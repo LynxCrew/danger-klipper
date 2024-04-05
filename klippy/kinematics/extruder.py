@@ -553,8 +553,8 @@ class PrinterExtruder:
     def get_extruder_steppers(self):
         return self.extruder_steppers
 
-    def update_move_time(self, flush_time):
-        self.trapq_finalize_moves(self.trapq, flush_time)
+    def update_move_time(self, flush_time, clear_history_time):
+        self.trapq_finalize_moves(self.trapq, flush_time, clear_history_time)
 
     def get_status(self, eventtime):
         sts = self.heater.get_status(eventtime)
@@ -697,7 +697,7 @@ class DummyExtruder:
     def __init__(self, printer):
         self.printer = printer
 
-    def update_move_time(self, flush_time):
+    def update_move_time(self, flush_time, clear_history_time):
         pass
 
     def check_move(self, move):
