@@ -31,6 +31,7 @@ At least one of the following must be specified:
 Please see {0}.md and config_Reference.md.
 """
 
+
 # Helper class to handle polling pins for probe attachment states
 class PinPollingHelper:
     def __init__(self, config, endstop):

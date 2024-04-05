@@ -163,11 +163,7 @@ class DeltesianKinematics:
         forceaxes = (
             [0, 1, 2]
             if (home_xz and home_y)
-            else [0, 2]
-            if home_xz
-            else [1]
-            if home_y
-            else []
+            else [0, 2] if home_xz else [1] if home_y else []
         )
         homing_state.set_axes(forceaxes)
         homepos = [None] * 4

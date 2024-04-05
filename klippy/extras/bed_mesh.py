@@ -1313,9 +1313,11 @@ class ZMesh:
         y_mult = self.y_mult
         self.mesh_matrix = [
             [
-                0.0
-                if ((i % x_mult) or (j % y_mult))
-                else z_matrix[j // y_mult][i // x_mult]
+                (
+                    0.0
+                    if ((i % x_mult) or (j % y_mult))
+                    else z_matrix[j // y_mult][i // x_mult]
+                )
                 for i in range(self.mesh_x_count)
             ]
             for j in range(self.mesh_y_count)
@@ -1375,9 +1377,11 @@ class ZMesh:
         c = self.mesh_params["tension"]
         self.mesh_matrix = [
             [
-                0.0
-                if ((i % x_mult) or (j % y_mult))
-                else z_matrix[j // y_mult][i // x_mult]
+                (
+                    0.0
+                    if ((i % x_mult) or (j % y_mult))
+                    else z_matrix[j // y_mult][i // x_mult]
+                )
                 for i in range(self.mesh_x_count)
             ]
             for j in range(self.mesh_y_count)
@@ -1497,9 +1501,9 @@ class ProfileManager:
             self.profiles[name] = {}
             zvals = profile.getlists("points", seps=(",", "\n"), parser=float)
             self.profiles[name]["points"] = zvals
-            self.profiles[name][
-                "mesh_params"
-            ] = params = collections.OrderedDict()
+            self.profiles[name]["mesh_params"] = params = (
+                collections.OrderedDict()
+            )
             for key, t in PROFILE_OPTIONS.items():
                 if t is int:
                     params[key] = profile.getint(key)

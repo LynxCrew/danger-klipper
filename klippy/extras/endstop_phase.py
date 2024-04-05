@@ -15,6 +15,7 @@ TRINAMIC_DRIVERS = [
     "tmc5160",
 ]
 
+
 # Calculate the trigger phase of a stepper motor
 class PhaseCalc:
     def __init__(self, printer, name, phases=None):

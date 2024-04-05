@@ -187,6 +187,7 @@ class ZTilt:
         z_offset = offsets[2]
         logging.info("Calculating bed tilt with: %s", positions)
         params = {"x_adjust": 0.0, "y_adjust": 0.0, "z_adjust": z_offset}
+
         # Perform coordinate descent
         def adjusted_height(pos, params):
             x, y, z = pos

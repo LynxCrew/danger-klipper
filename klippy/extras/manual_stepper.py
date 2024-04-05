@@ -140,8 +140,10 @@ class ManualStepper:
             self.sync_print_time()
 
     def get_status(self, eventtime):
-        return {'position': self.rail.get_commanded_position(),
-                'enabled': self.steppers[0].is_motor_enabled()}
+        return {
+            "position": self.rail.get_commanded_position(),
+            "enabled": self.steppers[0].is_motor_enabled(),
+        }
 
     # Toolhead wrappers to support homing
     def flush_step_generation(self):

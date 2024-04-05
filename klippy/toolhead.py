@@ -258,22 +258,25 @@ class ToolHead:
         self.lookahead.set_flush_time(BUFFER_TIME_HIGH)
         self.commanded_pos = [0.0, 0.0, 0.0, 0.0]
         # Velocity and acceleration control
-        self.max_velocity = config.getfloat('max_velocity', above=0.)
-        self.max_accel = config.getfloat('max_accel', above=0.)
+        self.max_velocity = config.getfloat("max_velocity", above=0.0)
+        self.max_accel = config.getfloat("max_accel", above=0.0)
         min_cruise_ratio = 0.5
-        if config.getfloat('minimum_cruise_ratio', None) is None:
-            req_accel_to_decel = config.getfloat('max_accel_to_decel', None,
-                                                 above=0.)
+        if config.getfloat("minimum_cruise_ratio", None) is None:
+            req_accel_to_decel = config.getfloat(
+                "max_accel_to_decel", None, above=0.0
+            )
             if req_accel_to_decel is not None:
-                config.deprecate('max_accel_to_decel')
-                min_cruise_ratio = 1. - min(1., (req_accel_to_decel
-                                                 / self.max_accel))
-        self.min_cruise_ratio = config.getfloat('minimum_cruise_ratio',
-                                                min_cruise_ratio,
-                                                below=1., minval=0.)
+                config.deprecate("max_accel_to_decel")
+                min_cruise_ratio = 1.0 - min(
+                    1.0, (req_accel_to_decel / self.max_accel)
+                )
+        self.min_cruise_ratio = config.getfloat(
+            "minimum_cruise_ratio", min_cruise_ratio, below=1.0, minval=0.0
+        )
         self.square_corner_velocity = config.getfloat(
-            'square_corner_velocity', 5., minval=0.)
-        self.junction_deviation = self.max_accel_to_decel = 0.
+            "square_corner_velocity", 5.0, minval=0.0
+        )
+        self.junction_deviation = self.max_accel_to_decel = 0.0
         self._calc_junction_deviation()
         # Input stall detection
         self.check_stall_time = 0.0
@@ -292,9 +295,9 @@ class ToolHead:
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.do_kick_flush_timer = True
         self.last_flush_time = self.min_restart_time = 0.0
-        self.need_flush_time = (
-            self.step_gen_time
-        ) = self.clear_history_time = 0.0
+        self.need_flush_time = self.step_gen_time = self.clear_history_time = (
+            0.0
+        )
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
         self.kin_flush_times = []
@@ -687,15 +690,19 @@ class ToolHead:
         print_time = self.print_time
         estimated_print_time = self.mcu.estimated_print_time(eventtime)
         res = dict(self.kin.get_status(eventtime))
-        res.update({ 'print_time': print_time,
-                     'stalls': self.print_stall,
-                     'estimated_print_time': estimated_print_time,
-                     'extruder': self.extruder.get_name(),
-                     'position': self.Coord(*self.commanded_pos),
-                     'max_velocity': self.max_velocity,
-                     'max_accel': self.max_accel,
-                     'minimum_cruise_ratio': self.min_cruise_ratio,
-                     'square_corner_velocity': self.square_corner_velocity})
+        res.update(
+            {
+                "print_time": print_time,
+                "stalls": self.print_stall,
+                "estimated_print_time": estimated_print_time,
+                "extruder": self.extruder.get_name(),
+                "position": self.Coord(*self.commanded_pos),
+                "max_velocity": self.max_velocity,
+                "max_accel": self.max_accel,
+                "minimum_cruise_ratio": self.min_cruise_ratio,
+                "square_corner_velocity": self.square_corner_velocity,
+            }
+        )
         return res
 
     def _handle_shutdown(self):
@@ -741,8 +748,9 @@ class ToolHead:
 
     def _calc_junction_deviation(self):
         scv2 = self.square_corner_velocity**2
-        self.junction_deviation = scv2 * (math.sqrt(2.) - 1.) / self.max_accel
-        self.max_accel_to_decel = self.max_accel * (1. - self.min_cruise_ratio)
+        self.junction_deviation = scv2 * (math.sqrt(2.0) - 1.0) / self.max_accel
+        self.max_accel_to_decel = self.max_accel * (1.0 - self.min_cruise_ratio)
+
     def cmd_G4(self, gcmd):
         # Dwell
         delay = gcmd.get_float("P", 0.0, minval=0.0) / 1000.0
@@ -758,17 +766,23 @@ class ToolHead:
         max_velocity = gcmd.get_float("VELOCITY", None, above=0.0)
         max_accel = gcmd.get_float("ACCEL", None, above=0.0)
         square_corner_velocity = gcmd.get_float(
-            'SQUARE_CORNER_VELOCITY', None, minval=0.)
+            "SQUARE_CORNER_VELOCITY", None, minval=0.0
+        )
         min_cruise_ratio = gcmd.get_float(
-            'MINIMUM_CRUISE_RATIO', None, minval=0., below=1.)
+            "MINIMUM_CRUISE_RATIO", None, minval=0.0, below=1.0
+        )
         if min_cruise_ratio is None:
-            req_accel_to_decel = gcmd.get_float('ACCEL_TO_DECEL',
-                                                None, above=0.)
+            req_accel_to_decel = gcmd.get_float(
+                "ACCEL_TO_DECEL", None, above=0.0
+            )
             if req_accel_to_decel is not None and max_accel is not None:
-                min_cruise_ratio = 1. - min(1., req_accel_to_decel / max_accel)
+                min_cruise_ratio = 1.0 - min(
+                    1.0, req_accel_to_decel / max_accel
+                )
             elif req_accel_to_decel is not None and max_accel is None:
-                min_cruise_ratio = 1. - min(1., (req_accel_to_decel
-                                                 / self.max_accel))
+                min_cruise_ratio = 1.0 - min(
+                    1.0, (req_accel_to_decel / self.max_accel)
+                )
         if max_velocity is not None:
             self.max_velocity = max_velocity
         if max_accel is not None:
@@ -778,15 +792,25 @@ class ToolHead:
         if min_cruise_ratio is not None:
             self.min_cruise_ratio = min_cruise_ratio
         self._calc_junction_deviation()
-        msg = ("max_velocity: %.6f\n"
-               "max_accel: %.6f\n"
-               "minimum_cruise_ratio: %.6f\n"
-               "square_corner_velocity: %.6f" % (
-                   self.max_velocity, self.max_accel,
-                   self.min_cruise_ratio, self.square_corner_velocity))
+        msg = (
+            "max_velocity: %.6f\n"
+            "max_accel: %.6f\n"
+            "minimum_cruise_ratio: %.6f\n"
+            "square_corner_velocity: %.6f"
+            % (
+                self.max_velocity,
+                self.max_accel,
+                self.min_cruise_ratio,
+                self.square_corner_velocity,
+            )
+        )
         self.printer.set_rollover_info("toolhead", "toolhead: %s" % (msg,))
-        if (max_velocity is None and max_accel is None
-            and square_corner_velocity is None and min_cruise_ratio is None):
+        if (
+            max_velocity is None
+            and max_accel is None
+            and square_corner_velocity is None
+            and min_cruise_ratio is None
+        ):
             gcmd.respond_info(msg, log=False)
 
     def cmd_M204(self, gcmd):

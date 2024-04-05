@@ -45,14 +45,20 @@ class Heater:
         self.pwm_delay = self.sensor.get_report_time_delta()
         # Setup temperature checks
         self.min_extrude_temp = config.getfloat(
-            'min_extrude_temp', 170.,
-            minval=self.min_temp, maxval=self.max_temp)
-        is_fileoutput = (self.printer.get_start_args().get('debugoutput')
-                         is not None)
-        self.can_extrude = self.min_extrude_temp <= 0. or is_fileoutput
-        self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
-        self.smooth_time = config.getfloat('smooth_time', 1., above=0.)
-        self.inv_smooth_time = 1. / self.smooth_time
+            "min_extrude_temp",
+            170.0,
+            minval=self.min_temp,
+            maxval=self.max_temp,
+        )
+        is_fileoutput = (
+            self.printer.get_start_args().get("debugoutput") is not None
+        )
+        self.can_extrude = self.min_extrude_temp <= 0.0 or is_fileoutput
+        self.max_power = config.getfloat(
+            "max_power", 1.0, above=0.0, maxval=1.0
+        )
+        self.smooth_time = config.getfloat("smooth_time", 1.0, above=0.0)
+        self.inv_smooth_time = 1.0 / self.smooth_time
         self.is_shutdown = False
         self.lock = threading.Lock()
         self.last_temp = self.smoothed_temp = self.target_temp = 0.0
@@ -111,8 +117,9 @@ class Heater:
             self.cmd_SET_HEATER_PID,
             desc=self.cmd_SET_HEATER_PID_help,
         )
-        self.printer.register_event_handler("klippy:shutdown",
-                                            self._handle_shutdown)
+        self.printer.register_event_handler(
+            "klippy:shutdown", self._handle_shutdown
+        )
 
     def lookup_control(self, profile, load_clean=False):
         algos = collections.OrderedDict(
@@ -149,13 +156,16 @@ class Heater:
             temp_diff = temp - self.smoothed_temp
             adj_time = min(time_diff * self.inv_smooth_time, 1.0)
             self.smoothed_temp += temp_diff * adj_time
-            self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
-        #logging.debug("temp: %.3f %f = %f", read_time, temp)
+            self.can_extrude = self.smoothed_temp >= self.min_extrude_temp
+        # logging.debug("temp: %.3f %f = %f", read_time, temp)
+
     def _handle_shutdown(self):
         self.is_shutdown = True
+
     # External commands
     def get_name(self):
         return self.name
+
     def get_pwm_delay(self):
         return self.pwm_delay
 
