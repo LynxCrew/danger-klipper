@@ -167,7 +167,8 @@ trapq_append(struct trapq *tq, double print_time
 
 // Expire any moves older than `print_time` from the trapezoid velocity queue
 void __visible
-trapq_finalize_moves(struct trapq *tq, double print_time)
+trapq_finalize_moves(struct trapq *tq, double print_time, double
+                     , double clear_history_time)
 {
     struct move *head_sentinel = list_first_entry(&tq->moves, struct move,node);
     struct move *tail_sentinel = list_last_entry(&tq->moves, struct move, node);
