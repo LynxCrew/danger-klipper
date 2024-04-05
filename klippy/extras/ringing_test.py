@@ -162,9 +162,11 @@ class RingingTest:
         notch = gcmd.get_float("NOTCH", self.notch, above=0.0)
         notch_offset = gcmd.get_float(
             "NOTCH_OFFSET",
-            self.notch_offset
-            if size == self.size
-            else size * DEFAULT_NOTCH_OFFSET_RATIO,
+            (
+                self.notch_offset
+                if size == self.size
+                else size * DEFAULT_NOTCH_OFFSET_RATIO
+            ),
             above=2.0,
             maxval=0.5 * size,
         )

@@ -8,6 +8,7 @@ import chelper
 
 API_UPDATE_INTERVAL = 0.500
 
+
 # Helper to periodically transmit data to a set of API clients
 class APIDumpHelper:
     def __init__(
@@ -209,6 +210,7 @@ class DumpStepper:
 
 
 NEVER_TIME = 9999999999999999.0
+
 
 # Extract trapezoidal motion queue (trapq)
 class DumpTrapQ:
