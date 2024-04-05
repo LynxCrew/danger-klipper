@@ -26,7 +26,7 @@ class ControllerFan:
         self.idle_speed = config.getfloat(
             "idle_speed", default=self.fan_speed, minval=0.0, maxval=1.0
         )
-        self.idle_timeout = config.getint("idle_timeout", default=30, minval=0)
+        self.idle_timeout = config.getint("idle_timeout", default=30, minval=-1)
         self.heater_names = config.getlist("heater", ("extruder",))
         self.last_on = self.idle_timeout
         self.last_speed = 0.0
@@ -57,7 +57,7 @@ class ControllerFan:
         return self.fan.get_status(eventtime)
 
     def callback(self, eventtime):
-        speed = 0.0
+        speed = self.idle_speed
         active = False
         for name in self.stepper_names:
             active |= self.stepper_enable.lookup_enable(name).is_motor_enabled()
@@ -68,9 +68,11 @@ class ControllerFan:
         if active:
             self.last_on = 0
             speed = self.fan_speed
-        elif self.last_on < self.idle_timeout:
-            speed = self.idle_speed
-            self.last_on += 1
+        elif self.idle_timeout != -1:
+            if self.last_on >= self.idle_timeout:
+                speed = 0.
+            else:
+                self.last_on += 1
         if speed != self.last_speed:
             self.last_speed = speed
             curtime = self.printer.get_reactor().monotonic()
