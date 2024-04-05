@@ -194,7 +194,7 @@ class Printer:
         ):
             pconfig.log_config(config)
         # Create printer components
-        for m in [pins, mcu]:
+        for m in [pins, non_critical_mcus, mcu]:
             m.add_printer_objects(config)
         for section_config in config.get_prefix_sections(""):
             self.load_object(config, section_config.get_name(), None)

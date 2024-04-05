@@ -41,8 +41,7 @@ class RunoutHelper:
         self.filament_present = False
         self.sensor_enabled = True
         self.smart = config.getboolean("smart", False)
-        self.always_fire_events = config.getboolean(
-            "always_fire_events", False)
+        self.always_fire_events = config.getboolean("always_fire_events", False)
         self.runout_position = 0.0
         self.runout_elapsed = 0.0
         self.runout_distance_timer = None
