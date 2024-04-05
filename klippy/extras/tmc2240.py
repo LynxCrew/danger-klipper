@@ -248,13 +248,13 @@ Fields["SG4_IND"] = {
 SignedFields = ["cur_a", "cur_b", "sgt", "pwm_scale_auto", "offset_sin90"]
 
 FieldFormatters = dict(tmc2130.FieldFormatters)
-FieldFormatters.update(
-    {
-        "s2vsa": (lambda v: "1(ShortToSupply_A!)" if v else ""),
-        "s2vsb": (lambda v: "1(ShortToSupply_B!)" if v else ""),
-        "adc_temp": (lambda v: "0x%04x(%.1fC)" % (v, ((v - 2038) / 7.7))),
-    }
-)
+FieldFormatters.update({
+    "s2vsa":            (lambda v: "1(ShortToSupply_A!)" if v else ""),
+    "s2vsb":            (lambda v: "1(ShortToSupply_B!)" if v else ""),
+    "adc_temp":         (lambda v: "0x%04x(%.1fC)" % (v, ((v - 2038) / 7.7))),
+    "adc_vsupply":      (lambda v: "0x%04x(%.3fV)" % (v, v * 0.009732)),
+    "adc_ain":          (lambda v: "0x%04x(%.3fmV)" % (v, v * 0.3052)),
+})
 
 
 ######################################################################
