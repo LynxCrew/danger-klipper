@@ -748,7 +748,7 @@ class ToolHead:
 
     def _calc_junction_deviation(self):
         scv2 = self.square_corner_velocity**2
-        self.junction_deviation = scv2 * (math.sqrt(2.0) - 1.0) / self.max_accel
+        self.equilateral_corner_v2 = scv2 * (math.sqrt(2.0) - 1.0)
         self.max_accel_to_decel = self.max_accel * (1.0 - self.min_cruise_ratio)
 
     def cmd_G4(self, gcmd):
