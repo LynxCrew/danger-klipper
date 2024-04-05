@@ -15,6 +15,7 @@ class Fan:
     def __init__(self, config, default_shutdown_speed=0.0):
         self.printer = config.get_printer()
         self.last_fan_value = 0.0
+        self.pwm_value = 0.
         self.last_fan_time = 0.0
         # Read config
         self.kick_start_time = config.getfloat(
