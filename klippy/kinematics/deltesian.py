@@ -15,6 +15,7 @@ MIN_ANGLE = 5.0
 
 class DeltesianKinematics:
     def __init__(self, toolhead, config):
+        self.printer = config.get_printer()
         self.rails = [None] * 3
         stepper_configs = [
             config.getsection("stepper_" + s) for s in ["left", "right", "y"]
@@ -50,8 +51,38 @@ class DeltesianKinematics:
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        config.get_printer().register_event_handler(
+        self.printer.register_event_handler(
             "stepper_enable:motor_off", self._motor_off
+        )
+
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_x", self._set_unhomed_x
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_y", self._set_unhomed_y
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_z", self._set_unhomed_z
+        )
+
+        self.printer.register_event_handler(
+            "stepper_enable:disable_left", self._disable_towers
+        )
+        self.printer.register_event_handler(
+            "stepper_enable:disable_right", self._disable_towers
+        )
+        self.printer.register_event_handler(
+            "stepper_enable:disable_y", self._set_unhomed_y
+        )
+
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_x", self._set_homed_x
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_y", self._set_homed_y
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_z", self._set_homed_z
         )
         self.limits = [(1.0, -1.0)] * 3
         # X axis limits
@@ -122,6 +153,9 @@ class DeltesianKinematics:
         self.set_position([0.0, 0.0, 0.0], ())
         self.supports_dual_carriage = False
 
+    def get_rails(self):
+        return self.rails
+
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
 
@@ -187,6 +221,28 @@ class DeltesianKinematics:
 
     def _motor_off(self, print_time):
         self.homed_axis = [False] * 3
+
+    def _set_unhomed_x(self, print_time):
+        self.homed_axis[0] = False
+
+    def _set_unhomed_y(self, print_time):
+        self.homed_axis[1] = False
+
+    def _set_unhomed_z(self, print_time):
+        self.homed_axis[2] = False
+
+    def _set_homed_x(self, print_time):
+        self.homed_axis[0] = True
+
+    def _set_homed_y(self, print_time):
+        self.homed_axis[1] = True
+
+    def _set_homed_z(self, print_time):
+        self.homed_axis[2] = True
+
+    def _disable_towers(self, print_time):
+        self.homed_axis[0] = False
+        self.homed_axis[2] = False
 
     def check_move(self, move):
         limits = list(map(list, self.limits))

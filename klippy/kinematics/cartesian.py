@@ -50,6 +50,36 @@ class CartKinematics:
         self.printer.register_event_handler(
             "stepper_enable:motor_off", self._motor_off
         )
+
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_x", self._set_unhomed_x
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_y", self._set_unhomed_y
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_z", self._set_unhomed_z
+        )
+
+        self.printer.register_event_handler(
+            "stepper_enable:disable_x", self._set_unhomed_x
+        )
+        self.printer.register_event_handler(
+            "stepper_enable:disable_y", self._set_unhomed_y
+        )
+        self.printer.register_event_handler(
+            "stepper_enable:disable_z", self._set_unhomed_z
+        )
+
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_x", self._set_homed_x
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_y", self._set_homed_y
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_z", self._set_homed_z
+        )
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
@@ -59,6 +89,9 @@ class CartKinematics:
             "max_z_accel", max_accel, above=0.0, maxval=max_accel
         )
         self.limits = [(1.0, -1.0)] * 3
+
+    def get_rails(self):
+        return self.rails
 
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
@@ -111,6 +144,24 @@ class CartKinematics:
     def _motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
 
+    def _set_unhomed_x(self, print_time):
+        self.limits[0] = (1.0, -1.0)
+
+    def _set_unhomed_y(self, print_time):
+        self.limits[1] = (1.0, -1.0)
+
+    def _set_unhomed_z(self, print_time):
+        self.limits[2] = (1.0, -1.0)
+
+    def _set_homed_x(self, print_time):
+        self.limits[0] = self.rails[0].get_range()
+
+    def _set_homed_y(self, print_time):
+        self.limits[1] = self.rails[1].get_range()
+
+    def _set_homed_z(self, print_time):
+        self.limits[2] = self.rails[2].get_range()
+
     def _check_endstops(self, move):
         end_pos = move.end_pos
         for i in (0, 1, 2):
@@ -144,6 +195,7 @@ class CartKinematics:
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
         return {
+            "kinematics": "cartesian",
             "homed_axes": "".join(axes),
             "axis_minimum": self.axes_min,
             "axis_maximum": self.axes_max,

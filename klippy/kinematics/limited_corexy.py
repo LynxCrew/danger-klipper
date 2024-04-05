@@ -117,6 +117,17 @@ class LimitedCoreXYKinematics(corexy.CoreXYKinematics):
             max_a = min(max_a, self.max_z_accel * z_ratio)
         move.limit_speed(max_v, max_a)
 
+    def get_status(self, eventtime):
+        axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
+        return {
+            "kinematics": "limited_corexy",
+            "homed_axes": "".join(axes),
+            "axis_minimum": self.axes_min,
+            "axis_maximum": self.axes_max,
+            "max_x_accel": self.max_x_accel,
+            "max_y_accel": self.max_y_accel,
+        }
+
 
 def load_kinematics(toolhead, config):
     return LimitedCoreXYKinematics(toolhead, config)

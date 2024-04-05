@@ -9,6 +9,7 @@ import stepper
 
 class PolarKinematics:
     def __init__(self, toolhead, config):
+        self.printer = config.get_printer()
         # Setup axis steppers
         stepper_bed = stepper.PrinterStepper(
             config.getsection("stepper_bed"), units_in_radians=True
@@ -25,8 +26,38 @@ class PolarKinematics:
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        config.get_printer().register_event_handler(
+        self.printer.register_event_handler(
             "stepper_enable:motor_off", self._motor_off
+        )
+
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_x", self._set_unhomed_xy
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_y", self._set_unhomed_xy
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_z", self._set_unhomed_z
+        )
+
+        self.printer.register_event_handler(
+            "stepper_enable:disable_bed", self._set_unhomed_xy
+        )
+        self.printer.register_event_handler(
+            "stepper_enable:disable_arm", self._set_unhomed_xy
+        )
+        self.printer.register_event_handler(
+            "stepper_enable:disable_z", self._set_unhomed_z
+        )
+
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_x", self._set_homed_xy
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_y", self._set_homed_xy
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_z", self._set_homed_z
         )
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
@@ -43,6 +74,9 @@ class PolarKinematics:
         self.axes_min = toolhead.Coord(-max_xy, -max_xy, min_z, 0.0)
         self.axes_max = toolhead.Coord(max_xy, max_xy, max_z, 0.0)
         self.supports_dual_carriage = False
+
+    def get_rails(self):
+        return self.rails
 
     def get_steppers(self):
         return list(self.steppers)
@@ -106,6 +140,18 @@ class PolarKinematics:
         self.limit_z = (1.0, -1.0)
         self.limit_xy2 = -1.0
 
+    def _set_unhomed_xy(self, print_time):
+        self.limit_xy2 = -1.0
+
+    def _set_unhomed_z(self, print_time):
+        self.limit_z = (1.0, -1.0)
+
+    def _set_homed_xy(self, print_time):
+        self.limit_xy2 = self.rails[0].get_range()[1] ** 2
+
+    def _set_homed_z(self, print_time):
+        self.limit_z = self.rails[1].get_range()
+
     def check_move(self, move):
         end_pos = move.end_pos
         xy2 = end_pos[0] ** 2 + end_pos[1] ** 2
@@ -128,6 +174,7 @@ class PolarKinematics:
         xy_home = "xy" if self.limit_xy2 >= 0.0 else ""
         z_home = "z" if self.limit_z[0] <= self.limit_z[1] else ""
         return {
+            "kinematics": "polar",
             "homed_axes": xy_home + z_home,
             "axis_minimum": self.axes_min,
             "axis_maximum": self.axes_max,

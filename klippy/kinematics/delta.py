@@ -12,6 +12,7 @@ SLOW_RATIO = 3.0
 
 class DeltaKinematics:
     def __init__(self, toolhead, config):
+        self.printer = config.get_printer()
         # Setup tower rails
         stepper_configs = [config.getsection("stepper_" + a) for a in "abc"]
         rail_a = stepper.LookupMultiRail(
@@ -29,8 +30,38 @@ class DeltaKinematics:
             default_position_endstop=a_endstop,
         )
         self.rails = [rail_a, rail_b, rail_c]
-        config.get_printer().register_event_handler(
+        self.printer.register_event_handler(
             "stepper_enable:motor_off", self._motor_off
+        )
+
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_x", self._set_unhomed
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_y", self._set_unhomed
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_z", self._set_unhomed
+        )
+
+        self.printer.register_event_handler(
+            "stepper_enable:disable_a", self._set_unhomed
+        )
+        self.printer.register_event_handler(
+            "stepper_enable:disable_b", self._set_unhomed
+        )
+        self.printer.register_event_handler(
+            "stepper_enable:disable_c", self._set_unhomed
+        )
+
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_x", self._set_homed
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_y", self._set_homed
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_z", self._set_homed
         )
         # Setup max velocity
         self.max_velocity, self.max_accel = toolhead.get_max_velocity()
@@ -133,6 +164,9 @@ class DeltaKinematics:
         self.set_position([0.0, 0.0, 0.0], ())
         self.supports_dual_carriage = False
 
+    def get_rails(self):
+        return self.rails
+
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
 
@@ -161,6 +195,13 @@ class DeltaKinematics:
     def _motor_off(self, print_time):
         self.limit_xy2 = -1.0
         self.need_home = True
+
+    def _set_unhomed(self, print_time):
+        self.limit_xy2 = -1.0
+        self.need_home = True
+
+    def _set_homed(self, print_time):
+        self.need_home = False
 
     def check_move(self, move):
         end_pos = move.end_pos

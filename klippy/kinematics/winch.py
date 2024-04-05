@@ -30,6 +30,9 @@ class WinchKinematics:
         self.set_position([0.0, 0.0, 0.0], ())
         self.supports_dual_carriage = False
 
+    def get_rails(self):
+        return []
+
     def get_steppers(self):
         return list(self.steppers)
 
@@ -54,6 +57,7 @@ class WinchKinematics:
     def get_status(self, eventtime):
         # XXX - homed_checks and rail limits not implemented
         return {
+            "kinematics": "winch",
             "homed_axes": "xyz",
             "axis_minimum": self.axes_min,
             "axis_maximum": self.axes_max,
