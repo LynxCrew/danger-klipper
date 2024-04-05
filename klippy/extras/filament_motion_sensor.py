@@ -134,7 +134,7 @@ class EncoderSensor:
             self.detection_length = detection_length
         return reset_needed
 
-    def reset_needed(self, enable=None, always_fire_events=None):
+    def reset(self):
         self._update_filament_runout_pos()
         self.runout_helper.note_filament_present(True)
 
