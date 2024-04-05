@@ -9,9 +9,9 @@ DRIVER_REPORT_TIME = 1.0
 class PrinterTemperatureDriver:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.name = config.get("sensor_driver")
 
-        driver_name = config.get("sensor_driver")
-        self.driver = self.printer.lookup_object(driver_name)
+        self.driver = None
 
         self.temp = self.min_temp = self.max_temp = 0.0
 
@@ -25,6 +25,7 @@ class PrinterTemperatureDriver:
         )
 
     def handle_connect(self):
+        self.driver = self.printer.lookup_object(self.name)
         self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
 
     def setup_callback(self, temperature_callback):
@@ -49,11 +50,13 @@ class PrinterTemperatureDriver:
 
         measured_time = self.reactor.monotonic()
 
-        if self.temp is not None:
-            mcu = self.driver.get_mcu()
-            self.temperature_callback(
-                mcu.estimated_print_time(measured_time), self.temp
-            )
+        if self.temp is None:
+            self.temp = 0.0
+
+        mcu = self.driver.get_mcu()
+        self.temperature_callback(
+            mcu.estimated_print_time(measured_time), self.temp
+        )
 
         return measured_time + DRIVER_REPORT_TIME
 

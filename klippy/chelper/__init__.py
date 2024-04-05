@@ -280,6 +280,7 @@ defs_all = [
     defs_kin_idex,
 ]
 
+
 # Update filenames to an absolute path
 def get_abs_files(srcdir, filelist):
     return [os.path.join(srcdir, fname) for fname in filelist]
@@ -326,6 +327,7 @@ def do_build_code(cmd):
 FFI_main = None
 FFI_lib = None
 pyhelper_logging_callback = None
+
 
 # Hepler invoked from C errorf() code to log errors
 def logging_callback(msg):
