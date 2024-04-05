@@ -3,14 +3,16 @@
 # Copyright (C) 2019-2022  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, ast
+import logging
+import ast
 from .display import display
 
 # Time between each led template update
 RENDER_TIME = 0.500
 
-
 # Helper code for common LED initialization and control
+
+
 class LEDHelper:
     def __init__(self, config, update_func, led_count=1):
         self.printer = config.get_printer()
@@ -23,6 +25,7 @@ class LEDHelper:
         blue = config.getfloat("initial_BLUE", 0.0, minval=0.0, maxval=1.0)
         white = config.getfloat("initial_WHITE", 0.0, minval=0.0, maxval=1.0)
         self.led_state = [(red, green, blue, white)] * led_count
+        self.active_template = None
         # Register commands
         name = config.get_name().split()[-1]
         gcode = self.printer.lookup_object("gcode")
@@ -30,21 +33,94 @@ class LEDHelper:
             "SET_LED", "LED", name, self.cmd_SET_LED, desc=self.cmd_SET_LED_help
         )
 
+    def check_index(self, index, gcmd, led_count):
+        try:
+            i = int(index)
+        except ValueError:
+            raise gcmd.error(
+                "index '%s' is not a number, "
+                "only numbers, ',', '-' and '|' are allowed." % index
+            )
+        if i < 1:
+            raise gcmd.error("index can not be less than 1(was '%d')" % i)
+        if i > led_count:
+            raise gcmd.error(
+                "index can not exceed amount of " "leds in chain(was '%d')" % i
+            )
+        return i
+
+    def check_step(self, step, min, max, gcmd):
+        try:
+            i = int(step)
+        except ValueError:
+            raise gcmd.error(
+                "step '%s' is not a number, " "only numbers are allowed." % step
+            )
+        if i < 1:
+            raise gcmd.error("step can not be less than 1(was '%d')" % i)
+        if i > max - min:
+            raise gcmd.error(
+                "Steps can not be bigger than range " "(was '%d')" % i
+            )
+        return i
+
+    def get_indices(self, gcmd, led_count):
+        given_indices = gcmd.get("INDEX", None)
+        if given_indices is None:
+            return range(1, (led_count + 1))
+        indices = set()
+        for index in given_indices.split(","):
+            led_range = index.split("-")
+            if len(led_range) > 2:
+                raise gcmd.error(
+                    "More than one '-' found in '%s', "
+                    "only one allowed" % index
+                )
+            elif len(led_range) == 1:
+                if "|" in led_range[0]:
+                    raise gcmd.error(
+                        "'|' specified without preceding "
+                        "range in '%s'" % index
+                    )
+                indices.add(self.check_index(index, gcmd, led_count))
+            else:
+                step = 1
+                min_val = led_range[0]
+                max_val = led_range[1]
+                range_steps = max_val.split("|")
+                if len(range_steps) > 2:
+                    raise gcmd.error(
+                        "More than one '|' found in '%s', "
+                        "only one allowed" % index
+                    )
+                elif len(range_steps) == 2:
+                    step = range_steps[1]
+                    max_val = range_steps[0]
+                min = self.check_index(min_val, gcmd, led_count)
+                max = self.check_index(max_val, gcmd, led_count)
+                if max > min:
+                    raise gcmd.error(
+                        "Min value greater than max value in '%s'" % index
+                    )
+                for i in range(
+                    min, (max + 1), self.check_step(step, min, max, gcmd)
+                ):
+                    indices.add(i)
+        return indices
+
     def get_led_count(self):
         return self.led_count
 
     def set_color(self, index, color):
-        if index is None:
-            new_led_state = [color] * self.led_count
-            if self.led_state == new_led_state:
-                return
-        else:
-            if self.led_state[index - 1] == color:
-                return
-            new_led_state = list(self.led_state)
-            new_led_state[index - 1] = color
+        if self.led_state[index - 1] == color:
+            return
+        new_led_state = list(self.led_state)
+        new_led_state[index - 1] = color
         self.led_state = new_led_state
         self.need_transmit = True
+
+    def set_active_template(self, template):
+        self.active_template = template
 
     def check_transmit(self, print_time):
         if not self.need_transmit:
@@ -63,14 +139,14 @@ class LEDHelper:
         green = gcmd.get_float("GREEN", 0.0, minval=0.0, maxval=1.0)
         blue = gcmd.get_float("BLUE", 0.0, minval=0.0, maxval=1.0)
         white = gcmd.get_float("WHITE", 0.0, minval=0.0, maxval=1.0)
-        index = gcmd.get_int("INDEX", None, minval=1, maxval=self.led_count)
         transmit = gcmd.get_int("TRANSMIT", 1)
         sync = gcmd.get_int("SYNC", 1)
         color = (red, green, blue, white)
-
         # Update and transmit data
+
         def lookahead_bgfunc(print_time):
-            self.set_color(index, color)
+            for index in self.get_indices(gcmd, self.led_count):
+                self.set_color(index, color)
             if transmit:
                 self.check_transmit(print_time)
 
@@ -79,14 +155,20 @@ class LEDHelper:
             toolhead = self.printer.lookup_object("toolhead")
             toolhead.register_lookahead_callback(lookahead_bgfunc)
         else:
-            # Send update now (so as not to wake toolhead and reset idle_timeout)
+            # Send update now (so as not to wake toolhead and reset
+            # idle_timeout)
             lookahead_bgfunc(None)
 
     def get_status(self, eventtime=None):
-        return {"color_data": self.led_state}
+        return {
+            "color_data": self.led_state,
+            "active_template": self.active_template,
+        }
 
 
 # Main LED tracking code
+
+
 class PrinterLED:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -105,12 +187,25 @@ class PrinterLED:
             self.cmd_SET_LED_TEMPLATE,
             desc=self.cmd_SET_LED_TEMPLATE_help,
         )
+        self.printer.register_event_handler(
+            "klippy:shutdown", self._handle_shutdown
+        )
+
+    def _handle_shutdown(self):
+        self.active_templates = {}
 
     def setup_helper(self, config, update_func, led_count=1):
         led_helper = LEDHelper(config, update_func, led_count)
         name = config.get_name().split()[-1]
+        if name in self.led_helpers:
+            raise config.error("LED name '%s' is not unique." % (name,))
         self.led_helpers[name] = led_helper
         return led_helper
+
+    def lookup_led_helper(self, name, config):
+        if name in self.led_helpers:
+            return self.led_helpers[name]
+        raise config.error("Unknown LED '%s'" % (name,))
 
     def _activate_timer(self):
         if self.render_timer is not None or not self.active_templates:
@@ -118,14 +213,18 @@ class PrinterLED:
         reactor = self.printer.get_reactor()
         self.render_timer = reactor.register_timer(self._render, reactor.NOW)
 
-    def _activate_template(self, led_helper, index, template, lparams):
+    def _activate_template(
+        self, led_helper, index, template, lparams, tpl_name
+    ):
         key = (led_helper, index)
         if template is not None:
             uid = (template,) + tuple(sorted(lparams.items()))
             self.active_templates[key] = (uid, template, lparams)
+            led_helper.set_active_template(tpl_name)
             return
         if key in self.active_templates:
             del self.active_templates[key]
+            led_helper.set_active_template(None)
 
     def _render(self, eventtime):
         if not self.active_templates:
@@ -175,7 +274,6 @@ class PrinterLED:
         if led_helper is None:
             raise gcmd.error("Unknown LED '%s'" % (led_name,))
         led_count = led_helper.get_led_count()
-        index = gcmd.get_int("INDEX", None, minval=1, maxval=led_count)
         template = None
         lparams = {}
         tpl_name = gcmd.get("TEMPLATE")
@@ -196,19 +294,19 @@ class PrinterLED:
                     lparams[p] = ast.literal_eval(v)
                 except ValueError as e:
                     raise gcmd.error("Unable to parse '%s' as a literal" % (v,))
-        if index is not None:
-            self._activate_template(led_helper, index, template, lparams)
-        else:
-            for i in range(led_count):
-                self._activate_template(led_helper, i + 1, template, lparams)
+        for index in led_helper.get_indices(gcmd, led_count):
+            self._activate_template(
+                led_helper, index, template, lparams, tpl_name
+            )
         self._activate_timer()
 
 
 PIN_MIN_TIME = 0.100
 MAX_SCHEDULE_TIME = 5.0
 
-
 # Handler for PWM controlled LEDs
+
+
 class PrinterPWMLED:
     def __init__(self, config):
         self.printer = printer = config.get_printer()

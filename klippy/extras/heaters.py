@@ -40,6 +40,12 @@ class Heater:
         self.sensor = sensor
         self.min_temp = config.getfloat("min_temp", minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat("max_temp", above=self.min_temp)
+        self.max_set_temp = config.getfloat(
+            "max_set_temp",
+            self.max_temp,
+            minval=self.min_temp,
+            maxval=self.max_temp,
+        )
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
         self.pwm_delay = self.sensor.get_report_time_delta()
@@ -54,6 +60,8 @@ class Heater:
             self.printer.get_start_args().get("debugoutput") is not None
         )
         self.can_extrude = self.min_extrude_temp <= 0.0 or is_fileoutput
+        self.enabled = True
+        self.cold_extrude = False
         self.max_power = config.getfloat(
             "max_power", 1.0, above=0.0, maxval=1.0
         )
@@ -121,6 +129,13 @@ class Heater:
             "klippy:shutdown", self._handle_shutdown
         )
 
+    def notify_disabled(self, gcmd):
+        if gcmd is not None:
+            gcmd.respond_info(
+                "Heater [%s] is disabled due to an "
+                "accelerometer being connected." % self.short_name
+            )
+
     def lookup_control(self, profile, load_clean=False):
         algos = collections.OrderedDict(
             {
@@ -156,7 +171,9 @@ class Heater:
             temp_diff = temp - self.smoothed_temp
             adj_time = min(time_diff * self.inv_smooth_time, 1.0)
             self.smoothed_temp += temp_diff * adj_time
-            self.can_extrude = self.smoothed_temp >= self.min_extrude_temp
+            self.can_extrude = (
+                self.smoothed_temp >= self.min_extrude_temp or self.cold_extrude
+            )
         # logging.debug("temp: %.3f %f = %f", read_time, temp)
 
     def _handle_shutdown(self):
@@ -179,10 +196,10 @@ class Heater:
         self.inv_smooth_time = inv_smooth_time
 
     def set_temp(self, degrees):
-        if degrees and (degrees < self.min_temp or degrees > self.max_temp):
+        if degrees and (degrees < self.min_temp or degrees > self.max_set_temp):
             raise self.printer.command_error(
                 "Requested temperature (%.1f) out of range (%.1f:%.1f)"
-                % (degrees, self.min_temp, self.max_temp)
+                % (degrees, self.min_temp, self.max_set_temp)
             )
         with self.lock:
             self.target_temp = degrees
@@ -243,6 +260,9 @@ class Heater:
             "pid_profile": self.get_control().get_profile()["name"],
         }
 
+    def set_enabled(self, enabled):
+        self.enabled = enabled
+
     def is_adc_faulty(self):
         if self.last_temp > self.max_temp or self.last_temp < self.min_temp:
             return True
@@ -253,7 +273,7 @@ class Heater:
     def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
         temp = gcmd.get_float("TARGET", 0.0)
         pheaters = self.printer.lookup_object("heaters")
-        pheaters.set_temperature(self, temp)
+        pheaters.set_temperature(self, temp, gcmd=gcmd)
 
     cmd_SET_SMOOTH_TIME_help = "Set the smooth time for the given heater"
 
@@ -968,7 +988,10 @@ class PrinterHeaters:
             gcode.respond_raw(self._get_temp(eventtime))
             eventtime = reactor.pause(eventtime + 1.0)
 
-    def set_temperature(self, heater, temp, wait=False):
+    def set_temperature(self, heater, temp, wait=False, gcmd=None):
+        if not heater.enabled:
+            heater.notify_disabled(gcmd)
+            return
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.register_lookahead_callback((lambda pt: None))
         heater.set_temp(temp)

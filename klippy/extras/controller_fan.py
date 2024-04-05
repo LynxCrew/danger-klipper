@@ -70,7 +70,7 @@ class ControllerFan:
             speed = self.fan_speed
         elif self.idle_timeout != -1:
             if self.last_on >= self.idle_timeout:
-                speed = 0.
+                speed = 0.0
             else:
                 self.last_on += 1
         if speed != self.last_speed:

@@ -58,6 +58,11 @@ class ForceMove:
                 self.cmd_SET_KINEMATIC_POSITION,
                 desc=self.cmd_SET_KINEMATIC_POSITION_help,
             )
+            gcode.register_command(
+                "MARK_AS_HOMED",
+                self.cmd_MARK_AS_HOMED,
+                desc=self.cmd_MARK_AS_HOMED_help,
+            )
 
     def register_stepper(self, config, mcu_stepper):
         self.steppers[mcu_stepper.get_name()] = mcu_stepper
@@ -169,11 +174,52 @@ class ForceMove:
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.get_last_move_time()
         curpos = toolhead.get_position()
-        x = gcmd.get_float("X", curpos[0])
-        y = gcmd.get_float("Y", curpos[1])
-        z = gcmd.get_float("Z", curpos[2])
+        homing_axes = []
+        x = gcmd.get_float("X", None)
+        y = gcmd.get_float("Y", None)
+        z = gcmd.get_float("Z", None)
+        if x is None:
+            x = curpos[0]
+        else:
+            homing_axes.append(0)
+        if y is None:
+            y = curpos[1]
+        else:
+            homing_axes.append(1)
+        if z is None:
+            z = curpos[2]
+        else:
+            homing_axes.append(2)
         logging.info("SET_KINEMATIC_POSITION pos=%.3f,%.3f,%.3f", x, y, z)
-        toolhead.set_position([x, y, z, curpos[3]], homing_axes=(0, 1, 2))
+        toolhead.set_position([x, y, z, curpos[3]], homing_axes=homing_axes)
+
+    cmd_MARK_AS_HOMED_help = "Manually set a specific axis as homed"
+
+    def cmd_MARK_AS_HOMED(self, gcmd):
+        toolhead = self.printer.lookup_object("toolhead")
+        toolhead.dwell(STALL_TIME)
+        print_time = toolhead.get_last_move_time()
+        axes_str = gcmd.get("AXES", None)
+        if axes_str is None:
+            axes = ["X", "Y", "Z"]
+        else:
+            axes = axes_str.split(",")
+        invalid_axis = []
+        for axis in axes:
+            if (
+                axis.lower() != "x"
+                and axis.lower() != "y"
+                and axis.lower() != "z"
+            ):
+                invalid_axis.append(axis)
+        if invalid_axis:
+            gcmd.respond_info("MARK_AS_HOMED: Invalid axis %s" % invalid_axis)
+            return
+        logging.info("Marking axes as homed: %s", axes)
+        for axis in axes:
+            self.printer.send_event(
+                "force_move:mark_as_homed_%s" % axis.lower(), print_time
+            )
 
 
 def load_config(config):

@@ -17,6 +17,9 @@ class PrinterNeoPixel:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
         self.mutex = printer.get_reactor().mutex()
+        self.reactor = self.printer.get_reactor()
+        self.gcode = self.printer.lookup_object("gcode")
+        gcode_macro = self.printer.load_object(config, "gcode_macro")
         # Configure neopixel
         ppins = printer.lookup_object("pins")
         pin_params = ppins.lookup_pin(config.get("pin"))
@@ -28,6 +31,7 @@ class PrinterNeoPixel:
         # Build color map
         chain_count = config.getint("chain_count", 1, minval=1)
         color_order = config.getlist("color_order", ["GRB"])
+        self.init_gcode = gcode_macro.load_template(config, "init_gcode", "")
         if len(color_order) == 1:
             color_order = [color_order[0]] * chain_count
         if len(color_order) != chain_count:
@@ -50,6 +54,16 @@ class PrinterNeoPixel:
         self.old_color_data = bytearray([d ^ 1 for d in self.color_data])
         # Register callbacks
         printer.register_event_handler("klippy:connect", self.send_data)
+        printer.register_event_handler("klippy:ready", self._handle_ready)
+
+    def _handle_ready(self):
+        self.timer_handler = self.reactor.register_timer(
+            self._init_gcode, self.reactor.monotonic()
+        )
+
+    def _init_gcode(self, eventtime):
+        self.gcode.run_script(self.init_gcode.render())
+        return self.reactor.NEVER
 
     def build_config(self):
         bmt = self.mcu.seconds_to_clock(BIT_MAX_TIME)
