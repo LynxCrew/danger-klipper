@@ -165,6 +165,14 @@ class PrinterStepperEnable:
         )
         self.enable_lines[name] = EnableTracking(mcu_stepper, enable)
 
+    def stepper_off(self, stepper_name, print_time, rail_name):
+        el = self.enable_lines[stepper_name]
+        el.motor_disable(print_time)
+        if rail_name != 'extruder':
+            self.printer.send_event("stepper_enable:disable_%s"
+                                    % rail_name.lower(),
+                                    print_time)
+
     def motor_off(self):
         self.axes_off()
 

@@ -770,20 +770,27 @@ class MCU:
         self._mcu_tick_stddev = 0.0
         self._mcu_tick_awake = 0.0
 
-        # noncritical mcus
-        self.non_critical_recon_timer = self._reactor.register_timer(
-            self.non_critical_recon_event
-        )
         self.is_non_critical = False
         non_critical_mcus = printer.lookup_object("non_critical_mcus", None)
         if non_critical_mcus is not None and non_critical_mcus.enabled:
             self.is_non_critical = config.getboolean("is_non_critical", False)
+        if self.is_non_critical:
+            # noncritical mcus
+            self.non_critical_recon_timer = self._reactor.register_timer(
+                self.non_critical_recon_event
+            )
         self._non_critical_disconnected = False
         # self.last_noncrit_recon_eventtime = None
         self.reconnect_interval = (
-            config.getfloat("reconnect_interval", 2.0) + 0.12
+            config.getfloat("reconnect_interval", None)
         )  # add small change to not collide with other events
-
+        if self.reconnect_interval is not None and not self.is_non_critical:
+            raise config.error(
+                "mcu must be non_critical in order to specify a reconnect timer"
+            )
+        if self.reconnect_interval is None:
+            self.reconnect_interval = 2.0
+        self.reconnect_interval += 0.12
         # Register handlers
         printer.register_event_handler(
             "klippy:firmware_restart", self._firmware_restart

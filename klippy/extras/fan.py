@@ -87,7 +87,7 @@ class Fan:
             )
         if self.max_err is not None and self.min_rpm is None:
             raise config.error(
-                "'min_rpm' must be specified before enabling `max_error`"
+                "'min_rpm' must be specified before enabling 'max_error'"
             )
         if self.min_rpm is None:
             self.min_rpm = 0
