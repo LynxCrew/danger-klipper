@@ -20,6 +20,9 @@ class PrinterProbe:
         self.name = config.get_name()
         self.mcu_probe = mcu_probe
         self.speed = config.getfloat("speed", 5.0, above=0.0)
+        self.horizontal_move_speed = config.getfloat('horizontal_move_speed',
+                                                     self.speed,
+                                                     above=0.)
         self.lift_speed = config.getfloat("lift_speed", self.speed, above=0.0)
         self.x_offset = config.getfloat("x_offset", 0.0)
         self.y_offset = config.getfloat("y_offset", 0.0)
@@ -352,7 +355,7 @@ class PrinterProbe:
         # Move the nozzle over the probe point
         curpos[0] += self.x_offset
         curpos[1] += self.y_offset
-        self._move(curpos, self.speed)
+        self._move(curpos, self.horizontal_move_speed)
         # Start manual probe
         manual_probe.ManualProbeHelper(
             self.printer, gcmd, self.probe_calibrate_finalize
