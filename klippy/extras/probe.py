@@ -483,6 +483,9 @@ class ProbePointsHelper:
                 option_name, seps=(",", "\n"), parser=float, count=2
             )
         def_move_z = config.getfloat("horizontal_move_z", 5.0)
+        self.move_z_speed = config.getfloat('horizontal_move_z_speed',
+                                            None,
+                                            above=0.)
         self.default_horizontal_move_z = def_move_z
         self.speed = config.getfloat("speed", 50.0, above=0.0)
         self.use_offsets = False
@@ -517,6 +520,8 @@ class ProbePointsHelper:
         if not self.results:
             # Use full speed to first probe position
             speed = self.speed
+        elif self.move_z_speed is not None:
+            speed = self.move_z_speed
         toolhead.manual_move([None, None, self.horizontal_move_z], speed)
         # Check if done probing
         if len(self.results) >= len(self.probe_points):
