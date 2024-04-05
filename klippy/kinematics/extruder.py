@@ -58,6 +58,7 @@ class PALinearModel:
     name = "linear"
 
     def __init__(self, config=None):
+        self.pa_enabled = True
         if config:
             self.pressure_advance = config.getfloat(
                 "pressure_advance", 0.0, minval=0.0
@@ -65,22 +66,28 @@ class PALinearModel:
         else:
             self.pressure_advance = 0.0
 
+    def set_enabled(self, enable):
+        self.pa_enabled = enable
+
     def update(self, gcmd):
         self.pressure_advance = gcmd.get_float(
             "ADVANCE", self.pressure_advance, minval=0.0
         )
 
     def enabled(self):
-        return self.pressure_advance > 0.0
+        return self.pa_enabled and self.pressure_advance > 0.0
 
     def get_pa_params(self):
-        return (self.pressure_advance,)
+        return (self.pressure_advance,) if self.pa_enabled else (0,)
 
     def get_status(self, eventtime):
         return {"pressure_advance": self.pressure_advance}
 
     def get_msg(self):
-        return "pressure_advance: %.6f" % (self.pressure_advance,)
+        return "enabled: %s\n" "pressure_advance: %.6f" % (
+            "true" if self.pa_enabled else "false",
+            self.pressure_advance,
+        )
 
     def get_func(self):
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -89,6 +96,7 @@ class PALinearModel:
 
 class PANonLinearModel:
     def __init__(self, config=None):
+        self.pa_enabled = True
         if config:
             self.linear_advance = config.getfloat(
                 "linear_advance", 0.0, minval=0.0
@@ -109,6 +117,9 @@ class PANonLinearModel:
             self.linear_offset = 0.0
             self.linearization_velocity = 0.0
 
+    def set_enabled(self, enable):
+        self.pa_enabled = enable
+
     def update(self, gcmd):
         self.linear_advance = gcmd.get_float(
             "ADVANCE", self.linear_advance, minval=0.0
@@ -126,15 +137,21 @@ class PANonLinearModel:
             )
 
     def enabled(self):
-        return self.linear_advance > 0.0 or self.linear_offset > 0.0
+        return self.pa_enabled and (
+            self.linear_advance > 0.0 or self.linear_offset > 0.0
+        )
 
     def get_pa_params(self):
         # The order must match the order of parameters in the
         # pressure_advance_params struct in kin_extruder.c
         return (
-            self.linear_advance,
-            self.linear_offset,
-            self.linearization_velocity,
+            (
+                self.linear_advance,
+                self.linear_offset,
+                self.linearization_velocity,
+            )
+            if self.enabled
+            else (0, 0, 0)
         )
 
     def get_status(self, eventtime):
@@ -146,10 +163,12 @@ class PANonLinearModel:
 
     def get_msg(self):
         return (
+            "enabled: %s\n"
             "linear_advance: %.6f\n"
             "linear_offset: %.6f\n"
             "linearization_velocity: %.6f"
             % (
+                "true" if self.pa_enabled else "false",
                 self.linear_advance,
                 self.linear_offset,
                 self.linearization_velocity,
@@ -273,6 +292,7 @@ class ExtruderStepper:
             "pressure_advance_model": self.pa_model.name,
             "time_offset": self.pressure_advance_time_offset,
             "motion_queue": self.motion_queue,
+            "pressure_advance_enabled": self.pa_model.pa_enabled,
         }
         sts.update(self.pa_model.get_status(eventtime))
         sts.update(self.smoother.get_status(eventtime))
@@ -364,6 +384,9 @@ class ExtruderStepper:
         pa_model = self.pa_model
         if pa_model_name != self.pa_model.name:
             pa_model = self.pa_models[pa_model_name]()
+        self.pa_model.set_enabled(
+            gcmd.get_int("ENABLE", self.pa_model.pa_enabled, minval=0, maxval=1)
+        )
         pa_model.update(gcmd)
         self.smoother.update(gcmd)
         time_offset = gcmd.get_float(

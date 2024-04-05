@@ -774,7 +774,10 @@ class MCU:
         self.non_critical_recon_timer = self._reactor.register_timer(
             self.non_critical_recon_event
         )
-        self.is_non_critical = config.getboolean("is_non_critical", False)
+        self.is_non_critical = False
+        non_critical_mcus = printer.lookup_object("non_critical_mcus", None)
+        if non_critical_mcus is not None and non_critical_mcus.enabled:
+            self.is_non_critical = config.getboolean("is_non_critical", False)
         self._non_critical_disconnected = False
         # self.last_noncrit_recon_eventtime = None
         self.reconnect_interval = (
