@@ -595,13 +595,14 @@ class PrinterConfig:
             "SAVE_CONFIG to '%s' (backup in '%s')", cfgpath, backup_path
         )
         try:
-            # Read the current config into the backup before making changes to
-            # the original file
-            currentconfig = open(cfgpath, "r")
-            backupconfig = open(backup_path, "w")
-            backupconfig.write(currentconfig.read())
-            backupconfig.close()
-            currentconfig.close()
+            if gcode.get_int("BACKUP", 1, minval=0, maxval=1):
+                # Read the current config into the backup before making changes to
+                # the original file
+                currentconfig = open(cfgpath, "r")
+                backupconfig = open(backup_path, "w")
+                backupconfig.write(currentconfig.read())
+                backupconfig.close()
+                currentconfig.close()
             # With the backup created, write the new data to the original file
             currentconfig = open(cfgpath, "w")
             currentconfig.write(cfgdata)
@@ -693,5 +694,12 @@ class PrinterConfig:
         data = regular_data.rstrip() + autosave_data
         self._write_backup(cfgname, data, gcode)
 
-        # Request a restart
-        gcode.request_restart("restart")
+        # If requested restart or no restart just flag config saved
+        require_restart = gcmd.get_int("RESTART", 1, minval=0, maxval=1)
+        if require_restart:
+            # Request a restart
+            gcode.request_restart("restart")
+        else:
+            # flag config updated to false since config saved with no restart
+            self.save_config_pending = False
+            gcode.respond_info("Config update without restart successful")

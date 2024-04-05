@@ -3,9 +3,12 @@
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
+
 from . import pulse_counter
 
 FAN_MIN_TIME = 0.100
+SAFETY_CHECK_INIT_TIME = 3.0
 
 
 class Fan:
@@ -67,19 +70,55 @@ class Fan:
             self.enable_pin = ppins.setup_pin("digital_out", enable_pin)
             self.enable_pin.setup_max_duration(0.0)
 
-        # Setup tachometer
         self.tachometer = FanTachometer(config)
 
+        self.name = config.get_name().split()[-1]
+        self.num_err = 0
+        self.min_rpm = config.getint("min_rpm", None, minval=0)
+        self.max_err = config.getint("max_error", None, minval=0)
+        if (
+            self.min_rpm is not None
+            and self.min_rpm > 0
+            and self.tachometer._freq_counter is None
+        ):
+            raise config.error(
+                "'tachometer_pin' must be specified before enabling `min_rpm`"
+            )
+        if self.max_err is not None and self.min_rpm is None:
+            raise config.error(
+                "'min_rpm' must be specified before enabling `max_error`"
+            )
+        if self.min_rpm is None:
+            self.min_rpm = 0
+        if self.max_err is None:
+            self.max_err = 3
+
+        self.printer.register_event_handler("klippy:ready", self.handle_ready)
         # Register callbacks
         self.printer.register_event_handler(
             "gcode:request_restart", self._handle_request_restart
         )
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command(
+            "SET_FAN",
+            "FAN",
+            self.name,
+            self.cmd_SET_FAN,
+            desc=self.cmd_SET_FAN_help,
+        )
+
+    def handle_ready(self):
+        reactor = self.printer.get_reactor()
+        if self.min_rpm > 0:
+            reactor.register_timer(
+                self.fan_check, reactor.monotonic() + SAFETY_CHECK_INIT_TIME
+            )
 
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
 
-    def set_speed(self, print_time, value):
-        if value == self.last_fan_value:
+    def set_speed(self, print_time, value, force=False):
+        if value == self.last_fan_value and not force:
             return
         if value > 0:
             # Scale value between min_power and max_power
@@ -104,6 +143,7 @@ class Fan:
             # Run fan at full speed for specified kick_start_time
             self.mcu_fan.set_pwm(print_time, self.max_power)
             print_time += self.kick_start_time
+        self.pwm_value = pwm_value
         self.mcu_fan.set_pwm(print_time, pwm_value)
         self.last_fan_time = print_time
         self.last_fan_value = value
@@ -120,9 +160,40 @@ class Fan:
     def get_status(self, eventtime):
         tachometer_status = self.tachometer.get_status(eventtime)
         return {
-            "speed": self.last_fan_value,
+            "speed": self.pwm_value,
+            "normalized_speed": self.last_fan_value,
             "rpm": tachometer_status["rpm"],
         }
+
+    def fan_check(self, eventtime):
+        rpm = self.tachometer.get_status(eventtime)["rpm"]
+        if self.last_fan_value and rpm is not None and rpm < self.min_rpm:
+            self.num_err += 1
+            if self.num_err > self.max_err:
+                msg = "'%s' spinning below minimum safe speed of %d rev/min" % (
+                    self.name,
+                    self.min_rpm,
+                )
+                logging.error(msg)
+                self.printer.invoke_shutdown(msg)
+                return self.printer.get_reactor().NEVER
+        else:
+            self.num_err = 0
+        return eventtime + 1.5
+
+    cmd_SET_FAN_help = "Change settings for a fan"
+
+    def cmd_SET_FAN(self, gcmd):
+        self.min_power = gcmd.get_float(
+            "MIN_POWER", self.min_power, minval=0.0, maxval=1.0
+        )
+        self.max_power = gcmd.get_float(
+            "MAX_POWER", self.max_power, above=self.min_power, maxval=1.0
+        )
+        self.min_rpm = gcmd.get_float("MIN_RPM", self.min_rpm, minval=0.0)
+        curtime = self.printer.get_reactor().monotonic()
+        print_time = self.get_mcu().estimated_print_time(curtime)
+        self.set_speed(print_time, self.last_fan_value, force=True)
 
 
 class FanTachometer:

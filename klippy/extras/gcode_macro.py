@@ -3,6 +3,7 @@
 # Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import pipes
 import traceback, logging, ast, copy, json
 import jinja2, math
 
@@ -84,8 +85,17 @@ class PrinterGCodeMacro:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.env = jinja2.Environment(
-            "{%", "%}", "{", "}", extensions=["jinja2.ext.do"]
+            "{%",
+            "%}",
+            "{",
+            "}",
+            extensions=["jinja2.ext.do", "jinja2.ext.loopcontrols"],
         )
+
+        self.env.filters["boolean"] = self.boolean
+        self.env.filters["bool"] = self.boolean
+        self.env.filters["repr"] = repr
+        self.env.filters["shell_quote"] = pipes.quote
 
     def load_template(self, config, option, default=None):
         name = "%s:%s" % (config.get_name(), option)
@@ -94,6 +104,10 @@ class PrinterGCodeMacro:
         else:
             script = config.get(option, default)
         return TemplateWrapper(self.printer, self.env, name, script)
+
+    def boolean(self, value):
+        lowercase_value = str(value).lower()
+        return lowercase_value in ["true", "1"]
 
     def _action_emergency_stop(self, msg="action_emergency_stop"):
         self.printer.invoke_shutdown("Shutdown due to %s" % (msg,))

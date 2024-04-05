@@ -9,6 +9,11 @@ import importlib
 from . import probe
 
 
+MAX_RETRIES = 30
+MAX_RETRY_TOLERANCE = 1.0
+MAX_DEVIATION = 50.0
+
+
 def params_to_normal_form(np, params, offsets):
     v = np.array([offsets[0], offsets[1], params["z_adjust"]])
     r = np.array([1, 0, params["x_adjust"]])
@@ -103,6 +108,12 @@ class ZAdjustStatus:
         printer.register_event_handler(
             "stepper_enable:motor_off", self._motor_off
         )
+        printer.register_event_handler(
+            "stepper_enable:disable_z", self._motor_off
+        )
+        printer.register_event_handler(
+            "unhome:mark_as_unhomed_z", self._motor_off
+        )
 
     def check_retry_result(self, retry_result):
         if retry_result == "done":
@@ -122,29 +133,46 @@ class ZAdjustStatus:
 class RetryHelper:
     def __init__(self, config, error_msg_extra=""):
         self.gcode = config.get_printer().lookup_object("gcode")
-        self.default_max_retries = config.getint("retries", 0, minval=0)
+        self.default_max_retries = config.getint(
+            "retries", 0, minval=0, maxval=MAX_RETRIES
+        )
         self.default_retry_tolerance = config.getfloat(
-            "retry_tolerance", 0.0, above=0.0
+            "retry_tolerance", 0.0, above=0.0, maxval=MAX_RETRY_TOLERANCE
+        )
+        self.default_increasing_threshold = config.getfloat(
+            "increasing_threshold", 0.0000001, above=0.0
+        )
+        self.default_max_deviation = config.getfloat(
+            "max_deviation", 5.0, minval=0.0, maxval=MAX_DEVIATION
         )
         self.value_label = "Probed points range"
         self.error_msg_extra = error_msg_extra
 
     def start(self, gcmd):
         self.max_retries = gcmd.get_int(
-            "RETRIES", self.default_max_retries, minval=0, maxval=30
+            "RETRIES", self.default_max_retries, minval=0, maxval=MAX_RETRIES
         )
         self.retry_tolerance = gcmd.get_float(
             "RETRY_TOLERANCE",
             self.default_retry_tolerance,
             minval=0.0,
-            maxval=1.0,
+            maxval=MAX_RETRY_TOLERANCE,
+        )
+        self.increasing_threshold = gcmd.get_float(
+            "INCREASING_THRESHOLD", self.default_increasing_threshold, above=0.0
+        )
+        self.max_deviation = gcmd.get_float(
+            "MAX_DEVIATION",
+            self.default_max_deviation,
+            minval=0.0,
+            maxval=MAX_DEVIATION,
         )
         self.current_retry = 0
         self.previous = None
         self.increasing = 0
 
     def check_increase(self, error):
-        if self.previous and error > self.previous + 0.0000001:
+        if self.previous and error > self.previous + self.increasing_threshold:
             self.increasing += 1
         elif self.increasing > 0:
             self.increasing -= 1
@@ -165,6 +193,11 @@ class RetryHelper:
                 self.retry_tolerance,
             )
         )
+        if error > self.max_deviation:
+            raise self.gcode.error(
+                "Retries aborting: %s is exceeding "
+                "max_deviation of %.3f" % (self.value_label, self.max_deviation)
+            )
         if self.check_increase(error):
             raise self.gcode.error(
                 "Retries aborting: %s is increasing. %s"

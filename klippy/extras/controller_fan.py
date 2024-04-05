@@ -9,12 +9,19 @@ PIN_MIN_TIME = 0.100
 
 
 class ControllerFan:
-    def __init__(self, config):
+    def __init__(self, config, defined_fan=None):
+        self.name = config.get_name().split()[1]
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.printer.register_event_handler(
             "klippy:connect", self.handle_connect
         )
+        if defined_fan is None:
+            self.printer.register_event_handler(
+                "klippy:ready", self.handle_ready
+            )
+            self.fan = fan.Fan(config)
+        else:
+            self.fan = defined_fan
         self.stepper_names = config.getlist("stepper", None)
         self.stepper_enable = self.printer.load_object(config, "stepper_enable")
         self.printer.load_object(config, "heaters")
@@ -30,6 +37,15 @@ class ControllerFan:
         self.heater_names = config.getlist("heater", ("extruder",))
         self.last_on = self.idle_timeout
         self.last_speed = 0.0
+        self.enabled = True
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command(
+            "SET_CONTROLLER_FAN",
+            "CONTROLLER_FAN",
+            self.name,
+            self.cmd_SET_CONTROLLER_FAN,
+            desc=self.cmd_SET_CONTROLLER_FAN_help,
+        )
 
     def handle_connect(self):
         # Heater lookup
@@ -56,7 +72,7 @@ class ControllerFan:
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
 
-    def callback(self, eventtime):
+    def get_speed(self, eventtime):
         speed = self.idle_speed
         active = False
         for name in self.stepper_names:
@@ -73,12 +89,25 @@ class ControllerFan:
                 speed = 0.0
             else:
                 self.last_on += 1
-        if speed != self.last_speed:
+        return speed
+
+    def callback(self, eventtime):
+        speed = self.get_speed(eventtime)
+        if self.enabled and speed != self.last_speed:
             self.last_speed = speed
             curtime = self.printer.get_reactor().monotonic()
             print_time = self.fan.get_mcu().estimated_print_time(curtime)
             self.fan.set_speed(print_time + PIN_MIN_TIME, speed)
         return eventtime + 1.0
+
+    cmd_SET_CONTROLLER_FAN_help = "Enable or Disable a controller_fan"
+
+    def cmd_SET_CONTROLLER_FAN(self, gcmd):
+        self.enabled = gcmd.get_int("ENABLE", self.enabled, minval=0, maxval=1)
+        if not self.enabled:
+            curtime = self.printer.get_reactor().monotonic()
+            print_time = self.fan.get_mcu().estimated_print_time(curtime)
+            self.fan.set_speed(print_time + PIN_MIN_TIME, 0.0)
 
 
 def load_config_prefix(config):
