@@ -12,3 +12,6 @@ _test_.*
 klippy/plugins/*
 !klippy/plugins/__init__.py
 .vscode
+/*.old
+config.*
+.idea/*
