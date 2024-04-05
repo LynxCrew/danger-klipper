@@ -428,7 +428,9 @@ class PrinterRail:
         self._tmc_current_helpers = None
         self.get_name = self.mcu_stepper.get_name
         self.get_commanded_position = self.mcu_stepper.get_commanded_position
-        self.calc_position_from_coord = self.mcu_stepper.calc_position_from_coord
+        self.calc_position_from_coord = (
+            self.mcu_stepper.calc_position_from_coord
+        )
         # Primary endstop position
         mcu_endstop = self.endstops[0][0]
         if hasattr(mcu_endstop, "get_position_endstop"):

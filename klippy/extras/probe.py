@@ -20,9 +20,9 @@ class PrinterProbe:
         self.name = config.get_name()
         self.mcu_probe = mcu_probe
         self.speed = config.getfloat("speed", 5.0, above=0.0)
-        self.horizontal_move_speed = config.getfloat('horizontal_move_speed',
-                                                     self.speed,
-                                                     above=0.)
+        self.horizontal_move_speed = config.getfloat(
+            "horizontal_move_speed", self.speed, above=0.0
+        )
         self.lift_speed = config.getfloat("lift_speed", self.speed, above=0.0)
         self.x_offset = config.getfloat("x_offset", 0.0)
         self.y_offset = config.getfloat("y_offset", 0.0)
@@ -483,9 +483,9 @@ class ProbePointsHelper:
                 option_name, seps=(",", "\n"), parser=float, count=2
             )
         def_move_z = config.getfloat("horizontal_move_z", 5.0)
-        self.move_z_speed = config.getfloat('horizontal_move_z_speed',
-                                            None,
-                                            above=0.)
+        self.move_z_speed = config.getfloat(
+            "horizontal_move_z_speed", None, above=0.0
+        )
         self.default_horizontal_move_z = def_move_z
         self.speed = config.getfloat("speed", 50.0, above=0.0)
         self.use_offsets = False

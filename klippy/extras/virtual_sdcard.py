@@ -15,7 +15,9 @@ class VirtualSDGCodeProvider:
         # sdcard state
         sd = config.get("path")
         self.with_subdirs = config.getboolean("with_subdirs", False)
-        self.finish_message = config.get("finish_message", "Done printing file")
+        self.done_printing_message = config.get(
+            "done_printing_message", "Done printing file"
+        )
         self.sdcard_dirname = os.path.normpath(os.path.expanduser(sd))
         self.filename = ""
         self.current_file = None
@@ -93,7 +95,7 @@ class VirtualSDGCodeProvider:
                     self.current_file.close()
                     self.current_file = None
                     logging.info("Finished SD card print")
-                    self.gcode.respond_raw(self.finish_message)
+                    self.gcode.respond_raw(self.done_printing_message)
                     break
                 lines = data.split("\n")
                 lines[0] = partial_input + lines[0]

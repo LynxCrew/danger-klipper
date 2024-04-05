@@ -781,8 +781,8 @@ class MCU:
             )
         self._non_critical_disconnected = False
         # self.last_noncrit_recon_eventtime = None
-        self.reconnect_interval = (
-            config.getfloat("reconnect_interval", None)
+        self.reconnect_interval = config.getfloat(
+            "reconnect_interval", None
         )  # add small change to not collide with other events
         if self.reconnect_interval is not None and not self.is_non_critical:
             raise config.error(
