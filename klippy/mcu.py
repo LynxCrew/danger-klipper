@@ -776,6 +776,7 @@ class MCU:
         )
         self.is_non_critical = False
         non_critical_mcus = printer.lookup_object("non_critical_mcus", None)
+        logging.info(non_critical_mcus)
         if non_critical_mcus is not None and non_critical_mcus.enabled:
             self.is_non_critical = config.getboolean("is_non_critical", False)
         self._non_critical_disconnected = False
