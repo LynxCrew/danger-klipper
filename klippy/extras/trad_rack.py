@@ -120,11 +120,9 @@ class TradRack:
         self.eject_length = config.getfloat(
             "eject_length", default=30.0, above=0.0
         )
-        self.config_bowden_length = (
-            self.bowden_load_length
-        ) = self.bowden_unload_length = config.getfloat(
-            "bowden_length", above=0.0
-        )
+        self.config_bowden_length = self.bowden_load_length = (
+            self.bowden_unload_length
+        ) = config.getfloat("bowden_length", above=0.0)
         self.extruder_load_length = config.getfloat(
             "extruder_load_length", above=0.0
         )
@@ -2281,12 +2279,12 @@ class TradRackToolHead(toolhead.ToolHead, object):
         # Flush tracking
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.do_kick_flush_timer = True
-        self.last_flush_time = (
-            self.last_sg_flush_time
-        ) = self.min_restart_time = 0.0
-        self.need_flush_time = (
-            self.step_gen_time
-        ) = self.clear_history_time = 0.0
+        self.last_flush_time = self.last_sg_flush_time = (
+            self.min_restart_time
+        ) = 0.0
+        self.need_flush_time = self.step_gen_time = self.clear_history_time = (
+            0.0
+        )
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = toolhead.SDS_CHECK_TIME
         self.kin_flush_times = []
