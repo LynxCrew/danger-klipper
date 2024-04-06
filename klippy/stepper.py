@@ -322,6 +322,11 @@ class MCU_stepper:
         a = axis.encode()
         return ffi_lib.itersolve_is_active_axis(self._stepper_kinematics, a)
 
+    def get_status(self, eventtime):
+        return {
+            "mcu_position": self.get_mcu_position(),
+        }
+
 
 # Helper code to build a stepper object from a config section
 def PrinterStepper(config, units_in_radians=False):
@@ -352,6 +357,8 @@ def PrinterStepper(config, units_in_radians=False):
         step_pulse_duration,
         units_in_radians,
     )
+    if name.startswith("stepper_"):
+        printer.add_object(name, mcu_stepper)
     # Register with helper modules
     for mname in ["stepper_enable", "force_move", "motion_report"]:
         m = printer.load_object(config, mname)

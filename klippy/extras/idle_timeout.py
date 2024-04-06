@@ -3,7 +3,7 @@
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
+import logging, time
 
 DEFAULT_IDLE_GCODE = """
 {% if 'heaters' in printer %}
@@ -35,12 +35,15 @@ class IdleTimeout:
         )
         self.state = "Idle"
         self.last_print_start_systime = 0.0
+        self.mcu_startup_unixtime = time.time() - self.reactor.monotonic()
 
     def get_status(self, eventtime):
-        printing_time = 0.0
-        if self.state == "Printing":
-            printing_time = eventtime - self.last_print_start_systime
-        return {"state": self.state, "printing_time": printing_time}
+        return {
+            "state": self.state,
+            "mcu_uptime": eventtime,
+            "mcu_startup_unixtime": self.mcu_startup_unixtime,
+            "last_print_start_time": self.last_print_start_systime,
+        }
 
     def handle_ready(self):
         self.toolhead = self.printer.lookup_object("toolhead")
