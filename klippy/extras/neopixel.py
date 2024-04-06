@@ -55,6 +55,9 @@ class PrinterNeoPixel:
         # Register callbacks
         printer.register_event_handler("klippy:connect", self.send_data)
         printer.register_event_handler("klippy:ready", self._handle_ready)
+        printer.register_event_handler(
+            self.mcu.get_non_critical_reconnect_event_name(), self.send_data
+        )
 
     def _handle_ready(self):
         self.timer_handler = self.reactor.register_timer(
