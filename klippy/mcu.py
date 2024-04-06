@@ -957,7 +957,6 @@ class MCU:
         local_config_cmds.insert(
             0, "allocate_oids count=%d" % (self._oid_count,)
         )
-        logging.info("config_cmds: %s", local_config_cmds)
 
         # Resolve pin names
         mcu_type = self._serial.get_msgparser().get_constant("MCU")
