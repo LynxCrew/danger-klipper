@@ -33,6 +33,7 @@ Handlers = []
 # C call list generation
 ######################################################################
 
+
 # Create dynamic C functions that call a list of other C functions
 class HandleCallList:
     def __init__(self):
@@ -75,6 +76,7 @@ Handlers.append(HandleCallList())
 ######################################################################
 
 STATIC_STRING_MIN = 2
+
 
 # Generate a dynamic string to integer mapping
 class HandleEnumerations:
@@ -138,6 +140,7 @@ Handlers.append(HandlerEnumerations)
 ######################################################################
 # Constants
 ######################################################################
+
 
 # Allow adding build time constants to the data dictionary
 class HandleConstants:
@@ -232,6 +235,7 @@ Handlers.append(HandleInitialPins())
 # ARM IRQ vector table generation
 ######################################################################
 
+
 # Create ARM IRQ vector table from interrupt handler declarations
 class Handle_arm_irq:
     def __init__(self):
@@ -281,6 +285,7 @@ Handlers.append(Handle_arm_irq())
 ######################################################################
 # Wire protocol commands and responses
 ######################################################################
+
 
 # Dynamic command and response registration
 class HandleCommandGeneration:
@@ -529,6 +534,7 @@ Handlers.append(HandleCommandGeneration())
 # Version generation
 ######################################################################
 
+
 # Run program and return the specified output
 def check_output(prog):
     logging.debug("Running %s" % (repr(prog),))
@@ -613,10 +619,11 @@ class HandleVersions:
         self.toolstr = self.version = ""
 
     def update_data_dictionary(self, data):
-        data['version'] = self.version
-        data['build_versions'] = self.toolstr
-        data['app'] = 'Klipper'
-        data['license'] = 'GNU GPLv3'
+        data["version"] = self.version
+        data["build_versions"] = self.toolstr
+        data["app"] = "Klipper"
+        data["license"] = "GNU GPLv3"
+
     def generate_code(self, options):
         cleanbuild, self.toolstr = tool_versions(options.tools)
         self.version = build_version(options.extra, cleanbuild)
@@ -633,6 +640,7 @@ Handlers.append(HandleVersions())
 ######################################################################
 # Identify data dictionary generation
 ######################################################################
+
 
 # Automatically generate the wire protocol data dictionary
 class HandleIdentify:

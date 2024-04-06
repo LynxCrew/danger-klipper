@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, json, collections
 from . import probe
+from extras.danger_options import get_danger_options
 
 PROFILE_VERSION = 1
 PROFILE_OPTIONS = {
@@ -140,7 +141,7 @@ class BedMesh:
             else:
                 config_file.warn(
                     "config",
-                    f"Selected default bed mesh profile '{self.default_mesh_name}' not found in available profiles.",
+                    f"Selected default bed mesh profile '{self.default_mesh_name}' not in available profiles.",
                     "Invalid profile name",
                 )
         # register gcodes
@@ -172,8 +173,7 @@ class BedMesh:
 
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
-        self.danger_options = self.printer.lookup_object("danger_options")
-        if self.danger_options.log_bed_mesh_at_startup:
+        if get_danger_options().log_bed_mesh_at_startup:
             self.bmc.print_generated_points(logging.info)
 
     def set_mesh(self, mesh):

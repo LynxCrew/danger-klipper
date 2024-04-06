@@ -32,11 +32,11 @@ PID_PROFILE_OPTIONS = {
 class Heater:
     def __init__(self, config, sensor):
         self.printer = config.get_printer()
+        self.name = config.get_name()
+        self.short_name = short_name = self.name.split()[-1]
         self.reactor = self.printer.get_reactor()
         self.config = config
         self.configfile = self.printer.lookup_object("configfile")
-        self.name = config.get_name()
-        self.short_name = short_name = self.name.split()[-1]
         # Setup sensor
         self.sensor = sensor
         self.min_temp = config.getfloat("min_temp", minval=KELVIN_TO_CELSIUS)
@@ -101,28 +101,28 @@ class Heater:
         self.gcode.register_mux_command(
             "SET_HEATER_TEMPERATURE",
             "HEATER",
-            self.name,
+            short_name,
             self.cmd_SET_HEATER_TEMPERATURE,
             desc=self.cmd_SET_HEATER_TEMPERATURE_help,
         )
         self.gcode.register_mux_command(
             "SET_SMOOTH_TIME",
             "HEATER",
-            self.name,
+            short_name,
             self.cmd_SET_SMOOTH_TIME,
             desc=self.cmd_SET_SMOOTH_TIME_help,
         )
         self.gcode.register_mux_command(
             "PID_PROFILE",
             "HEATER",
-            self.name,
+            short_name,
             self.pmgr.cmd_PID_PROFILE,
             desc=self.pmgr.cmd_PID_PROFILE_help,
         )
         self.gcode.register_mux_command(
             "SET_HEATER_PID",
             "HEATER",
-            self.name,
+            short_name,
             self.cmd_SET_HEATER_PID,
             desc=self.cmd_SET_HEATER_PID_help,
         )
@@ -137,6 +137,10 @@ class Heater:
                 "accelerometer being connected." % self.short_name
             )
 
+        self.printer.register_event_handler(
+            "klippy:shutdown", self._handle_shutdown
+        )
+
     def lookup_control(self, profile, load_clean=False):
         algos = collections.OrderedDict(
             {
@@ -148,7 +152,7 @@ class Heater:
         return algos[profile["control"]](profile, self, load_clean)
 
     def set_pwm(self, read_time, value):
-        if self.target_temp <= 0.0:
+        if self.target_temp <= 0.0 or self.is_shutdown:
             value = 0.0
         if (read_time < self.next_pwm_time or not self.last_pwm_value) and abs(
             value - self.last_pwm_value
@@ -243,7 +247,7 @@ class Heater:
             last_pwm_value = self.last_pwm_value
         is_active = target_temp or last_temp > 50.0
         return is_active, "%s: target=%.0f temp=%.1f pwm=%.3f" % (
-            self.name,
+            self.short_name,
             target_temp,
             last_temp,
             last_pwm_value,
@@ -978,6 +982,7 @@ class PrinterHeaters:
 
     def _wait_for_temperature(self, heater):
         # Helper to wait on heater.check_busy() and report M105 temperatures
+
         if self.printer.get_start_args().get("debugoutput") is not None:
             return
 

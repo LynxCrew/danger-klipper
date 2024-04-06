@@ -7,6 +7,7 @@ import logging, threading, os
 import serial
 
 import msgproto, chelper, util
+from extras.danger_options import get_danger_options
 
 
 class error(Exception):
@@ -475,7 +476,7 @@ class SerialReader:
         )
 
     def handle_default(self, params):
-        if self.danger_options.disable_serial_reader_warnings:
+        if get_danger_options().log_serial_reader_warnings:
             logging.warn("%sgot %s", self.warn_prefix, params)
 
 
