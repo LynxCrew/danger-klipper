@@ -311,20 +311,19 @@ class Homing:
             needs_rehome = True
             retract_dist = hi.min_home_dist
 
-        # Perform second home
-        if retract_dist:
-            logging.info("homing:needs rehome: %s", needs_rehome)
-            # Retract
-            startpos = self._fill_coord(forcepos)
-            homepos = self._fill_coord(movepos)
-            axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
-            move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
-            retract_r = min(1.0, retract_dist / move_d)
-            retractpos = [
-                hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
-            ]
-            self.toolhead.move(retractpos, hi.retract_speed)
-            if not hi.use_sensorless_homing or needs_rehome:
+        if not hi.use_sensorless_homing or needs_rehome:
+            if retract_dist:
+                logging.info("homing:needs rehome: %s", needs_rehome)
+                # Retract
+                startpos = self._fill_coord(forcepos)
+                homepos = self._fill_coord(movepos)
+                axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
+                move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
+                retract_r = min(1.0, retract_dist / move_d)
+                retractpos = [
+                    hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
+                ]
+                self.toolhead.move(retractpos, hi.retract_speed)
                 # Home again
                 startpos = [
                     rp - ad * retract_r for rp, ad in zip(retractpos, axes_d)
@@ -353,27 +352,16 @@ class Homing:
                     raise self.printer.command_error(
                         "Early homing trigger on second home!"
                     )
-                if hi.retract_dist:
-                    # Retract (again)
-                    startpos = self._fill_coord(forcepos)
-                    homepos = self._fill_coord(movepos)
-                    axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
-                    move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
-                    retract_r = min(1.0, hi.retract_dist / move_d)
-                    retractpos = [
-                        hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
-                    ]
-                    self.toolhead.move(retractpos, hi.retract_speed)
-                if hi.post_retract_dist:
-                    startpos = self._fill_coord(forcepos)
-                    homepos = self._fill_coord(movepos)
-                    axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
-                    move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
-                    retract_r = min(1.0, hi.post_retract_dist / move_d)
-                    retractpos = [
-                        hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
-                    ]
-                    self.toolhead.move(retractpos, hi.post_retract_speed)
+        if hi.post_retract_dist:
+            startpos = self._fill_coord(forcepos)
+            homepos = self._fill_coord(movepos)
+            axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
+            move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
+            retract_r = min(1.0, hi.post_retract_dist / move_d)
+            retractpos = [
+                hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
+            ]
+            self.toolhead.move(retractpos, hi.post_retract_speed)
         self._set_current_post_homing(homing_axes)
         # Signal home operation complete
         self.toolhead.flush_step_generation()
