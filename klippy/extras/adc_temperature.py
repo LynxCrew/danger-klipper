@@ -26,8 +26,6 @@ class PrinterADCtoTemperature:
             if " " in config.get_name()
             else config.get_name()
         )
-        logging.info("names")
-        logging.info(self.name)
         ppins = config.get_printer().lookup_object("pins")
         self.mcu_adc = ppins.setup_pin("adc", config.get("sensor_pin"))
         self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
