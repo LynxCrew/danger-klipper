@@ -1363,12 +1363,7 @@ class MCU:
             return
         for cb in self._flush_callbacks:
             cb(print_time, clock)
-        clear_history_clock = max(
-            0, self.print_time_to_clock(clear_history_time)
-        )
-        ret = self._ffi_lib.steppersync_flush(
-            self._steppersync, clock, clear_history_clock
-        )
+        ret = self._ffi_lib.steppersync_flush(self._steppersync, clock)
         if ret:
             raise error(
                 "Internal error in MCU '%s' stepcompress" % (self._name,)
