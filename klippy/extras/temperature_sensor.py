@@ -3,6 +3,7 @@
 # Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
 
 KELVIN_TO_CELSIUS = -273.15
 
@@ -27,6 +28,7 @@ class PrinterSensorGeneric:
         self.measured_max = 0.0
 
     def temperature_callback(self, read_time, temp):
+        logging.info(self.name)
         self.last_temp = temp
         if temp:
             self.measured_min = min(self.measured_min, temp)
