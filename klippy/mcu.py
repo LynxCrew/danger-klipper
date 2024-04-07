@@ -1355,7 +1355,7 @@ class MCU:
     def register_flush_callback(self, callback):
         self._flush_callbacks.append(callback)
 
-    def flush_moves(self, print_time, clear_history_time):
+    def flush_moves(self, print_time):
         if self._steppersync is None:
             return
         clock = self.print_time_to_clock(print_time)
