@@ -861,6 +861,7 @@ class MCU:
             ]
             logging.info(heaters)
             for heater in heaters:
+                logging.info(heater.name)
                 if heater.is_adc_faulty():
                     append_msgs.append(
                         {
