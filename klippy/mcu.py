@@ -1486,10 +1486,11 @@ def error_help(msg, append_msgs=[]):
                         if isinstance(append, dict):
                             line = ", ".join(
                                 [
-                                    f"{str(k)}: {str(v)}\n"
+                                    f"\n{str(k)}: {str(v)}"
                                     for k, v in append.items()
                                 ]
                             )
+                            line += "\n"
                         help_msg = "\n".join([help_msg, str(line)])
                 return help_msg
     return ""
