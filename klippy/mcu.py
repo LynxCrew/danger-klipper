@@ -854,15 +854,11 @@ class MCU:
 
         append_msgs = []
         if msg.startswith("ADC out of range"):
-            logging.info("ADC_ZEANON")
             pheaters = self._printer.lookup_object("heaters")
             heaters = [
                 pheaters.lookup_heater(n) for n in pheaters.available_heaters
             ]
-            logging.info(heaters)
             for heater in heaters:
-                logging.info(heater.name)
-                logging.info(heater.last_temp)
                 if heater.is_adc_faulty():
                     append_msgs.append(
                         {
@@ -872,7 +868,6 @@ class MCU:
                             "max_temp": heater.max_temp,
                         }
                     )
-        logging.info(append_msgs)
         self._printer.invoke_async_shutdown(
             prefix + msg + error_help(msg=msg, append_msgs=append_msgs)
         )
