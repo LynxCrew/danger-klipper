@@ -8,7 +8,6 @@ import math
 import os
 import zlib
 import serialhdl, msgproto, pins, chelper, clocksync
-from extras.danger_options import get_danger_options
 
 
 class error(Exception):
@@ -116,10 +115,6 @@ class CommandWrapper:
     def send(self, data=(), minclock=0, reqclock=0):
         cmd = self._cmd.encode(data)
         self._serial.raw_send(cmd, minclock, reqclock, self._cmd_queue)
-
-    def send_wait_ack(self, data=(), minclock=0, reqclock=0):
-        cmd = self._cmd.encode(data)
-        self._serial.raw_send_wait_ack(cmd, minclock, reqclock, self._cmd_queue)
 
     def get_command_tag(self):
         return self._msgtag
@@ -246,17 +241,16 @@ class MCU_trsync:
                     [self._oid, self.REASON_PAST_END_TIME]
                 )
 
-    def start(
-        self, print_time, report_offset, trigger_completion, expire_timeout
-    ):
+    def start(self, print_time, trigger_completion, expire_timeout):
         self._trigger_completion = trigger_completion
         self._home_end_clock = None
         clock = self._mcu.print_time_to_clock(print_time)
         expire_ticks = self._mcu.seconds_to_clock(expire_timeout)
         expire_clock = clock + expire_ticks
-        report_ticks = self._mcu.seconds_to_clock(expire_timeout * 0.3)
-        report_clock = clock + int(report_ticks * report_offset + 0.5)
-        min_extend_ticks = int(report_ticks * 0.8 + 0.5)
+        report_ticks = self._mcu.seconds_to_clock(expire_timeout * 0.4)
+        min_extend_ticks = self._mcu.seconds_to_clock(
+            expire_timeout * 0.4 * 0.8
+        )
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trdispatch_mcu_setup(
             self._trdispatch_mcu,
@@ -269,8 +263,8 @@ class MCU_trsync:
             self._handle_trsync_state, "trsync_state", self._oid
         )
         self._trsync_start_cmd.send(
-            [self._oid, report_clock, report_ticks, self.REASON_COMMS_TIMEOUT],
-            reqclock=report_clock,
+            [self._oid, clock, report_ticks, self.REASON_COMMS_TIMEOUT],
+            reqclock=clock,
         )
         for s in self._steppers:
             self._stepper_stop_cmd.send([s.get_oid(), self._oid])
@@ -313,6 +307,9 @@ class MCU_endstop:
         ffi_main, ffi_lib = chelper.get_ffi()
         self._trdispatch = ffi_main.gc(ffi_lib.trdispatch_alloc(), ffi_lib.free)
         self._trsyncs = [MCU_trsync(mcu, self._trdispatch)]
+        self.danger_options = self._mcu.get_printer().lookup_object(
+            "danger_options"
+        )
 
     def get_mcu(self):
         return self._mcu
@@ -375,17 +372,11 @@ class MCU_endstop:
         self._rest_ticks = rest_ticks
         reactor = self._mcu.get_printer().get_reactor()
         self._trigger_completion = reactor.completion()
-        expire_timeout = get_danger_options().multi_mcu_trsync_timeout
+        expire_timeout = self.danger_options.multi_mcu_trsync_timeout
         if len(self._trsyncs) == 1:
             expire_timeout = TRSYNC_SINGLE_MCU_TIMEOUT
-        for i, trsync in enumerate(self._trsyncs):
-            report_offset = float(i) / len(self._trsyncs)
-            trsync.start(
-                print_time,
-                report_offset,
-                self._trigger_completion,
-                expire_timeout,
-            )
+        for trsync in self._trsyncs:
+            trsync.start(print_time, self._trigger_completion, expire_timeout)
         etrsync = self._trsyncs[0]
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trdispatch_start(self._trdispatch, etrsync.REASON_HOST_REQUEST)
@@ -440,6 +431,7 @@ class MCU_digital_out:
         self._pin = pin_params["pin"]
         self._invert = pin_params["invert"]
         self._start_value = self._shutdown_value = self._invert
+        self._is_static = False
         self._max_duration = 2.0
         self._last_clock = 0
         self._set_cmd = None
@@ -450,11 +442,20 @@ class MCU_digital_out:
     def setup_max_duration(self, max_duration):
         self._max_duration = max_duration
 
-    def setup_start_value(self, start_value, shutdown_value):
+    def setup_start_value(self, start_value, shutdown_value, is_static=False):
+        if is_static and start_value != shutdown_value:
+            raise pins.error("Static pin can not have shutdown value")
         self._start_value = (not not start_value) ^ self._invert
         self._shutdown_value = (not not shutdown_value) ^ self._invert
+        self._is_static = is_static
 
     def _build_config(self):
+        if self._is_static:
+            self._mcu.add_config_cmd(
+                "set_digital_out pin=%s value=%d"
+                % (self._pin, self._start_value)
+            )
+            return
         if self._max_duration and self._start_value != self._shutdown_value:
             raise pins.error(
                 "Pin with max duration must have start"
@@ -507,9 +508,10 @@ class MCU_pwm:
         self._pin = pin_params["pin"]
         self._invert = pin_params["invert"]
         self._start_value = self._shutdown_value = float(self._invert)
-        self._last_clock = 0
+        self._is_static = False
+        self._last_clock = self._last_cycle_ticks = 0
         self._pwm_max = 0.0
-        self._set_cmd = None
+        self._set_cmd = self._set_cycle_ticks = None
 
     def get_mcu(self):
         return self._mcu
@@ -521,12 +523,15 @@ class MCU_pwm:
         self._cycle_time = cycle_time
         self._hardware_pwm = hardware_pwm
 
-    def setup_start_value(self, start_value, shutdown_value):
+    def setup_start_value(self, start_value, shutdown_value, is_static=False):
+        if is_static and start_value != shutdown_value:
+            raise pins.error("Static pin can not have shutdown value")
         if self._invert:
             start_value = 1.0 - start_value
             shutdown_value = 1.0 - shutdown_value
         self._start_value = max(0.0, min(1.0, start_value))
         self._shutdown_value = max(0.0, min(1.0, shutdown_value))
+        self._is_static = is_static
 
     def _build_config(self):
         if self._max_duration and self._start_value != self._shutdown_value:
@@ -544,6 +549,16 @@ class MCU_pwm:
             raise pins.error("PWM pin max duration too large")
         if self._hardware_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
+            if self._is_static:
+                self._mcu.add_config_cmd(
+                    "set_pwm_out pin=%s cycle_ticks=%d value=%d"
+                    % (
+                        self._pin,
+                        cycle_ticks,
+                        self._start_value * self._pwm_max,
+                    )
+                )
+                return
             self._mcu.request_move_queue_slot()
             self._oid = self._mcu.create_oid()
             self._mcu.add_config_cmd(
@@ -571,6 +586,12 @@ class MCU_pwm:
         # Software PWM
         if self._shutdown_value not in [0.0, 1.0]:
             raise pins.error("shutdown value must be 0.0 or 1.0 on soft pwm")
+        if self._is_static:
+            self._mcu.add_config_cmd(
+                "set_digital_out pin=%s value=%d"
+                % (self._pin, self._start_value >= 0.5)
+            )
+            return
         if cycle_ticks >= 1 << 31:
             raise pins.error("PWM pin cycle time too large")
         self._mcu.request_move_queue_slot()
@@ -590,7 +611,7 @@ class MCU_pwm:
             "set_digital_out_pwm_cycle oid=%d cycle_ticks=%d"
             % (self._oid, cycle_ticks)
         )
-        self._pwm_max = float(cycle_ticks)
+        self._last_cycle_ticks = cycle_ticks
         svalue = int(self._start_value * cycle_ticks + 0.5)
         self._mcu.add_config_cmd(
             "queue_digital_out oid=%d clock=%d on_ticks=%d"
@@ -600,16 +621,39 @@ class MCU_pwm:
         self._set_cmd = self._mcu.lookup_command(
             "queue_digital_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue
         )
+        self._set_cycle_ticks = self._mcu.lookup_command(
+            "set_digital_out_pwm_cycle oid=%c cycle_ticks=%u", cq=cmd_queue
+        )
 
-    def set_pwm(self, print_time, value):
+    def set_pwm(self, print_time, value, cycle_time=None):
+        clock = self._mcu.print_time_to_clock(print_time)
+        minclock = self._last_clock
+        self._last_clock = clock
         if self._invert:
             value = 1.0 - value
-        v = int(max(0.0, min(1.0, value)) * self._pwm_max + 0.5)
-        clock = self._mcu.print_time_to_clock(print_time)
+        if self._hardware_pwm:
+            v = int(max(0.0, min(1.0, value)) * self._pwm_max + 0.5)
+            self._set_cmd.send(
+                [self._oid, clock, v], minclock=minclock, reqclock=clock
+            )
+            return
+        # Soft pwm update
+        if cycle_time is None:
+            cycle_time = self._cycle_time
+        cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
+        if cycle_ticks != self._last_cycle_ticks:
+            if cycle_ticks >= 1 << 31:
+                raise self._mcu.get_printer().command_error(
+                    "PWM cycle time too large"
+                )
+            self._set_cycle_ticks.send(
+                [self._oid, cycle_ticks], minclock=minclock, reqclock=clock
+            )
+            self._last_cycle_ticks = cycle_ticks
+        on_ticks = int(max(0.0, min(1.0, value)) * float(cycle_ticks) + 0.5)
         self._set_cmd.send(
-            [self._oid, clock, v], minclock=self._last_clock, reqclock=clock
+            [self._oid, clock, on_ticks], minclock=minclock, reqclock=clock
         )
-        self._last_clock = clock
 
 
 class MCU_adc:
@@ -772,10 +816,7 @@ class MCU:
         self._mcu_tick_awake = 0.0
 
         # noncritical mcus
-        self.is_non_critical = False
-        non_critical_mcus = printer.lookup_object("non_critical_mcus", None)
-        if non_critical_mcus is not None and non_critical_mcus.enabled:
-            self.is_non_critical = config.getboolean("is_non_critical", False)
+        self.is_non_critical = config.getboolean("is_non_critical", False)
         if self.is_non_critical and self.get_name() == "mcu":
             raise error("Primary MCU cannot be marked as non-critical!")
         if self.is_non_critical:
@@ -791,18 +832,9 @@ class MCU:
         self._non_critical_disconnect_event_name = (
             f"danger:non_critical_mcu_{self.get_name()}:disconnected"
         )
-
-        self.reconnect_interval = config.getfloat(
-            "reconnect_interval", None
+        self.reconnect_interval = (
+            config.getfloat("reconnect_interval", 2.0) + 0.12
         )  # add small change to not collide with other events
-        if self.reconnect_interval is not None and not self.is_non_critical:
-            raise config.error(
-                "mcu must be non_critical in order to specify a reconnect timer"
-            )
-        if self.reconnect_interval is None:
-            self.reconnect_interval = 2.0
-        self.reconnect_interval += 0.12
-
         self._cached_init_state = False
         self._oid_count_post_inits = 0
         self._config_cmds_post_inits = []
@@ -818,7 +850,6 @@ class MCU:
         printer.register_event_handler("klippy:connect", self._connect)
         printer.register_event_handler("klippy:shutdown", self._shutdown)
         printer.register_event_handler("klippy:disconnect", self._disconnect)
-        printer.register_event_handler("klippy:ready", self._ready)
 
     # Serial callbacks
     def _handle_mcu_stats(self, params):
@@ -839,7 +870,7 @@ class MCU:
         if clock is not None:
             self._shutdown_clock = self.clock32_to_clock64(clock)
         self._shutdown_msg = msg = params["static_string_id"]
-        if get_danger_options().log_shutdown_info:
+        if self.danger_options.log_shutdown_info:
             logging.info(
                 "MCU '%s' %s: %s\n%s\n%s",
                 self._name,
@@ -851,27 +882,7 @@ class MCU:
         prefix = "MCU '%s' shutdown: " % (self._name,)
         if params["#name"] == "is_shutdown":
             prefix = "Previous MCU '%s' shutdown: " % (self._name,)
-
-        append_msgs = []
-        if (msg.startswith("ADC out of range")
-                or msg.startswith("Thermocouple reader fault")):
-            pheaters = self._printer.lookup_object("heaters")
-            heaters = [
-                pheaters.lookup_heater(n) for n in pheaters.available_heaters
-            ]
-            for heater in heaters:
-                if heater.is_adc_faulty():
-                    append_msgs.append(
-                        {
-                            "heater": heater.name,
-                            "last_temp": "{:.2f}".format(heater.last_temp),
-                            "min_temp": heater.min_temp,
-                            "max_temp": heater.max_temp,
-                        }
-                    )
-        self._printer.invoke_async_shutdown(
-            prefix + msg + error_help(msg=msg, append_msgs=append_msgs)
-        )
+        self._printer.invoke_async_shutdown(prefix + msg + error_help(msg))
 
     def _handle_starting(self, params):
         if not self._is_shutdown and not self.is_non_critical:
@@ -960,7 +971,6 @@ class MCU:
         for cmdlist in (local_config_cmds, self._restart_cmds, self._init_cmds):
             for i, cmd in enumerate(cmdlist):
                 cmdlist[i] = pin_resolver.update_command(cmd)
-                logging.info("command: %s", cmdlist[i])
         # Calculate config CRC
         encoded_config = "\n".join(local_config_cmds).encode()
         config_crc = zlib.crc32(encoded_config) & 0xFFFFFFFF
@@ -1096,6 +1106,7 @@ class MCU:
         self._printer.set_rollover_info(self._name, log_info, log=False)
 
     def _check_serial_exists(self):
+
         if self._canbus_iface is not None:
             cbid = self._printer.lookup_object("canbus_ids")
             nodeid = cbid.get_nodeid(self._serialport)
@@ -1136,8 +1147,7 @@ class MCU:
                 self._clocksync.connect(self._serial)
             except serialhdl.error as e:
                 raise error(str(e))
-        if get_danger_options().log_startup_info:
-            logging.info(self._log_info())
+        logging.info(self._log_info())
         ppins = self._printer.lookup_object("pins")
         pin_resolver = ppins.get_pin_resolver(self._name)
         for cname, value in self.get_constants().items():
@@ -1167,25 +1177,6 @@ class MCU:
         self.register_response(self._handle_shutdown, "is_shutdown")
         self.register_response(self._handle_mcu_stats, "stats")
         return True
-
-    def _ready(self):
-        if self.is_fileoutput():
-            return
-        # Check that reported mcu frequency is in range
-        mcu_freq = self._mcu_freq
-        systime = self._reactor.monotonic()
-        get_clock = self._clocksync.get_clock
-        calc_freq = get_clock(systime + 1) - get_clock(systime)
-        mcu_freq_mhz = int(mcu_freq / 1000000.0 + 0.5)
-        calc_freq_mhz = int(calc_freq / 1000000.0 + 0.5)
-        if mcu_freq_mhz != calc_freq_mhz:
-            pconfig = self._printer.lookup_object("configfile")
-            msg = "MCU '%s' configured for %dMhz but running at %dMhz!" % (
-                self._name,
-                mcu_freq_mhz,
-                calc_freq_mhz,
-            )
-            pconfig.runtime_warning(msg)
 
     # Config creation helpers
     def setup_pin(self, pin_type, pin_params):
@@ -1365,7 +1356,7 @@ class MCU:
     def register_flush_callback(self, callback):
         self._flush_callbacks.append(callback)
 
-    def flush_moves(self, print_time, clear_history_time):
+    def flush_moves(self, print_time):
         if self._steppersync is None:
             return
         clock = self.print_time_to_clock(print_time)
@@ -1373,12 +1364,7 @@ class MCU:
             return
         for cb in self._flush_callbacks:
             cb(print_time, clock)
-        clear_history_clock = max(
-            0, self.print_time_to_clock(clear_history_time)
-        )
-        ret = self._ffi_lib.steppersync_flush(
-            self._steppersync, clock, clear_history_clock
-        )
+        ret = self._ffi_lib.steppersync_flush(self._steppersync, clock)
         if ret:
             raise error(
                 "Internal error in MCU '%s' stepcompress" % (self._name,)
@@ -1452,7 +1438,7 @@ similar system problems on the host computer.""",
 This is generally indicative of an intermittent
 communication failure between micro-controller and host.""",
     (
-        "ADC out of range", "Thermocouple reader fault",
+        "ADC out of range",
     ): """
 This generally occurs when a heater temperature exceeds
 its configured min_temp or max_temp.""",
@@ -1471,22 +1457,10 @@ or in response to an internal error in the host software.""",
 }
 
 
-def error_help(msg, append_msgs=[]):
+def error_help(msg):
     for prefixes, help_msg in Common_MCU_errors.items():
         for prefix in prefixes:
             if msg.startswith(prefix):
-                if append_msgs:
-                    for append in append_msgs:
-                        line = append
-                        if isinstance(append, dict):
-                            line = ", ".join(
-                                [
-                                    f"\n{str(k)}: {str(v)}"
-                                    for k, v in append.items()
-                                ]
-                            )
-                            line += "\n"
-                        help_msg = "\n".join([help_msg, str(line)])
                 return help_msg
     return ""
 
