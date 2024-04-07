@@ -48,6 +48,8 @@ class PrinterADCtoTemperature:
         else:
             danger_check_count = RANGE_CHECK_COUNT
 
+        logging.info("CHECK_COUNT")
+        logging.info(danger_check_count)
         adc_range = [self.adc_convert.calc_adc(t) for t in [min_temp, max_temp]]
 
         self.mcu_adc.setup_minmax(
