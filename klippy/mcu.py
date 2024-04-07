@@ -1457,12 +1457,7 @@ similar system problems on the host computer.""",
 This is generally indicative of an intermittent
 communication failure between micro-controller and host.""",
     (
-        "ADC out of range",
-    ): """
-This generally occurs when a heater temperature exceeds
-its configured min_temp or max_temp.""",
-    (
-        "Thermocouple reader fault",
+        "ADC out of range", "Thermocouple reader fault",
     ): """
 This generally occurs when a heater temperature exceeds
 its configured min_temp or max_temp.""",
@@ -1491,7 +1486,7 @@ def error_help(msg, append_msgs=[]):
                         if isinstance(append, dict):
                             line = ", ".join(
                                 [
-                                    f"{str(k)}: {str(v)}"
+                                    f"{str(k)}: {str(v)}\n"
                                     for k, v in append.items()
                                 ]
                             )
