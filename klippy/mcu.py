@@ -1462,6 +1462,11 @@ communication failure between micro-controller and host.""",
 This generally occurs when a heater temperature exceeds
 its configured min_temp or max_temp.""",
     (
+        "Thermocouple reader fault",
+    ): """
+This generally occurs when a heater temperature exceeds
+its configured min_temp or max_temp.""",
+    (
         "Rescheduled timer in the past",
         "Stepper too far in past",
     ): """
