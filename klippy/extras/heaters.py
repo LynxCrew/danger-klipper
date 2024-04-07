@@ -66,7 +66,7 @@ class Heater:
         self.max_power = config.getfloat(
             "max_power", 1.0, above=0.0, maxval=1.0
         )
-        self.config_smooth_time = config.getfloat('smooth_time', 1., above=0.)
+        self.config_smooth_time = config.getfloat("smooth_time", 1.0, above=0.0)
         self.smooth_time = self.config_smooth_time
         self.inv_smooth_time = 1.0 / self.smooth_time
         self.is_shutdown = False
