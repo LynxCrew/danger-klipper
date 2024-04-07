@@ -22,7 +22,11 @@ class PrinterADCtoTemperature:
     def __init__(self, config, adc_convert):
         self.adc_convert = adc_convert
         logging.info(config.get_name())
-        self.name = ""
+        self.name = (
+            config.get_name().split()[1]
+            if " " in config.get_name()
+            else config.get_name()
+        )
         ppins = config.get_printer().lookup_object("pins")
         self.mcu_adc = ppins.setup_pin("adc", config.get("sensor_pin"))
         self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
