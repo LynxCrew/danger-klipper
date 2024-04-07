@@ -853,8 +853,9 @@ class MCU:
             prefix = "Previous MCU '%s' shutdown: " % (self._name,)
 
         append_msgs = []
-        if (msg.startswith("ADC out of range")
-                or msg.startswith("Thermocouple reader fault")):
+        if msg.startswith("ADC out of range") or msg.startswith(
+            "Thermocouple reader fault"
+        ):
             pheaters = self._printer.lookup_object("heaters")
             heaters = [
                 pheaters.lookup_heater(n) for n in pheaters.available_heaters
@@ -1452,7 +1453,8 @@ similar system problems on the host computer.""",
 This is generally indicative of an intermittent
 communication failure between micro-controller and host.""",
     (
-        "ADC out of range", "Thermocouple reader fault",
+        "ADC out of range",
+        "Thermocouple reader fault",
     ): """
 This generally occurs when a heater temperature exceeds
 its configured min_temp or max_temp.""",
