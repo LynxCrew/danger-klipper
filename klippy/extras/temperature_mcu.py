@@ -51,7 +51,6 @@ class PrinterTemperatureMCU:
         self.mcu_adc.get_mcu().register_config_callback(self._build_config)
 
     def _build_config(self):
-        logging.info("Building")
         self.debug_read_cmd = self.mcu_adc.get_mcu().lookup_query_command(
             "debug_read order=%c addr=%u", "debug_result val=%u"
         )
