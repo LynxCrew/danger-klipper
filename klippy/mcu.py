@@ -859,6 +859,7 @@ class MCU:
             heaters = [
                 pheaters.lookup_heater(n) for n in pheaters.available_heaters
             ]
+            logging.info(heaters)
             for heater in heaters:
                 if heater.is_adc_faulty():
                     append_msgs.append(
