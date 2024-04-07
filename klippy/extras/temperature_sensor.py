@@ -38,11 +38,6 @@ class PrinterSensorGeneric:
     def stats(self, eventtime):
         return False, "%s: temp=%.1f" % (self.name, self.last_temp)
 
-    def is_adc_faulty(self):
-        if self.last_temp > self.max_temp or self.last_temp < self.min_temp:
-            return True
-        return False
-
     def get_status(self, eventtime):
         return {
             "temperature": round(self.last_temp, 2),

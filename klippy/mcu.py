@@ -859,7 +859,6 @@ class MCU:
             heaters = [
                 pheaters.lookup_heater(n) for n in pheaters.available_heaters
             ]
-            temp_sensors = [sensor for sensor in self._printer.objects.keys if sensor.startswith("temperature_sensor")]
             for heater in heaters:
                 logging.info("FAULTY_IT_IS")
                 logging.info(heater.is_adc_faulty())
@@ -870,17 +869,6 @@ class MCU:
                             "last_temp": "{:.2f}".format(heater.last_temp),
                             "min_temp": heater.min_temp,
                             "max_temp": heater.max_temp,
-                        }
-                    )
-            for sensor in temp_sensors:
-                temp_sensor = self._printer.lookup_object(sensor)
-                if temp_sensor.is_adc_faulty():
-                    append_msgs.append(
-                        {
-                            "sensor": sensor.name,
-                            "last_temp": "{:.2f}".format(sensor.last_temp),
-                            "min_temp": sensor.min_temp,
-                            "max_temp": sensor.max_temp,
                         }
                     )
         logging.info("APPEND_ZEANON")
