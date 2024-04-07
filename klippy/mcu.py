@@ -872,7 +872,7 @@ class MCU:
                             "max_temp": heater.max_temp,
                         }
                     )
-
+        logging.info(append_msgs)
         self._printer.invoke_async_shutdown(
             prefix + msg + error_help(msg=msg, append_msgs=append_msgs)
         )
