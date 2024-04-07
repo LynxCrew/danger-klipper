@@ -46,7 +46,7 @@ class PrinterADCtoTemperature:
         if self.name in get_danger_options().adc_ignore_limits:
             danger_check_count = 0
         else:
-            danger_check_count = 0
+            danger_check_count = RANGE_CHECK_COUNT
 
         logging.info("CHECK_COUNT")
         logging.info(self.name)
