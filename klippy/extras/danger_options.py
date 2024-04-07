@@ -45,7 +45,7 @@ class DangerOptions:
             self.disable_serial_reader_warnings = True
             self.disable_webhook_logging = True
 
-        self.adc_ignore_limits = config.getboolean("adc_ignore_limits", False)
+        self.adc_ignore_limits = config.getlist("adc_ignore_limits", [])
         self.autosave_includes = config.getboolean("autosave_includes", False)
 
         self.bgflush_extra_time = config.getfloat(

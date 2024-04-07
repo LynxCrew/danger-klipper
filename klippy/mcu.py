@@ -855,7 +855,6 @@ class MCU:
         append_msgs = []
         if (
             msg.startswith("ADC out of range")
-            and not get_danger_options.adc_ignore_limits
         ):
             pheaters = self._printer.lookup_object("heaters")
             heaters = [
