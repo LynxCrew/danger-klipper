@@ -873,8 +873,7 @@ class MCU:
                     )
         logging.info("APPEND_ZEANON")
         logging.info(append_msgs)
-        logging.info(msg)
-        logging.info(params["#name"])
+        logging.info(error_help(msg=msg, append_msgs=append_msgs))
         self._printer.invoke_async_shutdown(
             prefix + msg + error_help(msg=msg, append_msgs=append_msgs)
         )
