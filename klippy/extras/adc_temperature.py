@@ -21,7 +21,6 @@ RANGE_CHECK_COUNT = 4
 class PrinterADCtoTemperature:
     def __init__(self, config, adc_convert):
         self.adc_convert = adc_convert
-        logging.info(config.get_name())
         self.name = (
             config.get_name().split()[1]
             if " " in config.get_name()
