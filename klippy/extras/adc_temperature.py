@@ -45,6 +45,7 @@ class PrinterADCtoTemperature:
     def setup_minmax(self, min_temp, max_temp):
         logging.info("ADC_NAME:")
         logging.info(self.name)
+        logging.info(get_danger_options().adc_ignore_limits)
         if self.name in get_danger_options().adc_ignore_limits:
             danger_check_count = 0
         else:
