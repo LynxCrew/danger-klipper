@@ -364,7 +364,6 @@ class PrinterConfig:
         dirname = os.path.dirname(source_filename)
         include_spec = include_spec.strip()
         include_glob = os.path.join(dirname, include_spec)
-        include_filenames = None
         if sys.version_info >= (3, 5):
             include_filenames = glob.glob(include_glob, recursive=True)
         else:
