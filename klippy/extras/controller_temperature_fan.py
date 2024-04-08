@@ -43,6 +43,9 @@ class ControllerTemperatureFan:
     def get_status(self, eventtime):
         return self.temperature_fan.get_status(eventtime)
 
+    def is_adc_faulty(self):
+        return self.temperature_fan.is_adc_faulty()
+
 
 def load_config_prefix(config):
     return ControllerTemperatureFan(config)
