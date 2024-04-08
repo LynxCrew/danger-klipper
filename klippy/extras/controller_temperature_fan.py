@@ -22,6 +22,9 @@ class ControllerTemperatureFan:
             config, self.fan, self
         )
         self.controller_fan = controller_fan.ControllerFan(config, self.fan)
+        self.last_temp = self.temperature_fan.last_temp
+        self.min_temp = self.temperature_fan.min_temp
+        self.max_temp = self.temperature_fan.max_temp
 
     def set_speed(self, read_time, value):
         self.temperature_fan.set_speed(
@@ -30,6 +33,7 @@ class ControllerTemperatureFan:
 
     def temperature_callback(self, read_time, temp):
         self.temperature_fan.temperature_callback(read_time, temp)
+        self.last_temp = self.temperature_fan.last_temp
 
     def get_temp(self, eventtime):
         return self.temperature_fan.get_temp(eventtime)
