@@ -385,6 +385,8 @@ class GCodeDispatch:
         if cmd == "M21":
             # Don't warn about sd card init when not ready
             return
+        if cmd == "G28":
+            returnf
         if not self.is_printer_ready:
             raise gcmd.error(self.printer.get_state_message()[0])
             return
