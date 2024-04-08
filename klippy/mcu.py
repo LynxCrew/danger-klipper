@@ -876,7 +876,6 @@ class MCU:
                 if (
                     sensor.startswith("temperature_sensor")
                     or sensor.startswith("temperature_fan")
-                    or sensor.startswith("controller_temperature_fan")
                 )
             ]
             for sensor_name in sensor_names:
