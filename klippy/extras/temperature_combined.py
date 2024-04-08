@@ -29,7 +29,6 @@ class PrinterSensorCombined:
         # add object
         self.printer.add_object("temperature_combined " + self.name, self)
         # time-controlled sensor update
-        self.initialized = False
         self.temperature_update_timer = self.reactor.register_timer(
             self._temperature_update_event
         )
@@ -69,19 +68,12 @@ class PrinterSensorCombined:
         return REPORT_TIME
 
     def update_temp(self, eventtime):
-        if not self.initialized:
-            initialized = True
-            for sensor in self.sensors:
-                if not sensor.initialized:
-                    initialized = False
-            self.initialized = initialized
-        if not self.initialized:
-            return
         values = []
         for sensor in self.sensors:
-            sensor_status = sensor.get_status(eventtime)
-            sensor_temperature = sensor_status["temperature"]
-            values.append(sensor_temperature)
+            if sensor.initialized:
+                sensor_status = sensor.get_status(eventtime)
+                sensor_temperature = sensor_status["temperature"]
+                values.append(sensor_temperature)
 
         # check if values are out of max_deviation range
         if (max(values) - min(values)) > self.max_deviation:
@@ -111,8 +103,6 @@ class PrinterSensorCombined:
         # update sensor value
         self.update_temp(eventtime)
 
-        if not self.initialized:
-            return
         # check min / max temp values
         if self.last_temp < self.min_temp:
             self.printer.invoke_shutdown(
