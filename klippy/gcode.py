@@ -281,8 +281,6 @@ class GCodeDispatch:
             # Break line into parts and determine command
             parts = self.args_r.split(line.upper())
             numparts = len(parts)
-            logging.info("ZEANON_COMMAND")
-            logging.info(parts)
             cmd = ""
             if numparts >= 3 and parts[1] != "N":
                 while " " in parts[2]:
@@ -295,6 +293,7 @@ class GCodeDispatch:
                     parts.insert(5, parts[4].split(" ")[-1])
                     parts[4] = " ".join(parts[4].split(" ")[:-1])
                 cmd = parts[3] + parts[4].strip()
+            numparts = len(parts)
             # Build gcode "params" dictionary
             params = {
                 parts[i].strip(): parts[i + 1].strip() for i in range(1, numparts, 2)
