@@ -87,20 +87,21 @@ class PrinterSensorCombined:
                 sensor_temperature = sensor_status["temperature"]
                 values.append(sensor_temperature)
 
-        # check if values are out of max_deviation range
-        if values and (max(values) - min(values)) > self.max_deviation:
-            self.printer.invoke_shutdown(
-                "COMBINED SENSOR maximum deviation exceeded limit of %0.1f, "
-                "max sensor value %0.1f, min sensor value %0.1f."
-                % (
-                    self.max_deviation,
-                    max(values),
-                    min(values),
+        if values:
+            # check if values are out of max_deviation range
+            if (max(values) - min(values)) > self.max_deviation:
+                self.printer.invoke_shutdown(
+                    "COMBINED SENSOR maximum deviation exceeded limit of %0.1f, "
+                    "max sensor value %0.1f, min sensor value %0.1f."
+                    % (
+                        self.max_deviation,
+                        max(values),
+                        min(values),
+                    )
                 )
-            )
 
-        temp = self.apply_mode(values)
-        self.last_temp = temp
+            temp = self.apply_mode(values)
+            self.last_temp = temp
 
     def get_temp(self, eventtime):
         return self.last_temp, 0.0
