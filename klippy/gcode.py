@@ -285,10 +285,16 @@ class GCodeDispatch:
             logging.info(parts)
             cmd = ""
             if numparts >= 3 and parts[1] != "N":
-                cmd = parts[1] + parts[2].strip()
+                if " " in parts[2]:
+                    cmd = parts[1] + parts[2].split(" ")[0].strip()
+                else:
+                    cmd = parts[1] + parts[2].strip()
             elif numparts >= 5 and parts[1] == "N":
                 # Skip line number at start of command
-                cmd = parts[3] + parts[4].strip()
+                if " " in parts[4]:
+                    cmd = parts[3] + parts[4].split(" ")[0].strip()
+                else:
+                    cmd = parts[3] + parts[4].strip()
             # Build gcode "params" dictionary
             params = {
                 parts[i]: parts[i + 1].strip() for i in range(1, numparts, 2)
