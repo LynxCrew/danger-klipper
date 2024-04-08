@@ -41,7 +41,7 @@ class PrinterSensorCombined:
 
     def _handle_connect(self):
         sensors = [sensor for sensor in self.printer.objects if
-                   sensor.name.startswith("temperature_sensor")]
+                   sensor.startswith("temperature_sensor")]
         logging.info("ZEANON_SENSORS")
         logging.info(sensors)
         for sensor_name in self.sensor_names:
