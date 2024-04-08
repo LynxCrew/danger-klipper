@@ -44,8 +44,8 @@ class PrinterTemperatureDriver:
         if self.temp is not None:
             if self.temp < self.min_temp or self.temp > self.max_temp:
                 self.printer.invoke_shutdown(
-                    "DRIVER temperature %0.1f outside range of %0.1f:%.01f"
-                    % (self.temp, self.min_temp, self.max_temp)
+                    "DRIVER [%s] temperature %0.1f outside range of %0.1f:%.01f"
+                    % (self.name, self.temp, self.min_temp, self.max_temp)
                 )
 
         measured_time = self.reactor.monotonic()
