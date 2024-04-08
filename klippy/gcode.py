@@ -418,7 +418,7 @@ class GCodeDispatch:
         ):
             # Don't warn about requests to turn off fan when fan not present
             return
-        gcmd.respond_info('Unknown command1:"%s"' % (cmd,))
+        gcmd.respond_info('Unknown command:"%s"' % (cmd,))
 
     def _cmd_mux(self, command, gcmd):
         key, values = self.mux_commands[command]
