@@ -294,6 +294,9 @@ class GCodeDispatch:
                     parts[4] = " ".join(parts[4].split(" ")[:-1])
                 cmd = parts[3] + parts[4].strip()
             numparts = len(parts)
+            if numparts % 2 != 1:
+                parts.append("")
+                numparts += 1
             # Build gcode "params" dictionary
             logging.info("PARTS_ZEANON")
             logging.info(parts)
