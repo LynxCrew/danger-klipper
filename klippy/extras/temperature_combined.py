@@ -40,10 +40,6 @@ class PrinterSensorCombined:
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def _handle_connect(self):
-        sensors = [sensor for sensor in self.printer.objects if
-                   sensor.startswith("temperature_sensor")]
-        logging.info("ZEANON_SENSORS")
-        logging.info(sensors)
         for sensor_name in self.sensor_names:
             sensor = self.printer.lookup_object(sensor_name)
             # check if sensor has get_status function and
