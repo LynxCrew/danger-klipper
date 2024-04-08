@@ -269,7 +269,7 @@ class GCodeDispatch:
         self._respond_state("Ready")
 
     # Parse input into commands
-    args_r = re.compile("([A-Z_]+|[A-Z*/ ])")
+    args_r = re.compile("([A-Z_]+|[A-Z*/])")
 
     def _process_commands(self, commands, need_ack=True):
         for line in commands:
