@@ -298,8 +298,6 @@ class GCodeDispatch:
                 parts.append("")
                 numparts += 1
             # Build gcode "params" dictionary
-            logging.info("PARTS_ZEANON")
-            logging.info(parts)
             params = {
                 parts[i]: parts[i + 1].strip() for i in range(1, numparts, 2)
             }
@@ -396,8 +394,6 @@ class GCodeDispatch:
             return
         if cmd == "M21":
             # Don't warn about sd card init when not ready
-            return
-        if cmd == "G28":
             return
         if not self.is_printer_ready:
             raise gcmd.error(self.printer.get_state_message()[0])
