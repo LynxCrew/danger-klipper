@@ -629,8 +629,9 @@ class ShaperCalibrate:
             )
         )
 
-    def save_calibration_data(self, output, calibration_data, shapers=None,
-                              max_freq=None):
+    def save_calibration_data(
+        self, output, calibration_data, shapers=None, max_freq=None
+    ):
         try:
             max_freq = max_freq or MAX_FREQ
             with open(output, "w") as csvfile:
