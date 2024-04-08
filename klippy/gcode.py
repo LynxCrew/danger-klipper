@@ -281,6 +281,8 @@ class GCodeDispatch:
             # Break line into parts and determine command
             parts = self.args_r.split(line.upper())
             numparts = len(parts)
+            logging.info("ZEANON_COMMAND")
+            logging.info(parts)
             cmd = ""
             if numparts >= 3 and parts[1] != "N":
                 cmd = parts[1] + parts[2].strip()
