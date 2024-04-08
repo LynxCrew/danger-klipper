@@ -269,7 +269,7 @@ class GCodeDispatch:
         self._respond_state("Ready")
 
     # Parse input into commands
-    args_r = re.compile("([A-Z_]+|[A-Z*/])")
+    args_r = re.compile("([A-Z_]+|[A-Z*/ ])")
 
     def _process_commands(self, commands, need_ack=True):
         for line in commands:
@@ -285,19 +285,19 @@ class GCodeDispatch:
             logging.info(parts)
             cmd = ""
             if numparts >= 3 and parts[1] != "N":
-                if " " in parts[2]:
-                    cmd = parts[1] + parts[2].split(" ")[0].strip()
-                else:
-                    cmd = parts[1] + parts[2].strip()
+                while " " in parts[2]:
+                    parts.insert(3, parts[2].split(" ")[-1])
+                    parts[2] = " ".join(parts[2].split(" ")[:-1])
+                cmd = parts[1] + parts[2].strip()
             elif numparts >= 5 and parts[1] == "N":
                 # Skip line number at start of command
-                if " " in parts[4]:
-                    cmd = parts[3] + parts[4].split(" ")[0].strip()
-                else:
-                    cmd = parts[3] + parts[4].strip()
+                while " " in parts[4]:
+                    parts.insert(5, parts[4].split(" ")[-1])
+                    parts[4] = " ".join(parts[4].split(" ")[:-1])
+                cmd = parts[3] + parts[4].strip()
             # Build gcode "params" dictionary
             params = {
-                parts[i]: parts[i + 1].strip() for i in range(1, numparts, 2)
+                parts[i].strip(): parts[i + 1].strip() for i in range(1, numparts, 2)
             }
             gcmd = GCodeCommand(self, cmd, origline, params, need_ack)
             # Invoke handler for command
