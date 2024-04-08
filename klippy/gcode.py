@@ -295,6 +295,8 @@ class GCodeDispatch:
                 cmd = parts[3] + parts[4].strip()
             numparts = len(parts)
             # Build gcode "params" dictionary
+            logging.info("PARTS_ZEANON")
+            logging.info(parts)
             params = {
                 parts[i]: parts[i + 1].strip() for i in range(1, numparts, 2)
             }
