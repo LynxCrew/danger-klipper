@@ -374,7 +374,7 @@ class MessageParser:
         msgname = parts[0]
         mp = self.messages_by_name.get(msgname)
         if mp is None:
-            self._error("Unknown command: %s", msgname)
+            self._error("Unknown command2: %s", msgname)
         if msgformat != mp.msgformat:
             self._error(
                 "Command format mismatch: %s vs %s", msgformat, mp.msgformat
@@ -384,7 +384,7 @@ class MessageParser:
     def lookup_msgtag(self, msgformat):
         msgtag = self.msgtag_by_format.get(msgformat)
         if msgtag is None:
-            self._error("Unknown command: %s", msgformat)
+            self._error("Unknown command3: %s", msgformat)
         return msgtag
 
     def create_command(self, msg):
@@ -394,7 +394,7 @@ class MessageParser:
         msgname = parts[0]
         mp = self.messages_by_name.get(msgname)
         if mp is None:
-            self._error("Unknown command: %s", msgname)
+            self._error("Unknown command4: %s", msgname)
         try:
             argparts = dict(arg.split("=", 1) for arg in parts[1:])
             for name, value in argparts.items():
