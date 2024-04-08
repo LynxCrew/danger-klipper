@@ -872,7 +872,7 @@ class MCU:
                     )
             sensor_names = [
                 sensor
-                for sensor in self.printer.objects
+                for sensor in self._printer.objects
                 if sensor.startswith("temperature_sensor")
             ]
             for sensor_name in sensor_names:
