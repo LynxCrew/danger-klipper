@@ -4,6 +4,7 @@
 # Copyright (C) 2023  Michael Jäger <michael@mjaeger.eu>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
 
 REPORT_TIME = 0.300
 
@@ -39,6 +40,10 @@ class PrinterSensorCombined:
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def _handle_connect(self):
+        sensors = [sensor for sensor in self.printer.objects if
+                   sensor.name.startswith("temperature_sensor")]
+        logging.info("ZEANON_SENSORS")
+        logging.info(sensors)
         for sensor_name in self.sensor_names:
             sensor = self.printer.lookup_object(sensor_name)
             # check if sensor has get_status function and
