@@ -283,20 +283,20 @@ class GCodeDispatch:
             numparts = len(parts)
             cmd = ""
             if numparts >= 3 and parts[1] != "N":
-                while " " in parts[2]:
+                while " " in parts[2].strip():
                     parts.insert(3, parts[2].split(" ")[-1])
                     parts[2] = " ".join(parts[2].split(" ")[:-1])
                 cmd = parts[1] + parts[2].strip()
             elif numparts >= 5 and parts[1] == "N":
                 # Skip line number at start of command
-                while " " in parts[4]:
+                while " " in parts[4].strip():
                     parts.insert(5, parts[4].split(" ")[-1])
                     parts[4] = " ".join(parts[4].split(" ")[:-1])
                 cmd = parts[3] + parts[4].strip()
             numparts = len(parts)
             # Build gcode "params" dictionary
             params = {
-                parts[i].strip(): parts[i + 1].strip() for i in range(1, numparts, 2)
+                parts[i]: parts[i + 1].strip() for i in range(1, numparts, 2)
             }
             gcmd = GCodeCommand(self, cmd, origline, params, need_ack)
             # Invoke handler for command
