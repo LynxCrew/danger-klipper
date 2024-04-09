@@ -577,7 +577,7 @@ class PrinterConfig:
 
     cmd_SAVE_CONFIG_help = "Overwrite config file and restart"
 
-    def _write_backup(self, cfgpath, cfgdata, gcode, gcmd):
+    def _write_backup(self, cfgpath, cfgdata, gcode, write_backups):
         printercfg = self.printer.get_start_args()["config_file"]
         configdir = os.path.dirname(printercfg)
         # Define a directory for configuration backups so that include blocks
@@ -599,7 +599,7 @@ class PrinterConfig:
             "SAVE_CONFIG to '%s' (backup in '%s')", cfgpath, backup_path
         )
         try:
-            if gcmd.get_int("BACKUP", 1, minval=0, maxval=1):
+            if write_backups:
                 # Read the current config into the backup before making changes to
                 # the original file
                 currentconfig = open(cfgpath, "r")
@@ -616,7 +616,7 @@ class PrinterConfig:
             logging.exception(msg)
             raise gcode.error(msg)
 
-    def _save_includes(self, cfgpath, data, visitedpaths, gcode, gcmd):
+    def _save_includes(self, cfgpath, data, visitedpaths, gcode, write_backups):
         # Prevent an infinite loop in the event of configs circularly
         # referencing each other
         if cfgpath in visitedpaths:
@@ -659,7 +659,7 @@ class PrinterConfig:
                         include_predata,
                         visitedpaths,
                         gcode,
-                        gcmd,
+                        write_backups,
                     )
 
                     include_postdata = self._strip_duplicates(
@@ -668,7 +668,7 @@ class PrinterConfig:
                     # Only write and backup data that's been changed
                     if include_predata != include_postdata:
                         self._write_backup(
-                            include_filename, include_postdata, gcode, gcmd
+                            include_filename, include_postdata, gcode, write_backups
                         )
 
     def cmd_SAVE_CONFIG(self, gcmd):
@@ -693,8 +693,9 @@ class PrinterConfig:
             raise gcode.error(msg)
         regular_data = self._strip_duplicates(regular_data, self.autosave)
 
+        write_backups = gcmd.get_int("BACKUP", 1, minval=0, maxval=1)
         if get_danger_options().autosave_includes:
-            self._save_includes(cfgname, data, set(), gcode, gcmd)
+            self._save_includes(cfgname, data, set(), gcode, write_backups)
 
         # NOW we're safe to check for conflicts
         self._disallow_include_conflicts(regular_data, cfgname, gcode)
