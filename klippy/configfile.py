@@ -577,7 +577,7 @@ class PrinterConfig:
 
     cmd_SAVE_CONFIG_help = "Overwrite config file and restart"
 
-    def _write_backup(self, cfgpath, cfgdata, gcode):
+    def _write_backup(self, cfgpath, cfgdata, gcode, gcmd):
         printercfg = self.printer.get_start_args()["config_file"]
         configdir = os.path.dirname(printercfg)
         # Define a directory for configuration backups so that include blocks
@@ -599,7 +599,7 @@ class PrinterConfig:
             "SAVE_CONFIG to '%s' (backup in '%s')", cfgpath, backup_path
         )
         try:
-            if gcode.get_int("BACKUP", 1, minval=0, maxval=1):
+            if gcmd.get_int("BACKUP", 1, minval=0, maxval=1):
                 # Read the current config into the backup before making changes to
                 # the original file
                 currentconfig = open(cfgpath, "r")
@@ -616,7 +616,7 @@ class PrinterConfig:
             logging.exception(msg)
             raise gcode.error(msg)
 
-    def _save_includes(self, cfgpath, data, visitedpaths, gcode):
+    def _save_includes(self, cfgpath, data, visitedpaths, gcode, gcmd):
         # Prevent an infinite loop in the event of configs circularly
         # referencing each other
         if cfgpath in visitedpaths:
@@ -655,7 +655,11 @@ class PrinterConfig:
                     # includes as klipper checks this at startup.
                     include_predata = self._read_config_file(include_filename)
                     self._save_includes(
-                        include_filename, include_predata, visitedpaths, gcode
+                        include_filename,
+                        include_predata,
+                        visitedpaths,
+                        gcode,
+                        gcmd,
                     )
 
                     include_postdata = self._strip_duplicates(
@@ -664,7 +668,7 @@ class PrinterConfig:
                     # Only write and backup data that's been changed
                     if include_predata != include_postdata:
                         self._write_backup(
-                            include_filename, include_postdata, gcode
+                            include_filename, include_postdata, gcode, gcmd
                         )
 
     def cmd_SAVE_CONFIG(self, gcmd):
@@ -690,12 +694,12 @@ class PrinterConfig:
         regular_data = self._strip_duplicates(regular_data, self.autosave)
 
         if get_danger_options().autosave_includes:
-            self._save_includes(cfgname, data, set(), gcode)
+            self._save_includes(cfgname, data, set(), gcode, gcmd)
 
         # NOW we're safe to check for conflicts
         self._disallow_include_conflicts(regular_data, cfgname, gcode)
         data = regular_data.rstrip() + autosave_data
-        self._write_backup(cfgname, data, gcode)
+        self._write_backup(cfgname, data, gcode, gcmd)
 
         # If requested restart or no restart just flag config saved
         require_restart = gcmd.get_int("RESTART", 1, minval=0, maxval=1)
