@@ -289,10 +289,7 @@ class Calibrater:
         def callback(kin_pos):
             if kin_pos is None:
                 # probe was cancelled
-                self.gcmd.respond_info(
-                    "AXIS_TWIST_COMPENSATION_CALIBRATE: Probe cancelled, "
-                    "calibration aborted"
-                )
+                self.cmd_ABORT()
                 return
             z_offset = self.current_measured_z - kin_pos[2]
             self.results.append(z_offset)
