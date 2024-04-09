@@ -54,6 +54,9 @@ class AxisTwistCompensation:
         # setup calibrater
         self.calibrater = Calibrater(self, config)
 
+    def get_status(self, eventtime):
+        return {"is_active": self.calibrater.is_active}
+
     def get_z_compensation_value(self, pos):
         if not self.z_compensations:
             return 0
