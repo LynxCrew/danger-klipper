@@ -145,9 +145,9 @@ def verify_no_manual_probe(printer):
     gcode = printer.lookup_object("gcode")
     try:
         gcode.register_command("ACCEPT", "dummy")
+        gcode.register_command("ACCEPT", None)
     except printer.config_error as e:
         raise gcode.error("Already in a manual Z probe. Use ABORT to abort it.")
-    gcode.register_command("ACCEPT", None)
 
 
 Z_BOB_MINIMUM = 0.500

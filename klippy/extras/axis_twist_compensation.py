@@ -122,6 +122,7 @@ class Calibrater:
 
         self.configname = config.get_name()
 
+        self.is_active = False
         # register gcode handlers
         self._register_gcode_handlers()
 
@@ -144,6 +145,9 @@ class Calibrater:
             desc=self.cmd_AXIS_TWIST_COMPENSATION_CALIBRATE_help,
         )
 
+    def get_status(self, eventtime):
+        return {"is_active": self.is_active}
+
     cmd_AXIS_TWIST_COMPENSATION_CALIBRATE_help = """
     Performs the x twist calibration wizard
     Measure z probe offset at n points along the x axis,
@@ -151,7 +155,17 @@ class Calibrater:
     """
 
     def cmd_AXIS_TWIST_COMPENSATION_CALIBRATE(self, gcmd):
-        verify_no_compensation(self.printer)
+        if self.is_active:
+            raise gcmd.error(
+                "Already running a twist compensation calibration. Use ABORT"
+                " to abort it."
+            )
+        manual_probe = self.printer.lookup_object("manual_probe")
+        if manual_probe.status["is_active"]:
+            raise gcmd.error(
+                "Already in a manual Z probe. Use ABORT to abort it."
+            )
+        self.is_active = True
         self.gcode.register_command(
             "ABORT", self.cmd_ABORT, desc=self.cmd_ABORT_help
         )
@@ -334,6 +348,7 @@ class Calibrater:
             "calibration aborted"
         )
         self.abort_gcode.run_gcode_from_command()
+        self.is_active = False
         self.gcode.register_command("QUERY_TWIST_COMPENSATION_RUNNING", None)
         self.gcode.register_command("ABORT", None)
         self.gcode.register_command("CONTINUE", None)
@@ -376,6 +391,8 @@ class Calibrater:
             "update the printer config file and restart the printer."
         )
 
+        self.end_gcode.run_gcode_from_command()
+        self.is_active = False
         self.gcode.register_command("QUERY_TWIST_COMPENSATION_RUNNING", None)
 
 
