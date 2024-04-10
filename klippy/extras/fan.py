@@ -156,6 +156,7 @@ class Fan:
             i = 0
             while i < spool_up_time:
                 self.mcu_fan.set_pwm(print_time, spool_up_value)
+                self.pwm_value = spool_up_value
                 spool_up_value += value_diff * 0.1
                 print_time += spool_up_time * 0.1
                 i += 0.1
