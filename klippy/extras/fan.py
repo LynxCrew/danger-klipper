@@ -171,9 +171,10 @@ class Fan:
         if self.last_fan_value and rpm is not None and rpm < self.min_rpm:
             self.num_err += 1
             if self.num_err > self.max_err:
-                msg = "'%s' spinning below minimum safe speed of %d rev/min" % (
+                msg = "'%s' spinning below minimum safe speed.\n(expected: %d rev/min\nactual speed: %d reve/min)" % (
                     self.name,
                     self.min_rpm,
+                    rpm
                 )
                 logging.error(msg)
                 self.printer.invoke_shutdown(msg)
