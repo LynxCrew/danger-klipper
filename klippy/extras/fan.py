@@ -18,6 +18,7 @@ class Fan:
         self.pwm_value = 0.0
         self.last_fan_time = 0.0
         # Read config
+        self.spool_up_time = config.getfloat("spool_up_time", 0, minval=0)
         self.kick_start_time = config.getfloat(
             "kick_start_time", 0.1, minval=0.0
         )
@@ -144,6 +145,19 @@ class Fan:
             # Run fan at full speed for specified kick_start_time
             self.mcu_fan.set_pwm(print_time, self.max_power)
             print_time += self.kick_start_time
+        if (
+            value
+            and self.spool_up_time
+            and self.last_fan_value < value
+        ):
+            value_diff = value - self.last_fan_value
+            spool_up_time = self.spool_up_time * value_diff
+            spool_up_value = self.last_fan_value + (value_diff / 100)
+            for i in range(0, spool_up_time*100):
+
+                self.mcu_fan.set_pwm(print_time, spool_up_value)
+                spool_up_value += (value_diff / 100)
+                print_time += spool_up_time / 100
         self.pwm_value = pwm_value
         self.mcu_fan.set_pwm(print_time, pwm_value)
         self.last_fan_time = print_time
