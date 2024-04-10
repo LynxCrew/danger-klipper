@@ -201,7 +201,9 @@ class Calibrater:
         # begin calibration
         self.current_point_index = 0
         self.results = []
-        self._calibration(self.probe_points, self.nozzle_points, self.interval_dist)
+        self._calibration(
+            self.probe_points, self.nozzle_points, self.interval_dist
+        )
 
     def _calculate_nozzle_points(self, sample_count, interval_dist):
         # calculate the points to put the probe at, returned as a list of tuples
@@ -318,7 +320,9 @@ class Calibrater:
                     )
                 else:
                     self._calibration(
-                        self.probe_points, self.nozzle_points, self.interval_dist
+                        self.probe_points,
+                        self.nozzle_points,
+                        self.interval_dist,
                     )
 
         return callback
@@ -327,7 +331,9 @@ class Calibrater:
 
     def cmd_CONTINUE(self, gcmd):
         self.gcode.register_command("CONTINUE", None)
-        self._calibration(self.probe_points, self.nozzle_points, self.interval_dist)
+        self._calibration(
+            self.probe_points, self.nozzle_points, self.interval_dist
+        )
 
     cmd_QUERY_TWIST_COMPENSATION_RUNNING_help = """Query if we are running a
                                                    twist compensation"""

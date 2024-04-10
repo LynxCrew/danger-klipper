@@ -668,7 +668,10 @@ class PrinterConfig:
                     # Only write and backup data that's been changed
                     if include_predata != include_postdata:
                         self._write_backup(
-                            include_filename, include_postdata, gcode, write_backups
+                            include_filename,
+                            include_postdata,
+                            gcode,
+                            write_backups,
                         )
 
     def cmd_SAVE_CONFIG(self, gcmd):
