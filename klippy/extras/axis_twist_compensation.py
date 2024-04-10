@@ -55,7 +55,7 @@ class AxisTwistCompensation:
         self.calibrater = Calibrater(self, config)
 
     def get_status(self, eventtime):
-        return {"is_active": self.calibrater.is_active}
+        return self.calibrater.get_status(eventtime)
 
     def get_z_compensation_value(self, pos):
         if not self.z_compensations:
@@ -118,12 +118,11 @@ class Calibrater:
         self.results = None
         self.current_point_index = None
         self.gcmd = None
+        self.configname = config.get_name()
 
         self.nozzle_points = None
         self.probe_points = None
-        self.interval = None
-
-        self.configname = config.get_name()
+        self.interval_dist = None
 
         self.is_active = False
         # register gcode handlers
@@ -191,21 +190,18 @@ class Calibrater:
 
         # calculate some values
         x_range = self.end_point[0] - self.start_point[0]
-        interval_dist = x_range / (sample_count - 1)
-        nozzle_points = self._calculate_nozzle_points(
-            sample_count, interval_dist
+        self.interval_dist = x_range / (sample_count - 1)
+        self.nozzle_points = self._calculate_nozzle_points(
+            sample_count, self.interval_dist
         )
-        probe_points = self._calculate_probe_points(
-            nozzle_points, self.probe_x_offset, self.probe_y_offset
+        self.probe_points = self._calculate_probe_points(
+            self.nozzle_points, self.probe_x_offset, self.probe_y_offset
         )
-
-        # verify no other manual probe is in progress
-        ManualProbe.verify_no_manual_probe(self.printer)
 
         # begin calibration
         self.current_point_index = 0
         self.results = []
-        self._calibration(probe_points, nozzle_points, interval_dist)
+        self._calibration(self.probe_points, self.nozzle_points, self.interval_dist)
 
     def _calculate_nozzle_points(self, sample_count, interval_dist):
         # calculate the points to put the probe at, returned as a list of tuples
@@ -281,7 +277,7 @@ class Calibrater:
         )
 
     def _manual_probe_callback_factory(
-        self, probe_points, nozzle_points, interval
+        self, probe_points, nozzle_points, interval_dist
     ):
         # returns a callback function for the manual probe
         is_end = self.current_point_index == len(probe_points) - 1
@@ -302,7 +298,7 @@ class Calibrater:
 
                 self.probe_points = probe_points
                 self.nozzle_points = nozzle_points
-                self.interval = interval
+                self.interval_dist = interval_dist
 
                 self.gcode.register_command(
                     "ABORT", self.cmd_ABORT, desc=self.cmd_ABORT_help
@@ -322,7 +318,7 @@ class Calibrater:
                     )
                 else:
                     self._calibration(
-                        self.probe_points, self.nozzle_points, self.interval
+                        self.probe_points, self.nozzle_points, self.interval_dist
                     )
 
         return callback
@@ -331,7 +327,7 @@ class Calibrater:
 
     def cmd_CONTINUE(self, gcmd):
         self.gcode.register_command("CONTINUE", None)
-        self._calibration(self.probe_points, self.nozzle_points, self.interval)
+        self._calibration(self.probe_points, self.nozzle_points, self.interval_dist)
 
     cmd_QUERY_TWIST_COMPENSATION_RUNNING_help = """Query if we are running a
                                                    twist compensation"""
@@ -374,7 +370,7 @@ class Calibrater:
 
         self.nozzle_points = None
         self.probe_points = None
-        self.interval = None
+        self.interval_dist = None
 
         self.gcode.register_command("ABORT", None)
         self.gcode.register_command("CONTINUE", None)
