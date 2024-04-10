@@ -216,10 +216,6 @@ extruder_calc_position(struct stepper_kinematics *sk, struct move *m
                 pa_range_integrate(m, axis, move_time, sm,
                                    &pa_vel.axis[i]);
             }
-            // get rid of (bad! bad! bad!) smoothing of base position
-            e_pos.axis[i] = num_pulses
-                ? shaper_calc_position(m, axis, move_time, sp)
-                : m->start_pos.axis[i] + m->axes_r.axis[i] * move_dist;
         }
     }
     double position = e_pos.x + e_pos.y + e_pos.z;
