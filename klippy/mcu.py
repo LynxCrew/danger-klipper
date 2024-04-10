@@ -331,7 +331,7 @@ class TriggerDispatch:
     def start(self, print_time):
         reactor = self._mcu.get_printer().get_reactor()
         self._trigger_completion = reactor.completion()
-        expire_timeout = TRSYNC_TIMEOUT
+        expire_timeout = get_danger_options().multi_mcu_trsync_timeout
         if len(self._trsyncs) == 1:
             expire_timeout = TRSYNC_SINGLE_MCU_TIMEOUT
         for i, trsync in enumerate(self._trsyncs):
