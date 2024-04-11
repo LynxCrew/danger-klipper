@@ -413,11 +413,33 @@ class ShaperCalibrate:
         self,
         shaper_cfg,
         calibration_data,
+        shaper_freqs,
+        damping_ratio,
+        scv,
         max_smoothing,
+        test_damping_ratios,
+        max_freq,
         estimate_shaper,
         get_shaper_smoothing,
     ):
         np = self.numpy
+
+        damping_ratio = damping_ratio or shaper_defs.DEFAULT_DAMPING_RATIO
+        test_damping_ratios = test_damping_ratios or TEST_DAMPING_RATIOS
+
+        if not shaper_freqs:
+            shaper_freqs = (None, None, None)
+        if isinstance(shaper_freqs, tuple):
+            freq_end = shaper_freqs[1] or MAX_SHAPER_FREQ
+            freq_start = min(
+                shaper_freqs[0] or shaper_cfg.min_freq, freq_end - 1e-7
+            )
+            freq_step = shaper_freqs[2] or 0.2
+            test_freqs = np.arange(freq_start, freq_end, freq_step)
+        else:
+            test_freqs = np.array(shaper_freqs)
+
+        max_freq = max(max_freq or MAX_FREQ, test_freqs.max())
 
         shaper = shaper_cfg.init_func(1.0, shaper_defs.DEFAULT_DAMPING_RATIO)
 
@@ -425,22 +447,18 @@ class ShaperCalibrate:
         test_shaper_vals = np.zeros(shape=test_freq_bins.shape)
         # Exact damping ratio of the printer is unknown, pessimizing
         # remaining vibrations over possible damping values
-        for dr in TEST_DAMPING_RATIOS:
+        for dr in test_damping_ratios:
             vals = estimate_shaper(self.numpy, shaper, dr, test_freq_bins)
             test_shaper_vals = np.maximum(test_shaper_vals, vals)
 
-        test_freqs = np.arange(shaper_cfg.min_freq, MAX_SHAPER_FREQ, 0.2)
-
         freq_bins = calibration_data.freq_bins
-        psd = calibration_data.psd_sum[freq_bins <= MAX_FREQ]
-        freq_bins = freq_bins[freq_bins <= MAX_FREQ]
+        psd = calibration_data.psd_sum[freq_bins <= max_freq]
+        freq_bins = freq_bins[freq_bins <= max_freq]
 
         best_res = None
         results = []
         for test_freq in test_freqs[::-1]:
-            shaper = shaper_cfg.init_func(
-                test_freq, shaper_defs.DEFAULT_DAMPING_RATIO
-            )
+            shaper = shaper_cfg.init_func(test_freq, damping_ratio)
             shaper_smoothing = get_shaper_smoothing(shaper)
             if max_smoothing and shaper_smoothing > max_smoothing and best_res:
                 return best_res
@@ -450,7 +468,7 @@ class ShaperCalibrate:
             shaper_vibrations = self._estimate_remaining_vibrations(
                 freq_bins, shaper_vals, psd
             )
-            max_accel = self.find_max_accel(shaper, get_shaper_smoothing)
+            max_accel = self.find_max_accel(shaper, get_shaper_smoothing, scv)
             # The score trying to minimize vibrations, but also accounting
             # the growth of smoothing. The formula itself does not have any
             # special meaning, it simply shows good results on real user data
@@ -487,6 +505,8 @@ class ShaperCalibrate:
 
     def _bisect(self, func, eps=1e-8):
         left = right = 1.0
+        if not func(1e-9):
+            return 0.0
         while not func(left):
             right = left
             left *= 0.5
@@ -501,12 +521,13 @@ class ShaperCalibrate:
                 right = middle
         return left
 
-    def find_max_accel(self, s, get_smoothing):
+    def find_max_accel(self, s, get_smoothing, scv):
         # Just some empirically chosen value which produces good projections
         # for max_accel without much smoothing
         TARGET_SMOOTHING = 0.12
         max_accel = self._bisect(
-            lambda test_accel: get_smoothing(s, test_accel) <= TARGET_SMOOTHING,
+            lambda test_accel: get_smoothing(s, test_accel, scv)
+            <= TARGET_SMOOTHING,
             1e-2,
         )
         return max_accel
@@ -534,7 +555,12 @@ class ShaperCalibrate:
                 (
                     smoother_cfg,
                     calibration_data,
+                    shaper_freqs,
+                    damping_ratio,
+                    scv,
                     max_smoothing,
+                    test_damping_ratios,
+                    max_freq,
                     estimate_smoother,
                     self._get_smoother_smoothing,
                 ),
@@ -577,7 +603,12 @@ class ShaperCalibrate:
                 (
                     shaper_cfg,
                     calibration_data,
+                    shaper_freqs,
+                    damping_ratio,
+                    scv,
                     max_smoothing,
+                    test_damping_ratios,
+                    max_freq,
                     estimate_shaper,
                     self._get_shaper_smoothing,
                 ),
