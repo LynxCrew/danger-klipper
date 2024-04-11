@@ -25,6 +25,7 @@ AUTOTUNE_SHAPERS = [
     "smooth_2hump_ei",
     "smooth_zvd_ei",
     "smooth_si",
+    "zv",
     "mzv",
     "ei",
     "2hump_ei",
@@ -510,11 +511,23 @@ class ShaperCalibrate:
         )
         return max_accel
 
-    def find_best_shaper(self, calibration_data, max_smoothing, logger=None):
+    def find_best_shaper(
+        self,
+        calibration_data,
+        shapers=None,
+        damping_ratio=None,
+        scv=None,
+        shaper_freqs=None,
+        max_smoothing=None,
+        test_damping_ratios=None,
+        max_freq=None,
+        logger=None,
+    ):
         best_shaper = None
         all_shapers = []
+        shapers = shapers or AUTOTUNE_SHAPERS
         for smoother_cfg in shaper_defs.INPUT_SMOOTHERS:
-            if smoother_cfg.name not in AUTOTUNE_SHAPERS:
+            if smoother_cfg.name not in shapers:
                 continue
             smoother = self.background_process_exec(
                 self.fit_shaper,
@@ -557,7 +570,7 @@ class ShaperCalibrate:
                 # or it improves the score and smoothing (by 5% and 10% resp.)
                 best_shaper = smoother
         for shaper_cfg in shaper_defs.INPUT_SHAPERS:
-            if shaper_cfg.name not in AUTOTUNE_SHAPERS:
+            if shaper_cfg.name not in shapers:
                 continue
             shaper = self.background_process_exec(
                 self.fit_shaper,
