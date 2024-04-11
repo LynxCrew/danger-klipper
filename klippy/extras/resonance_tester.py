@@ -100,9 +100,9 @@ def suspend_limits(printer, max_accel, max_velocity, input_shaping):
         yield
     finally:
         # Restore input shaper if it was disabled for resonance testing
-        if input_shaper is not None:
-            input_shaper.enable_shaping()
-            gcode.respond_info("Re-enabled [input_shaper]")
+        # if input_shaper is not None:
+        #     input_shaper.enable_shaping()
+        #     gcode.respond_info("Re-enabled [input_shaper]")
         # Restore the original acceleration values
         gcode.run_script_from_command(
             "SET_VELOCITY_LIMIT ACCEL=%.3f MINIMUM_CRUISE_RATIO=%.3f VELOCITY=%.3f"
