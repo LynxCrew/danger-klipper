@@ -864,7 +864,7 @@ class ControlPositionalPID:
         )
         self.dt = heater.pwm_delay
         self.smooth = 1.0 + smooth_time / self.dt
-        self.heater.set_inv_smooth_time(1.0 / self.smooth_time)
+        self.heater.set_inv_smooth_time(1.0 / smooth_time)
         self.prev_temp = (
             AMBIENT_TEMP
             if load_clean
