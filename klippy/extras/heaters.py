@@ -304,13 +304,13 @@ class Heater:
             raise gcmd.error("Not a PID/PID_V controlled heater")
         kp = gcmd.get_float("KP", None)
         if kp is not None:
-            self.control.Kp = kp / PID_PARAM_BASE
+            self.control.set_pid_kp(kp)
         ki = gcmd.get_float("KI", None)
         if ki is not None:
-            self.control.Ki = ki / PID_PARAM_BASE
+            self.control.set_pid_ki(ki)
         kd = gcmd.get_float("KD", None)
         if kd is not None:
-            self.control.Kd = kd / PID_PARAM_BASE
+            self.control.set_pid_kd(kd)
 
     class ProfileManager:
         def __init__(self, outer_instance):
@@ -752,7 +752,18 @@ class ControlPID:
         )
 
     def update_smooth_time(self):
-        self.smooth_time = self.heater.get_smooth_time()  # smoothing window
+        self.min_deriv_time = self.heater.get_smooth_time()  # smoothing window
+
+    def set_pid_kp(self, kp):
+        self.Kp = kp / PID_PARAM_BASE
+
+    def set_pid_ki(self, ki):
+        self.Ki = ki / PID_PARAM_BASE
+        if self.Ki:
+            self.temp_integ_max = self.heater_max_power / self.Ki
+
+    def set_pid_kd(self, kd):
+        self.Kd = kd / PID_PARAM_BASE
 
     def get_profile(self):
         return self.profile
@@ -842,6 +853,15 @@ class ControlVelocityPID:
     def update_smooth_time(self):
         self.smooth_time = self.heater.get_smooth_time()  # smoothing window
 
+    def set_pid_kp(self, kp):
+        self.Kp = kp / PID_PARAM_BASE
+
+    def set_pid_ki(self, ki):
+        self.Ki = ki / PID_PARAM_BASE
+
+    def set_pid_kd(self, kd):
+        self.Kd = kd / PID_PARAM_BASE
+
     def get_profile(self):
         return self.profile
 
@@ -862,7 +882,7 @@ class ControlPositionalPID:
             if profile["smooth_time"] is None
             else profile["smooth_time"]
         )
-        self.dt = heater.pwm_delay
+        self.dt = self.heater.pwm_delay
         self.smooth = 1.0 + smooth_time / self.dt
         self.heater.set_inv_smooth_time(1.0 / smooth_time)
         self.prev_temp = (
@@ -917,7 +937,16 @@ class ControlPositionalPID:
         )
 
     def update_smooth_time(self):
-        self.smooth_time = self.heater.get_smooth_time()  # smoothing window
+        self.smooth = 1. + self.heater.get_smooth_time() / self.dt
+
+    def set_pid_kp(self, kp):
+        self.Kp = kp / PID_PARAM_BASE
+
+    def set_pid_ki(self, ki):
+        self.Ki = ki / PID_PARAM_BASE
+
+    def set_pid_kd(self, kd):
+        self.Kd = kd / PID_PARAM_BASE
 
     def get_profile(self):
         return self.profile
