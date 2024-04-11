@@ -937,7 +937,7 @@ class ControlPositionalPID:
         )
 
     def update_smooth_time(self):
-        self.smooth = 1. + self.heater.get_smooth_time() / self.dt
+        self.smooth = 1.0 + self.heater.get_smooth_time() / self.dt
 
     def set_pid_kp(self, kp):
         self.Kp = kp / PID_PARAM_BASE
