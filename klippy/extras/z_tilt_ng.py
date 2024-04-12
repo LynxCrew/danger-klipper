@@ -238,6 +238,8 @@ class ZTilt:
             "z_offsets", sep="\n", default=None
         )
 
+        logging.info(len(self.z_offsets))
+
         for i in range(0, len(self.z_offsets)):
             logging.info(self.z_offsets[i])
             self.z_offsets[i] = float(self.z_offsets[i])
