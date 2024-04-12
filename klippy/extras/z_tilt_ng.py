@@ -235,7 +235,7 @@ class ZTilt:
 
         logging.info(config.get("z_offsets"))
         self.z_offsets = config.getlist(
-            "z_offsets", sep="\n", count=z_count, default=None
+            "z_offsets", sep="\n", default=None
         )
 
         for i in self.z_offsets:
