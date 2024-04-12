@@ -233,8 +233,8 @@ class ZTilt:
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         self.probe_helper.minimum_points(2)
 
-        self.z_offsets = config.getlist(
-            "z_offsets", sep="\n", parser=float, count=z_count, default=None
+        self.z_offsets = config.getfloatlist(
+            "z_offsets", sep="\n", count=z_count, default=None
         )
 
         self.z_status = ZAdjustStatus(self.printer)
