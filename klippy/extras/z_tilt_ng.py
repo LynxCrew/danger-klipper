@@ -145,6 +145,9 @@ class RetryHelper:
         self.default_max_deviation = config.getfloat(
             "max_deviation", 5.0, minval=0.0, maxval=MAX_DEVIATION
         )
+        self.default_increasing_threshold = config.getfloat(
+            "increasing_threshold", 0.0000001, above=0.0
+        )
         self.value_label = "Probed points range"
         self.error_msg_extra = error_msg_extra
 
@@ -166,6 +169,9 @@ class RetryHelper:
             self.default_max_deviation,
             minval=0.0,
             maxval=MAX_DEVIATION,
+        )
+        self.increasing_threshold = gcmd.get_float(
+            "INCREASING_THRESHOLD", self.default_increasing_threshold, above=0.0
         )
         self.current_retry = 0
         self.previous = None

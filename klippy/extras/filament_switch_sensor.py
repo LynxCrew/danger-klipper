@@ -5,8 +5,6 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 
-from . import filament_motion_sensor
-
 CHECK_RUNOUT_TIMEOUT = 0.250
 
 
@@ -296,6 +294,7 @@ class SwitchSensor:
         return {
             "runout_distance": float(self.runout_helper.runout_distance),
             "runout_elapsed": float(self.runout_helper.runout_elapsed),
+            "check_on_print_start": bool(self.check_on_print_start),
         }
 
     def get_info(self, gcmd):

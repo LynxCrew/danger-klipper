@@ -1315,6 +1315,9 @@ extended [G-Code command](G-Codes.md#z_tilt) becomes available.
 #   more points than steppers then you will likely have a fixed
 #   minimum value for the range of probed points which you can learn
 #   by observing command output.
+#increasing_threshold: 0.0000001
+#   Sets the threshold that probe points can increase before z_tilt aborts.
+#   To disable the validation, set this parameter to a high value.
 ```
 
 ```
@@ -1338,6 +1341,8 @@ extended [G-Code command](G-Codes.md#z_tilt) becomes available.
 #retries: 0
 # See [z_tilt]
 #retry_tolerance: 0
+# See [z_tilt]
+#increasing_threshold: 0.0000001
 # See [z_tilt]
 #extra_points:
 #   A list in the same format as "points" above. This list contains
@@ -1416,6 +1421,9 @@ Where x is the 0, 0 point on the bed
 #retry_tolerance: 0
 #   If retries are enabled then retry if largest and smallest probed
 #   points differ more than retry_tolerance.
+#increasing_threshold: 0.0000001
+#   Sets the threshold that probe points can increase before qgl aborts.
+#   To disable the validation, set this parameter to a high value.
 ```
 
 ### [skew_correction]
@@ -2015,7 +2023,7 @@ aliases_<name>:
 
 Include file support. One may include additional config file from the
 main printer config file. Wildcards may also be used (eg,
-"configs/\*.cfg").
+"configs/\*.cfg", or "configs/\*\*/\*.cfg" if using python version >=3.5).
 
 ```
 [include my_other_config.cfg]
@@ -4804,6 +4812,13 @@ more information.
 #   If set to true the sensor will use the virtual_sd_card module to determine
 #   whether the printer is printing which is more reliable but will not work
 #   when streaming a print over usb or similar.
+#always_fire_events:
+#   If set to true, runout events will always fire no matter whether the sensor
+#   is enabled or disabled. Usefull for MMUs
+#check_on_print_start:
+#   If set to true, the sensor will be reevaluated when a print starts and if
+#   no filament is detected the runout_gcode will be run no matter the defined
+#   runout_distance(immediate_runout_gcode will not be run in this case)
 ```
 
 ### [filament_motion_sensor]
@@ -4831,6 +4846,7 @@ switch_pin:
 #event_delay:
 #pause_delay:
 #smart:
+#always_fire_events:
 #   See the "filament_switch_sensor" section for a description of the
 #   above parameters.
 ```
