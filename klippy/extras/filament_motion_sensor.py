@@ -31,20 +31,6 @@ class EncoderSensor:
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
         self.printer.register_event_handler(
-            "print_stats:start_printing", self._handle_printing_smart
-        )
-        self.printer.register_event_handler(
-            "print_stats:complete_printing", self._handle_not_printing_smart
-        )
-        self.printer.register_event_handler(
-            "print_stats:cancelled_printing",
-            self._handle_not_printing_smart,
-        )
-        self.printer.register_event_handler(
-            "print_stats:paused_printing", self._handle_not_printing_smart
-        )
-
-        self.printer.register_event_handler(
             "idle_timeout:printing", self._handle_printing
         )
         self.printer.register_event_handler(
