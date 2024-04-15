@@ -3,6 +3,8 @@
 # Copyright (C) 2021 Joshua Wherrett <thejoshw.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
+
 from . import filament_switch_sensor
 
 
@@ -29,6 +31,20 @@ class EncoderSensor:
         self.filament_runout_pos = None
         # Register commands and event handlers
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
+
+        self.printer.register_event_handler(
+            "print_stats:start_printing", self._handle_printing_smart
+        )
+        self.printer.register_event_handler(
+            "print_stats:complete_printing", self._handle_not_printing_smart
+        )
+        self.printer.register_event_handler(
+            "print_stats:cancelled_printing",
+            self._handle_not_printing_smart,
+        )
+        self.printer.register_event_handler(
+            "print_stats:paused_printing", self._handle_not_printing_smart
+        )
 
         self.printer.register_event_handler(
             "idle_timeout:printing", self._handle_printing
@@ -58,13 +74,27 @@ class EncoderSensor:
         )
 
     def _handle_printing(self, *args):
-        # if not self.runout_helper.smart:
+        if not self.runout_helper.smart:
+            self.reactor.update_timer(
+                self._extruder_pos_update_timer, self.reactor.NOW
+            )
+
+    def _handle_printing_smart(self, *args):
+        logging.info("HUHU")
+        if self.runout_helper.smart:
             self.reactor.update_timer(
                 self._extruder_pos_update_timer, self.reactor.NOW
             )
 
     def _handle_not_printing(self, *args):
-        # if not self.runout_helper.smart:
+        if not self.runout_helper.smart:
+            self.reactor.update_timer(
+                self._extruder_pos_update_timer, self.reactor.NEVER
+            )
+
+    def _handle_not_printing_smart(self, *args):
+        logging.info("HAHA")
+        if self.runout_helper.smart:
             self.reactor.update_timer(
                 self._extruder_pos_update_timer, self.reactor.NEVER
             )
