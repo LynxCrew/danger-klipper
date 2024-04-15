@@ -172,6 +172,7 @@ class PrinterStepperEnable:
             self.printer.send_event(
                 "stepper_enable:disable_%s" % rail_name.lower(), print_time
             )
+            logging.info("stepper_enable:disable_%s" % rail_name.lower())
 
     def motor_off(self):
         self.axes_off()
