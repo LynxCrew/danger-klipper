@@ -83,7 +83,7 @@ class Fan:
             and self.tachometer._freq_counter is None
         ):
             raise config.error(
-                "'tachometer_pin' must be specified before enabling `min_rpm`"
+                "'tachometer_pin' must be specified before enabling 'min_rpm'"
             )
         if self.max_err is not None and self.min_rpm is None:
             raise config.error(

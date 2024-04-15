@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+from extras.danger_options import get_danger_options
 
 CHECK_RUNOUT_TIMEOUT = 0.250
 
@@ -11,6 +12,7 @@ CHECK_RUNOUT_TIMEOUT = 0.250
 class RunoutHelper:
     def __init__(self, config, defined_sensor, runout_distance=0):
         self.name = config.get_name().split()[-1]
+        self.config = config
         self.defined_sensor = defined_sensor
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
@@ -33,6 +35,10 @@ class RunoutHelper:
             )
         self.pause_delay = config.getfloat("pause_delay", 0.5, minval=0.0)
         self.event_delay = config.getfloat("event_delay", 3.0, minval=0.0)
+        # self.check_runout_timeout = self.config.getfloat(
+        #     "check_runout_timeout", None, above=0
+        # )
+        self.check_runout_timeout = CHECK_RUNOUT_TIMEOUT
         self.runout_distance = runout_distance
         # Internal state
         self.min_event_systime = self.reactor.NEVER
@@ -62,6 +68,19 @@ class RunoutHelper:
 
     def _handle_ready(self):
         self.min_event_systime = self.reactor.monotonic() + 2.0
+        # if (
+        #     self.check_runout_timeout is not None
+        #     and not get_danger_options().modify_check_runout_timeout
+        # ):
+        #     raise self.config.error(
+        #         "'modify_check_runout_timeout' is not enabled in 'danger_options'"
+        #     )
+        # if self.check_runout_timeout is None:
+        #     self.check_runout_timeout = CHECK_RUNOUT_TIMEOUT
+        if get_danger_options().modify_check_runout_timeout:
+            self.check_runout_timeout = self.config.getfloat(
+                "check_runout_timeout", CHECK_RUNOUT_TIMEOUT, above=0
+            )
 
     def _runout_event_handler(self, eventtime):
         if self.immediate_runout_gcode is not None:
@@ -103,7 +122,7 @@ class RunoutHelper:
         )
         if runout_elapsed < self.runout_distance:
             self.runout_elapsed = runout_elapsed
-            return eventtime + CHECK_RUNOUT_TIMEOUT
+            return eventtime + self.check_runout_timeout
         else:
             self._execute_runout(eventtime)
             return self.reactor.NEVER
@@ -246,6 +265,11 @@ class SwitchSensor:
             )
         self.get_status = self.runout_helper.get_status
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
+
+        self.printer.register_event_handler(
+            "print_stats:start_printing", self._handle_printing_smart
+        )
+
         self.printer.register_event_handler(
             "idle_timeout:printing", self._handle_printing
         )
@@ -256,8 +280,14 @@ class SwitchSensor:
         ).estimated_print_time
 
     def _handle_printing(self, print_time):
-        if self.check_on_print_start:
-            self.runout_helper.note_filament_present(None, True, True)
+        if not self.runout_helper.smart:
+            if self.check_on_print_start:
+                self.runout_helper.note_filament_present(None, True, True)
+
+    def _handle_printing_smart(self, print_time):
+        if self.runout_helper.smart:
+            if self.check_on_print_start:
+                self.runout_helper.note_filament_present(None, True, True)
 
     def _button_handler(self, eventtime, state):
         self.runout_helper.note_filament_present(state)
@@ -323,7 +353,7 @@ class SwitchSensor:
             self.runout_helper.runout_distance = runout_distance
         if check_on_print_start is not None:
             self.check_on_print_start = check_on_print_start
-        # No reset is needed when changing the runout_distance, so we always
+        # No reset is needed when changing the runout_distance or check_on_print_start, so we always
         # return False
         return False
 

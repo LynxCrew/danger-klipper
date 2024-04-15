@@ -5,8 +5,6 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from . import filament_switch_sensor
 
-CHECK_RUNOUT_TIMEOUT = 0.250
-
 
 class EncoderSensor:
     def __init__(self, config):
@@ -31,6 +29,21 @@ class EncoderSensor:
         self.filament_runout_pos = None
         # Register commands and event handlers
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
+
+        self.printer.register_event_handler(
+            "print_stats:start_printing", self._handle_printing_smart
+        )
+        self.printer.register_event_handler(
+            "print_stats:complete_printing", self._handle_not_printing_smart
+        )
+        self.printer.register_event_handler(
+            "print_stats:cancelled_printing",
+            self._handle_not_printing_smart,
+        )
+        self.printer.register_event_handler(
+            "print_stats:paused_printing", self._handle_not_printing_smart
+        )
+
         self.printer.register_event_handler(
             "idle_timeout:printing", self._handle_printing
         )
@@ -59,14 +72,28 @@ class EncoderSensor:
         )
 
     def _handle_printing(self, print_time):
-        self.reactor.update_timer(
-            self._extruder_pos_update_timer, self.reactor.NOW
-        )
+        if not self.runout_helper.smart:
+            self.reactor.update_timer(
+                self._extruder_pos_update_timer, self.reactor.NOW
+            )
+
+    def _handle_printing_smart(self, print_time):
+        if self.runout_helper.smart:
+            self.reactor.update_timer(
+                self._extruder_pos_update_timer, self.reactor.NOW
+            )
 
     def _handle_not_printing(self, print_time):
-        self.reactor.update_timer(
-            self._extruder_pos_update_timer, self.reactor.NEVER
-        )
+        if not self.runout_helper.smart:
+            self.reactor.update_timer(
+                self._extruder_pos_update_timer, self.reactor.NEVER
+            )
+
+    def _handle_not_printing_smart(self, print_time):
+        if self.runout_helper.smart:
+            self.reactor.update_timer(
+                self._extruder_pos_update_timer, self.reactor.NEVER
+            )
 
     def get_extruder_pos(self, eventtime=None):
         if eventtime is None:
@@ -80,7 +107,7 @@ class EncoderSensor:
         self.runout_helper.note_filament_present(
             extruder_pos < self.filament_runout_pos
         )
-        return eventtime + CHECK_RUNOUT_TIMEOUT
+        return eventtime + self.runout_helper.check_runout_timeout
 
     def encoder_event(self, eventtime, state):
         if self.extruder is not None:

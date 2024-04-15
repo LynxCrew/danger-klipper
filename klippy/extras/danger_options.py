@@ -46,6 +46,9 @@ class DangerOptions:
             self.disable_webhook_logging = True
 
         self.adc_ignore_limits = config.getlist("adc_ignore_limits", [])
+        self.modify_check_runout_timeout = config.getboolean(
+            "modify_check_runout_timeout", False
+        )
         self.autosave_includes = config.getboolean("autosave_includes", False)
 
         self.bgflush_extra_time = config.getfloat(
