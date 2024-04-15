@@ -93,9 +93,9 @@ class CoreXYKinematics:
 
     def get_connected_rails(self, axis):
         if axis == 0 or axis == 1:
-            return [*self.rails[0], *self.rails[1]]
+            return [self.rails[0], self.rails[1]]
         elif axis == 2:
-            return self.rails[2]
+            return [self.rails[2]]
 
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
