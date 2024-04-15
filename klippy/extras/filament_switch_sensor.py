@@ -279,12 +279,12 @@ class SwitchSensor:
             "mcu"
         ).estimated_print_time
 
-    def _handle_printing(self, print_time):
+    def _handle_printing(self, *args):
         if not self.runout_helper.smart:
             if self.check_on_print_start:
                 self.runout_helper.note_filament_present(None, True, True)
 
-    def _handle_printing_smart(self, print_time):
+    def _handle_printing_smart(self, *args):
         if self.runout_helper.smart:
             if self.check_on_print_start:
                 self.runout_helper.note_filament_present(None, True, True)
