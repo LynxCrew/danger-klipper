@@ -148,6 +148,8 @@ class RotaryDeltaKinematics:
         return self.rails
 
     def get_connected_rails(self, axis):
+        if axis > 2 or axis < 0:
+            raise IndexError(f"Rail does not exist")
         return [self.rails[0], self.rails[1], self.rails[2]]
 
     def get_steppers(self):

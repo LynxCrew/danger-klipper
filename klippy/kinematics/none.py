@@ -14,7 +14,7 @@ class NoneKinematics:
         return []
 
     def get_connected_rails(self, axis):
-        return [self.get_rails()]
+        raise IndexError(f"Rail does not exist")
 
     def get_steppers(self):
         return []
