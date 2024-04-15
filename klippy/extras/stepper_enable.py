@@ -193,11 +193,12 @@ class PrinterStepperEnable:
                     self.stepper_off(extruder_name, print_time, "extruder")
         for axis in axes:
             try:
-                rail = kin.get_rails()[axis]
-                steppers = rail.get_steppers()
-                rail_name = rail.mcu_stepper.get_name(True)
-                for stepper in steppers:
-                    self.stepper_off(stepper.get_name(), print_time, rail_name)
+                rails = kin.get_connected_rails(axis)
+                for rail in rails:
+                    steppers = rail.get_steppers()
+                    rail_name = rail.mcu_stepper.get_name(True)
+                    for stepper in steppers:
+                        self.stepper_off(stepper.get_name(), print_time, rail_name)
             except IndexError:
                 continue
         self.printer.send_event("stepper_enable:axes_off", print_time)
