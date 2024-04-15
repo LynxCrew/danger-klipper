@@ -147,6 +147,9 @@ class RotaryDeltaKinematics:
     def get_rails(self):
         return self.rails
 
+    def get_connected_rails(self, axis):
+        return [*self.rails[0], *self.rails[1], *self.rails[2]]
+
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
 

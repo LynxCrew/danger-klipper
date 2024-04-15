@@ -78,6 +78,12 @@ class PolarKinematics:
     def get_rails(self):
         return self.rails
 
+    def get_connected_rails(self, axis):
+        if axis == 0 or axis == 1:
+            return [*self.rails[0], *self.rails[1]]
+        elif axis == 2:
+            return self.rails[2]
+
     def get_steppers(self):
         return list(self.steppers)
 

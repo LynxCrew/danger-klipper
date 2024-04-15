@@ -33,6 +33,9 @@ class WinchKinematics:
     def get_rails(self):
         return []
 
+    def get_connected_rails(self, axis):
+        return self.get_rails()
+
     def get_steppers(self):
         return list(self.steppers)
 

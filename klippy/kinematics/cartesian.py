@@ -93,6 +93,9 @@ class CartKinematics:
     def get_rails(self):
         return self.rails
 
+    def get_connected_rails(self, axis):
+        return self.rails[axis]
+
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
 
