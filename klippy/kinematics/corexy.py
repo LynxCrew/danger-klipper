@@ -13,7 +13,9 @@ class CoreXYKinematics:
         self.voron_stepper_def = config.getboolean("voron_stepper_def", False)
         self.zerog_stepper_def = config.getboolean("zerog_stepper_def", False)
         if self.voron_stepper_def and self.zerog_stepper_def:
-            raise config.error("'voron_stepper_def' and 'zerog_stepper_def' can not be defined at the same time")
+            raise config.error(
+                "'voron_stepper_def' and 'zerog_stepper_def' can not be defined at the same time"
+            )
         if self.voron_stepper_def:
             self.rails = [
                 stepper.LookupMultiRail(config.getsection("stepper_" + n))
