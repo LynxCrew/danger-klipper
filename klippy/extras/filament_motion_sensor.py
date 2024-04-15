@@ -72,25 +72,13 @@ class EncoderSensor:
         )
 
     def _handle_printing(self, *args):
-        if not self.runout_helper.smart:
-            self.reactor.update_timer(
-                self._extruder_pos_update_timer, self.reactor.NOW
-            )
-
-    def _handle_printing_smart(self, *args):
-        if self.runout_helper.smart:
+        # if not self.runout_helper.smart:
             self.reactor.update_timer(
                 self._extruder_pos_update_timer, self.reactor.NOW
             )
 
     def _handle_not_printing(self, *args):
-        if not self.runout_helper.smart:
-            self.reactor.update_timer(
-                self._extruder_pos_update_timer, self.reactor.NEVER
-            )
-
-    def _handle_not_printing_smart(self, *args):
-        if self.runout_helper.smart:
+        # if not self.runout_helper.smart:
             self.reactor.update_timer(
                 self._extruder_pos_update_timer, self.reactor.NEVER
             )
