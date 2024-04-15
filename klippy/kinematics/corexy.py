@@ -56,10 +56,10 @@ class CoreXYKinematics:
         )
 
         self.printer.register_event_handler(
-            "stepper_enable:disable_x", self._disable_xy
+            "stepper_enable:disable_a", self._disable_xy
         )
         self.printer.register_event_handler(
-            "stepper_enable:disable_y", self._disable_xy
+            "stepper_enable:disable_b", self._disable_xy
         )
         self.printer.register_event_handler(
             "stepper_enable:disable_z", self._set_unhomed_z
