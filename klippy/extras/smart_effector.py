@@ -82,12 +82,12 @@ class SmartEffectorEndstopWrapper:
             )
         else:
             self.control_pin = None
-        self.gcode.register_command(
-            "SET_SMART_EFFECTOR",
-            self.cmd_SET_SMART_EFFECTOR,
-            desc=self.cmd_SET_SMART_EFFECTOR_help,
-        )
-
+        self.gcode.register_command("SET_SMART_EFFECTOR",
+                                    self.cmd_SET_SMART_EFFECTOR,
+                                    desc=self.cmd_SET_SMART_EFFECTOR_help)
+    def probing_move(self, pos, speed):
+        phoming = self.printer.lookup_object('homing')
+        return phoming.probing_move(self, pos, speed)
     def probe_prepare(self, hmove):
         toolhead = self.printer.lookup_object("toolhead")
         self.probe_wrapper.probe_prepare(hmove)
