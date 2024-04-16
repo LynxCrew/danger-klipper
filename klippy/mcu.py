@@ -296,6 +296,7 @@ class MCU_trsync:
 
 TRSYNC_SINGLE_MCU_TIMEOUT = 0.250
 
+
 class TriggerDispatch:
     def __init__(self, mcu):
         self._mcu = mcu
@@ -303,10 +304,13 @@ class TriggerDispatch:
         ffi_main, ffi_lib = chelper.get_ffi()
         self._trdispatch = ffi_main.gc(ffi_lib.trdispatch_alloc(), ffi_lib.free)
         self._trsyncs = [MCU_trsync(mcu, self._trdispatch)]
+
     def get_oid(self):
         return self._trsyncs[0].get_oid()
+
     def get_command_queue(self):
         return self._trsyncs[0].get_command_queue()
+
     def add_stepper(self, stepper):
         trsyncs = {trsync.get_mcu(): trsync for trsync in self._trsyncs}
         trsync = trsyncs.get(stepper.get_mcu())
@@ -328,6 +332,7 @@ class TriggerDispatch:
 
     def get_steppers(self):
         return [s for trsync in self._trsyncs for s in trsync.get_steppers()]
+
     def start(self, print_time):
         reactor = self._mcu.get_printer().get_reactor()
         self._trigger_completion = reactor.completion()
@@ -336,18 +341,24 @@ class TriggerDispatch:
             expire_timeout = TRSYNC_SINGLE_MCU_TIMEOUT
         for i, trsync in enumerate(self._trsyncs):
             report_offset = float(i) / len(self._trsyncs)
-            trsync.start(print_time, report_offset,
-                         self._trigger_completion, expire_timeout)
+            trsync.start(
+                print_time,
+                report_offset,
+                self._trigger_completion,
+                expire_timeout,
+            )
         etrsync = self._trsyncs[0]
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trdispatch_start(self._trdispatch, etrsync.REASON_HOST_REQUEST)
         return self._trigger_completion
+
     def wait_end(self, end_time):
         etrsync = self._trsyncs[0]
         etrsync.set_home_end_time(end_time)
         if self._mcu.is_fileoutput():
             self._trigger_completion.complete(True)
         self._trigger_completion.wait()
+
     def stop(self):
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trdispatch_stop(self._trdispatch)
@@ -356,23 +367,28 @@ class TriggerDispatch:
             return MCU_trsync.REASON_COMMS_TIMEOUT
         return res[0]
 
+
 class MCU_endstop:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
-        self._pin = pin_params['pin']
-        self._pullup = pin_params['pullup']
-        self._invert = pin_params['invert']
+        self._pin = pin_params["pin"]
+        self._pullup = pin_params["pullup"]
+        self._invert = pin_params["invert"]
         self._oid = self._mcu.create_oid()
         self._home_cmd = self._query_cmd = None
         self._mcu.register_config_callback(self._build_config)
         self._rest_ticks = 0
         self._dispatch = TriggerDispatch(mcu)
+
     def get_mcu(self):
         return self._mcu
+
     def add_stepper(self, stepper):
         self._dispatch.add_stepper(stepper)
+
     def get_steppers(self):
         return self._dispatch.get_steppers()
+
     def _build_config(self):
         # Setup config
         self._mcu.add_config_cmd(
@@ -409,19 +425,28 @@ class MCU_endstop:
         self._rest_ticks = rest_ticks
         trigger_completion = self._dispatch.start(print_time)
         self._home_cmd.send(
-            [self._oid, clock, self._mcu.seconds_to_clock(sample_time),
-             sample_count, rest_ticks, triggered ^ self._invert,
-             self._dispatch.get_oid(), MCU_trsync.REASON_ENDSTOP_HIT],
-            reqclock=clock)
+            [
+                self._oid,
+                clock,
+                self._mcu.seconds_to_clock(sample_time),
+                sample_count,
+                rest_ticks,
+                triggered ^ self._invert,
+                self._dispatch.get_oid(),
+                MCU_trsync.REASON_ENDSTOP_HIT,
+            ],
+            reqclock=clock,
+        )
         return trigger_completion
+
     def home_wait(self, home_end_time):
         self._dispatch.wait_end(home_end_time)
         self._home_cmd.send([self._oid, 0, 0, 0, 0, 0, 0, 0])
         res = self._dispatch.stop()
         if res == MCU_trsync.REASON_COMMS_TIMEOUT:
-            return -1.
+            return -1.0
         if res != MCU_trsync.REASON_ENDSTOP_HIT:
-            return 0.
+            return 0.0
         if self._mcu.is_fileoutput():
             return home_end_time
         params = self._query_cmd.send([self._oid])
@@ -979,7 +1004,7 @@ class MCU:
         )
 
         # Resolve pin names
-        ppins = self._printer.lookup_object('pins')
+        ppins = self._printer.lookup_object("pins")
         pin_resolver = ppins.get_pin_resolver(self._name)
         for cmdlist in (local_config_cmds, self._restart_cmds, self._init_cmds):
             for i, cmd in enumerate(cmdlist):

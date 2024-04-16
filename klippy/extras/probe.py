@@ -417,20 +417,25 @@ class ProbeEndstopWrapper:
         for stepper in kin.get_steppers():
             if stepper.is_active_axis("z"):
                 self.add_stepper(stepper)
+
     def _raise_probe(self):
-        toolhead = self.printer.lookup_object('toolhead')
+        toolhead = self.printer.lookup_object("toolhead")
         start_pos = toolhead.get_position()
         self.deactivate_gcode.run_gcode_from_command()
-        if toolhead.get_position()[:3] != start_pos[:3]:
-            raise self.printer.command_error(
-                "Toolhead moved during probe activate_gcode script")
-    def _lower_probe(self):
-        toolhead = self.printer.lookup_object('toolhead')
-        start_pos = toolhead.get_position()
-        self.activate_gcode.run_gcode_from_command()
-        if toolhead.get_position()[:3] != start_pos[:3]:
+        position_pairs = zip(toolhead.get_position()[:3], start_pos[:3])
+        if any(abs(a - b) > 1e-6 for a, b in position_pairs):
             raise self.printer.command_error(
                 "Toolhead moved during probe deactivate_gcode script"
+            )
+
+    def _lower_probe(self):
+        toolhead = self.printer.lookup_object("toolhead")
+        start_pos = toolhead.get_position()
+        self.activate_gcode.run_gcode_from_command()
+        position_pairs = zip(toolhead.get_position()[:3], start_pos[:3])
+        if any(abs(a - b) > 1e-6 for a, b in position_pairs):
+            raise self.printer.command_error(
+                "Toolhead moved during probe activate_gcode script"
             )
 
     def multi_probe_begin(self):
@@ -442,18 +447,22 @@ class ProbeEndstopWrapper:
         if self.stow_on_each_sample:
             return
         self._raise_probe()
-        self.multi = 'OFF'
+        self.multi = "OFF"
+
     def probing_move(self, pos, speed):
-        phoming = self.printer.lookup_object('homing')
+        phoming = self.printer.lookup_object("homing")
         return phoming.probing_move(self, pos, speed)
+
     def probe_prepare(self, hmove):
-        if self.multi == 'OFF' or self.multi == 'FIRST':
+        if self.multi == "OFF" or self.multi == "FIRST":
             self._lower_probe()
-            if self.multi == 'FIRST':
-                self.multi = 'ON'
+            if self.multi == "FIRST":
+                self.multi = "ON"
+
     def probe_finish(self, hmove):
-        if self.multi == 'OFF':
+        if self.multi == "OFF":
             self._raise_probe()
+
     def get_position_endstop(self):
         return self.position_endstop
 
