@@ -33,6 +33,20 @@ class EncoderSensor:
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
         self.printer.register_event_handler(
+            "print_stats:start_printing", self._handle_printing_smart
+        )
+        self.printer.register_event_handler(
+            "print_stats:complete_printing", self._handle_not_printing_smart
+        )
+        self.printer.register_event_handler(
+            "print_stats:cancelled_printing",
+            self._handle_not_printing_smart,
+        )
+        self.printer.register_event_handler(
+            "print_stats:paused_printing", self._handle_not_printing_smart
+        )
+
+        self.printer.register_event_handler(
             "idle_timeout:printing", self._handle_printing
         )
         self.printer.register_event_handler(
@@ -58,16 +72,31 @@ class EncoderSensor:
         self._extruder_pos_update_timer = self.reactor.register_timer(
             self._extruder_pos_update_event
         )
+        self.runout_helper.note_filament_present(True)
 
     def _handle_printing(self, *args):
-        self.reactor.update_timer(
-            self._extruder_pos_update_timer, self.reactor.NOW
-        )
+        if not self.runout_helper.smart:
+            self.reactor.update_timer(
+                self._extruder_pos_update_timer, self.reactor.NOW
+            )
+
+    def _handle_printing_smart(self, *args):
+        if self.runout_helper.smart:
+            self.reactor.update_timer(
+                self._extruder_pos_update_timer, self.reactor.NOW
+            )
 
     def _handle_not_printing(self, *args):
-        self.reactor.update_timer(
-            self._extruder_pos_update_timer, self.reactor.NEVER
-        )
+        if not self.runout_helper.smart:
+            self.reactor.update_timer(
+                self._extruder_pos_update_timer, self.reactor.NEVER
+            )
+
+    def _handle_not_printing_smart(self, *args):
+        if self.runout_helper.smart:
+            self.reactor.update_timer(
+                self._extruder_pos_update_timer, self.reactor.NEVER
+            )
 
     def get_extruder_pos(self, eventtime=None):
         if eventtime is None:

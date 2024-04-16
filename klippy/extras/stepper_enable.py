@@ -198,9 +198,7 @@ class PrinterStepperEnable:
                     steppers = rail.get_steppers()
                     rail_name = rail.mcu_stepper.get_name(True)
                     for stepper in steppers:
-                        self.stepper_off(
-                            stepper.get_name(), print_time, rail_name
-                        )
+                        self.stepper_off(stepper.get_name(), print_time, rail_name)
             except IndexError:
                 continue
         self.printer.send_event("stepper_enable:axes_off", print_time)
