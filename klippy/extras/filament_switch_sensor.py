@@ -39,6 +39,10 @@ class RunoutHelper:
         #     "check_runout_timeout", None, above=0
         # )
         self.check_runout_timeout = CHECK_RUNOUT_TIMEOUT
+        if get_danger_options().modify_check_runout_timeout:
+            self.check_runout_timeout = self.config.getfloat(
+                "check_runout_timeout", self.check_runout_timeout, above=0
+            )
         self.runout_distance = runout_distance
         # Internal state
         self.min_event_systime = self.reactor.NEVER
@@ -77,10 +81,6 @@ class RunoutHelper:
         #     )
         # if self.check_runout_timeout is None:
         #     self.check_runout_timeout = CHECK_RUNOUT_TIMEOUT
-        if get_danger_options().modify_check_runout_timeout:
-            self.check_runout_timeout = self.config.getfloat(
-                "check_runout_timeout", CHECK_RUNOUT_TIMEOUT, above=0
-            )
 
     def _runout_event_handler(self, eventtime):
         if self.immediate_runout_gcode is not None:
