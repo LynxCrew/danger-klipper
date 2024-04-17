@@ -221,6 +221,7 @@ class PrinterProbe:
             # Probe position
             pos = self._probe(speed)
             if self.drop_first_result and first_probe:
+                gcmd.respond_info("Settling sample (ignored)...")
                 first_probe = False
                 liftpos = [None, None, pos[2] + sample_retract_dist]
                 self._move(liftpos, lift_speed)
@@ -247,9 +248,17 @@ class PrinterProbe:
     cmd_PROBE_help = "Probe Z-height at current XY position"
 
     def cmd_PROBE(self, gcmd):
+        drop_first_result = gcmd.get_int(
+            "DROP_FIRST_RESULT", self.drop_first_result
+        )
+        original_drop_first_result = self.drop_first_result
+        self.drop_first_result = drop_first_result
+
         pos = self.run_probe(gcmd)
         gcmd.respond_info("Result is z=%.6f" % (pos[2],))
         self.last_z_result = pos[2]
+
+        self.drop_first_result = original_drop_first_result
 
     cmd_QUERY_PROBE_help = "Return the status of the z-probe"
 
@@ -270,6 +279,12 @@ class PrinterProbe:
     cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
 
     def cmd_PROBE_ACCURACY(self, gcmd):
+        drop_first_result = gcmd.get_int(
+            "DROP_FIRST_RESULT", self.drop_first_result
+        )
+        original_drop_first_result = self.drop_first_result
+        self.drop_first_result = drop_first_result
+
         speed = gcmd.get_float("PROBE_SPEED", self.speed, above=0.0)
         lift_speed = self.get_lift_speed(gcmd)
         sample_count = gcmd.get_int("SAMPLES", 10, minval=1)
@@ -301,6 +316,7 @@ class PrinterProbe:
             # Probe position
             pos = self._probe(speed)
             if self.drop_first_result and first_probe:
+                gcmd.respond_info("Settling sample (ignored)...")
                 first_probe = False
                 liftpos = [None, None, pos[2] + sample_retract_dist]
                 self._move(liftpos, lift_speed)
@@ -328,6 +344,8 @@ class PrinterProbe:
             % (max_value, min_value, range_value, avg_value, median, sigma)
         )
 
+        self.drop_first_result = original_drop_first_result
+
     def probe_calibrate_finalize(self, kin_pos):
         if kin_pos is None:
             return
@@ -343,6 +361,12 @@ class PrinterProbe:
     cmd_PROBE_CALIBRATE_help = "Calibrate the probe's z_offset"
 
     def cmd_PROBE_CALIBRATE(self, gcmd):
+        drop_first_result = gcmd.get_int(
+            "DROP_FIRST_RESULT", self.drop_first_result
+        )
+        original_drop_first_result = self.drop_first_result
+        self.drop_first_result = drop_first_result
+
         manual_probe.verify_no_manual_probe(self.printer)
         # Perform initial probe
         lift_speed = self.get_lift_speed(gcmd)
@@ -359,6 +383,8 @@ class PrinterProbe:
         manual_probe.ManualProbeHelper(
             self.printer, gcmd, self.probe_calibrate_finalize
         )
+
+        self.drop_first_result = original_drop_first_result
 
     def cmd_Z_OFFSET_APPLY_PROBE(self, gcmd):
         offset = self.gcode_move.get_status()["homing_origin"].z
