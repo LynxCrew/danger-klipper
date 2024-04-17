@@ -49,6 +49,7 @@ class DangerOptions:
         self.modify_check_runout_timeout = config.getboolean(
             "modify_check_runout_timeout", False
         )
+        self.backup_folder = config.get("backup_folder", "config_backups")
         self.autosave_includes = config.getboolean("autosave_includes", False)
 
         self.bgflush_extra_time = config.getfloat(

@@ -582,7 +582,7 @@ class PrinterConfig:
         # Define a directory for configuration backups so that include blocks
         # using a wildcard to reference all files in a directory don't throw
         # errors
-        backupdir = os.path.join(configdir, "Config_Backups")
+        backupdir = os.path.join(configdir, get_danger_options().backup_folder)
         # Create the backup directory if it doesn't already exist
         if not os.path.exists(backupdir):
             os.mkdir(backupdir)
