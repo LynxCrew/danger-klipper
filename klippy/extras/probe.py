@@ -219,13 +219,14 @@ class PrinterProbe:
         first_probe = True
         while len(positions) < sample_count:
             # Probe position
-            pos = self._probe(speed)
             if self.drop_first_result and first_probe:
                 gcmd.respond_info("Settling sample (ignored)...")
+                pos = self._probe(speed)
                 first_probe = False
                 liftpos = [None, None, pos[2] + sample_retract_dist]
                 self._move(liftpos, lift_speed)
                 continue
+            pos = self._probe(speed)
             positions.append(pos)
             # Check samples tolerance
             z_positions = [p[2] for p in positions]
@@ -314,13 +315,14 @@ class PrinterProbe:
         first_probe = True
         while len(positions) < sample_count:
             # Probe position
-            pos = self._probe(speed)
             if self.drop_first_result and first_probe:
                 gcmd.respond_info("Settling sample (ignored)...")
+                pos = self._probe(speed)
                 first_probe = False
                 liftpos = [None, None, pos[2] + sample_retract_dist]
                 self._move(liftpos, lift_speed)
                 continue
+            pos = self._probe(speed)
             positions.append(pos)
             # Retract
             liftpos = [None, None, pos[2] + sample_retract_dist]
