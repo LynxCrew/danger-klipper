@@ -366,6 +366,7 @@ class TMCCommandHelper:
         home_current = gcmd.get_float(
             "HOMECURRENT", None, above=0.0, maxval=max_cur
         )
+        verbose = gcmd.get("VERBOSE", "low")
         if (
             run_current is not None
             or hold_current is not None
@@ -388,16 +389,17 @@ class TMCCommandHelper:
                 prev_home_cur,
             ) = ch.get_current()
         # Report values
-        if prev_hold_cur is None:
-            gcmd.respond_info(
-                "Run Current: %0.2fA Home Current: %0.2fA"
-                % (prev_cur, prev_home_cur)
-            )
-        else:
-            gcmd.respond_info(
-                "Run Current: %0.2fA Hold Current: %0.2fA Home Current: %0.2fA"
-                % (prev_cur, prev_hold_cur, prev_home_cur)
-            )
+        if verbose.lower() == "low" or verbose.lower() == "high":
+            if prev_hold_cur is None:
+                gcmd.respond_info(
+                    "Run Current: %0.2fA Home Current: %0.2fA"
+                    % (prev_cur, prev_home_cur)
+                )
+            else:
+                gcmd.respond_info(
+                    "Run Current: %0.2fA Hold Current: %0.2fA Home Current: %0.2fA"
+                    % (prev_cur, prev_hold_cur, prev_home_cur)
+                )
 
     # Stepper phase tracking
     def _get_phases(self):

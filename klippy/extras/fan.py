@@ -129,7 +129,8 @@ class Fan:
                 (lambda pt: self.set_speed(pt, 1.0, force=True))
             )
             reactor.register_timer(
-                self.startup_self_check, reactor.monotonic() + SAFETY_CHECK_INIT_TIME
+                self.startup_self_check,
+                reactor.monotonic() + SAFETY_CHECK_INIT_TIME,
             )
 
     def startup_self_check(self, eventtime):
