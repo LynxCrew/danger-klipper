@@ -432,7 +432,7 @@ class PrinterRail:
         self.endstops = []
         self.endstop_map = {}
         stepper_config = stepper_config or config
-        self.add_extra_stepper(stepper_config)
+        self.add_extra_stepper(stepper_config, config)
         self.mcu_stepper = self.steppers[0]
         self._tmc_current_helpers = None
         self.get_name = self.mcu_stepper.get_name
@@ -569,14 +569,16 @@ class PrinterRail:
     def get_endstops(self):
         return list(self.endstops)
 
-    def add_extra_stepper(self, config):
+    def add_extra_stepper(self, config, axis_config=None):
+        axis_config = axis_config or config
         stepper = PrinterStepper(config, self.stepper_units_in_radians)
         self.steppers.append(stepper)
-        if self.endstops and config.get("endstop_pin", None) is None:
+        if self.endstops and axis_config.get("endstop_pin", None) is None:
             # No endstop defined - use primary endstop
             self.endstops[0][0].add_stepper(stepper)
             return
-        endstop_pin = config.get("endstop_pin")
+
+        endstop_pin = axis_config.get("endstop_pin")
         printer = config.get_printer()
         ppins = printer.lookup_object("pins")
         pin_params = ppins.parse_pin(endstop_pin, True, True)
@@ -640,5 +642,5 @@ def LookupMultiRail(
         stepper_config = stepper_config or config
         if not config.has_section(stepper_config.get_name() + str(i)):
             break
-        rail.add_extra_stepper(config.getsection(stepper_config.get_name() + str(i)))
+        rail.add_extra_stepper(config.getsection(stepper_config.get_name() + str(i)), config)
     return rail
