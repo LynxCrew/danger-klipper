@@ -18,12 +18,18 @@ class CoreXYKinematics:
             )
         elif self.zerog_stepper_def:
             self.rails = [
-                stepper.LookupMultiRail(config.getsection("axis_" + n[0]), stepper_config=config.getsection("stepper_" + n[1]))
+                stepper.LookupMultiRail(
+                    config.getsection("axis_" + n[0]),
+                    stepper_config=config.getsection("stepper_" + n[1]),
+                )
                 for n in [["x", "a"], ["y", "b"], ["z", "z"]]
             ]
         elif self.voron_stepper_def:
             self.rails = [
-                stepper.LookupMultiRail(config.getsection("axis_" + n[0]), stepper_config=config.getsection("stepper_" + n[1]))
+                stepper.LookupMultiRail(
+                    config.getsection("axis_" + n[0]),
+                    stepper_config=config.getsection("stepper_" + n[1]),
+                )
                 for n in [["x", "b"], ["y", "a"], ["z", "z"]]
             ]
         else:

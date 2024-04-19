@@ -424,7 +424,7 @@ class PrinterRail:
         need_position_minmax=True,
         default_position_endstop=None,
         units_in_radians=False,
-        stepper_config=None
+        stepper_config=None,
     ):
         # Primary stepper and endstop
         self.stepper_units_in_radians = units_in_radians
@@ -636,11 +636,17 @@ def LookupMultiRail(
     stepper_config=None,
 ):
     rail = PrinterRail(
-        config, need_position_minmax, default_position_endstop, units_in_radians, stepper_config
+        config,
+        need_position_minmax,
+        default_position_endstop,
+        units_in_radians,
+        stepper_config,
     )
     for i in range(1, 99):
         stepper_config = stepper_config or config
         if not config.has_section(stepper_config.get_name() + str(i)):
             break
-        rail.add_extra_stepper(config.getsection(stepper_config.get_name() + str(i)), config)
+        rail.add_extra_stepper(
+            config.getsection(stepper_config.get_name() + str(i)), config
+        )
     return rail
