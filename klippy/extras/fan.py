@@ -125,7 +125,7 @@ class Fan:
             self.set_speed(reactor.monotonic(), 1.0, force=True)
             toolhead = self.printer.lookup_object("toolhead")
             toolhead.dwell(2)
-            self.fan_check(reactor.monotonic())
+            self.fan_check(reactor.monotonic(), force=True)
             self.set_speed(reactor.monotonic(), 0.0, force=True)
 
 
@@ -180,11 +180,11 @@ class Fan:
             "rpm": tachometer_status["rpm"],
         }
 
-    def fan_check(self, eventtime):
+    def fan_check(self, eventtime, force=False):
         rpm = self.tachometer.get_status(eventtime)["rpm"]
         if self.last_fan_value and rpm is not None and rpm < self.min_rpm:
             self.num_err += 1
-            if self.num_err > self.max_err:
+            if self.num_err > self.max_err or force:
                 msg = (
                     "'%s' spinning below minimum safe speed.\nexpected: %d rev/min\nactual: %d rev/min"
                     % (self.name, self.min_rpm, rpm)
