@@ -123,11 +123,19 @@ class Fan:
             )
         if self.startup_check:
             self.set_speed(reactor.monotonic(), 1.0, force=True)
-            toolhead = self.printer.lookup_object("toolhead")
-            toolhead.dwell(2)
-            self.fan_check(reactor.monotonic(), force=True)
-            self.set_speed(reactor.monotonic(), 0.0, force=True)
+            reactor.register_timer(
+                self.startup_self_check, reactor.monotonic() + SAFETY_CHECK_INIT_TIME
+            )
 
+    def startup_self_check(self, eventtime):
+        self.fan_check(eventtime, force=True)
+        toolhead = self.printer.lookup_object("toolhead")
+        toolhead.dwell(1.0)
+        toolhead.register_lookahead_callback(
+            (lambda pt: self.set_speed(pt, 0.0))
+        )
+        reactor = self.printer.get_reactor()
+        return reactor.NEVER
 
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
