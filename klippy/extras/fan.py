@@ -100,6 +100,7 @@ class Fan:
             self.max_err = 3
         if self.startup_check is None:
             self.startup_check = False
+        self.self_checking = False
 
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         # Register callbacks
@@ -122,6 +123,7 @@ class Fan:
                 self.fan_check, reactor.monotonic() + SAFETY_CHECK_INIT_TIME
             )
         if self.startup_check:
+            self.self_checking = True
             self.set_speed(reactor.monotonic(), 1.0, force=True)
             reactor.register_timer(
                 self.startup_self_check, reactor.monotonic() + SAFETY_CHECK_INIT_TIME
@@ -134,6 +136,7 @@ class Fan:
         toolhead.register_lookahead_callback(
             (lambda pt: self.set_speed(pt, 0.0))
         )
+        self.self_checking = False
         reactor = self.printer.get_reactor()
         return reactor.NEVER
 
@@ -142,6 +145,8 @@ class Fan:
 
     def set_speed(self, print_time, value, force=False):
         if value == self.last_fan_value and not force:
+            return
+        if self.self_checking and not force:
             return
         if value > 0:
             # Scale value between min_power and max_power
