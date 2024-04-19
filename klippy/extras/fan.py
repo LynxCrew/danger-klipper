@@ -125,9 +125,9 @@ class Fan:
         if self.startup_check:
             self.self_checking = True
             self.set_speed(reactor.monotonic(), 1.0, force=True)
-            reactor.register_timer(
-                self.startup_self_check, reactor.monotonic() + 10
-            )
+            # reactor.register_timer(
+            #     self.startup_self_check, reactor.monotonic() + 10
+            # )
 
     def startup_self_check(self, eventtime):
         self.fan_check(eventtime, force=True)
