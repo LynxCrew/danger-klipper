@@ -77,6 +77,7 @@ class Fan:
         self.num_err = 0
         self.min_rpm = config.getint("min_rpm", None, minval=0)
         self.max_err = config.getint("max_error", None, minval=0)
+        self.startup_check = config.getboolean("startup_check", None)
         if (
             self.min_rpm is not None
             and self.min_rpm > 0
@@ -89,10 +90,16 @@ class Fan:
             raise config.error(
                 "'min_rpm' must be specified before enabling 'max_error'"
             )
+        if self.startup_check is not None and self.min_rpm is None:
+            raise config.error(
+                "'min_rpm' must be specified before enabling 'startup_check'"
+            )
         if self.min_rpm is None:
             self.min_rpm = 0
         if self.max_err is None:
             self.max_err = 3
+        if self.startup_check is None:
+            self.startup_check = False
 
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         # Register callbacks
@@ -114,6 +121,13 @@ class Fan:
             reactor.register_timer(
                 self.fan_check, reactor.monotonic() + SAFETY_CHECK_INIT_TIME
             )
+        if self.startup_check:
+            self.set_speed(reactor.monotonic(), 1.0, force=True)
+            toolhead = self.printer.lookup_object("toolhead")
+            toolhead.dwell(2)
+            self.fan_check(reactor.monotonic())
+            self.set_speed(reactor.monotonic(), 0.0, force=True)
+
 
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
