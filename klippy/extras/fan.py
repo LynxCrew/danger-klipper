@@ -159,8 +159,10 @@ class Fan:
         else:
             pwm_value = 0
         print_time = max(self.last_fan_time + FAN_MIN_TIME, print_time)
+        self.pwm_value = pwm_value
+        self.last_fan_value = value
         if not self.self_checking or force:
-            if self.enable_pin and (not self.self_checking or force):
+            if self.enable_pin:
                 if value > 0 and self.last_fan_value == 0:
                     self.enable_pin.set_digital(print_time, 1)
                 elif value == 0 and self.last_fan_value > 0:
@@ -175,11 +177,8 @@ class Fan:
                 if not self.self_checking or force:
                     self.mcu_fan.set_pwm(print_time, self.max_power)
                 print_time += self.kick_start_time
-        self.pwm_value = pwm_value
-        if not self.self_checking or force:
             self.mcu_fan.set_pwm(print_time, pwm_value)
         self.last_fan_time = print_time
-        self.last_fan_value = value
 
     def set_speed_from_command(self, value):
         toolhead = self.printer.lookup_object("toolhead")
