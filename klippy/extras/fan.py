@@ -139,7 +139,7 @@ class Fan:
         toolhead.dwell(1.0)
         self.self_checking = False
         toolhead.register_lookahead_callback(
-            (lambda pt: self.set_speed(pt, 0.0))
+            (lambda pt: self.set_speed(pt, self.pwm_value))
         )
         reactor = self.printer.get_reactor()
         return reactor.NEVER
