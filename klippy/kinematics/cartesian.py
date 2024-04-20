@@ -13,10 +13,20 @@ class CartKinematics:
         # Setup axis rails
         self.dual_carriage_axis = None
         self.dual_carriage_rails = []
-        self.rails = [
-            stepper.LookupMultiRail(config.getsection("stepper_" + n))
-            for n in "xyz"
-        ]
+        self.improved_axes_def = config.getboolean("improved_axes_def", False)
+        if self.improved_axes_def:
+            self.rails = [
+                stepper.LookupMultiRail(
+                    config.getsection("axis_" + n),
+                    stepper_config=config.getsection("stepper_" + n),
+                )
+                for n in "xyz"
+            ]
+        else:
+            self.rails = [
+                stepper.LookupMultiRail(config.getsection("stepper_" + n))
+                for n in "xyz"
+            ]
         for rail, axis in zip(self.rails, "xyz"):
             rail.setup_itersolve("cartesian_stepper_alloc", axis.encode())
         ranges = [r.get_range() for r in self.rails]

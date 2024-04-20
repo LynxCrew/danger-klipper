@@ -10,13 +10,13 @@ class CoreXYKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
         # Setup axis rails
-        self.voron_stepper_def = config.getboolean("voron_stepper_def", False)
-        self.zerog_stepper_def = config.getboolean("zerog_stepper_def", False)
-        if self.voron_stepper_def and self.zerog_stepper_def:
+        self.voron_axes_def = config.getboolean("voron_axes_def", False)
+        self.zerog_axes_def = config.getboolean("zerog_axes_def", False)
+        if self.voron_axes_def and self.zerog_axes_def:
             raise config.error(
-                "'voron_stepper_def' and 'zerog_stepper_def' can not be defined at the same time"
+                "'voron_axes_def' and 'zerog_axes_def' can not be defined at the same time"
             )
-        elif self.zerog_stepper_def:
+        elif self.zerog_axes_def:
             self.rails = [
                 stepper.LookupMultiRail(
                     config.getsection("axis_" + n[0]),
@@ -24,7 +24,7 @@ class CoreXYKinematics:
                 )
                 for n in [["x", "a"], ["y", "b"], ["z", "z"]]
             ]
-        elif self.voron_stepper_def:
+        elif self.voron_axes_def:
             self.rails = [
                 stepper.LookupMultiRail(
                     config.getsection("axis_" + n[0]),

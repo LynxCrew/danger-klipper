@@ -171,7 +171,9 @@ class Fan:
                 value
                 and value < self.max_power
                 and self.kick_start_time
-                and (not self.last_fan_value or value - self.last_fan_value > 0.5)
+                and (
+                    not self.last_fan_value or value - self.last_fan_value > 0.5
+                )
             ):
                 # Run fan at full speed for specified kick_start_time
                 if not self.self_checking or force:
