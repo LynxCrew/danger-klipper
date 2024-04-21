@@ -484,7 +484,8 @@ class PrinterExtruder:
                     config.getsection(
                         "hotend" + self.name.replace("extruder", "")
                     ),
-                    gcode_id,
+                    gcode_id=gcode_id,
+                    heater_name=self.name
                 )
             else:
                 self.heater = pheaters.setup_heater(config, gcode_id)
