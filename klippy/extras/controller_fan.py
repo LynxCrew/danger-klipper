@@ -33,7 +33,7 @@ class ControllerFan:
             "idle_speed", default=self.fan_speed, minval=0.0, maxval=1.0
         )
         self.idle_timeout = config.getint("idle_timeout", default=30, minval=-1)
-        self.heater_names = config.getlist("heater", ("extruder",))
+        self.heater_names = config.getlist("heater", ("hotend",))
         self.last_on = self.idle_timeout
         self.last_speed = 0.0
         self.enabled = True
