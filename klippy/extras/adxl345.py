@@ -248,7 +248,7 @@ class AccelCommandHelper:
             accel_y = sum([y for (_, x, y, z) in samples]) / len(samples)
             accel_z = sum([z for (_, x, y, z) in samples]) / len(samples)
 
-            return_type = gcmd.get("RETURN", "vector")
+            return_type = gcmd.get("RETURN", "vector").lower()
             if return_type == "tilt":
                 tilt_x = math.degrees(math.atan2(accel_x, accel_z))
                 tilt_y = math.degrees(math.atan2(accel_y, accel_z))
