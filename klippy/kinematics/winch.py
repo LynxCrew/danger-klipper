@@ -8,6 +8,7 @@ import stepper, mathutil
 
 class WinchKinematics:
     def __init__(self, toolhead, config):
+        self.improved_axes_def = config.getboolean("improved_axes_def", False)
         # Setup steppers at each anchor
         self.steppers = []
         self.anchors = []

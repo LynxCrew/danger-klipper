@@ -9,6 +9,7 @@ class NoneKinematics:
     def __init__(self, toolhead, config):
         self.axes_minmax = toolhead.Coord(0.0, 0.0, 0.0, 0.0)
         self.supports_dual_carriage = False
+        self.improved_axes_def = config.getboolean("improved_axes_def", False)
 
     def get_rails(self):
         return []

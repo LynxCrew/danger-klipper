@@ -13,30 +13,22 @@ class CoreXYKinematics:
         self.improved_axes_def = config.getboolean("improved_axes_def", False)
         if self.improved_axes_def:
             self.voron_axes_def = config.getboolean("voron_axes_def", False)
-            self.zerog_axes_def = config.getboolean("zerog_axes_def", False)
-        else:
-            self.voron_axes_def = False
-            self.zerog_axes_def = False
-        if self.voron_axes_def and self.zerog_axes_def:
-            raise config.error(
-                "'voron_axes_def' and 'zerog_axes_def' can not be defined at the same time"
-            )
-        elif self.zerog_axes_def:
-            self.rails = [
-                stepper.LookupMultiRail(
-                    config.getsection("axis_" + n[0]),
-                    stepper_config=config.getsection("stepper_" + n[1]),
-                )
-                for n in [["x", "a"], ["y", "b"], ["z", "z"]]
-            ]
-        elif self.voron_axes_def:
-            self.rails = [
-                stepper.LookupMultiRail(
-                    config.getsection("axis_" + n[0]),
-                    stepper_config=config.getsection("stepper_" + n[1]),
-                )
-                for n in [["x", "b"], ["y", "a"], ["z", "z"]]
-            ]
+            if self.voron_axes_def:
+                self.rails = [
+                    stepper.LookupMultiRail(
+                        config.getsection("axis_" + n[0]),
+                        stepper_config=config.getsection("stepper_" + n[1]),
+                    )
+                    for n in [["x", "b"], ["y", "a"], ["z", "z"]]
+                ]
+            else:
+                self.rails = [
+                    stepper.LookupMultiRail(
+                        config.getsection("axis_" + n[0]),
+                        stepper_config=config.getsection("stepper_" + n[1]),
+                    )
+                    for n in [["x", "a"], ["y", "b"], ["z", "z"]]
+                ]
         else:
             self.rails = [
                 stepper.LookupMultiRail(config.getsection("stepper_" + n))

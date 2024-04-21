@@ -13,6 +13,7 @@ SLOW_RATIO = 3.0
 class DeltaKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
+        self.improved_axes_def = config.getboolean("improved_axes_def", False)
         # Setup tower rails
         stepper_configs = [config.getsection("stepper_" + a) for a in "abc"]
         rail_a = stepper.LookupMultiRail(

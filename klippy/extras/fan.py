@@ -130,7 +130,7 @@ class Fan:
             )
             reactor.register_timer(
                 self.startup_self_check,
-                reactor.monotonic() + SAFETY_CHECK_INIT_TIME,
+                reactor.monotonic() + (2 * SAFETY_CHECK_INIT_TIME),
             )
 
     def startup_self_check(self, eventtime):

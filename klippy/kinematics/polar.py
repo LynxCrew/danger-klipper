@@ -10,6 +10,7 @@ import stepper
 class PolarKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
+        self.improved_axes_def = config.getboolean("improved_axes_def", False)
         # Setup axis steppers
         stepper_bed = stepper.PrinterStepper(
             config.getsection("stepper_bed"), units_in_radians=True

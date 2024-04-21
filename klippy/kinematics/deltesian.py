@@ -16,6 +16,7 @@ MIN_ANGLE = 5.0
 class DeltesianKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
+        self.improved_axes_def = config.getboolean("improved_axes_def", False)
         self.rails = [None] * 3
         stepper_configs = [
             config.getsection("stepper_" + s) for s in ["left", "right", "y"]

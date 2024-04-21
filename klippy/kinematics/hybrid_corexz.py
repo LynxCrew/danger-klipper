@@ -11,6 +11,7 @@ from . import idex_modes
 class HybridCoreXZKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
+        self.improved_axes_def = config.getboolean("improved_axes_def", False)
         printer_config = config.getsection("printer")
         # itersolve parameters
         self.rails = [
