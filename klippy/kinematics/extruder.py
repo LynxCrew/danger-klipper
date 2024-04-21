@@ -482,7 +482,7 @@ class PrinterExtruder:
             if kin.improved_axes_def and self.name.startswith("extruder"):
                 self.heater = pheaters.setup_heater(
                     config.getsection(
-                        "hotend" + self.name.replacer("extruder", "")
+                        "hotend" + self.name.replace("extruder", "")
                     ),
                     gcode_id,
                 )
