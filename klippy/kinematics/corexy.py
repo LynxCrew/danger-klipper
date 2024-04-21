@@ -12,8 +12,8 @@ class CoreXYKinematics:
         # Setup axis rails
         self.improved_axes_def = config.getboolean("improved_axes_def", False)
         if self.improved_axes_def:
-            self.voron_axes_def = config.getboolean("voron_axes_def", False)
-            self.zerog_axes_def = config.getboolean("zerog_axes_def", False)
+            self.voron_axes_def = config.getboolean("vorons_axes_def", False)
+            self.zerog_axes_def = config.getboolean("zerogs_axes_def", False)
         else:
             self.voron_axes_def = False
             self.zerog_axes_def = False
