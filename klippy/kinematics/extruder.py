@@ -485,8 +485,7 @@ class PrinterExtruder:
                         "hotend" + self.name.replace("extruder", "")
                     ),
                     gcode_id=gcode_id,
-                    heater_name=self.name,
-                    config_name=self.name,
+                    heater_name=self.name
                 )
             else:
                 self.heater = pheaters.setup_heater(config, gcode_id)
