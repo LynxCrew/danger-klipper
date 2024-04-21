@@ -478,16 +478,7 @@ class PrinterExtruder:
         toolhead = self.printer.lookup_object("toolhead")
         gcode_id = "T%d" % (extruder_num,)
         if shared_heater is None:
-            kin = toolhead.get_kinematics()
-            if kin.improved_axes_def and self.name.startswith("extruder"):
-                self.heater = pheaters.setup_heater(
-                    config.getsection(
-                        "hotend" + self.name.replacer("extruder", "")
-                    ),
-                    gcode_id,
-                )
-            else:
-                self.heater = pheaters.setup_heater(config, gcode_id)
+            self.heater = pheaters.setup_heater(config, gcode_id)
         else:
             config.deprecate("shared_heater")
             self.heater = pheaters.lookup_heater(shared_heater)
