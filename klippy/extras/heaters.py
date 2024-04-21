@@ -1004,8 +1004,8 @@ class PrinterHeaters:
     def add_sensor_factory(self, sensor_type, sensor_factory):
         self.sensor_factories[sensor_type] = sensor_factory
 
-    def setup_heater(self, config, gcode_id=None, heater_name=None):
-        heater_name = heater_name or config.get_name().split()[-1]
+    def setup_heater(self, config, gcode_id=None):
+        heater_name = config.get_name().split()[-1]
         if heater_name in self.heaters:
             raise config.error("Heater %s already registered" % (heater_name,))
         # Setup sensor
