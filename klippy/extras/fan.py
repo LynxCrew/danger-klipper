@@ -78,6 +78,7 @@ class Fan:
         self.min_rpm = config.getint("min_rpm", None, minval=0)
         self.max_err = config.getint("max_error", None, minval=0)
         self.startup_check = config.getboolean("startup_check", None)
+        self.startup_check_delay = config.getfloat("startup_check_delay", None)
         if (
             self.min_rpm is not None
             and self.min_rpm > 0
@@ -94,12 +95,16 @@ class Fan:
             raise config.error(
                 "'min_rpm' must be specified before enabling 'startup_check'"
             )
-        if self.min_rpm is None:
-            self.min_rpm = 0
-        if self.max_err is None:
-            self.max_err = 3
-        if self.startup_check is None:
-            self.startup_check = False
+        if self.startup_check_delay is not None and self.startup_check is None:
+            raise config.error(
+                "'startup_check' must be enabled before enabling 'startup_check_delay'"
+            )
+        self.min_rpm = self.min_rpm or 0
+        self.max_err = self.max_err or 3
+        self.startup_check = self.startup_check or False
+        self.startup_check_delay = (
+            self.startup_check_delay or SAFETY_CHECK_INIT_TIME
+        )
         self.self_checking = False
 
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
@@ -134,15 +139,15 @@ class Fan:
         reactor = self.printer.get_reactor()
         reactor.register_timer(
             self.startup_self_check,
-            reactor.monotonic() + (2 * SAFETY_CHECK_INIT_TIME),
+            reactor.monotonic() + self.startup_check_delay,
         )
 
     def startup_self_check(self, eventtime):
         rpm = self.tachometer.get_status(eventtime)["rpm"]
         if rpm < self.min_rpm:
             msg = (
-                    "'%s' spinning below minimum safe speed.\nexpected: %d rev/min\nactual: %d rev/min"
-                    % (self.name, self.min_rpm, rpm)
+                "'%s' spinning below minimum safe speed.\nexpected: %d rev/min\nactual: %d rev/min"
+                % (self.name, self.min_rpm, rpm)
             )
             logging.error(msg)
             self.printer.invoke_shutdown(msg)
