@@ -146,7 +146,9 @@ class Fan:
         rpm = self.tachometer.get_status(eventtime)["rpm"]
         if rpm < self.min_rpm:
             msg = (
-                "'%s' spinning below minimum safe speed.\nexpected: %d rev/min\nactual: %d rev/min"
+                "'%s' spinning below minimum safe speed.\n"
+                "expected: %d rev/min\n"
+                "actual: %d rev/min"
                 % (self.name, self.min_rpm, rpm)
             )
             logging.error(msg)
