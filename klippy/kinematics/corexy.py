@@ -10,8 +10,13 @@ class CoreXYKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
         # Setup axis rails
-        self.voron_axes_def = config.getboolean("voron_axes_def", False)
-        self.zerog_axes_def = config.getboolean("zerog_axes_def", False)
+        self.improved_axes_def = config.getboolean("improved_axes_def", False)
+        if self.improved_axes_def:
+            self.voron_axes_def = config.getboolean("voron_axes_def", False)
+            self.zerog_axes_def = config.getboolean("zerog_axes_def", False)
+        else:
+            self.voron_axes_def = False
+            self.zerog_axes_def = False
         if self.voron_axes_def and self.zerog_axes_def:
             raise config.error(
                 "'voron_axes_def' and 'zerog_axes_def' can not be defined at the same time"
