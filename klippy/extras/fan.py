@@ -126,7 +126,7 @@ class Fan:
             self.self_checking = True
             toolhead = self.printer.lookup_object("toolhead")
             toolhead.register_lookahead_callback(
-                (lambda pt: self.set_speed(pt, 1.0, force=True))
+                (lambda pt: self.mcu_fan.set_pwm(pt, self.max_power))
             )
             reactor.register_timer(
                 self.startup_self_check,
@@ -134,12 +134,12 @@ class Fan:
             )
 
     def startup_self_check(self, eventtime):
-        self.fan_check(eventtime, force=True)
+        self.startup_fan_check(eventtime)
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.dwell(1.0)
         self.self_checking = False
         toolhead.register_lookahead_callback(
-            (lambda pt: self.set_speed(pt, self.pwm_value))
+            (lambda pt: self.set_speed(pt, self.pwm_value, force=True))
         )
         reactor = self.printer.get_reactor()
         return reactor.NEVER
@@ -176,8 +176,7 @@ class Fan:
                 )
             ):
                 # Run fan at full speed for specified kick_start_time
-                if not self.self_checking or force:
-                    self.mcu_fan.set_pwm(print_time, self.max_power)
+                self.mcu_fan.set_pwm(print_time, self.max_power)
                 print_time += self.kick_start_time
             self.mcu_fan.set_pwm(print_time, pwm_value)
         self.last_fan_time = print_time
@@ -214,6 +213,17 @@ class Fan:
         else:
             self.num_err = 0
         return eventtime + 1.5
+
+    def startup_fan_check(self, eventtime):
+        rpm = self.tachometer.get_status(eventtime)["rpm"]
+        if rpm < self.min_rpm:
+            msg = (
+                "'%s' spinning below minimum safe speed.\nexpected: %d rev/min\nactual: %d rev/min"
+                % (self.name, self.min_rpm, rpm)
+            )
+            logging.error(msg)
+            self.printer.invoke_shutdown(msg)
+            return self.printer.get_reactor().NEVER
 
     cmd_SET_FAN_help = "Change settings for a fan"
 
