@@ -6,8 +6,6 @@
 import logging
 import math
 import os
-import threading
-import time
 import zlib
 import serialhdl, msgproto, pins, chelper, clocksync
 from extras.danger_options import get_danger_options
@@ -820,7 +818,9 @@ class MCU:
             if canbus_uuid:
                 raise error("CAN MCUs can't be non-critical yet!")
             if self.hot_plug:
-                self.non_critical_recon_thread = threading.Thread(target=self.non_critical_revon_event_new)
+                self.non_critical_recon_timer = self._reactor.register_timer(
+                    self.non_critical_recon_event
+                )
         self.non_critical_disconnected = False
         self._non_critical_reconnect_event_name = (
             f"danger:non_critical_mcu_{self.get_name()}:reconnected"
@@ -977,17 +977,11 @@ class MCU:
         self._clocksync.disconnect()
         self._disconnect()
         if self.hot_plug:
-            self.non_critical_recon_thread.start()
+            self._reactor.update_timer(
+                self.non_critical_recon_timer, self._reactor.NOW
+            )
         self._printer.send_event(self._non_critical_disconnect_event_name)
         self.gcode.respond_info(f"mcu: '{self._name}' disconnected!", log=True)
-
-    def non_critical_revon_event_new(self):
-        while not self.recon_mcu():
-            time.sleep(2.0)
-
-        self.gcode.respond_info(
-            f"mcu: '{self._name}' reconnected!", log=True
-        )
 
     def non_critical_recon_event(self, eventtime):
         success = self.recon_mcu()
@@ -1116,7 +1110,10 @@ class MCU:
     def _connect(self):
         if self.non_critical_disconnected:
             if self.hot_plug:
-                self.non_critical_recon_thread.start()
+                self._reactor.update_timer(
+                    self.non_critical_recon_timer,
+                    self._reactor.NOW + self.reconnect_interval,
+                )
             return
         config_params = self._send_get_config()
         if not config_params["is_config"]:
