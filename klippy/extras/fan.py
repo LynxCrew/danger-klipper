@@ -171,12 +171,10 @@ class Fan:
             )
             logging.error(msg)
             self.printer.invoke_shutdown(msg)
-        toolhead = self.printer.lookup_object("toolhead")
-        toolhead.dwell(1.0)
-        self.self_checking = False
-        toolhead.register_lookahead_callback(
+        self.printer.lookup_object("toolhead").register_lookahead_callback(
             (lambda pt: self.set_speed(pt, self.pwm_value, force=True))
         )
+        self.self_checking = False
         self.printer.get_reactor().unregister_timer(self.startup_check_timer)
         self.startup_check_timer = None
         return self.printer.get_reactor().NEVER
