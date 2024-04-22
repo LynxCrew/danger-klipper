@@ -79,6 +79,9 @@ class Fan:
         self.max_err = config.getint("max_error", None, minval=0)
         self.startup_check = config.getboolean("startup_check", None)
         self.startup_check_delay = config.getfloat("startup_check_delay", None)
+        self.startup_check_rpm = config.getfloat(
+            "startup_check_rpm", None, minval=0
+        )
         if (
             self.min_rpm is not None
             and self.min_rpm > 0
@@ -100,6 +103,11 @@ class Fan:
                 "'startup_check' must be enabled before enabling "
                 "'startup_check_delay'"
             )
+        if self.startup_check_rpm is not None and self.startup_check is None:
+            raise config.error(
+                "'startup_check' must be enabled before enabling "
+                "'startup_check_rpm'"
+            )
         self.min_rpm = 0 if self.min_rpm is None else self.min_rpm
         self.max_err = 3 if self.max_err is None else self.max_err
         self.startup_check = (
@@ -109,6 +117,11 @@ class Fan:
             SAFETY_CHECK_INIT_TIME
             if self.startup_check_delay is None
             else self.startup_check_delay
+        )
+        self.startup_check_rpm = (
+            self.min_rpm
+            if self.startup_check_rpm is None
+            else self.startup_check_rpm
         )
         self.self_checking = False
 
@@ -149,11 +162,11 @@ class Fan:
 
     def startup_self_check(self, eventtime):
         rpm = self.tachometer.get_status(eventtime)["rpm"]
-        if rpm < self.min_rpm:
+        if rpm < self.startup_check_rpm:
             msg = (
                 "'%s' spinning below minimum safe speed.\n"
                 "expected: %d rev/min\n"
-                "actual: %d rev/min" % (self.name, self.min_rpm, rpm)
+                "actual: %d rev/min" % (self.name, self.startup_check_rpm, rpm)
             )
             logging.error(msg)
             self.printer.invoke_shutdown(msg)
