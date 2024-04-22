@@ -24,7 +24,7 @@ class StepperEnablePin:
         self.last_value = 0
         self.resend_timer = None
         self.resend_interval = (
-            max_enable_time - RESEND_HOST_TIME if max_enable_time else 0.0
+            (max_enable_time - RESEND_HOST_TIME) if max_enable_time else 0.0
         )
         self.last_print_time = 0.0
 
