@@ -806,13 +806,21 @@ class MCU:
         if non_critical_mcus is not None and non_critical_mcus.enabled:
             self.is_non_critical = config.getboolean("is_non_critical", False)
         if self.is_non_critical and self.get_name() == "mcu":
-            raise error("Primary MCU cannot be marked as non-critical!")
-        if self.is_non_critical:
-            self.non_critical_recon_timer = self._reactor.register_timer(
-                self.non_critical_recon_event
+            raise config.error("Primary MCU cannot be marked as non-critical!")
+        self.hot_plug = config.getboolean("hot_plug", None)
+        if self.hot_plug is not None and not self.is_non_critical:
+            raise config.error(
+                "'is_non_critical' must be enabled before "
+                "enabling 'hot_plug'"
             )
+        self.hot_plug = True if self.hot_plug is None else self.hot_plug
+        if self.is_non_critical:
             if canbus_uuid:
                 raise error("CAN MCUs can't be non-critical yet!")
+            if self.hot_plug:
+                self.non_critical_recon_timer = self._reactor.register_timer(
+                    self.non_critical_recon_event
+                )
         self.non_critical_disconnected = False
         self._non_critical_reconnect_event_name = (
             f"danger:non_critical_mcu_{self.get_name()}:reconnected"
@@ -968,9 +976,10 @@ class MCU:
         self.non_critical_disconnected = True
         self._clocksync.disconnect()
         self._disconnect()
-        self._reactor.update_timer(
-            self.non_critical_recon_timer, self._reactor.NOW
-        )
+        if self.hot_plug:
+            self._reactor.update_timer(
+                self.non_critical_recon_timer, self._reactor.NOW
+            )
         self._printer.send_event(self._non_critical_disconnect_event_name)
         self.gcode.respond_info(f"mcu: '{self._name}' disconnected!", log=True)
 
@@ -1100,10 +1109,11 @@ class MCU:
 
     def _connect(self):
         if self.non_critical_disconnected:
-            self._reactor.update_timer(
-                self.non_critical_recon_timer,
-                self._reactor.NOW + self.reconnect_interval,
-            )
+            if self.hot_plug:
+                self._reactor.update_timer(
+                    self.non_critical_recon_timer,
+                    self._reactor.NOW + self.reconnect_interval,
+                )
             return
         config_params = self._send_get_config()
         if not config_params["is_config"]:

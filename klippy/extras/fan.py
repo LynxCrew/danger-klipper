@@ -97,13 +97,18 @@ class Fan:
             )
         if self.startup_check_delay is not None and self.startup_check is None:
             raise config.error(
-                "'startup_check' must be enabled before enabling 'startup_check_delay'"
+                "'startup_check' must be enabled before enabling "
+                "'startup_check_delay'"
             )
-        self.min_rpm = self.min_rpm or 0
-        self.max_err = self.max_err or 3
-        self.startup_check = self.startup_check or False
+        self.min_rpm = 0 if self.min_rpm is None else self.min_rpm
+        self.max_err = 3 if self.max_err is None else self.max_err
+        self.startup_check = (
+            False if self.startup_check is None else self.startup_check
+        )
         self.startup_check_delay = (
-            self.startup_check_delay or SAFETY_CHECK_INIT_TIME
+            SAFETY_CHECK_INIT_TIME
+            if self.startup_check_delay is None
+            else self.startup_check_delay
         )
         self.self_checking = False
 
@@ -148,8 +153,7 @@ class Fan:
             msg = (
                 "'%s' spinning below minimum safe speed.\n"
                 "expected: %d rev/min\n"
-                "actual: %d rev/min"
-                % (self.name, self.min_rpm, rpm)
+                "actual: %d rev/min" % (self.name, self.min_rpm, rpm)
             )
             logging.error(msg)
             self.printer.invoke_shutdown(msg)
