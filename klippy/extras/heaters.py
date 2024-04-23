@@ -124,7 +124,7 @@ class Heater:
         self.gcode.register_mux_command(
             "PID_PROFILE",
             "HEATER",
-            short_name,
+            self.sensor_short_name,
             self.pmgr.cmd_PID_PROFILE,
             desc=self.pmgr.cmd_PID_PROFILE_help,
         )
