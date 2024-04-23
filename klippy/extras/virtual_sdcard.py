@@ -236,6 +236,7 @@ DEFAULT_ERROR_GCODE = """
 {% endif %}
 """
 
+
 class VirtualSD:
     def __init__(self, config):
         self.printer = config.get_printer()
