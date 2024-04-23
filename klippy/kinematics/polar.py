@@ -183,6 +183,7 @@ class PolarKinematics:
         z_home = "z" if self.limit_z[0] <= self.limit_z[1] else ""
         return {
             "kinematics": "polar",
+            "improved_axes_def": self.improved_axes_def,
             "homed_axes": xy_home + z_home,
             "axis_minimum": self.axes_min,
             "axis_maximum": self.axes_max,

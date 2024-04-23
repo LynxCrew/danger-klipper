@@ -64,6 +64,7 @@ class WinchKinematics:
         # XXX - homed_checks and rail limits not implemented
         return {
             "kinematics": "winch",
+            "improved_axes_def": self.improved_axes_def,
             "homed_axes": "xyz",
             "axis_minimum": self.axes_min,
             "axis_maximum": self.axes_max,

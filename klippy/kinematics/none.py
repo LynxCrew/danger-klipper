@@ -35,6 +35,7 @@ class NoneKinematics:
     def get_status(self, eventtime):
         return {
             "kinematics": "none",
+            "improved_axes_def": self.improved_axes_def,
             "homed_axes": "",
             "axis_minimum": self.axes_minmax,
             "axis_maximum": self.axes_minmax,

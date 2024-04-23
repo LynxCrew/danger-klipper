@@ -121,6 +121,7 @@ class LimitedCoreXYKinematics(corexy.CoreXYKinematics):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
         return {
             "kinematics": "limited_corexy",
+            "improved_axes_def": self.improved_axes_def,
             "homed_axes": "".join(axes),
             "axis_minimum": self.axes_min,
             "axis_maximum": self.axes_max,
