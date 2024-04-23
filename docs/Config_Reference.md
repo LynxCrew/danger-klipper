@@ -120,7 +120,7 @@ A collection of DangerKlipper-specific system options
 #   for conflicts to autosave data. Any configurations updated will be backed
 #   up to configs/config_backups.
 #bgflush_extra_time: 0.250
-#   This allows to set extra flush time (in seconds). Under certain conditions, 
+#   This allows to set extra flush time (in seconds). Under certain conditions,
 #   a low value will result in an error if message is not get flushed, a high value
 #   (0.250) will result in homing/probing latency. The default is 0.250
 ```
@@ -1684,9 +1684,11 @@ path:
 #   be provided.
 #on_error_gcode:
 #   A list of G-Code commands to execute when an error is reported.
+#   See docs/Command_Templates.md for G-Code format. The default is to
+#   run TURN_OFF_HEATERS.
 #with_subdirs: False
-#   Enable scanning of subdirectories for the menu and for the M20 and M23 commands. The default is False.
-
+#   Enable scanning of subdirectories for the menu and for the
+#   M20 and M23 commands. The default is False.
 ```
 
 ### [sdcard_loop]
@@ -2972,6 +2974,25 @@ sensor_type:
 #   Default is: "TEMP11_HUM11"
 #htu21d_report_time:
 #   Interval in seconds between readings. Default is 30
+```
+
+### SHT3X sensor
+
+SHT3X family two wire interface (I2C) environmental sensor. These sensors
+have a range of -55~125 C, so are usable for e.g. chamber temperature
+monitoring. They can also function as simple fan/heater controllers.
+
+```
+sensor_type: SHT3X
+#i2c_address:
+#   Default is 68 (0x44).
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
 ```
 
 ### LM75 temperature sensor
@@ -5228,25 +5249,25 @@ TradRack repo for additional information:
 ```
 [trad_rack]
 selector_max_velocity:
-#   Maximum velocity (in mm/s) of the selector. 
+#   Maximum velocity (in mm/s) of the selector.
 #   This parameter must be specified.
 selector_max_accel:
-#   Maximum acceleration (in mm/s^2) of the selector. 
+#   Maximum acceleration (in mm/s^2) of the selector.
 #   This parameter must be specified.
 #filament_max_velocity:
-#   Maximum velocity (in mm/s) for filament movement. 
+#   Maximum velocity (in mm/s) for filament movement.
 #   Defaults to buffer_pull_speed.
 #filament_max_accel: 1500.0
 #   Maximum acceleration (in mm/s^2) for filament movement.
 #   The default is 1500.0.
 toolhead_fil_sensor_pin:
 #   The pin on which the toolhead filament sensor is connected.
-#   If a pin is not specified, no toolhead filament sensor will 
+#   If a pin is not specified, no toolhead filament sensor will
 #   be used.
 lane_count:
 #   The number of filament lanes. This parameter must be specified.
 lane_spacing:
-#   Spacing (in mm) between filament lanes. 
+#   Spacing (in mm) between filament lanes.
 #   This parameter must be specified.
 #lane_offset_<lane index>:
 #   Options with a "lane_offset_" prefix may be specified for any of
@@ -5330,7 +5351,7 @@ toolhead_unload_length:
 #   segment into the lane module.
 #spool_pull_speed: 100.0
 #   Speed (in mm/s) to move filament through the bowden tube when
-#   loading from a spool. See Tuning.md for details. 
+#   loading from a spool. See Tuning.md for details.
 #   The default is 100.0.
 #buffer_pull_speed:
 #   Speed (in mm/s) to move filament through the bowden tube when
@@ -5352,7 +5373,7 @@ toolhead_unload_length:
 #load_with_toolhead_sensor: True
 #   Whether to use the toolhead sensor when loading the toolhead.
 #   See Tuning.md for details. Defaults to True but is ignored if
-#   toolhead_fil_sensor_pin is not specified. 
+#   toolhead_fil_sensor_pin is not specified.
 #unload_with_toolhead_sensor: True
 #   Whether to use the toolhead sensor when unloading the toolhead.
 #   See Tuning.md for details. Defaults to True but is ignored if
