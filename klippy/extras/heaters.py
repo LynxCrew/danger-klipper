@@ -896,13 +896,16 @@ class ControlPositionalPID:
             if profile["smooth_time"] is None
             else profile["smooth_time"]
         )
-        self.dt = self.heater.pwm_delay
-        self.smooth = 1.0 + smooth_time / self.dt
+        self.dt = heater.pwm_delay
+        self.smooth_time = smooth_time
         self.heater.set_inv_smooth_time(1.0 / smooth_time)
+        self.prev_temp_time = (0.0
+                               if load_clean
+                               else self.heater.reactor.monotonic())
         self.prev_temp = (
             AMBIENT_TEMP
             if load_clean
-            else self.heater.get_temp(self.heater.reactor.monotonic())[0]
+            else self.heater.get_temp(self.prev_temp_time)[0]
         )
         self.prev_err = 0.0
         self.prev_der = 0.0
@@ -911,14 +914,20 @@ class ControlPositionalPID:
     def temperature_update(self, read_time, temp, target_temp):
         # calculate the error
         err = target_temp - temp
+        # calculate the time difference
+        dt = read_time - self.prev_temp_time
         # calculate the current integral amount using the Trapezoidal rule
-        ic = ((self.prev_err + err) / 2.0) * self.dt
+        ic = ((self.prev_err + err) / 2.0) * dt
         i = self.int_sum + ic
-        # calculate the current derivative using a modified moving average,
-        # and derivative on measurement, to account for derivative kick
-        # when the set point changes
-        dc = -(temp - self.prev_temp) / self.dt
-        dc = ((self.smooth - 1.0) * self.prev_der + dc) / self.smooth
+
+        # calculate the current derivative using derivative on measurement,
+        # to account for derivative kick when the set point changes
+        # smooth the derivatives using a modified moving average
+        # that handles unevenly spaced data points
+        n = max(1.0, self.smooth_time / dt)
+        dc = -(temp - self.prev_temp) / dt
+        dc = ((n - 1.0) * self.prev_der + dc) / n
+
         # calculate the output
         o = self.Kp * err + self.Ki * i + self.Kd * dc
         # calculate the saturated output
@@ -928,6 +937,7 @@ class ControlPositionalPID:
         self.heater.set_pwm(read_time, so)
         # update the previous values
         self.prev_temp = temp
+        self.prev_temp_time = read_time
         self.prev_der = dc
         if target_temp > 0.0:
             self.prev_err = err
