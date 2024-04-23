@@ -3,9 +3,11 @@
 # Copyright (C) 2016-2023  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import concurrent
 import logging
 import math
 import os
+import time
 import zlib
 import serialhdl, msgproto, pins, chelper, clocksync
 from extras.danger_options import get_danger_options
@@ -818,8 +820,8 @@ class MCU:
             if canbus_uuid:
                 raise error("CAN MCUs can't be non-critical yet!")
             if self.hot_plug:
-                self.non_critical_recon_timer = self._reactor.register_timer(
-                    self.non_critical_recon_event
+                self.non_critical_recon_thread = (
+                    concurrent.futures.ThreadPoolExecutor(max_workers=1)
                 )
         self.non_critical_disconnected = False
         self._non_critical_reconnect_event_name = (
@@ -852,10 +854,19 @@ class MCU:
         printer.register_event_handler(
             "klippy:mcu_identify", self._mcu_identify
         )
-        printer.register_event_handler("klippy:connect", self._connect)
+        self.connect_method = (
+            self.async_wait_for_connect
+            if self.is_non_critical
+            else self._connect
+        )
+        printer.register_event_handler("klippy:connect", self.connect_method)
         printer.register_event_handler("klippy:shutdown", self._shutdown)
         printer.register_event_handler("klippy:disconnect", self._disconnect)
         printer.register_event_handler("klippy:ready", self._ready)
+        printer.register_event_handler(
+            f"danger:non_critical_mcu_{self.get_name()}:reconnecting",
+            self.recon_mcu,
+        )
 
     # Serial callbacks
     def _handle_mcu_stats(self, params):
@@ -977,21 +988,20 @@ class MCU:
         self._clocksync.disconnect()
         self._disconnect()
         if self.hot_plug:
-            self._reactor.update_timer(
-                self.non_critical_recon_timer, self._reactor.NOW
-            )
+            self.async_wait_for_connect()
         self._printer.send_event(self._non_critical_disconnect_event_name)
         self.gcode.respond_info(f"mcu: '{self._name}' disconnected!", log=True)
 
-    def non_critical_recon_event(self, eventtime):
-        success = self.recon_mcu()
-        if success:
-            self.gcode.respond_info(
-                f"mcu: '{self._name}' reconnected!", log=True
-            )
-            return self._reactor.NEVER
-        else:
-            return eventtime + self.reconnect_interval
+    def non_critical_recon_worker(self):
+        while (
+            self.non_critical_disconnected and not self._check_serial_exists()
+        ):
+            time.sleep(self.reconnect_interval)
+        self._printer.send_event(
+            f"danger:non_critical_mcu_{self.get_name()}:reconnecting"
+        )
+        self.gcode.respond_info(f"mcu: '{self._name}' reconnected!", log=True)
+        return
 
     def _send_config(self, prev_crc):
         if not self._cached_init_state:
@@ -1107,14 +1117,10 @@ class MCU:
         self._reserved_move_slots = 0
         self._steppersync = None
 
+    def async_wait_for_connect(self):
+        self.non_critical_recon_thread.submit(self.non_critical_recon_worker)
+
     def _connect(self):
-        if self.non_critical_disconnected:
-            if self.hot_plug:
-                self._reactor.update_timer(
-                    self.non_critical_recon_timer,
-                    self._reactor.NOW + self.reconnect_interval,
-                )
-            return
         config_params = self._send_get_config()
         if not config_params["is_config"]:
             if self._restart_method == "rpi_usb":
@@ -1166,7 +1172,7 @@ class MCU:
             return self._serial.check_connect(self._serialport, self._baud, rts)
 
     def _mcu_identify(self):
-        if self.is_non_critical and not self._check_serial_exists():
+        if self.is_non_critical:
             self.non_critical_disconnected = True
             return False
         else:
