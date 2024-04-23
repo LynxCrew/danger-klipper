@@ -36,6 +36,9 @@ class Heater:
         self.short_name = short_name = self.name.split()[-1]
         self.reactor = self.printer.get_reactor()
         sensor_config = config if sensor_config is None else sensor_config
+        self.sensor_config = sensor_config
+        self.sensor_name = sensor_config.get_name()
+        self.sensor_short_name = self.sensor_name.split()[-1]
         self.config = config
         self.configfile = self.printer.lookup_object("configfile")
         # Setup sensor
@@ -136,7 +139,7 @@ class Heater:
         if gcmd is not None:
             gcmd.respond_info(
                 "Heater [%s] is disabled due to an "
-                "accelerometer being connected." % self.short_name
+                "accelerometer being connected." % self.sensor_short_name
             )
 
         self.printer.register_event_handler(
@@ -320,7 +323,7 @@ class Heater:
             self.incompatible_profiles = []
             # Fetch stored profiles from Config
             stored_profs = self.outer_instance.config.get_prefix_sections(
-                "pid_profile %s" % self.outer_instance.name
+                "pid_profile %s" % self.outer_instance.sensor_name
             )
             for profile in stored_profs:
                 self._init_profile(profile, profile.get_name().split(" ", 2)[2])
@@ -358,7 +361,7 @@ class Heater:
                 raise self.outer_instance.printer.config_error(
                     "Unknown control type '%s' "
                     "in [pid_profile %s %s]."
-                    % (control, self.outer_instance.name, name)
+                    % (control, self.outer_instance.sensor_name, name)
                 )
             temp_profile["control"] = control
             temp_profile["name"] = name
@@ -376,17 +379,17 @@ class Heater:
                 raise self.outer_instance.gcode.error(
                     "pid_profile: '%s' has to be "
                     "specified in [pid_profile %s %s]."
-                    % (key, self.outer_instance.name, config_section.get_name())
+                    % (key, self.outer_instance.sensor_name, config_section.get_name())
                 )
             return value
 
         def _compute_section_name(self, profile_name):
             return (
-                self.outer_instance.name
+                self.outer_instance.sensor_name
                 if profile_name == "default"
                 else (
                     "pid_profile "
-                    + self.outer_instance.name
+                    + self.outer_instance.sensor_name
                     + " "
                     + profile_name
                 )
@@ -419,7 +422,7 @@ class Heater:
             return value.lower() if type == "lower" else value
 
         def init_default_profile(self):
-            return self._init_profile(self.outer_instance.config, "default")
+            return self._init_profile(self.outer_instance.sensor_config, "default")
 
         def set_values(self, profile_name, gcmd, verbose):
             current_profile = self.outer_instance.get_control().get_profile()
@@ -521,7 +524,7 @@ class Heater:
                     "has been saved to profile [%s] "
                     "for the current session.  The SAVE_CONFIG command will\n"
                     "update the printer config file and restart the printer."
-                    % (self.outer_instance.name, profile_name)
+                    % (self.outer_instance.sensor_name, profile_name)
                 )
 
         def load_profile(self, profile_name, gcmd, verbose):
@@ -539,7 +542,7 @@ class Heater:
                 if verbose == "high" or verbose == "low":
                     self.outer_instance.gcode.respond_info(
                         "PID Profile [%s] already loaded for heater [%s]."
-                        % (profile_name, self.outer_instance.name)
+                        % (profile_name, self.outer_instance.sensor_name)
                     )
                 return
             keep_target = self._check_value_gcmd(
@@ -552,7 +555,7 @@ class Heater:
                 if default is None:
                     raise self.outer_instance.gcode.error(
                         "pid_profile: Unknown profile [%s] for heater [%s]."
-                        % (profile_name, self.outer_instance.name)
+                        % (profile_name, self.outer_instance.sensor_name)
                     )
                 profile = self.profiles.get(default, None)
                 defaulted = True
@@ -560,7 +563,7 @@ class Heater:
                     raise self.outer_instance.gcode.error(
                         "pid_profile: Unknown default "
                         "profile [%s] for heater [%s]."
-                        % (default, self.outer_instance.name)
+                        % (default, self.outer_instance.sensor_name)
                     )
             control = self.outer_instance.lookup_control(profile, load_clean)
             self.outer_instance.set_control(control, keep_target)
@@ -572,11 +575,11 @@ class Heater:
                     "Couldn't find profile "
                     "[%s] for heater [%s]"
                     ", defaulted to [%s]."
-                    % (profile_name, self.outer_instance.name, default)
+                    % (profile_name, self.outer_instance.sensor_name, default)
                 )
             self.outer_instance.gcode.respond_info(
                 "PID Profile [%s] loaded for heater [%s].\n"
-                % (profile["name"], self.outer_instance.name)
+                % (profile["name"], self.outer_instance.sensor_name)
             )
             if verbose == "high":
                 smooth_time = (
@@ -614,7 +617,7 @@ class Heater:
                     "removed from storage for this session.\n"
                     "The SAVE_CONFIG command will update the printer\n"
                     "configuration and restart the printer"
-                    % (profile_name, self.outer_instance.name)
+                    % (profile_name, self.outer_instance.sensor_name)
                 )
             else:
                 self.outer_instance.gcode.respond_info(
