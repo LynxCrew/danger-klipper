@@ -32,17 +32,17 @@ PID_PROFILE_OPTIONS = {
 class Heater:
     def __init__(self, config, sensor, sensor_config=None):
         self.printer = config.get_printer()
-        config = config if sensor_config is None else sensor_config
         self.name = config.get_name()
         self.short_name = short_name = self.name.split()[-1]
         self.reactor = self.printer.get_reactor()
+        sensor_config = config if sensor_config is None else sensor_config
         self.config = config
         self.configfile = self.printer.lookup_object("configfile")
         # Setup sensor
         self.sensor = sensor
-        self.min_temp = config.getfloat("min_temp", minval=KELVIN_TO_CELSIUS)
-        self.max_temp = config.getfloat("max_temp", above=self.min_temp)
-        self.max_set_temp = config.getfloat(
+        self.min_temp = sensor_config.getfloat("min_temp", minval=KELVIN_TO_CELSIUS)
+        self.max_temp = sensor_config.getfloat("max_temp", above=self.min_temp)
+        self.max_set_temp = sensor_config.getfloat(
             "max_set_temp",
             self.max_temp,
             minval=self.min_temp,
@@ -52,7 +52,7 @@ class Heater:
         self.sensor.setup_callback(self.temperature_callback)
         self.pwm_delay = self.sensor.get_report_time_delta()
         # Setup temperature checks
-        self.min_extrude_temp = config.getfloat(
+        self.min_extrude_temp = sensor_config.getfloat(
             "min_extrude_temp",
             170.0,
             minval=self.min_temp,
@@ -64,10 +64,10 @@ class Heater:
         self.can_extrude = self.min_extrude_temp <= 0.0 or is_fileoutput
         self.enabled = True
         self.cold_extrude = False
-        self.max_power = config.getfloat(
+        self.max_power = sensor_config.getfloat(
             "max_power", 1.0, above=0.0, maxval=1.0
         )
-        self.config_smooth_time = config.getfloat("smooth_time", 1.0, above=0.0)
+        self.config_smooth_time = sensor_config.getfloat("smooth_time", 1.0, above=0.0)
         self.smooth_time = self.config_smooth_time
         self.inv_smooth_time = 1.0 / self.smooth_time
         self.is_shutdown = False
@@ -78,16 +78,16 @@ class Heater:
         self.next_pwm_time = 0.0
         self.last_pwm_value = 0.0
         # Those are necessary so the klipper config check does not complain
-        config.get("control", None)
-        config.getfloat("pid_kp", None)
-        config.getfloat("pid_ki", None)
-        config.getfloat("pid_kd", None)
-        config.getfloat("max_delta", None)
+        sensor_config.get("control", None)
+        sensor_config.getfloat("pid_kp", None)
+        sensor_config.getfloat("pid_ki", None)
+        sensor_config.getfloat("pid_kd", None)
+        sensor_config.getfloat("max_delta", None)
         # Setup output heater pin
         heater_pin = config.get("heater_pin")
         ppins = self.printer.lookup_object("pins")
         self.mcu_pwm = ppins.setup_pin("pwm", heater_pin)
-        pwm_cycle_time = config.getfloat(
+        pwm_cycle_time = sensor_config.getfloat(
             "pwm_cycle_time", 0.100, above=0.0, maxval=self.pwm_delay
         )
         self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
