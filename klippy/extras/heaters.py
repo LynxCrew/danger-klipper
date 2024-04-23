@@ -84,7 +84,7 @@ class Heater:
         sensor_config.getfloat("pid_kd", None)
         sensor_config.getfloat("max_delta", None)
         # Setup output heater pin
-        heater_pin = config.get("heater_pin")
+        heater_pin = sensor_config.get("heater_pin")
         ppins = self.printer.lookup_object("pins")
         self.mcu_pwm = ppins.setup_pin("pwm", heater_pin)
         pwm_cycle_time = sensor_config.getfloat(
