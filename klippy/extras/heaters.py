@@ -43,7 +43,9 @@ class Heater:
         self.configfile = self.printer.lookup_object("configfile")
         # Setup sensor
         self.sensor = sensor
-        self.min_temp = sensor_config.getfloat("min_temp", minval=KELVIN_TO_CELSIUS)
+        self.min_temp = sensor_config.getfloat(
+            "min_temp", minval=KELVIN_TO_CELSIUS
+        )
         self.max_temp = sensor_config.getfloat("max_temp", above=self.min_temp)
         self.max_set_temp = sensor_config.getfloat(
             "max_set_temp",
@@ -70,7 +72,9 @@ class Heater:
         self.max_power = sensor_config.getfloat(
             "max_power", 1.0, above=0.0, maxval=1.0
         )
-        self.config_smooth_time = sensor_config.getfloat("smooth_time", 1.0, above=0.0)
+        self.config_smooth_time = sensor_config.getfloat(
+            "smooth_time", 1.0, above=0.0
+        )
         self.smooth_time = self.config_smooth_time
         self.inv_smooth_time = 1.0 / self.smooth_time
         self.is_shutdown = False
@@ -379,7 +383,11 @@ class Heater:
                 raise self.outer_instance.gcode.error(
                     "pid_profile: '%s' has to be "
                     "specified in [pid_profile %s %s]."
-                    % (key, self.outer_instance.sensor_name, config_section.get_name())
+                    % (
+                        key,
+                        self.outer_instance.sensor_name,
+                        config_section.get_name(),
+                    )
                 )
             return value
 
@@ -422,7 +430,9 @@ class Heater:
             return value.lower() if type == "lower" else value
 
         def init_default_profile(self):
-            return self._init_profile(self.outer_instance.sensor_config, "default")
+            return self._init_profile(
+                self.outer_instance.sensor_config, "default"
+            )
 
         def set_values(self, profile_name, gcmd, verbose):
             current_profile = self.outer_instance.get_control().get_profile()
