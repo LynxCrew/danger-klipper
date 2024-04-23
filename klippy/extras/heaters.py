@@ -30,12 +30,12 @@ PID_PROFILE_OPTIONS = {
 
 
 class Heater:
-    def __init__(self, config, sensor):
+    def __init__(self, config, sensor, sensor_config=None):
         self.printer = config.get_printer()
         self.name = config.get_name()
         self.short_name = short_name = self.name.split()[-1]
         self.reactor = self.printer.get_reactor()
-        self.config = config
+        self.config = config if sensor_config is None else sensor_config
         self.configfile = self.printer.lookup_object("configfile")
         # Setup sensor
         self.sensor = sensor
@@ -1004,14 +1004,17 @@ class PrinterHeaters:
     def add_sensor_factory(self, sensor_type, sensor_factory):
         self.sensor_factories[sensor_type] = sensor_factory
 
-    def setup_heater(self, config, gcode_id=None):
+    def setup_heater(self, config, gcode_id=None, heater_config=None):
+        heater_config = config if heater_config is None else heater_config
         heater_name = config.get_name().split()[-1]
         if heater_name in self.heaters:
             raise config.error("Heater %s already registered" % (heater_name,))
         # Setup sensor
-        sensor = self.setup_sensor(config)
+        sensor = self.setup_sensor(heater_config)
         # Create heater
-        self.heaters[heater_name] = heater = Heater(config, sensor)
+        self.heaters[heater_name] = heater = Heater(
+            config, sensor, heater_config
+        )
         self.register_sensor(config, heater, gcode_id)
         self.available_heaters.append(config.get_name())
         return heater

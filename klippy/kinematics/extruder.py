@@ -477,14 +477,21 @@ class PrinterExtruder:
         pheaters = self.printer.load_object(config, "heaters")
         toolhead = self.printer.lookup_object("toolhead")
         gcode_id = "T%d" % (extruder_num,)
+        hotend_config = (
+            config.getsection("hotend" + self.name.replace("extruder", ""))
+            if toolhead.get_kinematics().improved_axes_def
+            else None
+        )
         if shared_heater is None:
-            self.heater = pheaters.setup_heater(config, gcode_id)
+            self.heater = pheaters.setup_heater(config, gcode_id, hotend_config)
         else:
             config.deprecate("shared_heater")
             self.heater = pheaters.lookup_heater(shared_heater)
         # Setup kinematic checks
-        self.nozzle_diameter = config.getfloat("nozzle_diameter", above=0.0)
-        filament_diameter = config.getfloat(
+        self.nozzle_diameter = hotend_config.getfloat(
+            "nozzle_diameter", above=0.0
+        )
+        filament_diameter = hotend_config.getfloat(
             "filament_diameter", minval=self.nozzle_diameter
         )
         self.filament_area = math.pi * (filament_diameter * 0.5) ** 2
