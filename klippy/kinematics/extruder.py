@@ -480,7 +480,7 @@ class PrinterExtruder:
         hotend_config = (
             config.getsection("hotend" + self.name.replace("extruder", ""))
             if toolhead.get_kinematics().improved_axes_def
-            else None
+            else config
         )
         if shared_heater is None:
             self.heater = pheaters.setup_heater(config, gcode_id, hotend_config)
