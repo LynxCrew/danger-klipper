@@ -214,8 +214,6 @@ class Fan:
             self.mcu_fan.set_pwm(print_time, pwm_value)
         self.pwm_value = pwm_value
         self.last_fan_value = value
-        logging.info("SELF CHECKING")
-        logging.info(self.self_checking)
         self.last_fan_time = print_time
 
     def set_speed_from_command(self, value):
