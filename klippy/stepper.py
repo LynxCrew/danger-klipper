@@ -454,7 +454,6 @@ class PrinterRail:
         # check for ":virtual_endstop" to make sure we don't detect ":z_virtual_endstop"
         endstop_is_virtual = endstop_pin is not None and (
             ":virtual_endstop" in endstop_pin
-            or "beacon:z_virtual_endstop" in endstop_pin
         )
 
         # Axis range
