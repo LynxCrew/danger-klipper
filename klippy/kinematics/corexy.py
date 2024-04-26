@@ -58,12 +58,20 @@ class CoreXYKinematics:
             "unhome:mark_as_unhomed_z", self._set_unhomed_z
         )
 
-        self.printer.register_event_handler(
-            "stepper_enable:disable_a", self._disable_xy
-        )
-        self.printer.register_event_handler(
-            "stepper_enable:disable_b", self._disable_xy
-        )
+        if self.improved_axes_def:
+            self.printer.register_event_handler(
+                "stepper_enable:disable_a", self._disable_xy
+            )
+            self.printer.register_event_handler(
+                "stepper_enable:disable_b", self._disable_xy
+            )
+        else:
+            self.printer.register_event_handler(
+                "stepper_enable:disable_x", self._disable_xy
+            )
+            self.printer.register_event_handler(
+                "stepper_enable:disable_y", self._disable_xy
+            )
         self.printer.register_event_handler(
             "stepper_enable:disable_z", self._set_unhomed_z
         )
