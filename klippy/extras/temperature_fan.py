@@ -288,7 +288,7 @@ class ControlCurve:
         )
         self.points = []
         points = config.getlists(
-            "points", seps=(":", "\n"), parser=float, count=2
+            "points", seps=(",", "\n"), parser=float, count=2
         )
         for temp, pwm in points:
             current_point = [temp, pwm]
