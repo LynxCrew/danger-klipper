@@ -132,7 +132,11 @@ class AccelCommandHelper:
         self.base_name = name_parts[0]
         self.name = name_parts[-1]
         self.register_commands(self.name)
-        self.disabled_heaters = config.getlist("disable_heaters", [])
+        self.disabled_heaters = []
+        if hasattr(config, "getlist"):
+            self.disabled_heaters = config.getlist(
+                "disable_heaters", self.disabled_heaters
+            )
         if len(name_parts) == 1:
             if self.name == "adxl345" or not config.has_section("adxl345"):
                 self.register_commands(None)
