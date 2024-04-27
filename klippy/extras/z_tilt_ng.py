@@ -302,7 +302,8 @@ class ZTilt:
                 "No z_positions configured. Run Z_TILT_AUTODETECT first"
             )
             return
-        self.probe_helper.use_xy_offsets(True)
+        if gcmd.get("PROBE_METHOD", "").lower() != "contact":
+            self.probe_helper.use_xy_offsets(True)
         self.z_status.reset()
         self.retry_helper.start(gcmd)
         self.probe_helper.start_probe(gcmd)
