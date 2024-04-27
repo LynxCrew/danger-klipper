@@ -302,11 +302,15 @@ class ZTilt:
                 "No z_positions configured. Run Z_TILT_AUTODETECT first"
             )
             return
-        if gcmd.get("PROBE_METHOD", "").lower() != "contact":
+        original_use_offsets = self.printer.use_offsets
+        if gcmd.get("PROBE_METHOD", "").lower() == "contact":
+            self.probe_helper.use_xy_offsets(False)
+        else:
             self.probe_helper.use_xy_offsets(True)
         self.z_status.reset()
         self.retry_helper.start(gcmd)
         self.probe_helper.start_probe(gcmd)
+        self.probe_helper.use_xy_offsets(original_use_offsets)
 
     def perform_coordinate_descent(self, offsets, positions):
         # Setup for coordinate descent analysis
