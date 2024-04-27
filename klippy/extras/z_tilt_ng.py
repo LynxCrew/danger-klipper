@@ -226,7 +226,7 @@ class ZTilt:
             self.numpy = importlib.import_module("numpy")
         except ImportError:
             logging.info(
-                "numpy not installed, Z_TILT_CALIBRATE will not be " "available"
+                "numpy not installed, Z_TILT_CALIBRATE will not be available"
             )
             self.numpy = None
 
