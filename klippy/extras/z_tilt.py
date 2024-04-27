@@ -217,15 +217,9 @@ class ZTilt:
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
 
     def cmd_Z_TILT_ADJUST(self, gcmd):
-        original_use_offsets = self.printer.use_offsets
-        if gcmd.get("PROBE_METHOD", "").lower() == "contact":
-            self.probe_helper.use_xy_offsets(False)
-        else:
-            self.probe_helper.use_xy_offsets(True)
         self.z_status.reset()
         self.retry_helper.start(gcmd)
         self.probe_helper.start_probe(gcmd)
-        self.probe_helper.use_xy_offsets(original_use_offsets)
 
     def probe_finalize(self, offsets, positions):
         # Setup for coordinate descent analysis
