@@ -23,6 +23,7 @@ PID_PROFILE_OPTIONS = {
     "pid_tolerance": (float, "%.4f"),
     "control": (str, "%s"),
     "smooth_time": (float, "%.3f"),
+    "smoothing_elements": (int, "%d"),
     "pid_kp": (float, "%.3f"),
     "pid_ki": (float, "%.3f"),
     "pid_kd": (float, "%.3f"),
@@ -75,7 +76,11 @@ class Heater:
         self.config_smooth_time = sensor_config.getfloat(
             "smooth_time", 1.0, above=0.0
         )
+        self.config_smoothing_elements = sensor_config.getint(
+            "smoothing_elements", 1, minval=1
+        )
         self.smooth_time = self.config_smooth_time
+        self.smoothing_elements = self.config_smoothing_elements
         self.inv_smooth_time = 1.0 / self.smooth_time
         self.is_shutdown = False
         self.lock = threading.Lock()
@@ -206,6 +211,9 @@ class Heater:
 
     def get_smooth_time(self):
         return self.smooth_time
+
+    def get_smoothing_elements(self):
+        return self.smoothing_elements
 
     def set_inv_smooth_time(self, inv_smooth_time):
         self.inv_smooth_time = inv_smooth_time
@@ -361,6 +369,7 @@ class Heater:
                     )
                 if name == "default":
                     temp_profile["smooth_time"] = None
+                    temp_profile["smoothing_elements"] = None
             else:
                 raise self.outer_instance.printer.config_error(
                     "Unknown control type '%s' "
@@ -453,6 +462,9 @@ class Heater:
             smooth_time = self._check_value_gcmd(
                 "SMOOTH_TIME", None, gcmd, float, True
             )
+            smoothing_elements = self._check_value_gcmd(
+                "SMOOTHING_ELEMENTS", None, gcmd, int, True
+            )
             keep_target = self._check_value_gcmd(
                 "KEEP_TARGET", 0, gcmd, int, True, minval=0, maxval=1
             )
@@ -464,6 +476,7 @@ class Heater:
                 "pid_tolerance": tolerance,
                 "control": control,
                 "smooth_time": smooth_time,
+                "smoothing_elements": smoothing_elements,
                 "pid_kp": kp,
                 "pid_ki": ki,
                 "pid_kd": kd,
@@ -500,6 +513,11 @@ class Heater:
                 if temp_profile["smooth_time"] is None
                 else temp_profile["smooth_time"]
             )
+            smoothing_elements = (
+                self.outer_instance.get_smoothing_elements()
+                if temp_profile["smoothing_elements"] is None
+                else temp_profile["smoothing_elements"]
+            )
             name = temp_profile["name"]
             self.outer_instance.gcode.respond_info(
                 "PID Parameters:\n"
@@ -507,9 +525,20 @@ class Heater:
                 "Tolerance: %.4f\n"
                 "Control: %s\n"
                 "Smooth Time: %.3f\n"
+                "Smoothing Elements: %d\n"
                 "pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
                 "name: %s"
-                % (target, tolerance, control, smooth_time, kp, ki, kd, name)
+                % (
+                    target,
+                    tolerance,
+                    control,
+                    smooth_time,
+                    smoothing_elements,
+                    kp,
+                    ki,
+                    kd,
+                    name,
+                )
             )
 
         def save_profile(self, profile_name=None, gcmd=None, verbose=True):
@@ -597,6 +626,11 @@ class Heater:
                     if profile["smooth_time"] is None
                     else profile["smooth_time"]
                 )
+                smoothing_elements = (
+                    self.outer_instance.get_smoothing_elements()
+                    if profile["smoothing_elements"] is None
+                    else profile["smoothing_elements"]
+                )
                 msg = (
                     "Target: %.2f\n"
                     "Tolerance: %.4f\n"
@@ -609,6 +643,8 @@ class Heater:
                 )
                 if smooth_time is not None:
                     msg += "Smooth Time: %.3f\n" % smooth_time
+                if smoothing_elements is not None:
+                    msg += "Smoothing Elements: %d\n" % smoothing_elements
                 msg += (
                     "PID Parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
                     % (profile["pid_kp"], profile["pid_ki"], profile["pid_kd"])
@@ -799,6 +835,11 @@ class ControlVelocityPID:
         self.Kp = profile["pid_kp"] / PID_PARAM_BASE
         self.Ki = profile["pid_ki"] / PID_PARAM_BASE
         self.Kd = profile["pid_kd"] / PID_PARAM_BASE
+        self.smoothing_elements = (
+            self.heater.get_smoothing_elements()
+            if profile["smoothing_elements"] is None
+            else profile["smoothing_elements"]
+        )
         smooth_time = (
             self.heater.get_smooth_time()
             if profile["smooth_time"] is None
@@ -807,6 +848,13 @@ class ControlVelocityPID:
         self.heater.set_inv_smooth_time(1.0 / smooth_time)
         self.smooth_time = smooth_time  # smoothing window
         self.temps = (
+            ([AMBIENT_TEMP] * 3)
+            if load_clean
+            else (
+                [self.heater.get_temp(self.heater.reactor.monotonic())[0]] * 3
+            )
+        )
+        self.smoothed_temps = (
             ([AMBIENT_TEMP] * 3)
             if load_clean
             else (
@@ -822,22 +870,31 @@ class ControlVelocityPID:
         # update the temp and time lists
         self.temps.pop(0)
         self.temps.append(temp)
+        self.smoothed_temps.pop(0)
+        # noinspection PyTypeChecker
+        self.smoothed_temps.append(
+            self.median(self.temps[-self.smoothing_elements :])
+        )
         self.times.pop(0)
         self.times.append(read_time)
 
         # calculate the 1st derivative: p part in velocity form
         # note the derivative is of the temp and not the error
         # this is to prevent derivative kick
-        d1 = self.temps[-1] - self.temps[-2]
+        d1 = self.smoothed_temps[-1] - self.smoothed_temps[-2]
 
         # calculate the error : i part in velocity form
         error = self.times[-1] - self.times[-2]
-        error = error * (target_temp - self.temps[-1])
+        error = error * (target_temp - self.smoothed_temps[-1])
 
         # calculate the 2nd derivative: d part in velocity form
         # note the derivative is of the temp and not the error
         # this is to prevent derivative kick
-        d2 = self.temps[-1] - 2.0 * self.temps[-2] + self.temps[-3]
+        d2 = (
+            self.smoothed_temps[-1]
+            - 2.0 * self.smoothed_temps[-2]
+            + self.smoothed_temps[-3]
+        )
         d2 = d2 / (self.times[-1] - self.times[-2])
 
         # smooth both the derivatives using a modified moving average
@@ -857,6 +914,18 @@ class ControlVelocityPID:
 
         # update the heater
         self.heater.set_pwm(read_time, self.pwm)
+
+    def median(self, temps):
+        current_target = temps[-1][1]
+        sorted_temps = sorted([key[0] for key in temps])
+        length = len(sorted_temps)
+        return float(
+            (
+                sorted_temps[length // 2 - 1] / 2.0
+                + sorted_temps[length // 2] / 2.0,
+                sorted_temps[length // 2],
+            )[length % 2]
+        ), float(current_target)
 
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
