@@ -875,6 +875,8 @@ class ControlVelocityPID:
         self.smoothed_temps.append(
             self.median(self.temps[-self.smoothing_elements:])
         )
+        logging.info("TEMPS_ZEANON")
+        logging.info(self.temps[-self.smoothing_elements:])
         self.times.pop(0)
         self.times.append(read_time)
 
