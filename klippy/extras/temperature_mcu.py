@@ -10,6 +10,8 @@ SAMPLE_COUNT = 8
 REPORT_TIME = 0.300
 RANGE_CHECK_COUNT = 4
 
+BEACON_REPORT_TIME = 1.0
+
 
 class PrinterTemperatureMCU:
     def __init__(self, config):
@@ -20,6 +22,16 @@ class PrinterTemperatureMCU:
         self.debug_read_cmd = None
         # Read config
         mcu_name = config.get("sensor_mcu", "mcu")
+        if mcu_name == "beacon":
+            self.beacon = None
+            self.reactor = self.printer.get_reactor()
+            self.sample_timer = self.reactor.register_timer(
+                self._sample_beacon_temperature
+            )
+            self.printer.register_event_handler(
+                "klippy:connect", self.handle_connect_beacon
+            )
+            return
         self.reference_voltage = config.getfloat(
             "reference_voltage", default=3.3
         )
@@ -49,6 +61,10 @@ class PrinterTemperatureMCU:
             "klippy:mcu_identify", self._mcu_identify
         )
         self.mcu_adc.get_mcu().register_config_callback(self._build_config)
+
+    def handle_connect_beacon(self):
+        self.beacon = self.printer.lookup_object("beacon")
+        self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
 
     def _build_config(self):
         self.debug_read_cmd = self.mcu_adc.get_mcu().lookup_query_command(
@@ -248,6 +264,28 @@ class PrinterTemperatureMCU:
     def read32(self, addr):
         params = self.debug_read_cmd.send([2, addr])
         return params["val"]
+
+    def _sample_beacon_temperature(self, eventtime):
+        self.temp = self.beacon.get_temp()
+
+        if self.temp is not None:
+            if self.temp < self.min_temp or self.temp > self.max_temp:
+                self.printer.invoke_shutdown(
+                    "Beacon temperature %0.1f outside range of %0.1f:%.01f"
+                    % (self.temp, self.min_temp, self.max_temp)
+                )
+
+        measured_time = self.reactor.monotonic()
+
+        if self.temp is None:
+            self.temp = 0.0
+
+        mcu = self.beacon.get_mcu()
+        self.temperature_callback(
+            mcu.estimated_print_time(measured_time), self.temp
+        )
+
+        return measured_time + BEACON_REPORT_TIME
 
 
 def load_config(config):
