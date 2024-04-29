@@ -266,7 +266,7 @@ class PrinterTemperatureMCU:
         return params["val"]
 
     def _sample_beacon_temperature(self, eventtime):
-        self.temp = self.beacon.mcu_temp_wrapper.get_temp(eventtime)
+        self.temp, target = self.beacon.mcu_temp_wrapper.get_temp(eventtime)
 
         if self.temp is not None:
             if self.temp < self.min_temp or self.temp > self.max_temp:
