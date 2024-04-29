@@ -918,8 +918,7 @@ class ControlVelocityPID:
         self.heater.set_pwm(read_time, self.pwm)
 
     def median(self, temps):
-        current_target = temps[-1][1]
-        sorted_temps = sorted([key[0] for key in temps])
+        sorted_temps = sorted(temps)
         length = len(sorted_temps)
         return float(
             (
@@ -927,7 +926,7 @@ class ControlVelocityPID:
                 + sorted_temps[length // 2] / 2.0,
                 sorted_temps[length // 2],
             )[length % 2]
-        ), float(current_target)
+        )
 
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
