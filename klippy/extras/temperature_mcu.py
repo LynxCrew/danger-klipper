@@ -10,8 +10,6 @@ SAMPLE_COUNT = 8
 REPORT_TIME = 0.300
 RANGE_CHECK_COUNT = 4
 
-BEACON_INIT_TIME = 1.0
-
 
 class PrinterTemperatureMCU:
     def __init__(self, config):
@@ -20,6 +18,7 @@ class PrinterTemperatureMCU:
         self.temp1 = self.adc1 = self.temp2 = self.adc2 = None
         self.temp = self.min_temp = self.max_temp = 0.0
         self.debug_read_cmd = None
+        self.temperature_callback = None
         # Read config
         mcu_name = config.get("sensor_mcu", "mcu")
         if mcu_name == "beacon":
@@ -64,7 +63,7 @@ class PrinterTemperatureMCU:
 
     def handle_connect_beacon(self):
         self.beacon = self.printer.lookup_object("beacon").mcu_temp_wrapper
-        self.reactor.update_timer(self.sample_timer, self.reactor.NOW + BEACON_INIT_TIME)
+        self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
 
     def _build_config(self):
         self.debug_read_cmd = self.mcu_adc.get_mcu().lookup_query_command(
