@@ -18,7 +18,7 @@ class PrinterTemperatureMCU:
         self.printer = config.get_printer()
         self.base_temperature = self.slope = None
         self.temp1 = self.adc1 = self.temp2 = self.adc2 = None
-        self.min_temp = self.max_temp = 0.0
+        self.temp = self.min_temp = self.max_temp = 0.0
         self.debug_read_cmd = None
         # Read config
         mcu_name = config.get("sensor_mcu", "mcu")
