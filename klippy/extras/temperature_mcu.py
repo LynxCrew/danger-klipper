@@ -24,6 +24,7 @@ class PrinterTemperatureMCU:
         mcu_name = config.get("sensor_mcu", "mcu")
         if mcu_name == "beacon":
             self.beacon = None
+            self.initialized = False
             self.reactor = self.printer.get_reactor()
             self.sample_timer = self.reactor.register_timer(
                 self._sample_beacon_temperature
@@ -63,7 +64,7 @@ class PrinterTemperatureMCU:
         self.mcu_adc.get_mcu().register_config_callback(self._build_config)
 
     def handle_connect_beacon(self):
-        self.beacon = self.printer.lookup_object("beacon")
+        self.beacon = self.printer.lookup_object("beacon").mcu_temp_wrapper
         self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
 
     def _build_config(self):
@@ -266,7 +267,7 @@ class PrinterTemperatureMCU:
         return params["val"]
 
     def _sample_beacon_temperature(self, eventtime):
-        self.temp, target = self.beacon.mcu_temp_wrapper.get_temp(eventtime)
+        self.temp, target = self.beacon.get_temp(eventtime)
 
         if self.temp is not None:
             if self.temp < self.min_temp or self.temp > self.max_temp:
