@@ -873,7 +873,7 @@ class ControlVelocityPID:
         self.smoothed_temps.pop(0)
         # noinspection PyTypeChecker
         self.smoothed_temps.append(
-            self.median(self.temps[-self.smoothing_elements :])
+            self.median(self.temps[-self.smoothing_elements:])
         )
         self.times.pop(0)
         self.times.append(read_time)
