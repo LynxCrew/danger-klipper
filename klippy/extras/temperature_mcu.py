@@ -29,7 +29,7 @@ class PrinterTemperatureMCU:
                 self._sample_beacon_temperature
             )
             self.printer.register_event_handler(
-                "klippy:ready", self.handle_beacon_ready
+                "klippy:ready", self.handle_beacon_connect
             )
             return
         self.reference_voltage = config.getfloat(
@@ -62,8 +62,8 @@ class PrinterTemperatureMCU:
         )
         self.mcu_adc.get_mcu().register_config_callback(self._build_config)
 
-    def handle_beacon_ready(self):
-        self.beacon = self.printer.lookup_object("beacon").mcu_temp_wrapper
+    def handle_beacon_connect(self):
+        self.beacon = self.printer.load_object(self.beacon_config, "beacon").mcu_temp_wrapper
         self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
 
     def _build_config(self):
