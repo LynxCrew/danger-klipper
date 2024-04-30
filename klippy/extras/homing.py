@@ -133,6 +133,8 @@ class HomingMove:
         move_end_print_time = self.toolhead.get_last_move_time()
         for mcu_endstop, name in self.endstops:
             trigger_time = mcu_endstop.home_wait(move_end_print_time)
+            if trigger_time is None:
+                error = "No trigger on %s after full movement" % (name,)
             if trigger_time > 0.0:
                 trigger_times[name] = trigger_time
             elif trigger_time < 0.0 and error is None:
