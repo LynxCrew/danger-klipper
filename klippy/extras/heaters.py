@@ -848,17 +848,19 @@ class ControlVelocityPID:
         self.heater.set_inv_smooth_time(1.0 / smooth_time)
         self.smooth_time = smooth_time  # smoothing window
         self.temps = (
-            ([AMBIENT_TEMP] * 3)
+            ([AMBIENT_TEMP] * max(3, self.smoothing_elements))
             if load_clean
             else (
-                [self.heater.get_temp(self.heater.reactor.monotonic())[0]] * 3
+                [self.heater.get_temp(self.heater.reactor.monotonic())[0]]
+                * max(3, self.smoothing_elements)
             )
         )
         self.smoothed_temps = (
-            ([AMBIENT_TEMP] * 3)
+            ([AMBIENT_TEMP] * max(3, self.smoothing_elements))
             if load_clean
             else (
-                [self.heater.get_temp(self.heater.reactor.monotonic())[0]] * 3
+                [self.heater.get_temp(self.heater.reactor.monotonic())[0]]
+                * max(3, self.smoothing_elements)
             )
         )
         self.times = [0.0] * 3  # temperature reading times
