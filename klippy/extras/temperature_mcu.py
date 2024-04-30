@@ -9,7 +9,7 @@ SAMPLE_TIME = 0.001
 SAMPLE_COUNT = 8
 REPORT_TIME = 0.300
 RANGE_CHECK_COUNT = 4
-REPORT_TIME_BEACON = 1.0
+BEACON_REPORT_TIME = 1.0
 
 
 class PrinterTemperatureMCU:
@@ -288,7 +288,7 @@ class PrinterTemperatureMCU:
             mcu.estimated_print_time(measured_time), self.temp
         )
 
-        return measured_time + REPORT_TIME_BEACON
+        return measured_time + BEACON_REPORT_TIME
 
 
 def load_config(config):
