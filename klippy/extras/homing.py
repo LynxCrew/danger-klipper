@@ -135,7 +135,7 @@ class HomingMove:
             trigger_time = mcu_endstop.home_wait(move_end_print_time)
             if trigger_time is None:
                 error = "No trigger on %s after full movement" % (name,)
-            if trigger_time > 0.0:
+            elif trigger_time > 0.0:
                 trigger_times[name] = trigger_time
             elif trigger_time < 0.0 and error is None:
                 error = "Communication timeout during homing %s" % (name,)
