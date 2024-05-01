@@ -296,7 +296,6 @@ class PrinterTemperatureMCU:
         self.report_time = report_time
 
 
-
 def load_config(config):
     pheaters = config.get_printer().load_object(config, "heaters")
     pheaters.add_sensor_factory("temperature_mcu", PrinterTemperatureMCU)
