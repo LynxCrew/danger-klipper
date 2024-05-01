@@ -19,6 +19,10 @@ class PrinterSensorGeneric:
         self.max_temp = config.getfloat(
             "max_temp", 99999999.9, above=self.min_temp
         )
+        if hasattr(self.sensor, "set_report_time"):
+            report_time = config.getfloat("report_time", None)
+            if report_time is not None:
+                self.sensor.set_report_time(report_time)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
         pheaters.register_sensor(config, self)

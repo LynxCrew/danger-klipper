@@ -20,11 +20,13 @@ class PrinterTemperatureMCU:
         self.temp = self.min_temp = self.max_temp = 0.0
         self.debug_read_cmd = None
         self.temperature_callback = None
+        self.report_time = REPORT_TIME
         # Read config
         mcu_name = config.get("sensor_mcu", "mcu")
         self.beacon = None
         if mcu_name == "beacon":
             self.beacon_config = config
+            self.report_time = BEACON_REPORT_TIME
             self.reactor = self.printer.get_reactor()
             self.sample_timer = self.reactor.register_timer(
                 self._sample_beacon_temperature
@@ -49,7 +51,7 @@ class PrinterTemperatureMCU:
         self.mcu_adc = ppins.setup_pin(
             "adc", "%s:ADC_TEMPERATURE" % (mcu_name,)
         )
-        self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
+        self.mcu_adc.setup_adc_callback(self.report_time, self.adc_callback)
         query_adc = config.get_printer().load_object(config, "query_adc")
         query_adc.register_adc(config.get_name(), self.mcu_adc)
         # Register callbacks
@@ -128,7 +130,7 @@ class PrinterTemperatureMCU:
         self.temperature_callback = temperature_callback
 
     def get_report_time_delta(self):
-        return REPORT_TIME
+        return self.report_time
 
     def adc_callback(self, read_time, read_value):
         temp = self.base_temperature + read_value * self.slope
@@ -288,7 +290,11 @@ class PrinterTemperatureMCU:
             mcu.estimated_print_time(measured_time), self.temp
         )
 
-        return measured_time + BEACON_REPORT_TIME
+        return measured_time + self.report_time
+
+    def set_report_time(self, report_time):
+        self.report_time = report_time
+
 
 
 def load_config(config):
