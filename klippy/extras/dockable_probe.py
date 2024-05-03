@@ -168,6 +168,7 @@ class DockableProbe:
         self.lift_speed = config.getfloat("lift_speed", self.speed, above=0.0)
         self.dock_retries = config.getint("dock_retries", 0)
         self.auto_attach_detach = config.getboolean("auto_attach_detach", True)
+        self.restore_toolhead = config.getboolean("restore_toolhead", True)
         self.travel_speed = config.getfloat(
             "travel_speed", self.speed, above=0.0
         )
@@ -184,6 +185,12 @@ class DockableProbe:
         # Positions (approach, detach, etc)
         self.approach_position = self._parse_coord(config, "approach_position")
         self.detach_position = self._parse_coord(config, "detach_position")
+        self.extract_position = self._parse_coord(
+            config, "extract_position", self.approach_position
+        )
+        self.insert_position = self._parse_coord(
+            config, "insert_position", self.extract_position
+        )
         self.dock_position = self._parse_coord(config, "dock_position")
         self.z_hop = config.getfloat("z_hop", 0.0, above=0.0)
 
@@ -196,7 +203,7 @@ class DockableProbe:
             self.dock_position, self.approach_position
         )
         self.detach_angle, self.detach_distance = self._get_vector(
-            self.dock_position, self.detach_position
+            self.dock_position, self.insert_position
         )
 
         # Pins
@@ -291,11 +298,14 @@ class DockableProbe:
     # and return a list of numbers.
     #
     # e.g. "233, 10, 0" -> [233, 10, 0]
-    def _parse_coord(self, config, name, expected_dims=3):
-        val = config.get(name)
+    def _parse_coord(self, config, name, default=None, expected_dims=3):
+        if default:
+            val = config.get(name, None)
+        else:
+            val = config.get(name)
         error_msg = "Unable to parse {0} in {1}: {2}"
         if not val:
-            return None
+            return default
         try:
             vals = [float(x.strip()) for x in val.split(",")]
         except Exception as e:
@@ -339,6 +349,7 @@ class DockableProbe:
         # Use last_'status' here to be consistent with QUERY_PROBE_'STATUS'.
         return {
             "last_status": self.last_probe_state,
+            "auto_attach_detach": self.auto_attach_detach,
         }
 
     cmd_MOVE_TO_APPROACH_PROBE_help = (
@@ -383,14 +394,35 @@ class DockableProbe:
     )
 
     def cmd_MOVE_TO_EXTRACT_PROBE(self, gcmd):
-        self.cmd_MOVE_TO_APPROACH_PROBE(gcmd)
+        if len(self.extract_position) > 2:
+            self.toolhead.manual_move(
+                [None, None, self.extract_position[2]], self.attach_speed
+            )
+
+        self.toolhead.manual_move(
+            [self.extract_position[0], self.extract_position[1], None],
+            self.attach_speed,
+        )
 
     cmd_MOVE_TO_INSERT_PROBE_help = (
         "Move near the dock with the" "probe attached before detaching"
     )
 
     def cmd_MOVE_TO_INSERT_PROBE(self, gcmd):
-        self.cmd_MOVE_TO_APPROACH_PROBE(gcmd)
+        if self._check_distance(dist=self.detach_distance):
+            self._align_to_vector(self.detach_angle)
+        else:
+            self._move_to_vector(self.detach_angle)
+
+        if len(self.insert_position) > 2:
+            self.toolhead.manual_move(
+                [None, None, self.insert_position[2]], self.travel_speed
+            )
+
+        self.toolhead.manual_move(
+            [self.insert_position[0], self.insert_position[1], None],
+            self.travel_speed,
+        )
 
     cmd_MOVE_TO_DETACH_PROBE_help = (
         "Move away from the dock to detach" "the probe"
@@ -462,7 +494,7 @@ class DockableProbe:
         if self.get_probe_state() != PROBE_ATTACHED:
             raise self.printer.command_error("Probe attach failed!")
 
-        if return_pos:
+        if return_pos and self.restore_toolhead:
             if not self._check_distance(return_pos, self.approach_distance):
                 self.toolhead.manual_move(
                     [return_pos[0], return_pos[1], None], self.travel_speed
@@ -493,7 +525,7 @@ class DockableProbe:
         if self.get_probe_state() != PROBE_DOCKED:
             raise self.printer.command_error("Probe detach failed!")
 
-        if return_pos:
+        if return_pos and self.restore_toolhead:
             if not self._check_distance(return_pos, self.detach_distance):
                 self.toolhead.manual_move(
                     [return_pos[0], return_pos[1], None], self.travel_speed
@@ -641,6 +673,8 @@ class DockableProbe:
         # will complete the probing next to the dock.
         return_pos = self.toolhead.get_position()
         self.auto_attach_probe(return_pos)
+        if not self.restore_toolhead:
+            self.toolhead.manual_move(return_pos, self.travel_speed)
 
     def multi_probe_end(self):
         self.multi = MULTI_OFF
@@ -686,6 +720,10 @@ class DockableProbe:
 
     def get_position_endstop(self):
         return self.position_endstop
+
+    def probing_move(self, pos, speed):
+        phoming = self.printer.lookup_object("homing")
+        return phoming.probing_move(self, pos, speed)
 
 
 def load_config(config):

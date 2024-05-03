@@ -2214,12 +2214,28 @@ detach_position: 0,0,0
 #   If Z is specified the toolhead will move to the Z location before the X, Y
 #   coordinates.
 #   This parameter is required.
+#extract_position: 0,0,0
+#   Similar to the approach_position, the extract_position is the coordinates
+#   where the toolhead is moved to extract the probe from the dock.
+#   If Z is specified the toolhead will move to the Z location before the X, Y
+#   coordinates.
+#   The default value is approach_probe value.
+#insert_position: 0,0,0
+#   Similar to the extract_position, the insert_position is the coordinates
+#   where the toolhead is moved before inserting the probe into the dock.
+#   If Z is specified the toolhead will move to the Z location before the X, Y
+#   coordinates.
+#   The default value is extract_probe value.
 #z_hop: 15.0
 #   Distance (in mm) to lift the Z axis prior to attaching/detaching the probe.
 #   If the Z axis is already homed and the current Z position is less
 #   than `z_hop`, then this will lift the head to a height of `z_hop`. If
 #   the Z axis is not already homed the head is lifted by `z_hop`.
 #   The default is to not implement Z hop.
+#restore_toolhead: True
+#   While True, the position of the toolhead is restored to the position prior 
+#   to the attach/detach movements.
+#   The default value is True.
 #dock_retries:
 #   The number of times to attempt to attach/dock the probe before raising
 #   an error and aborting probing.
@@ -3316,6 +3332,30 @@ information.
 #   is lower than the target temperature, the fan speed increases;
 #   otherwise, the fan speed decreases.
 #   The default is False.
+```
+
+```
+control: curve
+#points:
+#  50.0, 0.0
+#  55.0, 0.5
+#   A user might defne a list of points which consist of a temperature with
+#   it's associated fan speed (temp, fan_speed).
+#   The target_temp value defines the temperature at which the fan will run
+#   at full speed.
+#   The algorithm will use linear interpolation to get the fan speeds
+#   between two points (if one has defined 0.0 for 50° and 1.0 for 60° the
+#   fan would run with 0.5 at 55°)
+#cooling_hysteresis: 0.0
+#   define the temperature hysteresis for lowering the fan speed
+#   (temperature differences to the last measured value that are lower than
+#   the hysteresis will not cause lowering of the fan speed)
+#heating_hysteresis: 0.0
+#   same as cooling_hysteresis but for increasing the fan speed, it is
+#   recommended to be left at 0 for safety reasons
+#smooth_readings: 10
+#   the amount of readings a median should be taken of to determine the fan
+#   speed at each update interval, the default is 10
 ```
 
 ### [fan_generic]
