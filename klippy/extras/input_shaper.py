@@ -582,6 +582,11 @@ class InputShaper:
             desc=self.cmd_SET_INPUT_SHAPER_help,
         )
         gcode.register_command(
+            "GET_INPUT_SHAPER",
+            self.cmd_GET_INPUT_SHAPER,
+            desc=self.cmd_GET_INPUT_SHAPER_help,
+        )
+        gcode.register_command(
             "ENABLE_INPUT_SHAPER",
             self.cmd_ENABLE_INPUT_SHAPER,
             desc=self.cmd_ENABLE_INPUT_SHAPER_help,
@@ -679,6 +684,12 @@ class InputShaper:
                 for shaper in self.shapers
             ]
             self._update_input_shaping()
+        for shaper in self.shapers:
+            shaper.report(gcmd)
+
+    cmd_GET_INPUT_SHAPER_help = "Report input shaper paramters"
+
+    def cmd_GET_INPUT_SHAPER(self, gcmd):
         for shaper in self.shapers:
             shaper.report(gcmd)
 
