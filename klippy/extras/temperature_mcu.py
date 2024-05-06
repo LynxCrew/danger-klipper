@@ -279,11 +279,10 @@ class PrinterTemperatureMCU:
                     "Beacon temperature %0.1f outside range of %0.1f:%.01f"
                     % (self.temp, self.min_temp, self.max_temp)
                 )
+        else:
+            self.temp = 0.0
 
         measured_time = self.reactor.monotonic()
-
-        if self.temp is None:
-            self.temp = 0.0
 
         mcu = self.beacon.get_mcu()
         self.temperature_callback(
