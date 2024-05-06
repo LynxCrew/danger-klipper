@@ -14,6 +14,8 @@ SAFETY_CHECK_INIT_TIME = 3.0
 class Fan:
     def __init__(self, config, default_shutdown_speed=0.0):
         self.printer = config.get_printer()
+        self.gcode = self.printer.lookup_object("gcode")
+        self.reactor = self.printer.get_reactor()
         self.last_fan_value = 0.0
         self.pwm_value = 0.0
         self.last_fan_time = 0.0
@@ -77,6 +79,7 @@ class Fan:
         self.num_err = 0
         self.min_rpm = config.getint("min_rpm", None, minval=0)
         self.max_err = config.getint("max_error", None, minval=0)
+        self.on_error_gcode = config.get("on_error_gcode", None)
         self.startup_check = config.getboolean("startup_check", None)
         self.startup_check_delay = config.getfloat("startup_check_delay", None)
         self.startup_check_rpm = config.getfloat(
@@ -94,6 +97,10 @@ class Fan:
             raise config.error(
                 "'min_rpm' must be specified before enabling 'max_error'"
             )
+        if self.on_error_gcode is not None and self.min_rpm is None:
+            raise config.error(
+                "'min_rpm' must be specified before enabling 'on_error_gcode'"
+            )
         if self.startup_check is not None and self.min_rpm is None:
             raise config.error(
                 "'min_rpm' must be specified before enabling 'startup_check'"
@@ -108,8 +115,11 @@ class Fan:
                 "'startup_check' must be enabled before enabling "
                 "'startup_check_rpm'"
             )
+
         self.min_rpm = 0 if self.min_rpm is None else self.min_rpm
         self.max_err = 3 if self.max_err is None else self.max_err
+        self.fan_check_timer = None
+
         self.startup_check = (
             False if self.startup_check is None else self.startup_check
         )
@@ -141,11 +151,6 @@ class Fan:
         )
 
     def handle_ready(self):
-        reactor = self.printer.get_reactor()
-        if self.min_rpm > 0:
-            reactor.register_timer(
-                self.fan_check, reactor.monotonic() + SAFETY_CHECK_INIT_TIME
-            )
         if self.startup_check:
             self.self_checking = True
             toolhead = self.printer.lookup_object("toolhead")
@@ -193,6 +198,7 @@ class Fan:
             pwm_value = max(self.min_power, min(self.max_power, pwm_value))
         else:
             pwm_value = 0
+
         print_time = max(self.last_fan_time + FAN_MIN_TIME, print_time)
         if not self.self_checking or force:
             if self.enable_pin:
@@ -215,6 +221,18 @@ class Fan:
         self.pwm_value = pwm_value
         self.last_fan_value = value
         self.last_fan_time = print_time
+
+        if self.min_rpm > 0 and (not self.self_checking or force):
+            if pwm_value > 0:
+                if self.fan_check_timer is None:
+                    self.fan_check_timer = self.reactor.register_timer(
+                        self.fan_check,
+                        self.reactor.NOW + SAFETY_CHECK_INIT_TIME,
+                    )
+            else:
+                if self.fan_check_timer is not None:
+                    self.reactor.unregister_timer(self.fan_check_timer)
+                    self.fan_check_timer = None
 
     def set_speed_from_command(self, value):
         toolhead = self.printer.lookup_object("toolhead")
@@ -244,8 +262,12 @@ class Fan:
                     "actual: %d rev/min" % (self.name, self.min_rpm, rpm)
                 )
                 logging.error(msg)
-                self.printer.invoke_shutdown(msg)
-                return self.printer.get_reactor().NEVER
+                if self.on_error_gcode is not None:
+                    self.gcode.respond_info(msg)
+                    self.gcode.run_script_from_command(self.on_error_gcode)
+                else:
+                    self.printer.invoke_shutdown(msg)
+                    return self.printer.get_reactor().NEVER
         else:
             self.num_err = 0
         return eventtime + 1.5
