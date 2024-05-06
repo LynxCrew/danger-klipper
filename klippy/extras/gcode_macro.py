@@ -97,6 +97,10 @@ class PrinterGCodeMacro:
         self.env.filters["repr"] = repr
         self.env.filters["shell_quote"] = pipes.quote
 
+    def boolean(self, value):
+        lowercase_value = str(value).lower()
+        return lowercase_value in ["true", "1"]
+
     def load_template(self, config, option, default=None):
         name = "%s:%s" % (config.get_name(), option)
         if default is None:
@@ -104,10 +108,6 @@ class PrinterGCodeMacro:
         else:
             script = config.get(option, default)
         return TemplateWrapper(self.printer, self.env, name, script)
-
-    def boolean(self, value):
-        lowercase_value = str(value).lower()
-        return lowercase_value in ["true", "1"]
 
     def _action_emergency_stop(self, msg="action_emergency_stop"):
         self.printer.invoke_shutdown("Shutdown due to %s" % (msg,))
