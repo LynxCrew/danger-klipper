@@ -7,6 +7,7 @@ import collections
 import os
 import logging
 import threading
+from .control_mpc import ControlMPC
 
 
 ######################################################################
@@ -162,6 +163,7 @@ class Heater:
                 "pid": ControlPID,
                 "pid_v": ControlVelocityPID,
                 "pid_p": ControlPositionalPID,
+                "mpc": ControlMPC,
             }
         )
         return algos[profile["control"]](profile, self, load_clean)
@@ -225,6 +227,8 @@ class Heater:
                 % (degrees, self.min_temp, self.max_set_temp)
             )
         with self.lock:
+            if degrees != 0.0 and hasattr(self.control, "check_valid"):
+                self.control.check_valid()
             self.target_temp = degrees
 
     def get_temp(self, eventtime):
@@ -272,16 +276,22 @@ class Heater:
         )
 
     def get_status(self, eventtime):
+        control_stats = None
         with self.lock:
             target_temp = self.target_temp
             smoothed_temp = self.smoothed_temp
             last_pwm_value = self.last_pwm_value
-        return {
+            if hasattr(self.control, "get_status"):
+                control_stats = self.control.get_status(eventtime)
+        ret = {
             "temperature": round(smoothed_temp, 2),
             "target": target_temp,
             "power": last_pwm_value,
             "pid_profile": self.get_control().get_profile()["name"],
         }
+        if control_stats is not None:
+            ret["control_stats"] = control_stats
+        return ret
 
     def set_enabled(self, enabled):
         self.enabled = enabled
@@ -359,6 +369,83 @@ class Heater:
                 temp_profile["max_delta"] = config_section.getfloat(
                     "max_delta", 2.0, above=0.0
                 )
+            elif control == "mpc":
+                temp_profile["block_heat_capacity"] = config_section.getfloat(
+                    "block_heat_capacity", above=0.0, default=None
+                )
+                temp_profile["ambient_transfer"] = config_section.getfloat(
+                    "ambient_transfer", minval=0.0, default=None
+                )
+                temp_profile["target_reach_time"] = config_section.getfloat(
+                    "target_reach_time", above=0.0, default=2.0
+                )
+                temp_profile["smoothing"] = config_section.getfloat(
+                    "smoothing", above=0.0, default=0.25
+                )
+                temp_profile["heater_power"] = config_section.getfloat(
+                    "heater_power", above=0.0
+                )
+                temp_profile["sensor_responsiveness"] = config_section.getfloat(
+                    "sensor_responsiveness", above=0.0, default=None
+                )
+                temp_profile["min_ambient_change"] = config_section.getfloat(
+                    "min_ambient_change", above=0.0, default=1.0
+                )
+                temp_profile["steady_state_rate"] = config_section.getfloat(
+                    "steady_state_rate", above=0.0, default=0.5
+                )
+                temp_profile["filament_diameter"] = config_section.getfloat(
+                    "filament_radius", above=0.0, default=1.75
+                )
+                temp_profile["filament_density"] = config_section.getfloat(
+                    "filament_density", above=0.0, default=0.0
+                )
+                temp_profile[
+                    "filament_heat_capacity"
+                ] = config_section.getfloat(
+                    "filament_heat_capacity", above=0.0, default=0.0
+                )
+
+                ambient_sensor_name = config_section.get(
+                    "ambient_temp_sensor", None
+                )
+                ambient_sensor = None
+                if ambient_sensor_name is not None:
+                    try:
+                        ambient_sensor = (
+                            config_section.get_printer().lookup_object(
+                                ambient_sensor_name
+                            )
+                        )
+                    except Exception:
+                        raise config_section.error(
+                            f"Unknown ambient_temp_sensor '{ambient_sensor_name}' specified"
+                        )
+                temp_profile["ambient_temp_sensor"] = ambient_sensor
+
+                fan_name = config_section.get("cooling_fan", None)
+                fan = None
+                if fan_name is not None:
+                    try:
+                        fan_obj = config_section.get_printer().lookup_object(
+                            fan_name
+                        )
+                    except Exception:
+                        raise config_section.error(
+                            f"Unknown part_cooling_fan '{fan_name}' specified"
+                        )
+                    if not hasattr(fan_obj, "fan") or not hasattr(
+                        fan_obj.fan, "set_speed"
+                    ):
+                        raise config_section.error(
+                            f"part_cooling_fan '{fan_name}' is not a valid fan object"
+                        )
+                    fan = fan_obj.fan
+                temp_profile["cooling_fan"] = fan
+
+                temp_profile[
+                    "fan_ambient_transfer"
+                ] = config_section.getfloatlist("fan_ambient_transfer", [])
             elif control == "pid" or control == "pid_v" or control == "pid_p":
                 for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
                     can_be_none = (
@@ -1217,6 +1304,7 @@ class PrinterHeaters:
             raise gcmd.error("Unknown sensor '%s'" % (sensor_name,))
         min_temp = gcmd.get_float("MINIMUM", float("-inf"))
         max_temp = gcmd.get_float("MAXIMUM", float("inf"), above=min_temp)
+        error_on_cancel = gcmd.get("ALLOW_CANCEL", None) is None
         if min_temp == float("-inf") and max_temp == float("inf"):
             raise gcmd.error(
                 "Error on 'TEMPERATURE_WAIT': missing MINIMUM or MAXIMUM."
@@ -1235,7 +1323,7 @@ class PrinterHeaters:
             gcmd.respond_raw(self._get_temp(eventtime))
             return True
 
-        self.printer.wait_while(check)
+        self.printer.wait_while(check, error_on_cancel)
 
 
 def load_config(config):
