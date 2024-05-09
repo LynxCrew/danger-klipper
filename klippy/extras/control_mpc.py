@@ -702,7 +702,7 @@ class TuningControl:
         self.heater.set_temp(target)
 
     def get_profile(self):
-        return {"name": "tuning"}
+        return {"name": "autotune"}
 
     def get_type(self):
-        return "tuning"
+        return "autotune"
