@@ -61,7 +61,6 @@ class PrinterTemperatureMCU:
     def handle_beacon_ready(self):
         self.beacon = self.printer.lookup_object("beacon").mcu_temp_wrapper
         self.beacon.activate_timer()
-        self.beacon.setup_minmax(self.min_temp, self.max_temp)
 
     def _build_config(self):
         if self.beacon is not None:
@@ -121,9 +120,14 @@ class PrinterTemperatureMCU:
         )
 
     def setup_callback(self, temperature_callback):
+        if self.beacon is not None:
+            self.beacon.setup_callback(temperature_callback)
+            return
         self.temperature_callback = temperature_callback
 
     def get_report_time_delta(self):
+        if self.beacon is not None:
+            return self.beacon.report_time
         return self.report_time
 
     def adc_callback(self, read_time, read_value):
@@ -131,6 +135,9 @@ class PrinterTemperatureMCU:
         self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
 
     def setup_minmax(self, min_temp, max_temp):
+        if self.beacon is not None:
+            self.beacon.setup_minmax(min_temp, max_temp)
+            return
         self.min_temp = min_temp
         self.max_temp = max_temp
 
