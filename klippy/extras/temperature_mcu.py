@@ -9,7 +9,6 @@ SAMPLE_TIME = 0.001
 SAMPLE_COUNT = 8
 REPORT_TIME = 0.300
 RANGE_CHECK_COUNT = 4
-BEACON_REPORT_TIME = 1.0
 
 
 class PrinterTemperatureMCU:
@@ -25,12 +24,6 @@ class PrinterTemperatureMCU:
         mcu_name = config.get("sensor_mcu", "mcu")
         self.beacon = None
         if mcu_name == "beacon":
-            self.beacon_config = config
-            self.report_time = BEACON_REPORT_TIME
-            self.reactor = self.printer.get_reactor()
-            self.sample_timer = self.reactor.register_timer(
-                self._sample_beacon_temperature
-            )
             self.printer.register_event_handler(
                 "klippy:ready", self.handle_beacon_ready
             )
@@ -67,7 +60,8 @@ class PrinterTemperatureMCU:
 
     def handle_beacon_ready(self):
         self.beacon = self.printer.lookup_object("beacon").mcu_temp_wrapper
-        self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
+        self.beacon.activate_timer()
+        self.beacon.setup_minmax(self.min_temp, self.max_temp)
 
     def _build_config(self):
         if self.beacon is not None:
@@ -270,28 +264,10 @@ class PrinterTemperatureMCU:
         params = self.debug_read_cmd.send([2, addr])
         return params["val"]
 
-    def _sample_beacon_temperature(self, eventtime):
-        self.temp, target = self.beacon.get_temp(eventtime)
-
-        if self.temp is not None:
-            if self.temp < self.min_temp or self.temp > self.max_temp:
-                self.printer.invoke_shutdown(
-                    "Beacon temperature %0.1f outside range of %0.1f:%.01f"
-                    % (self.temp, self.min_temp, self.max_temp)
-                )
-        else:
-            self.temp = 0.0
-
-        measured_time = self.reactor.monotonic()
-
-        mcu = self.beacon.get_mcu()
-        self.temperature_callback(
-            mcu.estimated_print_time(measured_time), self.temp
-        )
-
-        return measured_time + self.report_time
-
     def set_report_time(self, report_time):
+        if self.beacon is not None:
+            self.beacon.set_report_time(report_time)
+            return
         self.report_time = report_time
 
 
