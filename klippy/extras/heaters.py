@@ -7,7 +7,7 @@ import collections
 import os
 import logging
 import threading
-from .control_mpc import ControlMPC
+import math
 
 
 ######################################################################
@@ -17,6 +17,7 @@ from .control_mpc import ControlMPC
 KELVIN_TO_CELSIUS = -273.15
 MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.0
+PIN_MIN_TIME = 0.100
 PID_PARAM_BASE = 255.0
 PID_PROFILE_VERSION = 1
 PID_PROFILE_OPTIONS = {
@@ -122,6 +123,7 @@ class Heater:
         # Load additional modules
         self.printer.load_object(config, "verify_heater %s" % (short_name,))
         self.printer.load_object(config, "pid_calibrate")
+        self.printer.load_object(config, "mpc_calibrate")
         self.gcode = self.printer.lookup_object("gcode")
         self.pmgr = self.ProfileManager(self)
         self.control = self.lookup_control(
@@ -154,6 +156,13 @@ class Heater:
             short_name,
             self.cmd_SET_HEATER_PID,
             desc=self.cmd_SET_HEATER_PID_help,
+        )
+        self.gcode.register_mux_command(
+            "MPC_SET",
+            "HEATER",
+            short_name,
+            self.cmd_MPC_SET,
+            desc=self.cmd_MPC_SET_help,
         )
         self.printer.register_event_handler(
             "klippy:shutdown", self._handle_shutdown
@@ -351,6 +360,24 @@ class Heater:
         kd = gcmd.get_float("KD", None)
         if kd is not None:
             self.control.set_pid_kd(kd)
+
+    cmd_MPC_SET_help = "Set MPC parameter"
+
+    def cmd_MPC_SET(self, gcmd):
+        if not isinstance(
+            self.control, ControlMPC
+        ):
+            raise gcmd.error("Not a MPC controlled heater")
+        self.control.const_filament_diameter = gcmd.get_float(
+            "FILAMENT_DIAMETER", self.control.const_filament_diameter
+        )
+        self.control.const_filament_density = gcmd.get_float(
+            "FILAMENT_DENSITY", self.control.const_filament_density
+        )
+        self.control.const_filament_heat_capacity = gcmd.get_float(
+            "FILAMENT_HEAT_CAPACITY", self.control.const_filament_heat_capacity
+        )
+        self.control._update_filament_const()
 
     class ProfileManager:
         def __init__(self, outer_instance):
@@ -1148,6 +1175,257 @@ class ControlPositionalPID:
 
     def get_type(self):
         return "pid_p"
+
+
+class ControlMPC:
+    def __init__(self, profile, heater, load_clean=False):
+        self.profile = profile
+        self._load_profile()
+        self.heater = heater
+        self.heater_max_power = heater.get_max_power() * self.const_heater_power
+
+        self.want_ambient_refresh = self.ambient_sensor is not None
+        self.state_block_temp = (
+            AMBIENT_TEMP if load_clean else self._heater_temp()
+        )
+        self.state_sensor_temp = self.state_block_temp
+        self.state_ambient_temp = AMBIENT_TEMP
+
+        self.last_power = 0.0
+        self.last_loss_ambient = 0.0
+        self.last_loss_filament = 0.0
+        self.last_time = 0.0
+        self.last_temp_time = 0.0
+
+        self.printer = heater.printer
+        self.toolhead = None
+
+    # Helpers
+
+    def _heater_temp(self):
+        return self.heater.get_temp(self.heater.reactor.monotonic())[0]
+
+    def _load_profile(self):
+        self.const_block_heat_capacity = self.profile["block_heat_capacity"]
+        self.const_ambient_transfer = self.profile["ambient_transfer"]
+        self.const_target_reach_time = self.profile["target_reach_time"]
+        self.const_heater_power = self.profile["heater_power"]
+        self.const_smoothing = self.profile["smoothing"]
+        self.const_sensor_responsiveness = self.profile["sensor_responsiveness"]
+        self.const_min_ambient_change = self.profile["min_ambient_change"]
+        self.const_steady_state_rate = self.profile["steady_state_rate"]
+        self.const_filament_diameter = self.profile["filament_diameter"]
+        self.const_filament_density = self.profile["filament_density"]
+        self.const_filament_heat_capacity = self.profile[
+            "filament_heat_capacity"
+        ]
+        self._update_filament_const()
+        self.ambient_sensor = self.profile["ambient_temp_sensor"]
+        self.cooling_fan = self.profile["cooling_fan"]
+        self.const_fan_ambient_transfer = self.profile["fan_ambient_transfer"]
+
+    def is_valid(self):
+        return (
+            self.const_block_heat_capacity is not None
+            and self.const_ambient_transfer is not None
+            and self.const_sensor_responsiveness is not None
+        )
+
+    def check_valid(self):
+        if self.is_valid():
+            return
+        name = self.heater.get_name()
+        raise self.printer.command_error(
+            f"Cannot activate '{name}' as MPC control is not fully configured.\n\n"
+            f"Run 'MPC_CALIBRATE' or ensure 'block_heat_capacity', 'sensor_responsiveness', and "
+            f"'ambient_transfer' settings are defined for '{name}'."
+        )
+
+    def _update_filament_const(self):
+        radius = self.const_filament_diameter / 2.0
+        self.const_filament_cross_section_heat_capacity = (
+            (radius * radius)  # mm^2
+            * math.pi  # 1
+            / 1000.0  # mm^3 => cm^3
+            * self.const_filament_density  # g/cm^3
+            * self.const_filament_heat_capacity  # J/g/K
+        )
+
+    # Control interface
+
+    def temperature_update(self, read_time, temp, target_temp):
+        if not self.is_valid():
+            self.heater.set_pwm(read_time, 0.0)
+            return
+
+        dt = read_time - self.last_temp_time
+        if self.last_temp_time == 0.0:
+            dt = 0.1
+
+        ## Extruder position
+        if self.toolhead is None:
+            self.toolhead = self.printer.lookup_object("toolhead")
+        if self.toolhead is not None:
+            extruder = self.toolhead.get_extruder()
+            if (
+                hasattr(extruder, "extruder_stepper")
+                and extruder.get_heater() == self.heater
+            ):
+                pos_prev = extruder.find_past_position(read_time - dt)
+                pos = extruder.find_past_position(read_time)
+                pos_next = extruder.find_past_position(read_time + dt)
+                extrude_speed_prev = max(0.0, (pos - pos_prev)) / dt
+                extrude_speed_next = max(0.0, (pos_next - pos)) / dt
+            else:
+                extrude_speed_prev = 0.0
+                extrude_speed_next = 0.0
+
+        # Modulate ambient transfer coefficient with fan speed
+        ambient_transfer = self.const_ambient_transfer
+        if self.cooling_fan and len(self.const_fan_ambient_transfer) > 1:
+            fan_speed = max(
+                0.0, min(1.0, self.cooling_fan.get_status(read_time)["speed"])
+            )
+            fan_break = fan_speed * (len(self.const_fan_ambient_transfer) - 1)
+            below = self.const_fan_ambient_transfer[math.floor(fan_break)]
+            above = self.const_fan_ambient_transfer[math.ceil(fan_break)]
+            if below != above:
+                frac = fan_break % 1.0
+                ambient_transfer = below * (1 - frac) + frac * above
+            else:
+                ambient_transfer = below
+
+        ## Simulate
+
+        # Expected power by heating at last power setting
+        expected_heating = self.last_power
+        # Expected power from block to ambient
+        block_ambient_delta = self.state_block_temp - self.state_ambient_temp
+        expected_ambient_transfer = block_ambient_delta * ambient_transfer
+        expected_filament_transfer = (
+            block_ambient_delta
+            * extrude_speed_prev
+            * self.const_filament_cross_section_heat_capacity
+        )
+
+        # Expected block dT since last period
+        expected_block_dT = (
+            (
+                expected_heating
+                - expected_ambient_transfer
+                - expected_filament_transfer
+            )
+            * dt
+            / self.const_block_heat_capacity
+        )
+        self.state_block_temp += expected_block_dT
+
+        # Expected sensor dT since last period
+        expected_sensor_dT = (
+            (self.state_block_temp - self.state_sensor_temp)
+            * self.const_sensor_responsiveness
+            * dt
+        )
+        self.state_sensor_temp += expected_sensor_dT
+
+        ## Correct
+
+        adjustment_dT = (temp - self.state_sensor_temp) * self.const_smoothing
+        self.state_block_temp += adjustment_dT
+        self.state_sensor_temp += adjustment_dT
+
+        if self.want_ambient_refresh:
+            temp = self.ambient_sensor.get_temp(read_time)[0]
+            if temp != 0.0:
+                self.state_ambient_temp = temp
+                self.want_ambient_refresh = False
+        if (self.last_power > 0 and self.last_power < 1.0) or abs(
+            expected_block_dT + adjustment_dT
+        ) < self.const_steady_state_rate * dt:
+            if adjustment_dT > 0.0:
+                ambient_delta = max(
+                    adjustment_dT, self.const_min_ambient_change * dt
+                )
+            else:
+                ambient_delta = min(
+                    adjustment_dT, -self.const_min_ambient_change * dt
+                )
+            self.state_ambient_temp += ambient_delta
+
+        ## Output
+
+        # Amount of power needed to reach the target temperature in the desired time
+
+        heating_power = (
+            (target_temp - self.state_block_temp)
+            * self.const_block_heat_capacity
+            / self.const_target_reach_time
+        )
+        # Losses (+ = lost from block, - = gained to block)
+        block_ambient_delta = self.state_block_temp - self.state_ambient_temp
+        loss_ambient = block_ambient_delta * ambient_transfer
+        loss_filament = (
+            block_ambient_delta
+            * extrude_speed_next
+            * self.const_filament_cross_section_heat_capacity
+        )
+
+        if target_temp != 0.0:
+            # The required power is the desired heating power + compensation for all the losses
+            power = max(
+                0.0,
+                min(
+                    self.heater_max_power,
+                    heating_power + loss_ambient + loss_filament,
+                ),
+            )
+        else:
+            power = 0
+
+        duty = power / self.const_heater_power
+
+        # logging.info(
+        #     "mpc: [%.3f] %.2f => %.2f / %.2f / %.2f = %.2f[%.2f+%.2f+%.2f] / %.2f, dT %.2f",
+        #     dt,
+        #     temp,
+        #     self.state_block_temp,
+        #     self.state_sensor_temp,
+        #     self.state_ambient_temp,
+        #     power,
+        #     heating_power,
+        #     loss_ambient,
+        #     loss_filament,
+        #     duty,
+        #     adjustment_dT,
+        # )
+
+        self.last_power = power
+        self.last_loss_ambient = loss_ambient
+        self.last_loss_filament = loss_filament
+        self.last_temp_time = read_time
+        self.heater.set_pwm(read_time, duty)
+
+    def check_busy(self, eventtime, smoothed_temp, target_temp):
+        return self.last_power > 0.0
+
+    def update_smooth_time(self):
+        self.smooth_time = self.heater.get_smooth_time()  # smoothing window
+
+    def get_profile(self):
+        return self.profile
+
+    def get_type(self):
+        return "mpc"
+
+    def get_status(self, eventtime):
+        return {
+            "temp_block": self.state_block_temp,
+            "temp_sensor": self.state_sensor_temp,
+            "temp_ambient": self.state_ambient_temp,
+            "power": self.last_power,
+            "loss_ambient": self.last_loss_ambient,
+            "loss_filament": self.last_loss_filament,
+        }
 
 
 ######################################################################
