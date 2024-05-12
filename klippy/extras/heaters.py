@@ -414,10 +414,10 @@ class Heater:
                 temp_profile["filament_density"] = config_section.getfloat(
                     "filament_density", above=0.0, default=0.0
                 )
-                temp_profile[
-                    "filament_heat_capacity"
-                ] = config_section.getfloat(
-                    "filament_heat_capacity", above=0.0, default=0.0
+                temp_profile["filament_heat_capacity"] = (
+                    config_section.getfloat(
+                        "filament_heat_capacity", above=0.0, default=0.0
+                    )
                 )
 
                 ambient_sensor_name = config_section.get(
@@ -457,9 +457,9 @@ class Heater:
                     fan = fan_obj.fan
                 temp_profile["cooling_fan"] = fan
 
-                temp_profile[
-                    "fan_ambient_transfer"
-                ] = config_section.getfloatlist("fan_ambient_transfer", [])
+                temp_profile["fan_ambient_transfer"] = (
+                    config_section.getfloatlist("fan_ambient_transfer", [])
+                )
             elif control == "pid" or control == "pid_v" or control == "pid_p":
                 for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
                     can_be_none = (
