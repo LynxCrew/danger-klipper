@@ -31,9 +31,6 @@ class ControlMPC:
         if not register:
             return
 
-        pheaters = self.printer.lookup_object("heaters")
-        pheaters.add_sensor_factory("block_temperature", MPC_BLOCK_TEMP_WRAPPER)
-
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "MPC_CALIBRATE",
@@ -779,3 +776,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
 
     def set_report_time(self, report_time):
         self.report_time = report_time
+
+def load_config(config):
+    pheaters = config.get_printer().load_object(config, "heaters")
+    pheaters.add_sensor_factory("block_temperature", MPC_BLOCK_TEMP_WRAPPER)
