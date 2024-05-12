@@ -364,9 +364,7 @@ class Heater:
     cmd_MPC_SET_help = "Set MPC parameter"
 
     def cmd_MPC_SET(self, gcmd):
-        if not isinstance(
-            self.control, ControlMPC
-        ):
+        if not isinstance(self.control, ControlMPC):
             raise gcmd.error("Not a MPC controlled heater")
         self.control.const_filament_diameter = gcmd.get_float(
             "FILAMENT_DIAMETER", self.control.const_filament_diameter

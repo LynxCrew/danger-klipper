@@ -24,6 +24,9 @@ class PrinterTemperatureMCU:
         mcu_name = config.get("sensor_mcu", "mcu")
         self.beacon = None
         if mcu_name == "beacon":
+            self.beacon = self.printer.load_object(
+                config, "beacon"
+            ).mcu_temp_wrapper
             self.printer.register_event_handler(
                 "klippy:ready", self.handle_beacon_ready
             )
@@ -59,7 +62,6 @@ class PrinterTemperatureMCU:
         self.mcu_adc.get_mcu().register_config_callback(self._build_config)
 
     def handle_beacon_ready(self):
-        self.beacon = self.printer.lookup_object("beacon").mcu_temp_wrapper
         self.beacon.activate_timer()
 
     def _build_config(self):

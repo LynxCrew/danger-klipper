@@ -5,6 +5,7 @@ from .heaters import ControlMPC
 
 PIN_MIN_TIME = 0.100
 
+
 class MPCCalibrate:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -15,9 +16,7 @@ class MPCCalibrate:
             desc=self.cmd_MPC_CALIBRATE_help,
         )
 
-
     cmd_MPC_CALIBRATE_help = "Run MPC calibration"
-
 
     def cmd_MPC_CALIBRATE(self, gcmd):
         heater_name = gcmd.get("HEATER")
@@ -441,6 +440,7 @@ class TuningControl:
 
     def get_type(self):
         return "autotune"
+
 
 def load_config(config):
     return MPCCalibrate(config)

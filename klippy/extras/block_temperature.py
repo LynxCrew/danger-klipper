@@ -67,6 +67,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
     def set_report_time(self, report_time):
         self.report_time = report_time
 
+
 def load_config(config):
     pheaters = config.get_printer().load_object(config, "heaters")
     pheaters.add_sensor_factory("block_temperature", MPC_BLOCK_TEMP_WRAPPER)
