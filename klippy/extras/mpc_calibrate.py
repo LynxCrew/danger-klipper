@@ -1,7 +1,7 @@
 import math
 import logging
 
-from klippy.extras.heaters import ControlMPC
+from .heaters import ControlMPC
 
 PIN_MIN_TIME = 0.100
 
