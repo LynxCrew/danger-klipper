@@ -749,15 +749,10 @@ class MPC_BLOCK_TEMP_WRAPPER:
         return self.report_time
 
     def _sample_block_temperature(self, eventtime):
-        control = self.heater.get_control()
-        if hasattr(control, "state_block_temp"):
-            self.temp = control.state_block_temp
-        elif hasattr(control, "smoothed_temp"):
-            self.temp = control.smoothed_temp
-        elif hasattr(control, "last_temp"):
-            self.temp = control.last_temp
+        if self.heater.get_control().get_type() == "mpc":
+            self.temp = self.heater.get_control().state_block_temp
         else:
-            self.temp = None
+            self.temp = self.heater.smoothed_temp
 
         if self.temp is not None:
             if self.temp < self.min_temp or self.temp > self.max_temp:
