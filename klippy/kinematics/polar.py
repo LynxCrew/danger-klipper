@@ -131,12 +131,10 @@ class PolarKinematics:
             else "y" if axis == 1 else "z" if axis == 2 else None
         )
         if axis_name is not None:
-            self.printer.send_event(
-                "homing:homing_move_begin_%s" % axis_name)
+            self.printer.send_event("homing:homing_move_begin_%s" % axis_name)
         homing_state.home_rails([rail], forcepos, homepos)
         if axis_name is not None:
-            self.printer.send_event(
-                "homing:homing_move_end_%s" % axis_name)
+            self.printer.send_event("homing:homing_move_end_%s" % axis_name)
 
     def home(self, homing_state):
         # Always home XY together

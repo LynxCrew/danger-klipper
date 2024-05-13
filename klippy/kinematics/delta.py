@@ -197,12 +197,10 @@ class DeltaKinematics:
         forcepos = list(self.home_position)
         forcepos[2] = -1.5 * math.sqrt(max(self.arm2) - self.max_xy2)
         for axis_name in ("x", "y", "z"):
-            self.printer.send_event(
-                "homing:homing_move_begin_%s" % axis_name)
+            self.printer.send_event("homing:homing_move_begin_%s" % axis_name)
         homing_state.home_rails(self.rails, forcepos, self.home_position)
         for axis_name in ("x", "y", "z"):
-            self.printer.send_event(
-                "homing:homing_move_end_%s" % axis_name)
+            self.printer.send_event("homing:homing_move_end_%s" % axis_name)
 
     def _motor_off(self, print_time):
         self.limit_xy2 = -1.0

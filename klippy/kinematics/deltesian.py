@@ -217,11 +217,11 @@ class DeltesianKinematics:
             forcepos[2] = -1.5 * math.sqrt(max(dz2))
             for axis_name in ("x", "z"):
                 self.printer.send_event(
-                    "homing:homing_move_begin_%s" % axis_name)
+                    "homing:homing_move_begin_%s" % axis_name
+                )
             homing_state.home_rails(self.rails[:2], forcepos, homepos)
             for axis_name in ("x", "z"):
-                self.printer.send_event(
-                    "homing:homing_move_end_%s" % axis_name)
+                self.printer.send_event("homing:homing_move_end_%s" % axis_name)
         if home_y:
             position_min, position_max = self.rails[2].get_range()
             hi = self.rails[2].get_homing_info()
