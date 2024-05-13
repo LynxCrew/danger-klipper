@@ -146,7 +146,11 @@ class CartKinematics:
         else:
             forcepos[axis] += 1.5 * (position_max - hi.position_endstop)
         # Perform homing
-        axis_name = "x" if axis == 0 else "y" if axis == 1 else "z" if axis == 2 else None
+        axis_name = (
+            "x"
+            if axis == 0
+            else "y" if axis == 1 else "z" if axis == 2 else None
+        )
         if axis_name is not None:
             self.printer.send_event("homing:homing_move_begin_%s" % axis_name)
         homing_state.home_rails([rail], forcepos, homepos)
