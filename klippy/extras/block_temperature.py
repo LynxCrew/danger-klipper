@@ -4,7 +4,7 @@ BLOCK_REPORT_TIME = 1.0
 class MPC_BLOCK_TEMP_WRAPPER:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.name = "beacon_coil"
+        self.name = "block_temperature"
 
         self.heater = None
 
@@ -47,7 +47,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
         if self.temp is not None:
             if self.temp < self.min_temp or self.temp > self.max_temp:
                 self.printer.invoke_shutdown(
-                    "DRIVER [%s] temperature %0.1f outside range of %0.1f:%.01f"
+                    "Heater Block [%s] temperature %0.1f outside range of %0.1f:%.01f"
                     % (self.name, self.temp, self.min_temp, self.max_temp)
                 )
         else:
