@@ -219,9 +219,13 @@ class DeltesianKinematics:
                 self.printer.send_event(
                     "homing:homing_move_begin_%s" % axis_name
                 )
-            homing_state.home_rails(self.rails[:2], forcepos, homepos)
-            for axis_name in ("x", "z"):
-                self.printer.send_event("homing:homing_move_end_%s" % axis_name)
+            try:
+                homing_state.home_rails(self.rails[:2], forcepos, homepos)
+            finally:
+                for axis_name in ("x", "z"):
+                    self.printer.send_event(
+                        "homing:homing_move_end_%s" % axis_name
+                    )
         if home_y:
             position_min, position_max = self.rails[2].get_range()
             hi = self.rails[2].get_homing_info()
@@ -232,8 +236,10 @@ class DeltesianKinematics:
             else:
                 forcepos[1] += 1.5 * (position_max - hi.position_endstop)
             self.printer.send_event("homing:homing_move_begin_y")
-            homing_state.home_rails([self.rails[2]], forcepos, homepos)
-            self.printer.send_event("homing:homing_move_end_y")
+            try:
+                homing_state.home_rails([self.rails[2]], forcepos, homepos)
+            finally:
+                self.printer.send_event("homing:homing_move_end_y")
 
     def _motor_off(self, print_time):
         self.homed_axis = [False] * 3

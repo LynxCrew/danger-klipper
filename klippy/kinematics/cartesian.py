@@ -153,9 +153,11 @@ class CartKinematics:
         )
         if axis_name is not None:
             self.printer.send_event("homing:homing_move_begin_%s" % axis_name)
-        homing_state.home_rails([rail], forcepos, homepos)
-        if axis_name is not None:
-            self.printer.send_event("homing:homing_move_end_%s" % axis_name)
+        try:
+            homing_state.home_rails([rail], forcepos, homepos)
+        finally:
+            if axis_name is not None:
+                self.printer.send_event("homing:homing_move_end_%s" % axis_name)
 
     def home(self, homing_state):
         # Each axis is homed independently and in order

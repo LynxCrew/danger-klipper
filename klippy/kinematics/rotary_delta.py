@@ -176,9 +176,11 @@ class RotaryDeltaKinematics:
         forcepos[2] = -1.0
         for axis_name in ("x", "y", "z"):
             self.printer.send_event("homing:homing_move_begin_%s" % axis_name)
-        homing_state.home_rails(self.rails, forcepos, self.home_position)
-        for axis_name in ("x", "y", "z"):
-            self.printer.send_event("homing:homing_move_end_%s" % axis_name)
+        try:
+            homing_state.home_rails(self.rails, forcepos, self.home_position)
+        finally:
+            for axis_name in ("x", "y", "z"):
+                self.printer.send_event("homing:homing_move_end_%s" % axis_name)
 
     def _motor_off(self, print_time):
         self.limit_xy2 = -1.0
