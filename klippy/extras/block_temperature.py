@@ -42,7 +42,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
         if self.heater.get_control().get_type() == "mpc":
             self.temp = self.heater.get_control().state_block_temp
         else:
-            self.temp = None
+            self.temp = self.heater.smoothed_temp
 
         if self.temp is not None:
             if self.temp < self.min_temp or self.temp > self.max_temp:
