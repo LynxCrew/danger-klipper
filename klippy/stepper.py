@@ -570,7 +570,7 @@ class PrinterRail:
         return list(self.endstops)
 
     def add_extra_stepper(self, config, axis_config=None):
-        axis_config = axis_config or config
+        axis_config = config if axis_config is None else config
         stepper = PrinterStepper(config, self.stepper_units_in_radians)
         self.steppers.append(stepper)
         if self.endstops and axis_config.get("endstop_pin", None) is None:
