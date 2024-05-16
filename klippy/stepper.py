@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import collections
+import logging
 import math
 import chelper, msgproto
 
@@ -571,6 +572,8 @@ class PrinterRail:
 
     def add_extra_stepper(self, config, axis_config=None):
         axis_config = config if axis_config is None else axis_config
+        logging.info("ZEANON_AXIS")
+        logging.info(axis_config.get_name())
         stepper = PrinterStepper(config, self.stepper_units_in_radians)
         self.steppers.append(stepper)
         if self.endstops and axis_config.get("endstop_pin", None) is None:
