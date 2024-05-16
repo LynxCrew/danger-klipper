@@ -572,8 +572,6 @@ class PrinterRail:
 
     def add_extra_stepper(self, config, axis_config=None):
         axis_config = config if axis_config is None else axis_config
-        logging.info("ZEANON_AXIS")
-        logging.info(axis_config.get_name())
         stepper = PrinterStepper(config, self.stepper_units_in_radians)
         self.steppers.append(stepper)
         if self.endstops and axis_config.get("endstop_pin", None) is None:
@@ -650,6 +648,7 @@ def LookupMultiRail(
         if not config.has_section(stepper_config.get_name() + str(i)):
             break
         rail.add_extra_stepper(
-            config.getsection(stepper_config.get_name() + str(i))
+            config.getsection(stepper_config.get_name() + str(i)),
+            config.getsection(config.get_name() + str(i))
         )
     return rail
