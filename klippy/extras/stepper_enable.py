@@ -59,6 +59,7 @@ class StepperEnablePin:
 
     def _resend_current_val(self, eventtime):
         if self.last_value == 0:
+            self.reactor.update_timer(self.resend_timer, self.reactor.NEVER)
             self.reactor.unregister_timer(self.resend_timer)
             self.resend_timer = None
             return self.reactor.NEVER

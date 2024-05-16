@@ -649,6 +649,6 @@ def LookupMultiRail(
             break
         rail.add_extra_stepper(
             config.getsection(stepper_config.get_name() + str(i)),
-            config.getsection(config.get_name() + str(i))
+            config.getsection(config.get_name() + str(i)),
         )
     return rail
