@@ -643,7 +643,7 @@ def LookupMultiRail(
         stepper_config,
     )
     for i in range(1, 99):
-        stepper_config = stepper_config or config
+        stepper_config = config if stepper_config is None else config
         if not config.has_section(stepper_config.get_name() + str(i)):
             break
         rail.add_extra_stepper(
