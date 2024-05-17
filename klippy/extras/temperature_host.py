@@ -25,6 +25,8 @@ class Temperature_HOST:
         self.printer.add_object("temperature_host " + self.name, self)
         if self.printer.get_start_args().get("debugoutput") is not None:
             return
+
+        self.sample_timer = None
         self.temperature_sample_thread = threading.Thread(
             target=self._start_sample_timer
         )

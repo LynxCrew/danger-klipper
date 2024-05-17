@@ -22,6 +22,7 @@ class PrinterTemperatureDriver:
 
         self.reactor = self.printer.get_reactor()
 
+        self.sample_timer = None
         self.temperature_sample_thread = threading.Thread(
             target=self._start_sample_timer
         )
