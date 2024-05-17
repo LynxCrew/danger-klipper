@@ -3,6 +3,9 @@
 # Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
+import threading
+
 DRIVER_REPORT_TIME = 1.0
 
 
@@ -18,12 +21,19 @@ class PrinterTemperatureDriver:
         self.report_time = DRIVER_REPORT_TIME
 
         self.reactor = self.printer.get_reactor()
-        self.sample_timer = self.reactor.register_timer(
-            self._sample_driver_temperature
+
+        self.temperature_sample_thread = threading.Thread(
+            target=self._start_sample_timer
         )
+        self.temperature_sample_thread.start()
 
         self.printer.register_event_handler(
             "klippy:connect", self.handle_connect
+        )
+
+    def _start_sample_timer(self):
+        self.sample_timer = self.reactor.register_timer(
+            self._sample_driver_temperature
         )
 
     def handle_connect(self):
@@ -41,6 +51,7 @@ class PrinterTemperatureDriver:
         return self.report_time
 
     def _sample_driver_temperature(self, eventtime):
+        logging.info("TEMPERATURE_DRIVER_UPDATE")
         self.temp = self.driver.get_temperature()
 
         if self.temp is not None:

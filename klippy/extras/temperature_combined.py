@@ -5,6 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+import threading
 
 REPORT_TIME = 0.300
 
@@ -27,17 +28,25 @@ class PrinterSensorCombined:
         self.apply_mode = config.getchoice("combination_method", algos)
         # set default values
         self.last_temp = self.min_temp = self.max_temp = 0.0
+        self.temperature_callback = None
         # add object
         self.printer.add_object("temperature_combined " + self.name, self)
         # time-controlled sensor update
         self.initialized = False
-        self.temperature_update_timer = self.reactor.register_timer(
-            self._temperature_update_event
+        self.temperature_sample_thread = threading.Thread(
+            target=self._start_sample_timer
         )
+        self.temperature_sample_thread.start()
+
         self.printer.register_event_handler(
             "klippy:connect", self._handle_connect
         )
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
+
+    def _start_sample_timer(self):
+        self.temperature_update_timer = self.reactor.register_timer(
+            self._temperature_update_event
+        )
 
     def _handle_connect(self):
         for sensor_name in self.sensor_names:

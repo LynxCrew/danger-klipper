@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 import logging
+import threading
 
 HOST_REPORT_TIME = 1.0
 RPI_PROC_TEMP_FILE = "/sys/class/thermal/thermal_zone0/temp"
@@ -24,9 +25,11 @@ class Temperature_HOST:
         self.printer.add_object("temperature_host " + self.name, self)
         if self.printer.get_start_args().get("debugoutput") is not None:
             return
-        self.sample_timer = self.reactor.register_timer(
-            self._sample_pi_temperature
+        self.temperature_sample_thread = threading.Thread(
+            target=self._start_sample_timer
         )
+        self.temperature_sample_thread.start()
+
         try:
             self.file_handle = open(self.path, "r")
         except:
@@ -36,6 +39,11 @@ class Temperature_HOST:
 
         self.printer.register_event_handler(
             "klippy:connect", self.handle_connect
+        )
+
+    def _start_sample_timer(self):
+        self.sample_timer = self.reactor.register_timer(
+            self._sample_pi_temperature
         )
 
     def handle_connect(self):
@@ -52,6 +60,7 @@ class Temperature_HOST:
         return self.report_time
 
     def _sample_pi_temperature(self, eventtime):
+        logging.info("TEMPERATURE_HOST_UPDATE")
         try:
             self.file_handle.seek(0)
             self.temp = float(self.file_handle.read()) / 1000.0
