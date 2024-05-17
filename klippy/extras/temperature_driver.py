@@ -25,7 +25,6 @@ class PrinterTemperatureDriver:
         self.temperature_sample_thread = threading.Thread(
             target=self._start_sample_timer
         )
-        self.temperature_sample_thread.start()
 
         self.printer.register_event_handler(
             "klippy:connect", self.handle_connect
@@ -33,12 +32,12 @@ class PrinterTemperatureDriver:
 
     def _start_sample_timer(self):
         self.sample_timer = self.reactor.register_timer(
-            self._sample_driver_temperature
+            self._sample_driver_temperature, self.reactor.NOW
         )
 
     def handle_connect(self):
         self.driver = self.printer.lookup_object(self.name)
-        self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
+        self.temperature_sample_thread.start()
 
     def setup_callback(self, temperature_callback):
         self.temperature_callback = temperature_callback

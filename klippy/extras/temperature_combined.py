@@ -36,7 +36,6 @@ class PrinterSensorCombined:
         self.temperature_sample_thread = threading.Thread(
             target=self._start_sample_timer
         )
-        self.temperature_sample_thread.start()
 
         self.printer.register_event_handler(
             "klippy:connect", self._handle_connect
@@ -45,7 +44,7 @@ class PrinterSensorCombined:
 
     def _start_sample_timer(self):
         self.temperature_update_timer = self.reactor.register_timer(
-            self._temperature_update_event
+            self._temperature_update_event, self.reactor.NOW
         )
 
     def _handle_connect(self):
@@ -64,9 +63,7 @@ class PrinterSensorCombined:
 
     def _handle_ready(self):
         # Start temperature update timer
-        self.reactor.update_timer(
-            self.temperature_update_timer, self.reactor.NOW
-        )
+        self.temperature_sample_thread.start()
 
     def setup_minmax(self, min_temp, max_temp):
         self.min_temp = min_temp

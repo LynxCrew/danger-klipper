@@ -28,7 +28,6 @@ class Temperature_HOST:
         self.temperature_sample_thread = threading.Thread(
             target=self._start_sample_timer
         )
-        self.temperature_sample_thread.start()
 
         try:
             self.file_handle = open(self.path, "r")
@@ -43,11 +42,11 @@ class Temperature_HOST:
 
     def _start_sample_timer(self):
         self.sample_timer = self.reactor.register_timer(
-            self._sample_pi_temperature
+            self._sample_pi_temperature, self.reactor.NOW
         )
 
     def handle_connect(self):
-        self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
+        self.temperature_sample_thread.start()
 
     def setup_minmax(self, min_temp, max_temp):
         self.min_temp = min_temp
