@@ -1,3 +1,5 @@
+import threading
+
 BLOCK_REPORT_TIME = 1.0
 
 
@@ -17,16 +19,23 @@ class MPC_BLOCK_TEMP_WRAPPER:
         self.temp = self.min_temp = self.max_temp = 0.0
 
         self.reactor = self.printer.get_reactor()
-        self.sample_timer = self.reactor.register_timer(
-            self._sample_block_temperature
+
+        self.sample_timer = None
+        self.temperature_sample_thread = threading.Thread(
+            target=self._start_sample_timer
         )
 
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
 
+    def _start_sample_timer(self):
+        self.sample_timer = self.reactor.register_timer(
+            self._sample_block_temperature, self.reactor.NOW
+        )
+
     def handle_ready(self):
         pheaters = self.printer.lookup_object("heaters")
         self.heater = pheaters.lookup_heater(self.heater_name)
-        self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
+        self.temperature_sample_thread.start()
 
     def setup_callback(self, temperature_callback):
         self.temperature_callback = temperature_callback
