@@ -219,6 +219,7 @@ class Fan:
                 print_time += self.kick_start_time
             self.mcu_fan.set_pwm(print_time, pwm_value)
             logging.info("FAN_1")
+            logging.info(self.name)
             logging.info(pwm_value)
         self.pwm_value = pwm_value
         self.last_fan_value = value

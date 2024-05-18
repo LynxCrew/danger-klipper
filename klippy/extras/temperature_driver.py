@@ -51,7 +51,6 @@ class PrinterTemperatureDriver:
         return self.report_time
 
     def _sample_driver_temperature(self, eventtime):
-        logging.info("TEMPERATURE_DRIVER_UPDATE")
         self.temp = self.driver.get_temperature()
 
         if self.temp is not None:

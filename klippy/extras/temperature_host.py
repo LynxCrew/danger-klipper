@@ -61,7 +61,6 @@ class Temperature_HOST:
         return self.report_time
 
     def _sample_pi_temperature(self, eventtime):
-        logging.info("TEMPERATURE_HOST_UPDATE")
         try:
             self.file_handle.seek(0)
             self.temp = float(self.file_handle.read()) / 1000.0
