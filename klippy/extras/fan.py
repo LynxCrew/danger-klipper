@@ -218,6 +218,9 @@ class Fan:
                 self.mcu_fan.set_pwm(print_time, self.max_power)
                 print_time += self.kick_start_time
             self.mcu_fan.set_pwm(print_time, pwm_value)
+            logging.info("FAN_ZEANON")
+            logging.info(self.name)
+            logging.info(pwm_value)
         self.pwm_value = pwm_value
         self.last_fan_value = value
         self.last_fan_time = print_time
@@ -237,10 +240,10 @@ class Fan:
                     self.reactor.unregister_timer(self.fan_check_timer)
                     self.fan_check_timer = None
 
-    def set_speed_from_command(self, value):
+    def set_speed_from_command(self, value, force=False):
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.register_lookahead_callback(
-            (lambda pt: self.set_speed(pt, value))
+            (lambda pt: self.set_speed(pt, value, force))
         )
 
     def _handle_request_restart(self, print_time):
@@ -328,11 +331,13 @@ class PrinterFan:
     def cmd_M106(self, gcmd):
         # Set fan speed
         value = gcmd.get_float("S", 255.0, minval=0.0) / 255.0
-        self.fan.set_speed_from_command(value)
+        force = gcmd.get_int("F", 0, minval=0, maxval=1)
+        self.fan.set_speed_from_command(value, force)
 
     def cmd_M107(self, gcmd):
         # Turn fan off
-        self.fan.set_speed_from_command(0.0)
+        force = gcmd.get_int("F", 0, minval=0, maxval=1)
+        self.fan.set_speed_from_command(0.0, force)
 
 
 def load_config(config):
