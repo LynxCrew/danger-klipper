@@ -387,7 +387,11 @@ class Heater:
                 "pid_profile %s" % self.outer_instance.sensor_name
             )
             for profile in stored_profs:
-                self._init_profile(profile, profile.get_name().split(" ", 2)[2])
+                if len(self.outer_instance.sensor_name.split(" ")) > 1:
+                    name = profile.get_name().split(" ", 3)[-1]
+                else:
+                    name = profile.get_name().split(" ", 2)[-1]
+                self._init_profile(profile, name)
 
         def _init_profile(self, config_section, name):
             version = config_section.getint("pid_version", 1)
