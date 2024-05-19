@@ -1,3 +1,6 @@
+import logging
+
+
 class DangerOptions:
     def __init__(self, config):
         self.minimal_logging = config.getboolean("minimal_logging", False)
@@ -46,6 +49,7 @@ class DangerOptions:
             self.disable_webhook_logging = True
 
         self.temp_ignore_limits = config.getlist("temp_ignore_limits", [])
+        logging.info("ZEANON_TEMP_IGNORE_LIMITS: %s", self.temp_ignore_limits)
         self.modify_check_runout_timeout = config.getboolean(
             "modify_check_runout_timeout", False
         )
