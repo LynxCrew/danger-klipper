@@ -198,7 +198,6 @@ class Fan:
             pwm_value = max(self.min_power, min(self.max_power, pwm_value))
         else:
             pwm_value = 0
-
         print_time = max(self.last_fan_time + FAN_MIN_TIME, print_time)
         if force or not self.self_checking:
             if self.enable_pin:
@@ -210,21 +209,15 @@ class Fan:
                 value
                 and value < self.max_power
                 and self.kick_start_time
-                and (
-                    not self.last_fan_value or value - self.last_fan_value > 0.5
-                )
+                and (not self.last_fan_value or value - self.last_fan_value > 0.5)
             ):
                 # Run fan at full speed for specified kick_start_time
                 self.mcu_fan.set_pwm(print_time, self.max_power)
                 print_time += self.kick_start_time
             self.mcu_fan.set_pwm(print_time, pwm_value)
-            if end_print:
-                logging.info("FAN_ZEANON")
-                logging.info(self.name)
-                logging.info(pwm_value)
-        self.pwm_value = pwm_value
-        self.last_fan_value = value
         self.last_fan_time = print_time
+        self.last_fan_value = value
+        self.pwm_value = pwm_value
 
         if self.min_rpm > 0 and (not self.self_checking or force):
             if pwm_value > 0:
