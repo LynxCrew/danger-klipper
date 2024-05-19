@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+from extras.danger_options import get_danger_options
 
 SAMPLE_TIME = 0.001
 SAMPLE_COUNT = 8
@@ -51,10 +52,17 @@ class PrinterTemperatureMCU:
         self.mcu_adc.setup_adc_callback(self.report_time, self.adc_callback)
         query_adc = config.get_printer().load_object(config, "query_adc")
         query_adc.register_adc(config.get_name(), self.mcu_adc)
+        if get_danger_options().temp_ignore_limits:
+            self._danger_check_count = 0
+        else:
+            self._danger_check_count = RANGE_CHECK_COUNT
+
         # Register callbacks
         if self.printer.get_start_args().get("debugoutput") is not None:
             self.mcu_adc.setup_minmax(
-                SAMPLE_TIME, SAMPLE_COUNT, range_check_count=RANGE_CHECK_COUNT
+                SAMPLE_TIME,
+                SAMPLE_COUNT,
+                range_check_count=self._danger_check_count,
             )
             return
         self.printer.register_event_handler(
@@ -119,7 +127,7 @@ class PrinterTemperatureMCU:
             SAMPLE_COUNT,
             minval=min(adc_range),
             maxval=max(adc_range),
-            range_check_count=RANGE_CHECK_COUNT,
+            range_check_count=self._danger_check_count,
         )
 
     def setup_callback(self, temperature_callback):
