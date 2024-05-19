@@ -54,7 +54,7 @@ class SensorBase:
         return REPORT_TIME
 
     def _build_config(self):
-        if self.name in get_danger_options().adc_ignore_limits:
+        if self.name in get_danger_options().temp_ignore_limits:
             danger_check_count = 0
         else:
             danger_check_count = MAX_INVALID_COUNT

@@ -45,7 +45,7 @@ class DangerOptions:
             self.disable_serial_reader_warnings = True
             self.disable_webhook_logging = True
 
-        self.adc_ignore_limits = config.getlist("adc_ignore_limits", [])
+        self.temp_ignore_limits = config.getlist("temp_ignore_limits", [])
         self.modify_check_runout_timeout = config.getboolean(
             "modify_check_runout_timeout", False
         )
