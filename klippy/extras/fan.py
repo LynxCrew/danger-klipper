@@ -219,7 +219,7 @@ class Fan:
         self.last_fan_value = value
         self.pwm_value = pwm_value
 
-        if self.min_rpm > 0 and (not self.self_checking or force):
+        if self.min_rpm > 0 and (force or not self.self_checking):
             if pwm_value > 0:
                 if self.fan_check_timer is None:
                     self.fan_check_timer = self.reactor.register_timer(
