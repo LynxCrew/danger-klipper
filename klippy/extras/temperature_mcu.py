@@ -14,6 +14,7 @@ RANGE_CHECK_COUNT = 4
 class PrinterTemperatureMCU:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.config = config
         self.base_temperature = self.slope = None
         self.temp1 = self.adc1 = self.temp2 = self.adc2 = None
         self.temp = self.min_temp = self.max_temp = 0.0
@@ -62,7 +63,7 @@ class PrinterTemperatureMCU:
         self.mcu_adc.get_mcu().register_config_callback(self._build_config)
 
     def handle_beacon_ready(self):
-        self.beacon.activate_timer()
+        self.beacon.activate_wrapper(self.config)
 
     def _build_config(self):
         if self.beacon is not None:

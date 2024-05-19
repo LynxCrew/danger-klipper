@@ -1,4 +1,5 @@
 import threading
+from extras.danger_options import get_danger_options
 
 BLOCK_REPORT_TIME = 1.0
 
@@ -6,7 +7,7 @@ BLOCK_REPORT_TIME = 1.0
 class MPC_BLOCK_TEMP_WRAPPER:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.name = "block_temperature"
+        self.name = config.get_name().split()[-1]
 
         self.heater = None
 
@@ -24,6 +25,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
         self.temperature_sample_thread = threading.Thread(
             target=self._start_sample_timer
         )
+        self.ignore = self.name in get_danger_options().temp_ignore_limits
 
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
 
@@ -54,7 +56,9 @@ class MPC_BLOCK_TEMP_WRAPPER:
             self.temp = self.heater.smoothed_temp
 
         if self.temp is not None:
-            if self.temp < self.min_temp or self.temp > self.max_temp:
+            if (
+                self.temp < self.min_temp or self.temp > self.max_temp
+            ) and not self.ignore:
                 self.printer.invoke_shutdown(
                     "Heater Block [%s] temperature %0.1f outside range of %0.1f:%.01f"
                     % (self.name, self.temp, self.min_temp, self.max_temp)

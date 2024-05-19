@@ -90,8 +90,8 @@ thermocouple_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
 {
     sendf("thermocouple_result oid=%c next_clock=%u value=%u fault=%c",
           oid, next_begin_time, value, fault);
-    /* check the result and stop if below or above allowed range */
     if (spi->max_invalid > 0) {
+        /* check the result and stop if below or above allowed range */
         if (fault || value < spi->min_value || value > spi->max_value) {
             spi->invalid_count++;
             if (spi->invalid_count < spi->max_invalid)
