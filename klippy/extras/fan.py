@@ -187,7 +187,7 @@ class Fan:
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
 
-    def set_speed(self, print_time, value, force=False):
+    def set_speed(self, print_time, value, force=False, end_print=False):
         if value == self.last_fan_value and not force:
             return
         if value > 0:
@@ -200,7 +200,7 @@ class Fan:
             pwm_value = 0
 
         print_time = max(self.last_fan_time + FAN_MIN_TIME, print_time)
-        if not self.self_checking or force:
+        if force or not self.self_checking:
             if self.enable_pin:
                 if value > 0 and self.last_fan_value == 0:
                     self.enable_pin.set_digital(print_time, 1)
@@ -218,9 +218,10 @@ class Fan:
                 self.mcu_fan.set_pwm(print_time, self.max_power)
                 print_time += self.kick_start_time
             self.mcu_fan.set_pwm(print_time, pwm_value)
-            logging.info("FAN_ZEANON")
-            logging.info(self.name)
-            logging.info(pwm_value)
+            if end_print:
+                logging.info("FAN_ZEANON")
+                logging.info(self.name)
+                logging.info(pwm_value)
         self.pwm_value = pwm_value
         self.last_fan_value = value
         self.last_fan_time = print_time
@@ -240,10 +241,10 @@ class Fan:
                     self.reactor.unregister_timer(self.fan_check_timer)
                     self.fan_check_timer = None
 
-    def set_speed_from_command(self, value, force=False):
+    def set_speed_from_command(self, value, force=False, end_print=False):
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.register_lookahead_callback(
-            (lambda pt: self.set_speed(pt, value, force))
+            (lambda pt: self.set_speed(pt, value, force, end_print))
         )
 
     def _handle_request_restart(self, print_time):
@@ -337,7 +338,8 @@ class PrinterFan:
     def cmd_M107(self, gcmd):
         # Turn fan off
         force = gcmd.get_int("F", 0, minval=0, maxval=1)
-        self.fan.set_speed_from_command(0.0, force)
+        end_print = gcmd.get_int("E", 0, minval=0, maxval=1)
+        self.fan.set_speed_from_command(0.0, force, end_print)
 
 
 def load_config(config):
