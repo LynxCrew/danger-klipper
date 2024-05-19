@@ -4,7 +4,11 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+import threading
+
 from . import bus
+
+from extras.danger_options import get_danger_options
 
 ######################################################################
 # NOTE: The implementation requires write support of length 0
@@ -106,15 +110,24 @@ class HTU21D:
             )
         self.deviceId = config.get("sensor_type")
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.0
-        self.sample_timer = self.reactor.register_timer(self._sample_htu21d)
+        self.sample_timer = None
+        self.temperature_sample_thread = threading.Thread(
+            target=self._start_sample_timer
+        )
+        self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("htu21d " + self.name, self)
         self.printer.register_event_handler(
             "klippy:connect", self.handle_connect
         )
 
+    def _start_sample_timer(self):
+        self.sample_timer = self.reactor.register_timer(
+            self._sample_htu21d, self.reactor.NOW
+        )
+
     def handle_connect(self):
         self._init_htu21d()
-        self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
+        self.temperature_sample_thread.start()
 
     def setup_minmax(self, min_temp, max_temp):
         self.min_temp = min_temp
@@ -242,7 +255,9 @@ class HTU21D:
             self.temp = self.humidity = 0.0
             return self.reactor.NEVER
 
-        if self.temp < self.min_temp or self.temp > self.max_temp:
+        if (
+            self.temp < self.min_temp or self.temp > self.max_temp
+        ) and not self.ignore:
             self.printer.invoke_shutdown(
                 "HTU21D temperature %0.1f outside range of %0.1f:%.01f"
                 % (self.temp, self.min_temp, self.max_temp)

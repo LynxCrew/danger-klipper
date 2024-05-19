@@ -46,7 +46,7 @@ class PrinterSensorCombined:
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def _start_sample_timer(self):
-        self.temperature_update_timer = self.reactor.register_timer(
+        self.sample_timer = self.reactor.register_timer(
             self._temperature_update_event, self.reactor.NOW
         )
 
@@ -122,25 +122,26 @@ class PrinterSensorCombined:
         # update sensor value
         self.update_temp(eventtime)
 
-        # check min / max temp values
-        if self.initialized and self.last_temp < self.min_temp:
-            self.printer.invoke_shutdown(
-                "COMBINED SENSOR temperature %0.1f "
-                "below minimum temperature of %0.1f."
-                % (
-                    self.last_temp,
-                    self.min_temp,
+        if not self.ignore:
+            # check min / max temp values
+            if self.initialized and self.last_temp < self.min_temp:
+                self.printer.invoke_shutdown(
+                    "COMBINED SENSOR temperature %0.1f "
+                    "below minimum temperature of %0.1f."
+                    % (
+                        self.last_temp,
+                        self.min_temp,
+                    )
                 )
-            )
-        if self.initialized and self.last_temp > self.max_temp:
-            self.printer.invoke_shutdown(
-                "COMBINED SENSOR temperature %0.1f "
-                "above maximum temperature of %0.1f."
-                % (
-                    self.last_temp,
-                    self.max_temp,
+            if self.initialized and self.last_temp > self.max_temp:
+                self.printer.invoke_shutdown(
+                    "COMBINED SENSOR temperature %0.1f "
+                    "above maximum temperature of %0.1f."
+                    % (
+                        self.last_temp,
+                        self.max_temp,
+                    )
                 )
-            )
 
         # this is copied from temperature_host to enable time triggered updates
         # get mcu and measured / current(?) time

@@ -20,11 +20,7 @@ MAX_INVALID_COUNT = 3
 class SensorBase:
     def __init__(self, config, chip_type, config_cmd=None, spi_mode=1):
         self.printer = config.get_printer()
-        self.name = (
-            config.get_name().split()[1]
-            if " " in config.get_name()
-            else config.get_name()
-        )
+        self.name = config.get_name().split()[-1]
         self.chip_type = chip_type
         self._callback = None
         self.min_sample_value = self.max_sample_value = 0

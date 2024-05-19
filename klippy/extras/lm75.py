@@ -6,6 +6,8 @@
 import logging
 from . import bus
 
+from extras.danger_options import get_danger_options
+
 LM75_CHIP_ADDR = 0x48
 LM75_I2C_SPEED = 100000
 LM75_REGS = {
@@ -35,15 +37,24 @@ class LM75:
             "lm75_report_time", LM75_REPORT_TIME, minval=LM75_MIN_REPORT_TIME
         )
         self.temp = self.min_temp = self.max_temp = 0.0
-        self.sample_timer = self.reactor.register_timer(self._sample_lm75)
+        self.sample_timer = None
+        self.temperature_sample_thread = threading.Thread(
+            target=self._start_sample_timer
+        )
+        self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("lm75 " + self.name, self)
         self.printer.register_event_handler(
             "klippy:connect", self.handle_connect
         )
 
+    def _start_sample_timer(self):
+        self.sample_timer = self.reactor.register_timer(
+            self._sample_lm75, self.reactor.NOW
+        )
+
     def handle_connect(self):
         self._init_lm75()
-        self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
+        self.temperature_sample_thread.start()
 
     def setup_minmax(self, min_temp, max_temp):
         self.min_temp = min_temp

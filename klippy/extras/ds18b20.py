@@ -6,6 +6,8 @@
 import logging
 import mcu
 
+from extras.danger_options import get_danger_options
+
 DS18_REPORT_TIME = 3.0
 # Temperature can be sampled at any time but conversion time is ~750ms, so
 # setting the time too low will not make the reports come faster.
@@ -33,8 +35,13 @@ class DS18B20:
     def _build_config(self):
         sid = "".join(["%02x" % (x,) for x in self.sensor_id])
         self._mcu.add_config_cmd(
-            "config_ds18b20 oid=%d serial=%s max_error_count=%d"
-            % (self.oid, sid, DS18_MAX_CONSECUTIVE_ERRORS)
+            "config_ds18b20 oid=%d serial=%s max_error_count=%d ignore_limits=%d"
+            % (
+                self.oid,
+                sid,
+                DS18_MAX_CONSECUTIVE_ERRORS,
+                int(self.name in get_danger_options().temp_ignore_limits),
+            )
         )
 
         clock = self._mcu.get_query_slot(self.oid)
