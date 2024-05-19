@@ -163,10 +163,8 @@ class AHT10:
             return self.reactor.NEVER
 
         if (
-                (self.temp < self.min_temp
-                 or self.temp > self.max_temp)
-                and not self.ignore
-        ):
+            self.temp < self.min_temp or self.temp > self.max_temp
+        ) and not self.ignore:
             self.printer.invoke_shutdown(
                 "AHT10 temperature %0.1f outside range of %0.1f:%.01f"
                 % (self.temp, self.min_temp, self.max_temp)

@@ -368,9 +368,9 @@ class BME280:
         if self.chip_type == "BME280":
             humid_raw = (data[6] << 8) | data[7]
             self.humidity = self._compensate_humidity_bme280(humid_raw)
-        if ((
+        if (
             self.temp < self.min_temp or self.temp > self.max_temp
-        ) and not self.ignore):
+        ) and not self.ignore:
             self.printer.invoke_shutdown(
                 "BME280 temperature %0.1f outside range of %0.1f:%.01f"
                 % (self.temp, self.min_temp, self.max_temp)
