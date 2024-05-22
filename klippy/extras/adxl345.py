@@ -352,6 +352,13 @@ class ADXL345:
             "query_adxl345_status oid=%c", oid=self.oid, cq=cmdqueue
         )
 
+    def check_connected(self):
+        if self.mcu.non_critical_disconnected:
+            raise self.printer.command_error(
+                "non_critical_mcu: ADXL [%s] is disconnected!"
+                % self.name
+            )
+
     def read_reg(self, reg):
         params = self.spi.spi_transfer([reg | REG_MOD_READ, 0x00])
         response = bytearray(params["response"])
@@ -369,6 +376,7 @@ class ADXL345:
             )
 
     def start_internal_client(self):
+        self.check_connected()
         aqh = AccelQueryHelper(self.printer)
         self.batch_bulk.add_client(aqh.handle_batch)
         return aqh
