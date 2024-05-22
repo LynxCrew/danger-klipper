@@ -245,10 +245,12 @@ class ResonanceTester:
         toolhead = self.printer.lookup_object("toolhead")
         if accel_chips is None:
             for chip_axis, chip in self.accel_chips:
-                pass #self._check_chip_connection(chip, toolhead, gcmd)
+                for axis in axes:
+                    if axis.matches(chip_axis):
+                        self._check_chip_connection(chip, toolhead, gcmd)
         else:
             for chip in accel_chips:
-                pass #self._check_chip_connection(chip, toolhead, gcmd)
+                self._check_chip_connection(chip, toolhead, gcmd)
 
         calibration_data = {axis: None for axis in axes}
 
