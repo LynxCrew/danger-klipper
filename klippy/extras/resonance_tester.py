@@ -320,6 +320,16 @@ class ResonanceTester:
     def _get_max_calibration_freq(self):
         return 1.5 * self.test.get_max_freq()
 
+    def _check_chip_connection(self, chip, toolhead, gcmd):
+        aclient = chip.start_internal_client()
+        toolhead.dwell(1.0)
+        aclient.finish_measurements()
+        values = aclient.get_samples()
+        if not values:
+            raise gcmd.error(
+                "No accelerometer measurements found for chip "
+                "[%s]" % chip.name)
+
     cmd_TEST_RESONANCES_help = "Runs the resonance test for a specifed axis"
 
     def cmd_TEST_RESONANCES(self, gcmd):
@@ -369,24 +379,10 @@ class ResonanceTester:
         toolhead = self.printer.lookup_object("toolhead")
         if accel_chips is None:
             for chip_axis, chip in self.accel_chips:
-                aclient = chip.start_internal_client()
-                toolhead.dwell(1.0)
-                aclient.finish_measurements()
-                values = aclient.get_samples()
-                if not values:
-                    raise gcmd.error(
-                        "No accelerometer measurements found for chip "
-                        "[%s]" % chip.name)
+                self._check_chip_connection(chip, toolhead, gcmd)
         else:
             for chip in accel_chips:
-                aclient = chip.start_internal_client()
-                toolhead.dwell(1.0)
-                aclient.finish_measurements()
-                values = aclient.get_samples()
-                if not values:
-                    raise gcmd.error(
-                        "No accelerometer measurements found for chip "
-                        "[%s]" % chip.name)
+                self._check_chip_connection(chip, toolhead, gcmd)
 
 
         data = self._run_test(
@@ -435,6 +431,14 @@ class ResonanceTester:
         name_suffix = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
         if not self.is_valid_name_suffix(name_suffix):
             raise gcmd.error("Invalid NAME parameter")
+
+        toolhead = self.printer.lookup_object("toolhead")
+        if accel_chips is None:
+            for chip_axis, chip in self.accel_chips:
+                self._check_chip_connection(chip, toolhead, gcmd)
+        else:
+            for chip in accel_chips:
+                self._check_chip_connection(chip, toolhead, gcmd)
 
         input_shaper = self.printer.lookup_object("input_shaper", None)
 
