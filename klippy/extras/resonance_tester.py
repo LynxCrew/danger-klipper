@@ -243,6 +243,13 @@ class ResonanceTester:
         test_point=None,
     ):
         toolhead = self.printer.lookup_object("toolhead")
+        if accel_chips is None:
+            for chip_axis, chip in self.accel_chips:
+                self._check_chip_connection(chip, toolhead, gcmd)
+        else:
+            for chip in accel_chips:
+                self._check_chip_connection(chip, toolhead, gcmd)
+
         calibration_data = {axis: None for axis in axes}
 
         self.test.prepare_test(gcmd)
@@ -376,15 +383,6 @@ class ResonanceTester:
         else:
             helper = None
 
-        toolhead = self.printer.lookup_object("toolhead")
-        if accel_chips is None:
-            for chip_axis, chip in self.accel_chips:
-                self._check_chip_connection(chip, toolhead, gcmd)
-        else:
-            for chip in accel_chips:
-                self._check_chip_connection(chip, toolhead, gcmd)
-
-
         data = self._run_test(
             gcmd,
             [axis],
@@ -431,14 +429,6 @@ class ResonanceTester:
         name_suffix = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
         if not self.is_valid_name_suffix(name_suffix):
             raise gcmd.error("Invalid NAME parameter")
-
-        toolhead = self.printer.lookup_object("toolhead")
-        if accel_chips is None:
-            for chip_axis, chip in self.accel_chips:
-                self._check_chip_connection(chip, toolhead, gcmd)
-        else:
-            for chip in accel_chips:
-                self._check_chip_connection(chip, toolhead, gcmd)
 
         input_shaper = self.printer.lookup_object("input_shaper", None)
 
