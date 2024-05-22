@@ -367,7 +367,7 @@ class ResonanceTester:
             helper = None
 
         toolhead = self.printer.lookup_object("toolhead")
-        for chip in accel_chips:
+        for chip in (self.accel_chips if accel_chips is None else accel_chips):
             aclient = chip.start_internal_client()
             toolhead.dwell(1.0)
             aclient.finish_measurements()
