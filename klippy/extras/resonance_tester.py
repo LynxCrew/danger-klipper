@@ -367,14 +367,27 @@ class ResonanceTester:
             helper = None
 
         toolhead = self.printer.lookup_object("toolhead")
-        for chip in (self.accel_chips if accel_chips is None else accel_chips):
-            aclient = chip.start_internal_client()
-            toolhead.dwell(1.0)
-            aclient.finish_measurements()
-            values = aclient.get_samples()
-            if not values:
-                raise gcmd.error("No accelerometer measurements found for chip "
-                                 "[%s]" % chip.name)
+        if accel_chips is None:
+            for chip_axis, chip in self.accel_chips:
+                aclient = chip.start_internal_client()
+                toolhead.dwell(1.0)
+                aclient.finish_measurements()
+                values = aclient.get_samples()
+                if not values:
+                    raise gcmd.error(
+                        "No accelerometer measurements found for chip "
+                        "[%s]" % chip.name)
+        else:
+            for chip in accel_chips:
+                aclient = chip.start_internal_client()
+                toolhead.dwell(1.0)
+                aclient.finish_measurements()
+                values = aclient.get_samples()
+                if not values:
+                    raise gcmd.error(
+                        "No accelerometer measurements found for chip "
+                        "[%s]" % chip.name)
+
 
         data = self._run_test(
             gcmd,
