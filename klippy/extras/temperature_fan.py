@@ -105,8 +105,7 @@ class TemperatureFan:
     def get_status(self, eventtime):
         status = self.fan.get_status(eventtime)
         status["temperature"] = round(self.last_temp, 2)
-        if self.control.get_type != "curve":
-            status["target"] = self.target_temp
+        status["target"] = self.target_temp
         status["control"] = self.control.get_type()
         return status
 
