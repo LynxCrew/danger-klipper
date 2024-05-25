@@ -192,8 +192,6 @@ class Fan:
 
     def set_speed(self, print_time, value, force=False, end_print=False):
         logging.info("zeanon_initial_print_time: %f" % print_time)
-        if value == self.last_fan_value and not force:
-            return
         if value > 0:
             # Scale value between min_power and max_power
             pwm_value = (
@@ -202,6 +200,8 @@ class Fan:
             pwm_value = max(self.min_power, min(self.max_power, pwm_value))
         else:
             pwm_value = 0
+        if pwm_value == self.pwm_value and not force:
+            return
         print_time = max(self.last_fan_time + FAN_MIN_TIME, print_time)
         if force or not self.self_checking:
             if self.enable_pin:
