@@ -23,6 +23,9 @@ class Fan:
         self.kick_start_time = config.getfloat(
             "kick_start_time", 0.1, minval=0.0
         )
+        self.kick_start_threshold = config.getfloat(
+            "kick_start_threshold", 0.5, minval=0.0, maxval=1.0
+        )
         self.min_power = config.getfloat(
             "min_power", default=None, minval=0.0, maxval=1.0
         )
@@ -210,7 +213,8 @@ class Fan:
                 and value < self.max_power
                 and self.kick_start_time
                 and (
-                    not self.last_fan_value or value - self.last_fan_value > 0.5
+                    not self.last_fan_value
+                    or value - self.last_fan_value > self.kick_start_threshold
                 )
             ):
                 # Run fan at full speed for specified kick_start_time
