@@ -191,6 +191,7 @@ class Fan:
         return self.mcu_fan.get_mcu()
 
     def set_speed(self, print_time, value, force=False, end_print=False):
+        logging.info("zeanon_initial_print_time: %f" % print_time)
         if value == self.last_fan_value and not force:
             return
         if value > 0:
@@ -221,6 +222,7 @@ class Fan:
                 self.mcu_fan.set_pwm(print_time, self.max_power)
                 print_time += self.kick_start_time
             self.mcu_fan.set_pwm(print_time, pwm_value)
+        logging.info("zeanon_adjusted_print_time: %f" % print_time)
         self.last_fan_time = print_time
         self.last_fan_value = value
         self.pwm_value = pwm_value
