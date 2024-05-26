@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+import threading
 
 PIN_MIN_TIME = 0.100
 MAX_ENABLE_TIME = 10.0
@@ -23,6 +24,9 @@ class StepperEnablePin:
         self.is_dedicated = True
         self.last_value = 0
         self.resend_timer = None
+        self.resend_thread = threading.Thread(
+            target=self._start_resend_timer
+        )
         self.resend_interval = (
             (max_enable_time - RESEND_HOST_TIME) if max_enable_time else 0.0
         )
@@ -53,9 +57,12 @@ class StepperEnablePin:
         self.last_value = value
         self.last_print_time = print_time
         if self.resend_interval and self.resend_timer is None:
-            self.resend_timer = self.reactor.register_timer(
-                self._resend_current_val, self.reactor.NOW
-            )
+            self.resend_thread.start()
+
+    def _start_resend_timer(self):
+        self.resend_timer = self.reactor.register_timer(
+            self._resend_current_val, self.reactor.NOW
+        )
 
     def _resend_current_val(self, eventtime):
         if self.last_value == 0:
