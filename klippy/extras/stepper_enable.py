@@ -73,6 +73,7 @@ class StepperEnablePin:
         if self.last_value == 0:
             self.reactor.unregister_timer(self.resend_timer)
             self.resend_timer = None
+            self.resend_thread = None
             return self.reactor.NEVER
 
         systime = self.reactor.monotonic()

@@ -31,7 +31,7 @@ class PrinterOutputPin:
         # Support mcu checking for maximum duration
         self.reactor = self.printer.get_reactor()
         self.resend_timer = None
-        self.resend_thread = threading.Thread(target=self._start_resend_timer)
+        self.resend_thread = None
         self.resend_interval = 0.0
         max_mcu_duration = config.getfloat(
             "maximum_mcu_duration", 0.0, minval=0.500, maxval=MAX_SCHEDULE_TIME
@@ -83,7 +83,10 @@ class PrinterOutputPin:
             self.mcu_pin.set_digital(print_time, value)
         self.last_value = value
         self.last_print_time = print_time
-        if self.resend_interval and self.resend_timer is None:
+        if self.resend_interval and self.resend_timer is None and self.resend_thread is None:
+            self.resend_thread = threading.Thread(
+                target=self._start_resend_timer
+            )
             self.resend_thread.start()
 
     cmd_SET_PIN_help = "Set the value of an output pin"
@@ -109,6 +112,7 @@ class PrinterOutputPin:
         if self.last_value == self.shutdown_value:
             self.reactor.unregister_timer(self.resend_timer)
             self.resend_timer = None
+            self.resend_thread = None
             return self.reactor.NEVER
 
         systime = self.reactor.monotonic()
