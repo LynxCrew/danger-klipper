@@ -24,9 +24,7 @@ class StepperEnablePin:
         self.is_dedicated = True
         self.last_value = 0
         self.resend_timer = None
-        self.resend_thread = threading.Thread(
-            target=self._start_resend_timer
-        )
+        self.resend_thread = None
         self.resend_interval = (
             (max_enable_time - RESEND_HOST_TIME) if max_enable_time else 0.0
         )
@@ -56,7 +54,14 @@ class StepperEnablePin:
         self.mcu_enable.set_digital(print_time, value)
         self.last_value = value
         self.last_print_time = print_time
-        if self.resend_interval and self.resend_timer is None:
+        if (
+            self.resend_interval
+            and self.resend_timer is None
+            and self.resend_thread is None
+        ):
+            self.resend_thread = threading.Thread(
+                target=self._start_resend_timer
+            )
             self.resend_thread.start()
 
     def _start_resend_timer(self):
@@ -66,7 +71,6 @@ class StepperEnablePin:
 
     def _resend_current_val(self, eventtime):
         if self.last_value == 0:
-            self.reactor.update_timer(self.resend_timer, self.reactor.NEVER)
             self.reactor.unregister_timer(self.resend_timer)
             self.resend_timer = None
             return self.reactor.NEVER

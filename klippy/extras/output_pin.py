@@ -3,6 +3,7 @@
 # Copyright (C) 2017-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import threading
 
 PIN_MIN_TIME = 0.100
 RESEND_HOST_TIME = 0.300 + PIN_MIN_TIME
@@ -30,6 +31,7 @@ class PrinterOutputPin:
         # Support mcu checking for maximum duration
         self.reactor = self.printer.get_reactor()
         self.resend_timer = None
+        self.resend_thread = threading.Thread(target=self._start_resend_timer)
         self.resend_interval = 0.0
         max_mcu_duration = config.getfloat(
             "maximum_mcu_duration", 0.0, minval=0.500, maxval=MAX_SCHEDULE_TIME
@@ -82,9 +84,7 @@ class PrinterOutputPin:
         self.last_value = value
         self.last_print_time = print_time
         if self.resend_interval and self.resend_timer is None:
-            self.resend_timer = self.reactor.register_timer(
-                self._resend_current_val, self.reactor.NOW
-            )
+            self.resend_thread.start()
 
     cmd_SET_PIN_help = "Set the value of an output pin"
 
@@ -98,6 +98,11 @@ class PrinterOutputPin:
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.register_lookahead_callback(
             lambda print_time: self._set_pin(print_time, value)
+        )
+
+    def _start_resend_timer(self):
+        self.resend_timer = self.reactor.register_timer(
+            self._resend_current_val, self.reactor.NOW
         )
 
     def _resend_current_val(self, eventtime):
