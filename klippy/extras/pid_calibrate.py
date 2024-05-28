@@ -67,6 +67,7 @@ class PIDCalibrate:
             "pid_ki": Ki,
             "pid_kd": Kd,
             "smooth_time": None,
+            "smoothing_elements": None,
             "name": profile_name,
         }
 
