@@ -31,6 +31,8 @@ class PrinterSensorCombined:
         self.apply_mode = config.getchoice("combination_method", algos)
         # set default values
         self.last_temp = self.min_temp = self.max_temp = 0.0
+        self.measured_min = 99999999.0
+        self.measured_max = 0.0
         self.temperature_callback = None
         # add object
         self.printer.add_object("temperature_combined " + self.name, self)
@@ -112,6 +114,9 @@ class PrinterSensorCombined:
 
             temp = self.apply_mode(values)
             self.last_temp = temp
+            if temp:
+                self.measured_min = min(self.measured_min, temp)
+                self.measured_max = max(self.measured_max, temp)
 
     def get_temp(self, eventtime):
         return self.last_temp, 0.0
@@ -119,6 +124,8 @@ class PrinterSensorCombined:
     def get_status(self, eventtime):
         return {
             "temperature": round(self.last_temp, 2),
+            "measured_min_temp": round(self.measured_min, 2),
+            "measured_max_temp": round(self.measured_max, 2),
         }
 
     def _temperature_update_event(self):
