@@ -144,8 +144,8 @@ class TMCErrorCheck:
         self.drv_status_reg_info = [0, reg_name, mask, err_mask, cs_actual_mask]
         # Setup for temperature query
         self.adc_temp = None
-        self.measured_min = None
-        self.measured_max = None
+        self.measured_min = 99999999.0
+        self.measured_max = 0.0
         self.adc_temp_reg = self.fields.lookup_register("adc_temp")
         if self.adc_temp_reg is not None:
             pheaters = self.printer.load_object(config, "heaters")
