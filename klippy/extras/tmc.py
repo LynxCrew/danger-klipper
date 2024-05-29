@@ -259,14 +259,12 @@ class TMCErrorCheck:
             fields = self.fields.get_reg_fields(reg_name, last_value)
             self.last_drv_fields = {n: v for n, v in fields.items() if v}
         if temp:
-            self.measured_min = min(self.measured_min
-                                    if self.measured_min
-                                    else 99999999.0,
-                                    temp)
-            self.measured_max = max(self.measured_max
-                                    if self.measured_max
-                                    else 0.0,
-                                    temp)
+            self.measured_min = min(
+                self.measured_min if self.measured_min else 99999999.0, temp
+            )
+            self.measured_max = max(
+                self.measured_max if self.measured_max else 0.0, temp
+            )
         return {
             "drv_status": self.last_drv_fields,
             "temperature": temp,
