@@ -5,6 +5,9 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+import threading
+import time
+
 from . import bus
 
 from extras.danger_options import get_danger_options
@@ -56,7 +59,6 @@ class SHT3X:
         self.report_time = config.getint("sht3x_report_time", 1, minval=1)
         self.deviceId = config.get("sensor_type")
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.0
-        self.sample_timer = None
         self.temperature_sample_thread = threading.Thread(
             target=self._start_sample_timer
         )
@@ -67,9 +69,10 @@ class SHT3X:
         )
 
     def _start_sample_timer(self):
-        self.sample_timer = self.reactor.register_timer(
-            self._sample_sht3x, self.reactor.NOW
-        )
+        wait_time = self._sample_sht3x()
+        while wait_time > 0 and not self.printer.is_shutdown():
+            time.sleep(wait_time)
+            wait_time = self._sample_sht3x()
 
     def handle_connect(self):
         self._init_sht3x()
@@ -101,14 +104,14 @@ class SHT3X:
         if self._crc8(status) != checksum:
             logging.warning("sht3x: Reading status - checksum error!")
 
-    def _sample_sht3x(self, eventtime):
+    def _sample_sht3x(self):
         try:
             # Read Temeprature
             params = self.i2c.i2c_write(
                 SHT3X_CMD["MEASURE"]["STRETCH_ENABLED"]["HIGH_REP"]
             )
             # Wait
-            self.reactor.pause(self.reactor.monotonic() + 0.20)
+            time.sleep(0.2)
 
             params = self.i2c.i2c_read([], 6)
 
@@ -132,7 +135,7 @@ class SHT3X:
         except Exception:
             logging.exception("sht3x: Error reading data")
             self.temp = self.humidity = 0.0
-            return self.reactor.NEVER
+            return 0
 
         if (
             self.temp < self.min_temp or self.temp > self.max_temp
@@ -145,7 +148,7 @@ class SHT3X:
         measured_time = self.reactor.monotonic()
         print_time = self.i2c.get_mcu().estimated_print_time(measured_time)
         self._callback(print_time, self.temp)
-        return measured_time + self.report_time
+        return self.report_time
 
     def _split_bytes(self, data):
         bytes = []

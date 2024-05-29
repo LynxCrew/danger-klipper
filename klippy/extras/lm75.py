@@ -4,6 +4,9 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+import threading
+import time
+
 from . import bus
 
 from extras.danger_options import get_danger_options
@@ -37,7 +40,6 @@ class LM75:
             "lm75_report_time", LM75_REPORT_TIME, minval=LM75_MIN_REPORT_TIME
         )
         self.temp = self.min_temp = self.max_temp = 0.0
-        self.sample_timer = None
         self.temperature_sample_thread = threading.Thread(
             target=self._start_sample_timer
         )
@@ -48,9 +50,10 @@ class LM75:
         )
 
     def _start_sample_timer(self):
-        self.sample_timer = self.reactor.register_timer(
-            self._sample_lm75, self.reactor.NOW
-        )
+        wait_time = self._sample_lm75()
+        while wait_time > 0 and not self.printer.is_shutdown():
+            time.sleep(wait_time)
+            wait_time = self._sample_lm75()
 
     def handle_connect(self):
         self._init_lm75()
@@ -80,14 +83,14 @@ class LM75:
         except:
             pass
 
-    def _sample_lm75(self, eventtime):
+    def _sample_lm75(self):
         try:
             sample = self.read_register("TEMP", 2)
             self.temp = self.degrees_from_sample(sample)
         except Exception:
             logging.exception("lm75: Error reading data")
             self.temp = 0.0
-            return self.reactor.NEVER
+            return 0
 
         if self.temp < self.min_temp or self.temp > self.max_temp:
             self.printer.invoke_shutdown(
@@ -97,7 +100,7 @@ class LM75:
 
         measured_time = self.reactor.monotonic()
         self._callback(self.mcu.estimated_print_time(measured_time), self.temp)
-        return measured_time + self.report_time
+        return self.report_time
 
     def read_register(self, reg_name, read_len):
         # read a single register

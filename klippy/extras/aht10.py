@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 import threading
+import time
 
 from . import bus
 from extras.danger_options import get_danger_options
@@ -37,7 +38,6 @@ class AHT10:
         )
         self.report_time = config.getint("aht10_report_time", 30, minval=5)
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.0
-        self.sample_timer = None
         self.temperature_sample_thread = threading.Thread(
             target=self._start_sample_timer
         )
@@ -50,9 +50,10 @@ class AHT10:
         self.init_sent = False
 
     def _start_sample_timer(self):
-        self.sample_timer = self.reactor.register_timer(
-            self._sample_aht10, self.reactor.NOW
-        )
+        wait_time = self._sample_aht10()
+        while wait_time > 0 and not self.printer.is_shutdown():
+            time.sleep(wait_time)
+            wait_time = self._sample_aht10()
 
     def handle_connect(self):
         self._init_aht10()
@@ -157,10 +158,10 @@ class AHT10:
                 + "%.3f, humidity: %.3f" % (self.temp, self.humidity)
             )
 
-    def _sample_aht10(self, eventtime):
+    def _sample_aht10(self):
         if not self._make_measurement():
             self.temp = self.humidity = 0.0
-            return self.reactor.NEVER
+            return 0
 
         if (
             self.temp < self.min_temp or self.temp > self.max_temp
@@ -173,7 +174,7 @@ class AHT10:
         measured_time = self.reactor.monotonic()
         print_time = self.i2c.get_mcu().estimated_print_time(measured_time)
         self._callback(print_time, self.temp)
-        return measured_time + self.report_time
+        return self.report_time
 
     def get_status(self, eventtime):
         return {

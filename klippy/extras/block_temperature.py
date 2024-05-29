@@ -1,4 +1,6 @@
 import threading
+import time
+
 from extras.danger_options import get_danger_options
 
 BLOCK_REPORT_TIME = 1.0
@@ -21,7 +23,6 @@ class MPC_BLOCK_TEMP_WRAPPER:
 
         self.reactor = self.printer.get_reactor()
 
-        self.sample_timer = None
         self.temperature_sample_thread = threading.Thread(
             target=self._start_sample_timer
         )
@@ -30,9 +31,10 @@ class MPC_BLOCK_TEMP_WRAPPER:
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
 
     def _start_sample_timer(self):
-        self.sample_timer = self.reactor.register_timer(
-            self._sample_block_temperature, self.reactor.NOW
-        )
+        wait_time = self._sample_block_temperature()
+        while wait_time > 0 and not self.printer.is_shutdown():
+            time.sleep(wait_time)
+            wait_time = self._sample_block_temperature()
 
     def handle_ready(self):
         pheaters = self.printer.lookup_object("heaters")
@@ -49,7 +51,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
     def get_report_time_delta(self):
         return self.report_time
 
-    def _sample_block_temperature(self, eventtime):
+    def _sample_block_temperature(self):
         if self.heater.get_control().get_type() == "mpc":
             self.temp = self.heater.get_control().state_block_temp
         else:
@@ -75,7 +77,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
             self.temp,
         )
 
-        return measured_time + self.report_time
+        return self.report_time
 
     def set_report_time(self, report_time):
         self.report_time = report_time

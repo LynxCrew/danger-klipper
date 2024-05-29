@@ -4,6 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import threading
+import time
+
 from extras.danger_options import get_danger_options
 
 DRIVER_REPORT_TIME = 1.0
@@ -23,7 +25,6 @@ class PrinterTemperatureDriver:
 
         self.reactor = self.printer.get_reactor()
 
-        self.sample_timer = None
         self.temperature_sample_thread = threading.Thread(
             target=self._start_sample_timer
         )
@@ -34,9 +35,10 @@ class PrinterTemperatureDriver:
         )
 
     def _start_sample_timer(self):
-        self.sample_timer = self.reactor.register_timer(
-            self._sample_driver_temperature, self.reactor.NOW
-        )
+        wait_time = self._sample_driver_temperature()
+        while wait_time > 0 and not self.printer.is_shutdown():
+            time.sleep(wait_time)
+            wait_time = self._sample_driver_temperature()
 
     def handle_connect(self):
         self.driver = self.printer.lookup_object(self.driver_name)
@@ -52,7 +54,7 @@ class PrinterTemperatureDriver:
     def get_report_time_delta(self):
         return self.report_time
 
-    def _sample_driver_temperature(self, eventtime):
+    def _sample_driver_temperature(self):
         self.temp = self.driver.get_temperature()
 
         if self.temp is not None:
@@ -74,7 +76,7 @@ class PrinterTemperatureDriver:
             mcu.estimated_print_time(measured_time), self.temp
         )
 
-        return measured_time + self.report_time
+        return self.report_time
 
     def set_report_time(self, report_time):
         self.report_time = report_time

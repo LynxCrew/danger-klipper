@@ -6,6 +6,8 @@
 
 import logging
 import threading
+import time
+
 from extras.danger_options import get_danger_options
 
 HOST_REPORT_TIME = 1.0
@@ -27,7 +29,6 @@ class Temperature_HOST:
         if self.printer.get_start_args().get("debugoutput") is not None:
             return
 
-        self.sample_timer = None
         self.temperature_sample_thread = threading.Thread(
             target=self._start_sample_timer
         )
@@ -45,9 +46,10 @@ class Temperature_HOST:
         )
 
     def _start_sample_timer(self):
-        self.sample_timer = self.reactor.register_timer(
-            self._sample_pi_temperature, self.reactor.NOW
-        )
+        wait_time = self._sample_pi_temperature()
+        while wait_time > 0 and not self.printer.is_shutdown():
+            time.sleep(wait_time)
+            wait_time = self._sample_pi_temperature()
 
     def handle_connect(self):
         self.temperature_sample_thread.start()
@@ -62,14 +64,14 @@ class Temperature_HOST:
     def get_report_time_delta(self):
         return self.report_time
 
-    def _sample_pi_temperature(self, eventtime):
+    def _sample_pi_temperature(self):
         try:
             self.file_handle.seek(0)
             self.temp = float(self.file_handle.read()) / 1000.0
         except Exception:
             logging.exception("temperature_host: Error reading data")
             self.temp = 0.0
-            return self.reactor.NEVER
+            return 0
 
         if not self.ignore:
             if self.temp < self.min_temp:
@@ -92,7 +94,7 @@ class Temperature_HOST:
         mcu = self.printer.lookup_object("mcu")
         measured_time = self.reactor.monotonic()
         self._callback(mcu.estimated_print_time(measured_time), self.temp)
-        return measured_time + self.report_time
+        return self.report_time
 
     def get_status(self, eventtime):
         return {

@@ -5,6 +5,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import threading
+import time
+
 from extras.danger_options import get_danger_options
 
 REPORT_TIME = 0.300
@@ -46,9 +48,10 @@ class PrinterSensorCombined:
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def _start_sample_timer(self):
-        self.sample_timer = self.reactor.register_timer(
-            self._temperature_update_event, self.reactor.NOW
-        )
+        wait_time = self._temperature_update_event()
+        while wait_time > 0 and not self.printer.is_shutdown():
+            time.sleep(wait_time)
+            wait_time = self._temperature_update_event()
 
     def _handle_connect(self):
         for sensor_name in self.sensor_names:
@@ -118,7 +121,8 @@ class PrinterSensorCombined:
             "temperature": round(self.last_temp, 2),
         }
 
-    def _temperature_update_event(self, eventtime):
+    def _temperature_update_event(self):
+        eventtime = self.reactor.monotonic()
         # update sensor value
         self.update_temp(eventtime)
 
@@ -146,13 +150,12 @@ class PrinterSensorCombined:
         # this is copied from temperature_host to enable time triggered updates
         # get mcu and measured / current(?) time
         mcu = self.printer.lookup_object("mcu")
-        measured_time = self.reactor.monotonic()
         # convert to print time?! for the callback???
         self.temperature_callback(
-            mcu.estimated_print_time(measured_time), self.last_temp
+            mcu.estimated_print_time(eventtime), self.last_temp
         )
         # set next update time
-        return measured_time + REPORT_TIME
+        return REPORT_TIME
 
 
 def mean(values):

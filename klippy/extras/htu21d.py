@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 import threading
+import time
 
 from . import bus
 
@@ -110,7 +111,6 @@ class HTU21D:
             )
         self.deviceId = config.get("sensor_type")
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.0
-        self.sample_timer = None
         self.temperature_sample_thread = threading.Thread(
             target=self._start_sample_timer
         )
@@ -121,9 +121,10 @@ class HTU21D:
         )
 
     def _start_sample_timer(self):
-        self.sample_timer = self.reactor.register_timer(
-            self._sample_htu21d, self.reactor.NOW
-        )
+        wait_time = self._sample_htu21d()
+        while wait_time > 0 and not self.printer.is_shutdown():
+            time.sleep(wait_time)
+            wait_time = self._sample_htu21d()
 
     def handle_connect(self):
         self._init_htu21d()
@@ -182,7 +183,7 @@ class HTU21D:
         self.i2c.i2c_write([HTU21D_COMMANDS["WRITE"]], registerData)
         logging.info("htu21d: Setting resolution to %s " % self.resolution)
 
-    def _sample_htu21d(self, eventtime):
+    def _sample_htu21d(self):
         try:
             # Read Temeprature
             if self.hold_master_mode:
@@ -191,10 +192,7 @@ class HTU21D:
                 params = self.i2c.i2c_write([HTU21D_COMMANDS["HTU21D_TEMP_NH"]])
 
             # Wait
-            self.reactor.pause(
-                self.reactor.monotonic()
-                + HTU21D_DEVICES[self.deviceId][self.resolution][0]
-            )
+            time.sleep([self.deviceId][self.resolution][0])
 
             params = self.i2c.i2c_read([], 3)
 
@@ -253,7 +251,7 @@ class HTU21D:
         except Exception:
             logging.exception("htu21d: Error reading data")
             self.temp = self.humidity = 0.0
-            return self.reactor.NEVER
+            return 0
 
         if (
             self.temp < self.min_temp or self.temp > self.max_temp
@@ -266,7 +264,7 @@ class HTU21D:
         measured_time = self.reactor.monotonic()
         print_time = self.i2c.get_mcu().estimated_print_time(measured_time)
         self._callback(print_time, self.temp)
-        return measured_time + self.report_time
+        return self.report_time
 
     def _chekCRC8(self, data):
         for bit in range(0, 16):
