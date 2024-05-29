@@ -264,8 +264,8 @@ class TMCErrorCheck:
         return {
             "drv_status": self.last_drv_fields,
             "temperature": temp,
-            "measured_min_temp": self.measured_min,
-            "measured_max_temp": self.measured_max,
+            "measured_min_temp": self.measured_min if temp else None,
+            "measured_max_temp": self.measured_max if temp else None,
         }
 
 
