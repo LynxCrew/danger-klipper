@@ -38,6 +38,8 @@ class TemperatureFan:
         )
         self.min_speed = self.min_speed_conf
         self.last_temp = 0.0
+        self.measured_min = 99999999.0
+        self.measured_max = 0.0
         self.last_temp_time = 0.0
         self.target_temp_conf = config.getfloat(
             "target_temp",
@@ -92,6 +94,9 @@ class TemperatureFan:
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp
         self.control.temperature_callback(read_time, temp)
+        if temp:
+            self.measured_min = min(self.measured_min, temp)
+            self.measured_max = max(self.measured_max, temp)
 
     def get_temp(self, eventtime):
         return self.last_temp, self.target_temp
@@ -105,6 +110,8 @@ class TemperatureFan:
     def get_status(self, eventtime):
         status = self.fan.get_status(eventtime)
         status["temperature"] = round(self.last_temp, 2)
+        status["measured_min_temp"] = round(self.measured_min, 2)
+        status["measured_max_temp"] = round(self.measured_max, 2)
         status["target"] = self.target_temp
         status["control"] = self.control.get_type()
         return status
