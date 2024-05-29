@@ -144,6 +144,8 @@ class TMCErrorCheck:
         self.drv_status_reg_info = [0, reg_name, mask, err_mask, cs_actual_mask]
         # Setup for temperature query
         self.adc_temp = None
+        self.measured_min = None
+        self.measured_max = None
         self.adc_temp_reg = self.fields.lookup_register("adc_temp")
         if self.adc_temp_reg is not None:
             pheaters = self.printer.load_object(config, "heaters")
@@ -244,14 +246,27 @@ class TMCErrorCheck:
 
     def get_status(self, eventtime=None):
         if self.check_timer is None:
-            return {"drv_status": None, "temperature": None}
+            return {
+                "drv_status": None,
+                "temperature": None,
+                "measured_min_temp": self.measured_min,
+                "measured_max_temp": self.measured_max,
+            }
         temp = self.get_temperature()
         last_value, reg_name = self.drv_status_reg_info[:2]
         if last_value != self.last_drv_status:
             self.last_drv_status = last_value
             fields = self.fields.get_reg_fields(reg_name, last_value)
             self.last_drv_fields = {n: v for n, v in fields.items() if v}
-        return {"drv_status": self.last_drv_fields, "temperature": temp}
+        if temp:
+            self.measured_min = min(self.measured_min, temp)
+            self.measured_max = max(self.measured_max, temp)
+        return {
+            "drv_status": self.last_drv_fields,
+            "temperature": temp,
+            "measured_min_temp": self.measured_min,
+            "measured_max_temp": self.measured_max,
+        }
 
 
 ######################################################################
