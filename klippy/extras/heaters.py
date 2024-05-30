@@ -425,8 +425,29 @@ class Heater:
                 temp_profile["smoothing"] = config_section.getfloat(
                     "smoothing", above=0.0, default=0.25, maxval=1.0
                 )
+                heater_power = config_section.getfloat(
+                    "heater_power", above=0.0, default=None
+                )
+                heater_powers = config_section.getlists(
+                    "heater_powers", seps=(",", "\n"), parser=float, count=2, default=None
+                )
+                if heater_power is None and heater_power is None:
+                    raise config_section.error(
+                        "Option 'heater_power' or 'heater_powers' "
+                        "in section '%s' must be specified"
+                        % config_section.name + " " + name
+                    )
+                if heater_power is not None and heater_powers is not None:
+                    raise config_section.error(
+                        "Option 'heater_power' and 'heater_powers' "
+                        "in section '%s' can not be specified both"
+                        % config_section.name + " " + name
+                    )
                 temp_profile["heater_power"] = config_section.getfloat(
                     "heater_power", above=0.0
+                )
+                temp_profile["heater_powers"] = config_section.getlists(
+                    "heater_powers", seps=(",", "\n"), parser=float, count=2
                 )
                 temp_profile["sensor_responsiveness"] = config_section.getfloat(
                     "sensor_responsiveness", above=0.0, default=None
@@ -462,7 +483,8 @@ class Heater:
                         )
                     except Exception:
                         raise config_section.error(
-                            f"Unknown ambient_temp_sensor '{ambient_sensor_name}' specified"
+                            f"Unknown ambient_temp_sensor "
+                            f"'{ambient_sensor_name}' specified"
                         )
                 temp_profile["ambient_temp_sensor"] = ambient_sensor
 
@@ -1184,7 +1206,11 @@ class ControlMPC:
         self.profile = profile
         self._load_profile()
         self.heater = heater
-        self.heater_max_power = heater.get_max_power() * self.const_heater_power
+        if self.const_heater_power is not None:
+            heater_power = self.const_heater_powers
+        else:
+            heater_power = self.const_heater_powers[0][1]
+        self.heater_max_power = heater.get_max_power() * heater_power
 
         self.want_ambient_refresh = self.ambient_sensor is not None
         self.state_block_temp = (
@@ -1212,6 +1238,7 @@ class ControlMPC:
         self.const_ambient_transfer = self.profile["ambient_transfer"]
         self.const_target_reach_time = self.profile["target_reach_time"]
         self.const_heater_power = self.profile["heater_power"]
+        self.const_heater_powers = self.profile["heater_powers"]
         self.const_smoothing = self.profile["smoothing"]
         self.const_sensor_responsiveness = self.profile["sensor_responsiveness"]
         self.const_min_ambient_change = self.profile["min_ambient_change"]
@@ -1386,7 +1413,25 @@ class ControlMPC:
         else:
             power = 0
 
-        duty = power / self.const_heater_power
+        if self.const_heater_power is not None:
+            heater_power = self.const_heater_power
+        else:
+            below = [
+                self.const_heater_powers[0][0],
+                self.const_heater_powers[0][1],
+            ]
+            above = [
+                self.const_heater_powers[-1][0],
+                self.const_heater_powers[-1][1],
+            ]
+            for config_temp in self.const_heater_powers:
+                if config_temp[0] < temp:
+                    below = config_temp
+                else:
+                    above = config_temp
+                    break
+            heater_power = self._interpolate(below, above, temp)
+        duty = power / heater_power
 
         # logging.info(
         #     "mpc: [%.3f/%.3f] %.2f => %.2f / %.2f / %.2f = %.2f[%.2f+%.2f+%.2f] / %.2f, dT %.2f, E %.2f=>%.2f",
@@ -1411,6 +1456,11 @@ class ControlMPC:
         self.last_loss_filament = loss_filament
         self.last_temp_time = read_time
         self.heater.set_pwm(read_time, duty)
+
+    def _interpolate(self, below, above, temp):
+        return (
+            (below[1] * (above[0] - temp)) + (above[1] * (temp - below[0]))
+        ) / (above[0] - below[0])
 
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         return abs(target_temp - smoothed_temp) > 1.0
