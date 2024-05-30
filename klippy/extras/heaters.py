@@ -1238,8 +1238,10 @@ class ControlMPC:
             return
         name = self.heater.get_name()
         raise self.printer.command_error(
-            f"Cannot activate '{name}' as MPC control is not fully configured.\n\n"
-            f"Run 'MPC_CALIBRATE' or ensure 'block_heat_capacity', 'sensor_responsiveness', and "
+            f"Cannot activate '{name}' as MPC control is not "
+            f"fully configured.\n\n"
+            f"Run 'MPC_CALIBRATE' or ensure 'block_heat_capacity', "
+            f"'sensor_responsiveness', and "
             f"'ambient_transfer' settings are defined for '{name}'."
         )
 
@@ -1264,13 +1266,15 @@ class ControlMPC:
         if self.last_temp_time == 0.0:
             dt = 0.1
 
-        ## Extruder position
+        # Extruder position
+        extrude_speed_prev = 0.0
+        extrude_speed_next = 0.0
         if self.toolhead is None:
             self.toolhead = self.printer.lookup_object("toolhead")
         if self.toolhead is not None:
             extruder = self.toolhead.get_extruder()
             if (
-                hasattr(extruder, "extruder_stepper")
+                hasattr(extruder, "find_past_position")
                 and extruder.get_heater() == self.heater
             ):
                 pos_prev = extruder.find_past_position(read_time - dt)
@@ -1278,9 +1282,6 @@ class ControlMPC:
                 pos_next = extruder.find_past_position(read_time + dt)
                 extrude_speed_prev = max(0.0, (pos - pos_prev)) / dt
                 extrude_speed_next = max(0.0, (pos_next - pos)) / dt
-            else:
-                extrude_speed_prev = 0.0
-                extrude_speed_next = 0.0
 
         # Modulate ambient transfer coefficient with fan speed
         ambient_transfer = self.const_ambient_transfer
@@ -1297,7 +1298,7 @@ class ControlMPC:
             else:
                 ambient_transfer = below
 
-        ## Simulate
+        # Simulate
 
         # Expected power by heating at last power setting
         expected_heating = self.last_power
@@ -1330,9 +1331,10 @@ class ControlMPC:
         )
         self.state_sensor_temp += expected_sensor_dT
 
-        ## Correct
+        # Correct
 
-        adjustment_dT = (temp - self.state_sensor_temp) * self.const_smoothing
+        smoothing = 1 - (1 - self.const_smoothing) ** dt
+        adjustment_dT = (temp - self.state_sensor_temp) * smoothing
         self.state_block_temp += adjustment_dT
         self.state_sensor_temp += adjustment_dT
 
@@ -1354,7 +1356,7 @@ class ControlMPC:
                 )
             self.state_ambient_temp += ambient_delta
 
-        ## Output
+        # Output
 
         # Amount of power needed to reach the target temperature in the desired time
 
@@ -1387,8 +1389,9 @@ class ControlMPC:
         duty = power / self.const_heater_power
 
         # logging.info(
-        #     "mpc: [%.3f] %.2f => %.2f / %.2f / %.2f = %.2f[%.2f+%.2f+%.2f] / %.2f, dT %.2f",
+        #     "mpc: [%.3f/%.3f] %.2f => %.2f / %.2f / %.2f = %.2f[%.2f+%.2f+%.2f] / %.2f, dT %.2f, E %.2f=>%.2f",
         #     dt,
+        #     smoothing,
         #     temp,
         #     self.state_block_temp,
         #     self.state_sensor_temp,
@@ -1399,6 +1402,8 @@ class ControlMPC:
         #     loss_filament,
         #     duty,
         #     adjustment_dT,
+        #     extrude_speed_prev,
+        #     extrude_speed_next,
         # )
 
         self.last_power = power
@@ -1408,10 +1413,10 @@ class ControlMPC:
         self.heater.set_pwm(read_time, duty)
 
     def check_busy(self, eventtime, smoothed_temp, target_temp):
-        return self.last_power > 0.0
+        return abs(target_temp - smoothed_temp) > 1.0
 
     def update_smooth_time(self):
-        self.smooth_time = self.heater.get_smooth_time()  # smoothing window
+        self.const_smoothing = self.heater.get_smooth_time()  # smoothing window
 
     def get_profile(self):
         return self.profile
