@@ -435,13 +435,13 @@ class Heater:
                     raise config_section.error(
                         "Option 'heater_power' or 'heater_powers' "
                         "in section '%s' must be specified"
-                        % config_section.name + " " + name
+                        % config_section.get_name() + " " + name
                     )
                 if heater_power is not None and heater_powers is not None:
                     raise config_section.error(
                         "Option 'heater_power' and 'heater_powers' "
                         "in section '%s' can not be specified both"
-                        % config_section.name + " " + name
+                        % config_section.get_name() + " " + name
                     )
                 temp_profile["heater_power"] = config_section.getfloat(
                     "heater_power", above=0.0
