@@ -1431,8 +1431,8 @@ class ControlMPC:
                     above = config_temp
                     break
             logging.info("ABOVE_AND_BELOW")
-            logging.info(below)
-            logging.info(above)
+            logging.info(self.const_heater_powers[0])
+            logging.info(self.const_heater_powers[-1])
             logging.info(self.const_heater_powers)
             heater_power = self._interpolate(below, above, temp)
             logging.info("HEATER_POWER")
