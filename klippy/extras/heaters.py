@@ -444,10 +444,10 @@ class Heater:
                         % config_section.get_name() + " " + name
                     )
                 temp_profile["heater_power"] = config_section.getfloat(
-                    "heater_power", above=0.0
+                    "heater_power", above=0.0, default=None
                 )
                 temp_profile["heater_powers"] = config_section.getlists(
-                    "heater_powers", seps=(",", "\n"), parser=float, count=2
+                    "heater_powers", seps=(",", "\n"), parser=float, count=2, default=None
                 )
                 temp_profile["sensor_responsiveness"] = config_section.getfloat(
                     "sensor_responsiveness", above=0.0, default=None
