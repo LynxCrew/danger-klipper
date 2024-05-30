@@ -39,7 +39,7 @@ class MpcCalibrate:
         self.ambient_sensor_name = self.config.get("ambient_temp_sensor", None)
 
     def run(self, gcmd):
-        use_analytic = gcmd.get("USE_DELTA", None) is not None
+        use_analytic = gcmd.get("USE_DELTA", None) != None
         ambient_max_measure_time = gcmd.get_float(
             "AMBIENT_MAX_MEASURE_TIME", 20.0, above=0.0
         )
@@ -193,8 +193,7 @@ class MpcCalibrate:
                 ret = temp > target
                 if ret and not reported[0]:
                     gcmd.respond_info(
-                        f"Waiting for heater to drop below {target} "
-                        f"degrees celcius"
+                        f"Waiting for heater to drop below {target} degrees celcius"
                     )
                     reported[0] = True
                 return ret
@@ -266,7 +265,7 @@ class MpcCalibrate:
                         ambient_max_measure_time, ambient_measure_sample_time
                     )
                     gcmd.respond_info(
-                        f"{speed * 100.:.0f}% fan average power: {power:.2f} W"
+                        f"{speed*100.:.0f}% fan average power: {power:.2f} W"
                     )
                     fan_powers.append((speed, power))
                 curtime = self.heater.reactor.monotonic()
