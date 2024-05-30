@@ -1206,10 +1206,10 @@ class ControlMPC:
         self.profile = profile
         self._load_profile()
         self.heater = heater
-        if self.const_heater_power is not None:
-            heater_power = self.const_heater_powers
-        else:
+        if self.const_heater_power is None:
             heater_power = self.const_heater_powers[0][1]
+        else:
+            heater_power = self.const_heater_powers
         self.heater_max_power = heater.get_max_power() * heater_power
 
         self.want_ambient_refresh = self.ambient_sensor is not None
@@ -1413,15 +1413,13 @@ class ControlMPC:
         else:
             power = 0
 
-        if self.const_heater_power is not None:
-            heater_power = self.const_heater_power
-        else:
+        if self.const_heater_power is None:
             below = [
-                0,
+                self.heater.min_temp,
                 self.const_heater_powers[0][1],
             ]
             above = [
-                99999999.9,
+                self.heater.max_temp,
                 self.const_heater_powers[-1][1],
             ]
             for config_temp in self.const_heater_powers:
@@ -1430,13 +1428,9 @@ class ControlMPC:
                 else:
                     above = config_temp
                     break
-            logging.info("ABOVE_AND_BELOW")
-            logging.info(self.const_heater_powers[0])
-            logging.info(self.const_heater_powers[-1])
-            logging.info(self.const_heater_powers)
             heater_power = self._interpolate(below, above, temp)
-            logging.info("HEATER_POWER")
-            logging.info(heater_power)
+        else:
+            heater_power = self.const_heater_power
         duty = power / heater_power
 
         # logging.info(
