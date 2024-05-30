@@ -1333,7 +1333,8 @@ class ControlMPC:
 
         ## Correct
 
-        adjustment_dT = (temp - self.state_sensor_temp) * self.const_smoothing
+        smoothing = 1 - (1 - self.const_smoothing) ** dt
+        adjustment_dT = (temp - self.state_sensor_temp) * smoothing
         self.state_block_temp += adjustment_dT
         self.state_sensor_temp += adjustment_dT
 
