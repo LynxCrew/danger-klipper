@@ -9,6 +9,7 @@ PIN_MIN_TIME = 0.100
 class MPCCalibrate:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.config = config
         gcode = self.printer.lookup_object("gcode")
         gcode.register_command(
             "MPC_CALIBRATE",
@@ -25,15 +26,17 @@ class MPCCalibrate:
             heater = pheaters.lookup_heater(heater_name)
         except self.printer.config_error as e:
             raise gcmd.error(str(e))
-        cal = MpcCalibrate(self.printer, heater)
+        cal = MpcCalibrate(self.printer, heater, self.config)
         cal.run(gcmd)
 
 
 class MpcCalibrate:
-    def __init__(self, printer, heater):
+    def __init__(self, printer, heater, config):
         self.printer = printer
+        self.config = config
         self.heater = heater
         self.orig_control = heater.get_control()
+        self.ambient_sensor_name = self.config.get("ambient_temp_sensor", None)
 
     def run(self, gcmd):
         use_analytic = gcmd.get("USE_DELTA", None) != None
@@ -48,11 +51,25 @@ class MpcCalibrate:
         threshold_temp = gcmd.get_float(
             "THRESHOLD", max(50.0, min(100, target_temp - 100.0))
         )
+        ambient_sensor_name = gcmd.get(
+            "AMBIENT_TEMP_SENSOR", self.ambient_sensor_name
+        )
+        ambient_sensor = None
+        if ambient_sensor_name is not None:
+            try:
+                ambient_sensor = self.printer.lookup_object(ambient_sensor_name)
+            except Exception:
+                raise self.config.error(
+                    f"Unknown ambient_temp_sensor '{ambient_sensor_name}' "
+                    f"specified"
+                )
 
         control = TuningControl(self.heater)
         old_control = self.heater.set_control(control)
         try:
-            ambient_temp = self.await_ambient(gcmd, control, threshold_temp)
+            ambient_temp = self.await_ambient(
+                gcmd, control, threshold_temp, ambient_sensor
+            )
             samples = self.heatup_test(gcmd, target_temp, control)
             first_res = self.process_first_pass(
                 samples,
@@ -162,13 +179,9 @@ class MpcCalibrate:
         self.printer.wait_while(process)
         return samples[-1][1]
 
-    def await_ambient(self, gcmd, control, minimum_temp):
+    def await_ambient(self, gcmd, control, minimum_temp, ambient_sensor):
         self.heater.alter_target(1.0)  # Turn on fan to increase settling speed
-        ambient_sensor = None
-        if (hasattr(self.orig_control, "ambient_sensor")
-                and self.orig_control.ambient_sensor is not None):
-            ambient_sensor = self.orig_control.ambient_sensor
-        ambient_sensor= gcmd.get("ambient_sensor", ambient_sensor)
+
         if ambient_sensor is not None:
             # If we have an ambient sensor we won't waste time waiting for ambient.
             # We do however need to wait for sub minimum_temp(we pick -5 C relative).
@@ -187,9 +200,7 @@ class MpcCalibrate:
 
             self.printer.wait_while(process)
             self.heater.alter_target(0.0)
-            return self.orig_control.ambient_sensor.get_temp(
-                self.heater.reactor.monotonic()
-            )[0]
+            return ambient_sensor.get_temp(self.heater.reactor.monotonic())[0]
 
         gcmd.respond_info("Waiting for heater to settle at ambient temperature")
         ambient_temp = self.wait_settle(0.01)
@@ -420,13 +431,12 @@ class MpcCalibrate:
 
 
 class TuningControl:
-    def __init__(self, heater, ambient_sensor=None):
+    def __init__(self, heater):
         self.value = 0.0
         self.target = None
         self.heater = heater
         self.log = []
         self.logging = False
-        self.ambient_sensor = ambient_sensor
 
     def temperature_update(self, read_time, temp, target_temp):
         if self.logging:
