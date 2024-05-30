@@ -1430,6 +1430,9 @@ class ControlMPC:
                 else:
                     above = config_temp
                     break
+            logging.info("ABOVE_AND_BELOW")
+            logging.info(below)
+            logging.info(above)
             heater_power = self._interpolate(below, above, temp)
             logging.info("HEATER_POWER")
             logging.info(heater_power)
