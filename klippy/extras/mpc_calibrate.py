@@ -164,7 +164,12 @@ class MpcCalibrate:
 
     def await_ambient(self, gcmd, control, minimum_temp):
         self.heater.alter_target(1.0)  # Turn on fan to increase settling speed
-        if self.orig_control.ambient_sensor is not None:
+        ambient_sensor = None
+        if (hasattr(self.orig_control, "ambient_sensor")
+                and self.orig_control.ambient_sensor is not None):
+            ambient_sensor = self.orig_control.ambient_sensor
+        ambient_sensor= gcmd.get("ambient_sensor", ambient_sensor)
+        if ambient_sensor is not None:
             # If we have an ambient sensor we won't waste time waiting for ambient.
             # We do however need to wait for sub minimum_temp(we pick -5 C relative).
             reported = [False]
@@ -415,12 +420,13 @@ class MpcCalibrate:
 
 
 class TuningControl:
-    def __init__(self, heater):
+    def __init__(self, heater, ambient_sensor=None):
         self.value = 0.0
         self.target = None
         self.heater = heater
         self.log = []
         self.logging = False
+        self.ambient_sensor = ambient_sensor
 
     def temperature_update(self, read_time, temp, target_temp):
         if self.logging:
