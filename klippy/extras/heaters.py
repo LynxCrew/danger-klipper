@@ -1417,11 +1417,11 @@ class ControlMPC:
             heater_power = self.const_heater_power
         else:
             below = [
-                self.const_heater_powers[0][0],
+                0,
                 self.const_heater_powers[0][1],
             ]
             above = [
-                self.const_heater_powers[-1][0],
+                99999999.9,
                 self.const_heater_powers[-1][1],
             ]
             for config_temp in self.const_heater_powers:
