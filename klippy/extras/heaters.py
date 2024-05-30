@@ -1433,6 +1433,7 @@ class ControlMPC:
             logging.info("ABOVE_AND_BELOW")
             logging.info(below)
             logging.info(above)
+            logging.info(self.const_heater_powers)
             heater_power = self._interpolate(below, above, temp)
             logging.info("HEATER_POWER")
             logging.info(heater_power)
