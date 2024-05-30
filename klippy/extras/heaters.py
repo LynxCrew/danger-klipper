@@ -1414,21 +1414,26 @@ class ControlMPC:
             power = 0
 
         if self.const_heater_power is None:
-            below = [
-                self.heater.min_temp,
-                self.const_heater_powers[0][1],
-            ]
-            above = [
-                self.heater.max_temp,
-                self.const_heater_powers[-1][1],
-            ]
-            for config_temp in self.const_heater_powers:
-                if config_temp[0] < temp:
-                    below = config_temp
-                else:
-                    above = config_temp
-                    break
-            heater_power = self._interpolate(below, above, temp)
+            if temp < self.const_heater_powers[0][0]:
+                heater_power = self.const_heater_powers[0][1]
+            elif temp > self.const_heater_powers[-1][0]:
+                heater_power = self.const_heater_powers[-1][1]
+            else:
+                below = [
+                    self.const_heater_powers[0][0],
+                    self.const_heater_powers[0][1],
+                ]
+                above = [
+                    self.const_heater_powers[-1][0],
+                    self.const_heater_powers[-1][1],
+                ]
+                for config_temp in self.const_heater_powers:
+                    if config_temp[0] < temp:
+                        below = config_temp
+                    else:
+                        above = config_temp
+                        break
+                heater_power = self._interpolate(below, above, temp)
         else:
             heater_power = self.const_heater_power
         duty = power / heater_power
