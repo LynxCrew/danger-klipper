@@ -304,6 +304,7 @@ class ZTilt:
             return
         self.z_status.reset()
         self.retry_helper.start(gcmd)
+        self.probe_helper.use_xy_offsets(True)
         self.probe_helper.start_probe(gcmd)
 
     def perform_coordinate_descent(self, offsets, positions):
