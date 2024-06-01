@@ -52,7 +52,7 @@ class StepperEnablePin:
         self.mcu_enable.set_digital(print_time, value)
         if self.resend_interval and self.resend_timer is None:
             self.resend_timer = self.reactor.register_timer(
-                self._resend_current_val, self.reactor.NOW
+                self._resend_current_val, self.reactor.NOW + PIN_MIN_TIME
             )
 
     def _resend_current_val(self, eventtime):
@@ -67,7 +67,7 @@ class StepperEnablePin:
         if time_diff > 0.0:
             # Reschedule for resend time
             return systime + time_diff
-        self._set_pin(print_time + PIN_MIN_TIME, self.last_value, True)
+        self._set_pin(print_time, self.last_value, True)
         return systime + self.resend_interval
 
 
