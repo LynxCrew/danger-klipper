@@ -375,7 +375,7 @@ class ZTilt:
         self.cal_avg_len = gcmd.get_int("AVGLEN", self.cal_conf_avg_len)
         self.cal_gcmd = gcmd
         self.cal_runs = []
-        self.cal_helper.use_offsets(True)
+        self.cal_helper.use_xy_offsets(True)
         self.cal_helper.start_probe(gcmd)
 
     def cal_finalize(self, offsets, positions):
