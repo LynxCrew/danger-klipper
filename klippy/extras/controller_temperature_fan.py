@@ -3,6 +3,8 @@
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
+
 from . import fan, temperature_fan, controller_fan
 
 KELVIN_TO_CELSIUS = -273.15
@@ -24,6 +26,8 @@ class ControllerTemperatureFan:
         self.controller_fan = controller_fan.ControllerFan(config, self.fan)
 
     def set_speed(self, read_time, value):
+        logging.info("Setting speed")
+        logging.info(self.controller_fan.get_speed(read_time))
         self.temperature_fan.set_speed(
             read_time, max(value, self.controller_fan.get_speed(read_time))
         )
