@@ -3,6 +3,8 @@
 # Copyright (C) 2019  Nils Friedchen <nils.friedchen@googlemail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
+
 from . import fan
 
 PIN_MIN_TIME = 0.100
@@ -50,6 +52,8 @@ class ControllerFan:
         # Heater lookup
         pheaters = self.printer.lookup_object("heaters")
         if self.heater_names is None:
+            logging.info("AVAILABLE_HEATERS")
+            logging.info(pheaters.available_heaters)
             self.heaters = [
                 pheaters.lookup_heater(n) for n in pheaters.available_heaters
             ]
