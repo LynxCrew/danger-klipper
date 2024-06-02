@@ -54,7 +54,9 @@ class TemperatureFan:
             "curve": ControlCurve,
         }
         algo = config.getchoice("control", algos)
-        self.control = algo(self, config)
+        self.control = algo(self,
+                            config,
+                            super_fan)
         self.next_speed_time = 0.0
         self.last_speed_value = 0.0
         self.enabled = True
@@ -172,8 +174,11 @@ class TemperatureFan:
 
 
 class ControlBangBang:
-    def __init__(self, temperature_fan, config):
+    def __init__(self, temperature_fan, config, controlled_fan=None):
         self.temperature_fan = temperature_fan
+        self.controlled_fan = (temperature_fan
+                               if controlled_fan is None
+                               else controlled_fan)
         self.reverse = config.getboolean("reverse", False)
         self.max_delta = config.getfloat("max_delta", 2.0, above=0.0)
         self.heating = False
@@ -191,9 +196,9 @@ class ControlBangBang:
         ):
             self.heating = not self.reverse
         if self.heating:
-            self.temperature_fan.set_speed(read_time, 0.0)
+            self.controlled_fan.set_speed(read_time, 0.0)
         else:
-            self.temperature_fan.set_speed(
+            self.controlled_fan.set_speed(
                 read_time, self.temperature_fan.get_max_speed()
             )
 
@@ -210,8 +215,11 @@ PID_SETTLE_SLOPE = 0.1
 
 
 class ControlPID:
-    def __init__(self, temperature_fan, config):
+    def __init__(self, temperature_fan, config, controlled_fan=None):
         self.temperature_fan = temperature_fan
+        self.controlled_fan = (temperature_fan
+                               if controlled_fan is None
+                               else controlled_fan)
         self.reverse = config.getboolean("reverse", False)
         self.Kp = config.getfloat("pid_Kp") / PID_PARAM_BASE
         self.Ki = config.getfloat("pid_Ki") / PID_PARAM_BASE
@@ -246,15 +254,15 @@ class ControlPID:
         co = self.Kp * temp_err + self.Ki * temp_integ - self.Kd * temp_deriv
         bounded_co = max(0.0, min(self.temperature_fan.get_max_speed(), co))
         if not self.reverse:
-            self.temperature_fan.set_speed(
+            self.controlled_fan.set_speed(
                 read_time,
                 max(
-                    self.temperature_fan.get_min_speed(),
-                    self.temperature_fan.get_max_speed() - bounded_co,
+                    self.controlled_fan.get_min_speed(),
+                    self.controlled_fan.get_max_speed() - bounded_co,
                 ),
             )
         else:
-            self.temperature_fan.set_speed(
+            self.controlled_fan.set_speed(
                 read_time, max(self.temperature_fan.get_min_speed(), bounded_co)
             )
         # Store state for next measurement
@@ -333,7 +341,7 @@ class ControlCurve:
         current_temp, target_temp = self.temperature_fan.get_temp(read_time)
         temp = self.smooth_temps(temp)
         if temp >= target_temp:
-            self.temperature_fan.set_speed(
+            self.controlled_fan.set_speed(
                 read_time, self.temperature_fan.get_max_speed()
             )
             return
