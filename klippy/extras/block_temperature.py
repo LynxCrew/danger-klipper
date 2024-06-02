@@ -24,13 +24,13 @@ class MPC_BLOCK_TEMP_WRAPPER:
         self.reactor = self.printer.get_reactor()
 
         self.temperature_sample_thread = threading.Thread(
-            target=self._start_sample_timer
+            target=self._run_sample_timer
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
 
-    def _start_sample_timer(self):
+    def _run_sample_timer(self):
         wait_time = self._sample_block_temperature()
         while wait_time > 0 and not self.printer.is_shutdown():
             time.sleep(wait_time)

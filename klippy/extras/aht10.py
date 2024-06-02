@@ -39,7 +39,7 @@ class AHT10:
         self.report_time = config.getint("aht10_report_time", 30, minval=5)
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.0
         self.temperature_sample_thread = threading.Thread(
-            target=self._start_sample_timer
+            target=self._run_sample_timer
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("aht10 " + self.name, self)
@@ -49,7 +49,7 @@ class AHT10:
         self.is_calibrated = False
         self.init_sent = False
 
-    def _start_sample_timer(self):
+    def _run_sample_timer(self):
         wait_time = self._sample_aht10()
         while wait_time > 0 and not self.printer.is_shutdown():
             time.sleep(wait_time)

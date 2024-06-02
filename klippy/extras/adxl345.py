@@ -133,6 +133,7 @@ class AccelCommandHelper:
         self.name = name_parts[-1]
         self.register_commands(self.name)
         self.disabled_heaters = []
+        self.init_timer = None
         if hasattr(config, "getlist"):
             self.disabled_heaters = config.getlist(
                 "disable_heaters", self.disabled_heaters
@@ -152,7 +153,9 @@ class AccelCommandHelper:
             raise Exception("No accelerometer measurements found")
 
     def _handle_ready(self):
-        self.reactor.register_timer(self._init_accel, self.reactor.NOW)
+        self.init_timer = self.reactor.register_timer(
+            self._init_accel, self.reactor.NOW
+        )
 
     def _init_accel(self, eventtime):
         try:
@@ -172,6 +175,8 @@ class AccelCommandHelper:
                     "'%s' is not a valid heater." % (heater_name,)
                 )
             heater.set_enabled(not connected)
+        self.reactor.unregister_timer(self.init_timer)
+        self.init_timer = None
         return self.reactor.NEVER
 
     def register_commands(self, name):

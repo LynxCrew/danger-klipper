@@ -163,7 +163,7 @@ class BME280:
         self.dig = None
         self.sample_timer = None
         self.temperature_sample_thread = threading.Thread(
-            target=self._start_sample_timer
+            target=self._run_sample_timer
         )
         self.chip_type = "BMP280"
         self.chip_registers = BME280_REGS
@@ -174,7 +174,7 @@ class BME280:
             "klippy:connect", self.handle_connect
         )
 
-    def _start_sample_timer(self):
+    def _run_sample_timer(self):
         self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
 
     def handle_connect(self):

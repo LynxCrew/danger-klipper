@@ -41,7 +41,7 @@ class PrinterSensorCombined:
 
         self.sample_timer = None
         self.temperature_sample_thread = threading.Thread(
-            target=self._start_sample_timer
+            target=self._run_sample_timer
         )
 
         self.printer.register_event_handler(
@@ -49,7 +49,7 @@ class PrinterSensorCombined:
         )
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
-    def _start_sample_timer(self):
+    def _run_sample_timer(self):
         wait_time = self._temperature_update_event()
         while wait_time > 0 and not self.printer.is_shutdown():
             time.sleep(wait_time)

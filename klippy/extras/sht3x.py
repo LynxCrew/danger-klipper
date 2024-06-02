@@ -60,7 +60,7 @@ class SHT3X:
         self.deviceId = config.get("sensor_type")
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.0
         self.temperature_sample_thread = threading.Thread(
-            target=self._start_sample_timer
+            target=self._run_sample_timer
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("sht3x " + self.name, self)
@@ -68,7 +68,7 @@ class SHT3X:
             "klippy:connect", self.handle_connect
         )
 
-    def _start_sample_timer(self):
+    def _run_sample_timer(self):
         wait_time = self._sample_sht3x()
         while wait_time > 0 and not self.printer.is_shutdown():
             time.sleep(wait_time)

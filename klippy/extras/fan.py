@@ -4,6 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+import threading
+import time
 
 from . import pulse_counter
 
@@ -121,7 +123,7 @@ class Fan:
 
         self.min_rpm = 0 if self.min_rpm is None else self.min_rpm
         self.max_err = 3 if self.max_err is None else self.max_err
-        self.fan_check_timer = None
+        self.fan_check_thread = None
 
         self.startup_check = (
             False if self.startup_check is None else self.startup_check
@@ -152,6 +154,12 @@ class Fan:
             self.cmd_SET_FAN,
             desc=self.cmd_SET_FAN_help,
         )
+
+    def _run_fan_check(self):
+        wait_time = self.fan_check()
+        while wait_time > 0 and not self.printer.is_shutdown():
+            time.sleep(wait_time)
+            wait_time = self.fan_check()
 
     def handle_ready(self):
         if self.startup_check:
@@ -227,18 +235,14 @@ class Fan:
 
         if self.min_rpm > 0 and (force or not self.self_checking):
             if pwm_value > 0:
-                if self.fan_check_timer is None:
-                    self.fan_check_timer = self.reactor.register_timer(
-                        self.fan_check,
-                        self.reactor.NOW + SAFETY_CHECK_INIT_TIME,
+                if self.fan_check_thread is None:
+                    self.fan_check_thread = threading.Thread(
+                        target=self._run_fan_check
                     )
+                    self.fan_check_thread.start()
             else:
-                if self.fan_check_timer is not None:
-                    self.reactor.update_timer(
-                        self.fan_check_timer, self.reactor.NEVER
-                    )
-                    self.reactor.unregister_timer(self.fan_check_timer)
-                    self.fan_check_timer = None
+                if self.fan_check_thread is not None:
+                    self.fan_check_thread = None
 
     def set_speed_from_command(self, value, force=False, end_print=False):
         toolhead = self.printer.lookup_object("toolhead")
@@ -257,11 +261,15 @@ class Fan:
             "rpm": tachometer_status["rpm"],
         }
 
-    def fan_check(self, eventtime, force=False):
+    def fan_check(self):
+        measured_time = self.reactor.monotonic()
+        eventtime = self.printer.lookup_object("mcu").estimated_print_time(
+            measured_time
+        )
         rpm = self.tachometer.get_status(eventtime)["rpm"]
         if self.last_fan_value and rpm is not None and rpm < self.min_rpm:
             self.num_err += 1
-            if self.num_err > self.max_err or force:
+            if self.num_err > self.max_err:
                 msg = (
                     "'%s' spinning below minimum safe speed.\n"
                     "expected: %d rev/min\n"
@@ -276,7 +284,9 @@ class Fan:
                     return self.printer.get_reactor().NEVER
         else:
             self.num_err = 0
-        return eventtime + 1.5
+        if self.last_fan_value:
+            return 1.5
+        return 0
 
     cmd_SET_FAN_help = "Change settings for a fan"
 

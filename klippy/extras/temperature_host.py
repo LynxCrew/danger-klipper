@@ -30,7 +30,7 @@ class Temperature_HOST:
             return
 
         self.temperature_sample_thread = threading.Thread(
-            target=self._start_sample_timer
+            target=self._run_sample_timer
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
@@ -45,7 +45,7 @@ class Temperature_HOST:
             "klippy:connect", self.handle_connect
         )
 
-    def _start_sample_timer(self):
+    def _run_sample_timer(self):
         wait_time = self._sample_pi_temperature()
         while wait_time > 0 and not self.printer.is_shutdown():
             time.sleep(wait_time)
