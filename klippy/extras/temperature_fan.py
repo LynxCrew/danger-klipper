@@ -54,9 +54,7 @@ class TemperatureFan:
             "curve": ControlCurve,
         }
         algo = config.getchoice("control", algos)
-        self.control = algo(self,
-                            config,
-                            super_fan)
+        self.control = algo(self, config, super_fan)
         self.next_speed_time = 0.0
         self.last_speed_value = 0.0
         self.enabled = True
@@ -176,9 +174,9 @@ class TemperatureFan:
 class ControlBangBang:
     def __init__(self, temperature_fan, config, controlled_fan=None):
         self.temperature_fan = temperature_fan
-        self.controlled_fan = (temperature_fan
-                               if controlled_fan is None
-                               else controlled_fan)
+        self.controlled_fan = (
+            temperature_fan if controlled_fan is None else controlled_fan
+        )
         self.reverse = config.getboolean("reverse", False)
         self.max_delta = config.getfloat("max_delta", 2.0, above=0.0)
         self.heating = False
@@ -217,9 +215,9 @@ PID_SETTLE_SLOPE = 0.1
 class ControlPID:
     def __init__(self, temperature_fan, config, controlled_fan=None):
         self.temperature_fan = temperature_fan
-        self.controlled_fan = (temperature_fan
-                               if controlled_fan is None
-                               else controlled_fan)
+        self.controlled_fan = (
+            temperature_fan if controlled_fan is None else controlled_fan
+        )
         self.reverse = config.getboolean("reverse", False)
         self.Kp = config.getfloat("pid_Kp") / PID_PARAM_BASE
         self.Ki = config.getfloat("pid_Ki") / PID_PARAM_BASE

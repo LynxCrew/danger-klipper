@@ -39,7 +39,6 @@ class PrinterSensorCombined:
         # time-controlled sensor update
         self.initialized = False
 
-        self.sample_timer = None
         self.temperature_sample_thread = threading.Thread(
             target=self._run_sample_timer
         )

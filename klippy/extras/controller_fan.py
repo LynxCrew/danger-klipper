@@ -4,6 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+import threading
+import time
 
 from . import fan
 
@@ -39,6 +41,9 @@ class ControllerFan:
         self.last_on = self.idle_timeout
         self.last_speed = 0.0
         self.enabled = True
+        self.temperature_sample_thread = threading.Thread(
+            target=self._run_sample_timer
+        )
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "SET_CONTROLLER_FAN",
@@ -48,12 +53,16 @@ class ControllerFan:
             desc=self.cmd_SET_CONTROLLER_FAN_help,
         )
 
+    def _run_sample_timer(self):
+        wait_time = self.callback()
+        while wait_time > 0 and not self.printer.is_shutdown():
+            time.sleep(wait_time)
+            wait_time = self.callback()
+
     def handle_connect(self):
         # Heater lookup
         pheaters = self.printer.lookup_object("heaters")
         if self.heater_names is None:
-            logging.info("AVAILABLE_HEATERS")
-            logging.info(pheaters.available_heaters)
             self.heaters = [
                 pheaters.lookup_heater(n) for n in pheaters.available_heaters
             ]
@@ -74,10 +83,7 @@ class ControllerFan:
             )
 
     def handle_ready(self):
-        reactor = self.printer.get_reactor()
-        reactor.register_timer(
-            self.callback, reactor.monotonic() + PIN_MIN_TIME
-        )
+        self.temperature_sample_thread.start()
 
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
@@ -101,14 +107,14 @@ class ControllerFan:
                 self.last_on += 1
         return speed
 
-    def callback(self, eventtime):
-        speed = self.get_speed(eventtime)
+    def callback(self):
+        curtime = self.printer.get_reactor().monotonic()
+        print_time = self.fan.get_mcu().estimated_print_time(curtime)
+        speed = self.get_speed(print_time)
         if self.enabled and speed != self.last_speed:
             self.last_speed = speed
-            curtime = self.printer.get_reactor().monotonic()
-            print_time = self.fan.get_mcu().estimated_print_time(curtime)
             self.fan.set_speed(print_time + PIN_MIN_TIME, speed)
-        return eventtime + 1.0
+        return 1.0
 
     cmd_SET_CONTROLLER_FAN_help = "Enable or Disable a controller_fan"
 
