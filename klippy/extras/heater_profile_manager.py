@@ -193,28 +193,9 @@ class ProfileManager:
 
     def save_profile(self, profile_name=None, gcmd=None, verbose=True):
         temp_profile = self.outer_instance.get_control().get_profile()
-        if profile_name is None:
-            profile_name = temp_profile["name"]
-        section_name = self._compute_section_name(profile_name)
-        self.outer_instance.configfile.set(
-            section_name, "pid_version", PID_PROFILE_VERSION
+        self.control_types[temp_profile["control"]].save_profile(
+            self, temp_profile, profile_name, gcmd, verbose
         )
-        for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
-            value = temp_profile[key]
-            if value is not None:
-                self.outer_instance.configfile.set(
-                    section_name, key, placeholder % value
-                )
-        temp_profile["name"] = profile_name
-        self.profiles[profile_name] = temp_profile
-        if verbose:
-            self.outer_instance.gcode.respond_info(
-                "Current PID profile for heater [%s] "
-                "has been saved to profile [%s] "
-                "for the current session.  The SAVE_CONFIG command will\n"
-                "update the printer config file and restart the printer."
-                % (self.outer_instance.sensor_name, profile_name)
-            )
 
     def load_profile(self, profile_name, gcmd, verbose):
         verbose = self._check_value_gcmd("VERBOSE", "low", gcmd, "lower", True)
@@ -319,9 +300,9 @@ class ProfileManager:
                 "No profile named [%s] to remove" % profile_name
             )
 
-    cmd_PID_PROFILE_help = "PID Profile Persistent Storage management"
+    cmd_HEATER_PROFILE_help = "PID Profile Persistent Storage management"
 
-    def cmd_PID_PROFILE(self, gcmd):
+    def cmd_HEATER_PROFILE(self, gcmd):
         options = collections.OrderedDict(
             {
                 "LOAD": self.load_profile,

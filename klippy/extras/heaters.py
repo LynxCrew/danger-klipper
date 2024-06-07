@@ -152,11 +152,11 @@ class Heater:
             desc=self.cmd_SET_SMOOTH_TIME_help,
         )
         self.gcode.register_mux_command(
-            "PID_PROFILE",
+            "HEATER_PROFILE",
             "HEATER",
             self.sensor_short_name,
-            self.pmgr.cmd_PID_PROFILE,
-            desc=self.pmgr.cmd_PID_PROFILE_help,
+            self.pmgr.cmd_HEATER_PROFILE,
+            desc=self.pmgr.cmd_HEATER_PROFILE_help,
         )
         self.gcode.register_mux_command(
             "SET_HEATER_PID",
@@ -400,8 +400,7 @@ class ControlBangBang:
         return temp_profile
 
     @staticmethod
-    def save_profile(pmgr, profile_name=None, verbose=True):
-        temp_profile = pmgr.outer_instance.get_control().get_profile()
+    def save_profile(pmgr, temp_profile, profile_name=None, verbose=True):
         if profile_name is None:
             profile_name = temp_profile["name"]
         section_name = pmgr._compute_section_name(profile_name)
@@ -464,7 +463,7 @@ class ControlPID:
         return temp_profile
 
     @staticmethod
-    def save_profile(pmgr, profile_name=None, verbose=True):
+    def save_profile(pmgr, temp_profile, profile_name=None, verbose=True):
         temp_profile = pmgr.outer_instance.get_control().get_profile()
         if profile_name is None:
             profile_name = temp_profile["name"]
@@ -592,7 +591,7 @@ class ControlVelocityPID:
         return temp_profile
 
     @staticmethod
-    def save_profile(pmgr, profile_name=None, verbose=True):
+    def save_profile(pmgr, temp_profile, profile_name=None, verbose=True):
         temp_profile = pmgr.outer_instance.get_control().get_profile()
         if profile_name is None:
             profile_name = temp_profile["name"]
@@ -759,7 +758,7 @@ class ControlPositionalPID:
         return temp_profile
 
     @staticmethod
-    def save_profile(pmgr, profile_name=None, verbose=True):
+    def save_profile(pmgr, temp_profile, profile_name=None, verbose=True):
         temp_profile = pmgr.outer_instance.get_control().get_profile()
         if profile_name is None:
             profile_name = temp_profile["name"]
@@ -992,7 +991,7 @@ class ControlMPC:
         return temp_profile
 
     @staticmethod
-    def save_profile(pmgr, profile_name=None, verbose=True):
+    def save_profile(pmgr, temp_profile, profile_name=None, verbose=True):
         temp_profile = pmgr.outer_instance.get_control().get_profile()
         if profile_name is None:
             profile_name = temp_profile["name"]
