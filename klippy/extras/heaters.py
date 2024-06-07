@@ -318,7 +318,7 @@ class Heater:
             "temperature": round(smoothed_temp, 2),
             "target": target_temp,
             "power": last_pwm_value,
-            "pid_profile": self.get_control().get_profile()["name"],
+            "heater_profile": self.get_control().get_profile()["name"],
         }
         if control_stats is not None:
             ret["control_stats"] = control_stats
