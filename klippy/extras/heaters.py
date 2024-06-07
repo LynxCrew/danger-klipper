@@ -898,7 +898,6 @@ class ControlMPC:
             "smoothing": config_section.getfloat(
                 "smoothing", above=0.0, default=0.25
             ),
-            "heater_power": config_section.getfloat("heater_power", above=0.0),
             "sensor_responsiveness": config_section.getfloat(
                 "sensor_responsiveness", above=0.0, default=None
             ),
@@ -920,6 +919,41 @@ class ControlMPC:
                 )
             ),
         }
+
+        heater_power = config_section.getfloat(
+            "heater_power", above=0.0, default=None
+        )
+        heater_powers = config_section.getlists(
+            "heater_powers",
+            seps=(",", "\n"),
+            parser=float,
+            count=2,
+            default=None,
+        )
+        if heater_power is None and heater_powers is None:
+            raise config_section.error(
+                "Option 'heater_power' or 'heater_powers' "
+                "in section '%s' must be specified"
+                % (config_section.get_name() + " " + name)
+            )
+        if heater_power is not None and heater_powers is not None:
+            raise config_section.error(
+                "Option 'heater_power' and 'heater_powers' "
+                "in section '%s' can not be specified both"
+                % config_section.get_name()
+                + " "
+                + name
+            )
+        temp_profile["heater_power"] = config_section.getfloat(
+            "heater_power", above=0.0, default=None
+        )
+        temp_profile["heater_powers"] = config_section.getlists(
+            "heater_powers",
+            seps=(",", "\n"),
+            parser=float,
+            count=2,
+            default=None,
+        )
 
         ambient_sensor_name = config_section.get("ambient_temp_sensor", None)
         ambient_sensor = None
@@ -992,6 +1026,9 @@ class ControlMPC:
         )
         pmgr.outer_instance.configfile.set(
             section_name, "heater_power", temp_profile["heater_power"]
+        )
+        pmgr.outer_instance.configfile.set(
+            section_name, "heater_powers", temp_profile["heater_powers"]
         )
         pmgr.outer_instance.configfile.set(
             section_name,
