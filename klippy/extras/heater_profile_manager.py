@@ -1,3 +1,6 @@
+import collections
+
+
 class ProfileManager:
     def __init__(self, outer_instance, control_types):
         self.outer_instance = outer_instance
