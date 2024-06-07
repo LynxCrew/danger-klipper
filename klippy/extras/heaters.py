@@ -126,7 +126,14 @@ class Heater:
         self.printer.load_object(config, "pid_calibrate")
         self.printer.load_object(config, "mpc_calibrate")
         self.gcode = self.printer.lookup_object("gcode")
-        self.pmgr = ProfileManager(self)
+        control_types = {
+            "watermark": ControlBangBang,
+            "pid": ControlPID,
+            "pid_v": ControlVelocityPID,
+            "pid_p": ControlPositionalPID,
+            "mpc": ControlMPC,
+        }
+        self.pmgr = ProfileManager(self, control_types)
         self.control = self.lookup_control(
             self.pmgr.init_default_profile(), True
         )

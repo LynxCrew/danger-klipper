@@ -1,21 +1,7 @@
-from extras.heaters import ControlBangBang
-from extras.heaters import ControlPID
-from extras.heaters import ControlVelocityPID
-from extras.heaters import ControlPositionalPID
-from extras.heaters import ControlMPC
-
-CONTROL_TYPES = {
-    "watermark": ControlBangBang,
-    "pid": ControlPID,
-    "pid_v": ControlVelocityPID,
-    "pid_p": ControlPositionalPID,
-    "mpc": ControlMPC,
-}
-
-
 class ProfileManager:
-    def __init__(self, outer_instance):
+    def __init__(self, outer_instance, control_types):
         self.outer_instance = outer_instance
+        self.control_types = control_types
         self.profiles = {}
         self.incompatible_profiles = []
         # Fetch stored profiles from Config
@@ -33,8 +19,8 @@ class ProfileManager:
         control = self._check_value_config(
             "control", config_section, str, False
         )
-        if control in CONTROL_TYPES.keys():
-            temp_profile = CONTROL_TYPES[control].init_profile(
+        if control in self.control_types.keys():
+            temp_profile = self.control_types[control].init_profile(
                 config_section, name, self
             )
         else:
