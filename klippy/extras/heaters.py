@@ -889,7 +889,7 @@ class ControlMPC:
             "ambient_transfer": config_section.getfloat(
                 "ambient_transfer", minval=0.0, default=None
             ),
-            "fan_ambient_transfer": config_section.getfloat(
+            "fan_ambient_transfer": config_section.getfloatlist(
                 "fan_ambient_transfer", minval=0.0, default=None
             ),
             "target_reach_time": config_section.getfloat(
