@@ -31,14 +31,16 @@ class MPCCalibrate:
 
 
 class MpcCalibrate:
-    def __init__(self, printer, heater, config):
+    def __init__(self, printer, heater, config, pmgr):
         self.printer = printer
         self.config = config
         self.heater = heater
+        self.pmgr = pmgr
         self.orig_control = heater.get_control()
         self.ambient_sensor_name = self.config.get("ambient_temp_sensor", None)
 
     def run(self, gcmd):
+        profile_name = gcmd.get("PROFILE", "default")
         use_analytic = gcmd.get("USE_DELTA", None) is not None
         ambient_max_measure_time = gcmd.get_float(
             "AMBIENT_MAX_MEASURE_TIME", 20.0, above=0.0
@@ -87,7 +89,7 @@ class MpcCalibrate:
                 "sensor_responsiveness",
             ]:
                 profile[key] = first_res[key]
-            new_control = ControlMPC(profile, self.heater, True)
+            new_control = self.heater.lookup_control(profile, True)
             new_control.state_block_temp = first_res["post_block_temp"]
             new_control.state_sensor_temp = first_res["post_sensor_temp"]
             new_control.state_ambient_temp = ambient_temp
@@ -124,7 +126,17 @@ class MpcCalibrate:
                 [f"{p:.6g}" for p in second_res["fan_ambient_transfer"]]
             )
 
-            cfgname = self.heater.get_name()
+            for key in [
+                "block_heat_capacity",
+                "ambient_transfer",
+                "fan_ambient_transfer",
+                "sensor_responsiveness",
+            ]:
+                profile[key] = first_res[key]
+
+            new_control = self.heater.lookup_control(profile, True)
+            self.heater.set_control(new_control, False)
+
             gcmd.respond_info(
                 f"Finished MPC calibration of heater '{cfgname}'\n"
                 "Measured:\n "
@@ -133,24 +145,8 @@ class MpcCalibrate:
                 f"  ambient_transfer={ambient_transfer:#.6g} [W/K]\n"
                 f"  fan_ambient_transfer={fan_ambient_transfer} [W/K]\n"
             )
-
-            configfile = self.heater.printer.lookup_object("configfile")
-            configfile.set(cfgname, "control", "mpc")
-            configfile.set(
-                cfgname, "block_heat_capacity", f"{block_heat_capacity:#.6g}"
-            )
-            configfile.set(
-                cfgname,
-                "sensor_responsiveness",
-                f"{sensor_responsiveness:#.6g}",
-            )
-            configfile.set(
-                cfgname, "ambient_transfer", f"{ambient_transfer:#.6g}"
-            )
-            configfile.set(
-                cfgname,
-                "fan_ambient_transfer",
-                fan_ambient_transfer,
+            self.heater.pmgr.save_profile(
+                profile_name=profile_name, verbose=False
             )
 
         except self.printer.command_error as e:
