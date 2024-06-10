@@ -10,6 +10,8 @@ import time
 from . import bus
 from extras.danger_options import get_danger_options
 
+from extras.danger_options import get_danger_options
+
 ######################################################################
 # Compatible Sensors:
 #       AHT10      -    Tested w/ BTT GTR 1.0 MCU on i2c3

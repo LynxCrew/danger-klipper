@@ -132,13 +132,14 @@ class HomingMove:
         trigger_times = {}
         move_end_print_time = self.toolhead.get_last_move_time()
         for mcu_endstop, name in self.endstops:
-            trigger_time = mcu_endstop.home_wait(move_end_print_time)
-            if trigger_time is None:
-                error = "No trigger on %s after full movement" % (name,)
-            elif trigger_time > 0.0:
+            try:
+                trigger_time = mcu_endstop.home_wait(move_end_print_time)
+            except self.printer.command_error as e:
+                if error is None:
+                    error = "Error during homing %s: %s" % (name, str(e))
+                continue
+            if trigger_time > 0.0:
                 trigger_times[name] = trigger_time
-            elif trigger_time < 0.0 and error is None:
-                error = "Communication timeout during homing %s" % (name,)
             elif check_triggered and error is None:
                 error = "No trigger on %s after full movement" % (name,)
         # Determine stepper halt positions
@@ -283,7 +284,7 @@ class Homing:
             chs = rail.get_tmc_current_helpers()
             dwell_time = None
             for ch in chs:
-                if ch is not None and ch.needs_home_current_change():
+                if ch is not None and ch.needs_run_current_change():
                     if dwell_time is None:
                         dwell_time = ch.current_change_dwell_time
                     ch.set_current_for_normal(print_time)

@@ -84,22 +84,6 @@ A collection of DangerKlipper-specific system options
 #   If an unused config option or section should cause an error
 #   if False, will warn but allow klipper to still run.
 #   The default is True.
-#log_statistics: True
-#   If statistics should be logged
-#   (helpful for keeping the log clean during development)
-#   The default is True.
-#log_config_file_at_startup: True
-#   If the config file should be logged at startup
-#   The default is True.
-#log_bed_mesh_at_startup: True
-#   If the bed mesh should be logged on startup
-#   (helpful for keeping the log clean during development)
-#   The default is True.
-#log_shutdown_info: True
-#   If we should log detailed crash info when an exception occurs
-#   Most of it is overly-verbose and fluff and we still get a stack trace
-#   for normal exceptions, so setting to False can help save time while developing
-#   The default is True.
 #allow_plugin_override: False
 #   Allows modules in `plugins` to override modules of the same name in `extras`
 #   The default is False.
@@ -112,9 +96,9 @@ A collection of DangerKlipper-specific system options
 #   sensorless homing. The default is 0.5mm.
 #temp_ignore_limits: False
 #   When set to true, this parameter ignores the min_value and max_value
-#   limits for ADC temperature sensors. It prevents shutdowns due to
-#   'ADC out of range' errors by allowing readings outside the specified
-#   range without triggering a shutdown. Default is False.
+#   limits for temperature sensors. It prevents shutdowns due to
+#   'ADC out of range' and similar errors by allowing readings outside the
+#   specified range without triggering a shutdown. The default is False.
 #autosave_includes: False
 #   When set to true, SAVE_CONFIG will recursively read [include ...] blocks
 #   for conflicts to autosave data. Any configurations updated will be backed
@@ -123,6 +107,30 @@ A collection of DangerKlipper-specific system options
 #   This allows to set extra flush time (in seconds). Under certain conditions,
 #   a low value will result in an error if message is not get flushed, a high value
 #   (0.250) will result in homing/probing latency. The default is 0.250
+
+# Logging options
+
+#minimal_logging: False
+#   Set all log parameters log options to False. The default is False.
+#log_statistics: True
+#   If statistics should be logged
+#   (helpful for keeping the log clean during development)
+#   The default is True.
+#log_config_file_at_startup: True
+#   If the config file should be logged at startup
+#   The default is True.
+#log_bed_mesh_at_startup: True
+#   If the bed mesh should be logged at startup
+#   (helpful for keeping the log clean during development)
+#   The default is True.
+#log_shutdown_info: True
+#   If we should log detailed crash info when an exception occurs
+#   Most of it is overly-verbose and fluff and we still get a stack trace
+#   for normal exceptions, so setting to False can help save time while developing
+#   The default is True.
+#log_serial_reader_warnings: True
+#log_startup_info: True
+#log_webhook_method_register_messages: False
 ```
 
 ## Common kinematic settings
@@ -1320,6 +1328,8 @@ extended [G-Code command](G-Codes.md#z_tilt) becomes available.
 #   To disable the validation, set this parameter to a high value.
 ```
 
+#### [z_tilt_ng]
+
 ```
 [z_tilt_ng]
 #z_positions:
@@ -2226,6 +2236,15 @@ detach_position: 0,0,0
 #   If Z is specified the toolhead will move to the Z location before the X, Y
 #   coordinates.
 #   The default value is extract_probe value.
+#safe_dock_distance :
+#   This setting defines a security area around dock during ATTACH/DETACH_PROBE
+#   commands. While inside the area, the toolhead move away prior to reach the 
+#   approach or insert position.
+#   Default is the smallest distance to the dock of approach, detach, insert 
+#   position. It could be only lower than the Default value.
+#safe_position : approach_position
+#   A safe position to ensure MOVE_AVOIDING_DOCK travel does not move the 
+#   toolhead out of range.   
 #z_hop: 15.0
 #   Distance (in mm) to lift the Z axis prior to attaching/detaching the probe.
 #   If the Z axis is already homed and the current Z position is less
@@ -2233,7 +2252,7 @@ detach_position: 0,0,0
 #   the Z axis is not already homed the head is lifted by `z_hop`.
 #   The default is to not implement Z hop.
 #restore_toolhead: True
-#   While True, the position of the toolhead is restored to the position prior 
+#   While True, the position of the toolhead is restored to the position prior
 #   to the attach/detach movements.
 #   The default value is True.
 #dock_retries:
@@ -2341,6 +2360,9 @@ Support for eddy current inductive probes. One may define this section
 sensor_type: ldc1612
 #   The sensor chip used to perform eddy current measurements. This
 #   parameter must be provided and must be set to ldc1612.
+#intb_pin:
+#   MCU gpio pin connected to the ldc1612 sensor's INTB pin (if
+#   available). The default is to not use the INTB pin.
 #z_offset:
 #   The nominal distance (in mm) between the nozzle and bed that a
 #   probing attempt should stop at. This parameter must be provided.
@@ -2907,9 +2929,9 @@ sensor_pin:
 #   name in the above list.
 ```
 
-### BMP180/BMP280/BME280/BME680 temperature sensor
+### BMP180/BMP280/BME280/BMP388/BME680 temperature sensor
 
-BMP180/BMP280/BME280/BME680 two wire interface (I2C) environmental sensors.
+BMP180/BMP280/BME280/BMP388/BME680 two wire interface (I2C) environmental sensors.
 Note that these sensors are not intended for use with extruders and
 heater beds, but rather for monitoring ambient temperature (C),
 pressure (hPa), relative humidity and in case of the BME680 gas level.
@@ -2920,8 +2942,8 @@ temperature.
 ```
 sensor_type: BME280
 #i2c_address:
-#   Default is 118 (0x76). The BMP180 and some BME280 sensors have an address of 119
-#   (0x77).
+#   Default is 118 (0x76). The BMP180, BMP388 and some BME280 sensors
+#   have an address of 119 (0x77).
 #i2c_mcu:
 #i2c_bus:
 #i2c_software_scl_pin:
@@ -3184,6 +3206,31 @@ pin:
 #   input. In such a case, the PWM pin can be used normally, and e.g. a
 #   ground-switched FET(standard fan pin) can be used to control power to
 #   the fan.
+```
+
+### [heated_fan]
+
+Heated print cooling fans. An experimental module for high-temperature
+printing that requires part cooling air to be closer to the printed part
+temperature.
+
+```
+
+[heated_fan]
+#   See the "fan" section for a description for fan parameters.
+#   See the "heater_generic" section for a description for the heater
+#   parameters.
+#heater_temp: 50
+#   The target temperature (in Celsius) for the heater when the fan is
+#   turned on. The default is 50 Celsius.
+#min_speed: 1.0
+#   The minimum fan speed (expressed as a value from 0.0 to 1.0) that the
+#   fan will be set to when its associated heater is on (e.g.: to protect
+#   ducts from melting). If the fan is set to a speed lower than min_speed,
+#   the min_speed value is applied. The default is 1.0 (100%)
+#idle_timeout: 60
+#   A timeout in seconds for the fan to stay on when it is requested to turn
+#   off, to protect ducts from melting. The default is 60 (s).
 ```
 
 ### [heater_fan]
@@ -3767,6 +3814,18 @@ run_current:
 #   set, "stealthChop" mode will be enabled if the stepper motor
 #   velocity is below this value. The default is 0, which disables
 #   "stealthChop" mode.
+#coolstep_threshold:
+#   The velocity (in mm/s) to set the TMC driver internal "CoolStep"
+#   threshold to. If set, the coolstep feature will be enabled when
+#   the stepper motor velocity is near or above this value. Important
+#   - if coolstep_threshold is set and "sensorless homing" is used,
+#   then one must ensure that the homing speed is above the coolstep
+#   threshold! The default is to not enable the coolstep feature.
+#high_velocity_threshold:
+#   The velocity (in mm/s) to set the TMC driver internal "high
+#   velocity" threshold (THIGH) to. This is typically used to disable
+#   the "CoolStep" feature at high speeds. The default is to not set a
+#   TMC "high velocity" threshold.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441
@@ -3906,6 +3965,13 @@ run_current:
 #sense_resistor: 0.110
 #stealthchop_threshold: 0
 #   See the "tmc2208" section for the definition of these parameters.
+#coolstep_threshold:
+#   The velocity (in mm/s) to set the TMC driver internal "CoolStep"
+#   threshold to. If set, the coolstep feature will be enabled when
+#   the stepper motor velocity is near or above this value. Important
+#   - if coolstep_threshold is set and "sensorless homing" is used,
+#   then one must ensure that the homing speed is above the coolstep
+#   threshold! The default is to not enable the coolstep feature.
 #uart_address:
 #   The address of the TMC2209 chip for UART messages (an integer
 #   between 0 and 3). This is typically used when multiple TMC2209
@@ -4071,6 +4137,18 @@ run_current:
 #   set, "stealthChop" mode will be enabled if the stepper motor
 #   velocity is below this value. The default is 0, which disables
 #   "stealthChop" mode.
+#coolstep_threshold:
+#   The velocity (in mm/s) to set the TMC driver internal "CoolStep"
+#   threshold to. If set, the coolstep feature will be enabled when
+#   the stepper motor velocity is near or above this value. Important
+#   - if coolstep_threshold is set and "sensorless homing" is used,
+#   then one must ensure that the homing speed is above the coolstep
+#   threshold! The default is to not enable the coolstep feature.
+#high_velocity_threshold:
+#   The velocity (in mm/s) to set the TMC driver internal "high
+#   velocity" threshold (THIGH) to. This is typically used to disable
+#   the "CoolStep" feature at high speeds. The default is to not set a
+#   TMC "high velocity" threshold.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441
@@ -4198,6 +4276,18 @@ run_current:
 #   set, "stealthChop" mode will be enabled if the stepper motor
 #   velocity is below this value. The default is 0, which disables
 #   "stealthChop" mode.
+#coolstep_threshold:
+#   The velocity (in mm/s) to set the TMC driver internal "CoolStep"
+#   threshold to. If set, the coolstep feature will be enabled when
+#   the stepper motor velocity is near or above this value. Important
+#   - if coolstep_threshold is set and "sensorless homing" is used,
+#   then one must ensure that the homing speed is above the coolstep
+#   threshold! The default is to not enable the coolstep feature.
+#high_velocity_threshold:
+#   The velocity (in mm/s) to set the TMC driver internal "high
+#   velocity" threshold (THIGH) to. This is typically used to disable
+#   the "CoolStep" feature at high speeds. The default is to not set a
+#   TMC "high velocity" threshold.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441

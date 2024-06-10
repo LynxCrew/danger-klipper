@@ -19,8 +19,8 @@ json_loads_byteify = None
 if sys.version_info.major < 3:
 
     def json_loads_byteify(data, ignore_dicts=False):
-        if isinstance(data, unicode):
-            return data.encode("utf-8")
+        if isinstance(data, bytes):
+            return data.decode("utf-8")
         if isinstance(data, list):
             return [json_loads_byteify(i, True) for i in data]
         if isinstance(data, dict) and not ignore_dicts:
@@ -384,6 +384,7 @@ class WebHooks:
         src_path = os.path.dirname(__file__)
         klipper_path = os.path.normpath(os.path.join(src_path, ".."))
         response = {
+            "app": "Danger-Klipper",
             "state": state,
             "state_message": state_message,
             "hostname": socket.gethostname(),

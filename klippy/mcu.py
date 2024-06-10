@@ -132,9 +132,9 @@ class CommandWrapper:
 
 class MCU_trsync:
     REASON_ENDSTOP_HIT = 1
-    REASON_COMMS_TIMEOUT = 2
-    REASON_HOST_REQUEST = 3
-    REASON_PAST_END_TIME = 4
+    REASON_HOST_REQUEST = 2
+    REASON_PAST_END_TIME = 3
+    REASON_COMMS_TIMEOUT = 4
 
     def __init__(self, mcu, trdispatch):
         self._mcu = mcu
@@ -236,7 +236,7 @@ class MCU_trsync:
             if tc is not None:
                 self._trigger_completion = None
                 reason = params["trigger_reason"]
-                is_failure = reason == self.REASON_COMMS_TIMEOUT
+                is_failure = reason >= self.REASON_COMMS_TIMEOUT
                 self._reactor.async_complete(tc, is_failure)
         elif self._home_end_clock is not None:
             clock = self._mcu.clock32_to_clock64(params["clock"])
@@ -363,8 +363,9 @@ class TriggerDispatch:
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trdispatch_stop(self._trdispatch)
         res = [trsync.stop() for trsync in self._trsyncs]
-        if any([r == MCU_trsync.REASON_COMMS_TIMEOUT for r in res]):
-            return MCU_trsync.REASON_COMMS_TIMEOUT
+        err_res = [r for r in res if r >= MCU_trsync.REASON_COMMS_TIMEOUT]
+        if err_res:
+            return err_res[0]
         return res[0]
 
 
@@ -443,8 +444,9 @@ class MCU_endstop:
         self._dispatch.wait_end(home_end_time)
         self._home_cmd.send([self._oid, 0, 0, 0, 0, 0, 0, 0])
         res = self._dispatch.stop()
-        if res == MCU_trsync.REASON_COMMS_TIMEOUT:
-            return -1.0
+        if res >= MCU_trsync.REASON_COMMS_TIMEOUT:
+            cmderr = self._mcu.get_printer().command_error
+            raise cmderr("Communication timeout during homing")
         if res != MCU_trsync.REASON_ENDSTOP_HIT:
             return 0.0
         if self._mcu.is_fileoutput():
@@ -1498,16 +1500,12 @@ class MCU:
 
 
 Common_MCU_errors = {
-    (
-        "Timer too close",
-    ): """
+    ("Timer too close",): """
 This often indicates the host computer is overloaded. Check
 for other processes consuming excessive CPU time, high swap
 usage, disk errors, overheating, unstable voltage, or
 similar system problems on the host computer.""",
-    (
-        "Missed scheduling of next ",
-    ): """
+    ("Missed scheduling of next ",): """
 This is generally indicative of an intermittent
 communication failure between micro-controller and host.""",
     (
@@ -1523,9 +1521,7 @@ its configured min_temp or max_temp.""",
 This generally occurs when the micro-controller has been
 requested to step at a rate higher than it is capable of
 obtaining.""",
-    (
-        "Command request",
-    ): """
+    ("Command request",): """
 This generally occurs in response to an M112 G-Code command
 or in response to an internal error in the host software.""",
 }

@@ -112,7 +112,7 @@ class PrinterProbe:
     def _handle_home_rails_begin(self, homing_state, rails):
         endstops = [es for rail in rails for es, name in rail.get_endstops()]
         if self.mcu_probe in endstops:
-            self.multi_probe_begin()
+            self.multi_probe_begin(always_restore_toolhead=True)
 
     def _handle_home_rails_end(self, homing_state, rails):
         endstops = [es for rail in rails for es, name in rail.get_endstops()]
@@ -125,8 +125,11 @@ class PrinterProbe:
         except:
             logging.exception("Multi-probe end")
 
-    def multi_probe_begin(self):
-        self.mcu_probe.multi_probe_begin()
+    def multi_probe_begin(self, always_restore_toolhead=False):
+        try:
+            self.mcu_probe.multi_probe_begin(always_restore_toolhead)
+        except:
+            self.mcu_probe.multi_probe_begin()
         self.multi_probe_pending = True
 
     def multi_probe_end(self):
@@ -195,6 +198,12 @@ class PrinterProbe:
         # even number of samples
         return self._calc_mean(z_sorted[middle - 1 : middle + 1])
 
+    @property
+    def _drop_first_result(self):
+        if hasattr(self, "drop_first_result"):
+            return self.drop_first_result
+        return False
+
     def run_probe(self, gcmd):
         speed = gcmd.get_float("PROBE_SPEED", self.speed, above=0.0)
         lift_speed = self.get_lift_speed(gcmd)
@@ -211,7 +220,7 @@ class PrinterProbe:
         samples_result = gcmd.get("SAMPLES_RESULT", self.samples_result)
         must_notify_multi_probe = not self.multi_probe_pending
         if must_notify_multi_probe:
-            self.multi_probe_begin()
+            self.multi_probe_begin(always_restore_toolhead=True)
         probexy = self.printer.lookup_object("toolhead").get_position()[:2]
         retries = 0
         positions = []
@@ -309,7 +318,7 @@ class PrinterProbe:
             )
         )
         # Probe bed sample_count times
-        self.multi_probe_begin()
+        self.multi_probe_begin(always_restore_toolhead=True)
         positions = []
 
         first_probe = True

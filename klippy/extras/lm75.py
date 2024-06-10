@@ -92,7 +92,9 @@ class LM75:
             self.temp = 0.0
             return 0
 
-        if self.temp < self.min_temp or self.temp > self.max_temp:
+        if (
+            self.temp < self.min_temp or self.temp > self.max_temp
+        ) and not get_danger_options().temp_ignore_limits:
             self.printer.invoke_shutdown(
                 "LM75 temperature %0.1f outside range of %0.1f:%.01f"
                 % (self.temp, self.min_temp, self.max_temp)
