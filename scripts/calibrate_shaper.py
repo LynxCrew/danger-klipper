@@ -73,7 +73,8 @@ def calibrate_shaper(
     shaper_freqs,
     max_smoothing,
     test_damping_ratios,
-    max_freq
+    max_freq,
+    include_smoothers=False,
 ):
     helper = shaper_calibrate.ShaperCalibrate(printer=None)
     if isinstance(datas[0], shaper_calibrate.CalibrationData):
@@ -90,6 +91,7 @@ def calibrate_shaper(
     shaper, all_shapers = helper.find_best_shaper(
         calibration_data,
         shapers=shapers,
+        include_smoothers=include_smoothers,
         damping_ratio=damping_ratio,
         scv=scv,
         shaper_freqs=shaper_freqs,
@@ -276,6 +278,13 @@ def main():
         help="a comma-separated list of shapers to test",
     )
     opts.add_option(
+        "--include_smoothers",
+        type="string",
+        dest="include_smoothers",
+        default=False,
+        help="defines whether input_smoothers should be included",
+    )
+    opts.add_option(
         "--damping_ratio",
         type="float",
         dest="damping_ratio",
@@ -329,24 +338,46 @@ def main():
         try:
             shaper_freqs = [float(s) for s in options.shaper_freq.split(",")]
         except ValueError:
+            shaper_freqs = []
             opts.error("invalid floating point value in --shaper_freq param")
         max_freq = max(max_freq, max(shaper_freqs) * 4.0 / 3.0)
+
     if options.test_damping_ratios:
         try:
             test_damping_ratios = [
                 float(s) for s in options.test_damping_ratios.split(",")
             ]
         except ValueError:
+            test_damping_ratios = None
             opts.error(
                 "invalid floating point value in "
                 + "--test_damping_ratios param"
             )
     else:
         test_damping_ratios = None
+
     if options.shapers is None:
         shapers = None
     else:
         shapers = options.shapers.lower().split(",")
+
+    if options.include_smoothers is None:
+        include_smoothers = False
+    elif (
+        options.include_smoothers.lower() == "true"
+        or options.include_smoothers.lower() == "y"
+        or options.include_smoothers.lower() == "1"
+    ):
+        include_smoothers = True
+    elif (
+        options.include_smoothers.lower() == "false"
+        or options.include_smoothers.lower() == "n"
+        or options.include_smoothers.lower() == "0"
+    ):
+        include_smoothers = False
+    else:
+        include_smoothers = False
+        opts.error("invalid boolean value in --include_smoothers param")
 
     # Parse data
     datas = [parse_log(fn) for fn in args]
@@ -357,6 +388,7 @@ def main():
         datas,
         options.csv,
         shapers=shapers,
+        include_smoothers=include_smoothers,
         damping_ratio=options.damping_ratio,
         scv=options.scv,
         shaper_freqs=shaper_freqs,

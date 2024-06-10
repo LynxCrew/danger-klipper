@@ -428,6 +428,9 @@ class ResonanceTester:
         max_smoothing = gcmd.get_float(
             "MAX_SMOOTHING", self.max_smoothing, minval=0.05
         )
+        include_smoothers = gcmd.get_int(
+            "INCLUDE_SMOOTHERS", 0, minval=0, maxval=1
+        )
 
         name_suffix = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
         if not self.is_valid_name_suffix(name_suffix):
@@ -457,6 +460,7 @@ class ResonanceTester:
             max_freq = self._get_max_calibration_freq()
             best_shaper, all_shapers = helper.find_best_shaper(
                 calibration_data[axis],
+                include_smoothers=include_smoothers,
                 max_smoothing=max_smoothing,
                 scv=scv,
                 max_freq=max_freq,
