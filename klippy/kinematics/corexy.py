@@ -6,6 +6,13 @@
 import stepper
 
 
+AXIS_NAMES = {
+    1: "x",
+    2: "y",
+    3: "z",
+}
+
+
 class CoreXYKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
@@ -141,11 +148,7 @@ class CoreXYKinematics:
             else:
                 forcepos[axis] += 1.5 * (position_max - hi.position_endstop)
             # Perform homing
-            axis_name = (
-                "x"
-                if axis == 0
-                else "y" if axis == 1 else "z" if axis == 2 else None
-            )
+            axis_name = AXIS_NAMES[axis] if axis in AXIS_NAMES else None
             if axis_name is not None:
                 self.printer.send_event(
                     "homing:homing_move_begin_%s" % axis_name
