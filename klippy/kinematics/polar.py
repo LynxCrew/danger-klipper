@@ -32,16 +32,6 @@ class PolarKinematics:
         )
 
         self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_x", self._set_unhomed_xy
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_y", self._set_unhomed_xy
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_z", self._set_unhomed_z
-        )
-
-        self.printer.register_event_handler(
             "stepper_enable:disable_bed", self._set_unhomed_xy
         )
         self.printer.register_event_handler(
@@ -49,6 +39,16 @@ class PolarKinematics:
         )
         self.printer.register_event_handler(
             "stepper_enable:disable_z", self._set_unhomed_z
+        )
+
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_x", self._set_unhomed_xy
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_y", self._set_unhomed_xy
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_z", self._set_unhomed_z
         )
 
         self.printer.register_event_handler(

@@ -55,16 +55,6 @@ class CoreXYKinematics:
             "stepper_enable:motor_off", self._motor_off
         )
 
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_x", self._set_unhomed_x
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_y", self._set_unhomed_y
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_z", self._set_unhomed_z
-        )
-
         if self.improved_axes_def:
             self.printer.register_event_handler(
                 "stepper_enable:disable_a", self._disable_xy
@@ -81,6 +71,16 @@ class CoreXYKinematics:
             )
         self.printer.register_event_handler(
             "stepper_enable:disable_z", self._set_unhomed_z
+        )
+
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_x", self._set_unhomed_x
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_y", self._set_unhomed_y
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_z", self._set_unhomed_z
         )
 
         self.printer.register_event_handler(

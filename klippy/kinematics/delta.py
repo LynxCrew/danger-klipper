@@ -36,16 +36,6 @@ class DeltaKinematics:
         )
 
         self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_x", self._set_unhomed
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_y", self._set_unhomed
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_z", self._set_unhomed
-        )
-
-        self.printer.register_event_handler(
             "stepper_enable:disable_a", self._set_unhomed
         )
         self.printer.register_event_handler(
@@ -53,6 +43,16 @@ class DeltaKinematics:
         )
         self.printer.register_event_handler(
             "stepper_enable:disable_c", self._set_unhomed
+        )
+
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_x", self._set_unhomed
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_y", self._set_unhomed
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_z", self._set_unhomed
         )
 
         self.printer.register_event_handler(

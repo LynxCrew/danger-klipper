@@ -46,16 +46,6 @@ class CoreXZKinematics:
         )
 
         self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_x", self._set_unhomed_x
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_y", self._set_unhomed_y
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_z", self._set_unhomed_z
-        )
-
-        self.printer.register_event_handler(
             "stepper_enable:disable_x", self._disable_xz
         )
         self.printer.register_event_handler(
@@ -63,6 +53,16 @@ class CoreXZKinematics:
         )
         self.printer.register_event_handler(
             "stepper_enable:disable_z", self._disable_xz
+        )
+
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_x", self._set_unhomed_x
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_y", self._set_unhomed_y
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_z", self._set_unhomed_z
         )
 
         self.printer.register_event_handler(

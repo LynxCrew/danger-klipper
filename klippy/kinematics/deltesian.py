@@ -57,16 +57,6 @@ class DeltesianKinematics:
         )
 
         self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_x", self._set_unhomed_x
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_y", self._set_unhomed_y
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_z", self._set_unhomed_z
-        )
-
-        self.printer.register_event_handler(
             "stepper_enable:disable_left", self._disable_towers
         )
         self.printer.register_event_handler(
@@ -74,6 +64,16 @@ class DeltesianKinematics:
         )
         self.printer.register_event_handler(
             "stepper_enable:disable_y", self._set_unhomed_y
+        )
+
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_x", self._set_unhomed_x
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_y", self._set_unhomed_y
+        )
+        self.printer.register_event_handler(
+            "unhome:mark_as_unhomed_z", self._set_unhomed_z
         )
 
         self.printer.register_event_handler(
