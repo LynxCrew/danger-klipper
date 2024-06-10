@@ -454,12 +454,13 @@ class ResonanceTester:
             toolhead = self.printer.lookup_object("toolhead")
             toolhead_info = toolhead.get_status(systime)
             scv = toolhead_info["square_corner_velocity"]
+            max_freq = self._get_max_calibration_freq()
             best_shaper, all_shapers = helper.find_best_shaper(
                 calibration_data[axis],
                 max_smoothing=max_smoothing,
                 scv=scv,
-                max_freq=1.5 * self.test.get_max_freq(),
-                logging=gcmd.respond_info,
+                max_freq=max_freq,
+                logger=gcmd.respond_info,
             )
             gcmd.respond_info(
                 "Recommended shaper_type_%s = %s, shaper_freq_%s = %.1f Hz"
