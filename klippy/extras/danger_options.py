@@ -53,17 +53,6 @@ class DangerOptions:
         self.backup_folder = config.get("backup_folder", "config_backups")
         self.autosave_includes = config.getboolean("autosave_includes", False)
 
-        temp_ignore_limits = False
-        if config.getboolean("temp_ignore_limits", None) is None:
-            adc_ignore_limits = config.getboolean("adc_ignore_limits", None)
-            if adc_ignore_limits is not None:
-                config.deprecate("adc_ignore_limits")
-                temp_ignore_limits = adc_ignore_limits
-
-        self.temp_ignore_limits = config.getboolean(
-            "temp_ignore_limits", temp_ignore_limits
-        )
-
         self.autosave_includes = config.getboolean("autosave_includes", False)
         self.bgflush_extra_time = config.getfloat(
             "bgflush_extra_time", 0.250, minval=0.0
