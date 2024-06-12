@@ -35,9 +35,7 @@ class MCU_pwm_cycle:
                 "shutdown value must be 0.0 or 1.0 on soft pwm"
             )
         if cycle_ticks >= 1 << 31:
-            raise self._mcu.get_printer().config_error(
-                "PWM pin cycle time too large"
-            )
+            raise self._mcu.get_printer().config_error("PWM pin cycle time too large")
         self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
@@ -52,8 +50,7 @@ class MCU_pwm_cycle:
             )
         )
         self._mcu.add_config_cmd(
-            "set_digital_out_pwm_cycle oid=%d cycle_ticks=%d"
-            % (self._oid, cycle_ticks)
+            "set_digital_out_pwm_cycle oid=%d cycle_ticks=%d" % (self._oid, cycle_ticks)
         )
         self._cycle_ticks = cycle_ticks
         svalue = int(self._start_value * cycle_ticks + 0.5)
@@ -76,9 +73,7 @@ class MCU_pwm_cycle:
         cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
         if cycle_ticks != self._cycle_ticks:
             if cycle_ticks >= 1 << 31:
-                raise self._mcu.get_printer().command_error(
-                    "PWM cycle time too large"
-                )
+                raise self._mcu.get_printer().command_error("PWM cycle time too large")
             self._set_cycle_ticks.send(
                 [self._oid, cycle_ticks], minclock=minclock, reqclock=clock
             )
@@ -104,13 +99,10 @@ class PrinterOutputPWMCycle:
         # Determine start and shutdown values
         self.scale = config.getfloat("scale", 1.0, above=0.0)
         self.last_value = (
-            config.getfloat("value", 0.0, minval=0.0, maxval=self.scale)
-            / self.scale
+            config.getfloat("value", 0.0, minval=0.0, maxval=self.scale) / self.scale
         )
         self.shutdown_value = (
-            config.getfloat(
-                "shutdown_value", 0.0, minval=0.0, maxval=self.scale
-            )
+            config.getfloat("shutdown_value", 0.0, minval=0.0, maxval=self.scale)
             / self.scale
         )
         # Create pwm pin object

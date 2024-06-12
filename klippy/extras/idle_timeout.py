@@ -25,9 +25,7 @@ class IdleTimeout:
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.idle_timeout = config.getfloat("timeout", 600.0, minval=0)
         gcode_macro = self.printer.load_object(config, "gcode_macro")
-        self.idle_gcode = gcode_macro.load_template(
-            config, "gcode", DEFAULT_IDLE_GCODE
-        )
+        self.idle_gcode = gcode_macro.load_template(config, "gcode", DEFAULT_IDLE_GCODE)
         self.gcode.register_command(
             "SET_IDLE_TIMEOUT",
             self.cmd_SET_IDLE_TIMEOUT,
@@ -108,9 +106,7 @@ class IdleTimeout:
             return eventtime + READY_TIMEOUT
         # Transition to "ready" state
         self.state = "Ready"
-        self.printer.send_event(
-            "idle_timeout:ready", est_print_time + PIN_MIN_TIME
-        )
+        self.printer.send_event("idle_timeout:ready", est_print_time + PIN_MIN_TIME)
         return eventtime + self.idle_timeout
 
     def handle_sync_print_time(self, curtime, print_time, est_print_time):
@@ -121,9 +117,7 @@ class IdleTimeout:
         self.last_print_start_systime = curtime
         check_time = READY_TIMEOUT + print_time - est_print_time
         self.reactor.update_timer(self.timeout_timer, curtime + check_time)
-        self.printer.send_event(
-            "idle_timeout:printing", est_print_time + PIN_MIN_TIME
-        )
+        self.printer.send_event("idle_timeout:printing", est_print_time + PIN_MIN_TIME)
 
     cmd_SET_IDLE_TIMEOUT_help = "Set the idle timeout in seconds"
 

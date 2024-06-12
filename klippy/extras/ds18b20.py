@@ -64,9 +64,7 @@ class DS18B20:
         temp = params["value"] / 1000.0
 
         if params["fault"]:
-            logging.info(
-                "ds18b20 reports fault %d (temp=%0.1f)", params["fault"], temp
-            )
+            logging.info("ds18b20 reports fault %d (temp=%0.1f)", params["fault"], temp)
             return
 
         next_clock = self._mcu.clock32_to_clock64(params["next_clock"])

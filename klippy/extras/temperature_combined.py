@@ -41,13 +41,9 @@ class PrinterSensorCombined:
         # time-controlled sensor update
         self.initialized = False
 
-        self.temperature_sample_thread = threading.Thread(
-            target=self._run_sample_timer
-        )
+        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
 
-        self.printer.register_event_handler(
-            "klippy:connect", self._handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def _run_sample_timer(self):
@@ -61,9 +57,9 @@ class PrinterSensorCombined:
             sensor = self.printer.lookup_object(sensor_name)
             # check if sensor has get_status function and
             # get_status has a 'temperature' value
-            if hasattr(
-                sensor, "get_status"
-            ) and "temperature" in sensor.get_status(self.reactor.monotonic()):
+            if hasattr(sensor, "get_status") and "temperature" in sensor.get_status(
+                self.reactor.monotonic()
+            ):
                 self.sensors.append(sensor)
             else:
                 raise self.printer.config_error(
@@ -100,9 +96,7 @@ class PrinterSensorCombined:
 
         if values:
             # check if values are out of max_deviation range
-            if (
-                max(values) - min(values)
-            ) > self.max_deviation and not self.ignore:
+            if (max(values) - min(values)) > self.max_deviation and not self.ignore:
                 self.printer.invoke_shutdown(
                     "COMBINED SENSOR maximum deviation exceeded limit of %0.1f, "
                     "max sensor value %0.1f, min sensor value %0.1f."
@@ -159,9 +153,7 @@ class PrinterSensorCombined:
         # get mcu and measured / current(?) time
         mcu = self.printer.lookup_object("mcu")
         # convert to print time?! for the callback???
-        self.temperature_callback(
-            mcu.estimated_print_time(eventtime), self.last_temp
-        )
+        self.temperature_callback(mcu.estimated_print_time(eventtime), self.last_temp)
         # set next update time
         return REPORT_TIME
 

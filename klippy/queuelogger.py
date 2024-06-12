@@ -61,17 +61,12 @@ class QueueListener(logging.handlers.TimedRotatingFileHandler):
 
     def doRollover(self):
         logging.handlers.TimedRotatingFileHandler.doRollover(self)
-        lines = [
-            self.rollover_info[name] for name in sorted(self.rollover_info)
-        ]
+        lines = [self.rollover_info[name] for name in sorted(self.rollover_info)]
         lines.append(
-            "=============== Log rollover at %s ==============="
-            % (time.asctime(),)
+            "=============== Log rollover at %s ===============" % (time.asctime(),)
         )
         self.emit(
-            logging.makeLogRecord(
-                {"msg": "\n".join(lines), "level": logging.INFO}
-            )
+            logging.makeLogRecord({"msg": "\n".join(lines), "level": logging.INFO})
         )
 
 
@@ -80,9 +75,7 @@ MainQueueHandler = None
 
 def setup_bg_logging(filename, debuglevel, rotate_log_at_restart):
     global MainQueueHandler
-    ql = QueueListener(
-        filename=filename, rotate_log_at_restart=rotate_log_at_restart
-    )
+    ql = QueueListener(filename=filename, rotate_log_at_restart=rotate_log_at_restart)
     MainQueueHandler = QueueHandler(ql.bg_queue)
     root = logging.getLogger()
     root.addHandler(MainQueueHandler)

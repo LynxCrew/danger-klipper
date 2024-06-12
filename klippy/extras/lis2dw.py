@@ -48,9 +48,7 @@ class LIS2DW:
         mcu.add_config_cmd(
             "config_lis2dw oid=%d spi_oid=%d" % (oid, self.spi.get_oid())
         )
-        mcu.add_config_cmd(
-            "query_lis2dw oid=%d rest_ticks=0" % (oid,), on_restart=True
-        )
+        mcu.add_config_cmd("query_lis2dw oid=%d rest_ticks=0" % (oid,), on_restart=True)
         mcu.register_config_callback(self._build_config)
         # Bulk sample message reading
         chip_smooth = self.data_rate * BATCH_UPDATES * 2
@@ -97,8 +95,7 @@ class LIS2DW:
             raise self.printer.command_error(
                 "Failed to set LIS2DW register [0x%x] to 0x%x: got 0x%x. "
                 "This is generally indicative of connection problems "
-                "(e.g. faulty wiring) or a faulty lis2dw chip."
-                % (reg, val, stored_val)
+                "(e.g. faulty wiring) or a faulty lis2dw chip." % (reg, val, stored_val)
             )
 
     def start_internal_client(self):

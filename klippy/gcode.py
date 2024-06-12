@@ -99,13 +99,11 @@ class GCodeCommand:
             )
         if above is not None and value <= above:
             raise self.error(
-                "Error on '%s': %s must be above %s"
-                % (self._commandline, name, above)
+                "Error on '%s': %s must be above %s" % (self._commandline, name, above)
             )
         if below is not None and value >= below:
             raise self.error(
-                "Error on '%s': %s must be below %s"
-                % (self._commandline, name, below)
+                "Error on '%s': %s must be below %s" % (self._commandline, name, below)
             )
         return value
 
@@ -142,9 +140,7 @@ class GCodeDispatch:
         self.is_fileinput = not not printer.get_start_args().get("debuginput")
         printer.register_event_handler("klippy:ready", self._handle_ready)
         printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
-        printer.register_event_handler(
-            "klippy:disconnect", self._handle_disconnect
-        )
+        printer.register_event_handler("klippy:disconnect", self._handle_disconnect)
         # Command handling
         self.is_printer_ready = False
         self.mutex = printer.get_reactor().mutex()
@@ -298,9 +294,7 @@ class GCodeDispatch:
                 parts.append("")
                 numparts += 1
             # Build gcode "params" dictionary
-            params = {
-                parts[i]: parts[i + 1].strip() for i in range(1, numparts, 2)
-            }
+            params = {parts[i]: parts[i + 1].strip() for i in range(1, numparts, 2)}
             gcmd = GCodeCommand(self, cmd, origline, params, need_ack)
             # Invoke handler for command
             handler = self.gcode_handlers.get(cmd, self.cmd_default)
@@ -370,9 +364,7 @@ class GCodeDispatch:
     def _get_extended_params(self, gcmd):
         m = self.extended_r.match(gcmd.get_commandline())
         if m is None:
-            raise self.error(
-                "Malformed command '%s'" % (gcmd.get_commandline(),)
-            )
+            raise self.error("Malformed command '%s'" % (gcmd.get_commandline(),))
         eargs = m.group("args")
         try:
             eparams = [earg.split("=", 1) for earg in shlex.split(eargs)]
@@ -381,9 +373,7 @@ class GCodeDispatch:
             gcmd._params.update(eparams)
             return gcmd
         except ValueError as e:
-            raise self.error(
-                "Malformed command '%s'" % (gcmd.get_commandline(),)
-            )
+            raise self.error("Malformed command '%s'" % (gcmd.get_commandline(),))
 
     # G-Code special command handlers
     def cmd_default(self, gcmd):
@@ -413,8 +403,7 @@ class GCodeDispatch:
             # Don't warn about requests to turn off heaters when not present
             return
         elif cmd == "M107" or (
-            cmd == "M106"
-            and (not gcmd.get_float("S", 1.0) or self.is_fileinput)
+            cmd == "M106" and (not gcmd.get_float("S", 1.0) or self.is_fileinput)
         ):
             # Don't warn about requests to turn off fan when fan not present
             return
@@ -427,9 +416,7 @@ class GCodeDispatch:
         else:
             key_param = gcmd.get(key)
         if key_param not in values:
-            raise gcmd.error(
-                "The value '%s' is not valid for %s" % (key_param, key)
-            )
+            raise gcmd.error("The value '%s' is not valid for %s" % (key_param, key))
         values[key_param](gcmd)
 
     # Low-level G-Code commands that are needed before the config file is loaded
@@ -517,9 +504,7 @@ class GCodeIO:
         self.fd_handle = None
         if not self.is_fileinput:
             self.gcode.register_output_handler(self._respond_raw)
-            self.fd_handle = self.reactor.register_fd(
-                self.fd, self._process_data
-            )
+            self.fd_handle = self.reactor.register_fd(self.fd, self._process_data)
         self.partial_input = ""
         self.pending_commands = []
         self.bytes_read = 0
@@ -528,9 +513,7 @@ class GCodeIO:
     def _handle_ready(self):
         self.is_printer_ready = True
         if self.is_fileinput and self.fd_handle is None:
-            self.fd_handle = self.reactor.register_fd(
-                self.fd, self._process_data
-            )
+            self.fd_handle = self.reactor.register_fd(self.fd, self._process_data)
 
     def _dump_debug(self):
         out = []
@@ -593,9 +576,7 @@ class GCodeIO:
             pending_commands = self.pending_commands
         self.is_processing_data = False
         if self.fd_handle is None:
-            self.fd_handle = self.reactor.register_fd(
-                self.fd, self._process_data
-            )
+            self.fd_handle = self.reactor.register_fd(self.fd, self._process_data)
 
     def _respond_raw(self, msg):
         if self.pipe_is_active:

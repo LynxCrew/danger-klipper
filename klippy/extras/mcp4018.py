@@ -28,8 +28,7 @@ class SoftwareI2C:
         self.sda_oid = self.mcu.create_oid()
         if sda_params["chip"] != self.mcu:
             raise ppins.error(
-                "%s: scl_pin and sda_pin must be on same mcu"
-                % (config.get_name(),)
+                "%s: scl_pin and sda_pin must be on same mcu" % (config.get_name(),)
             )
         self.mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s"
@@ -43,8 +42,7 @@ class SoftwareI2C:
     def build_config(self):
         self.mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d"
-            " default_value=%d max_duration=%d"
-            % (self.scl_oid, self.scl_pin, 1, 1, 0)
+            " default_value=%d max_duration=%d" % (self.scl_oid, self.scl_pin, 1, 1, 0)
         )
         self.update_pin_cmd = self.mcu.lookup_command(
             "update_digital_out oid=%c value=%c", cq=self.cmd_queue
@@ -86,9 +84,7 @@ class mcp4018:
         self.printer = config.get_printer()
         self.i2c = SoftwareI2C(config, 0x2F)
         self.scale = config.getfloat("scale", 1.0, above=0.0)
-        self.start_value = config.getfloat(
-            "wiper", minval=0.0, maxval=self.scale
-        )
+        self.start_value = config.getfloat("wiper", minval=0.0, maxval=self.scale)
         config.get_printer().register_event_handler(
             "klippy:connect", self.handle_connect
         )

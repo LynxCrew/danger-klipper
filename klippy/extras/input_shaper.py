@@ -33,9 +33,7 @@ class TypedInputShaperParams:
         self.shaper_freq = 0.0
         if config is not None:
             if shaper_type not in self.shapers:
-                raise config.error(
-                    "Unsupported shaper type: %s" % (shaper_type,)
-                )
+                raise config.error("Unsupported shaper type: %s" % (shaper_type,))
             self.damping_ratio = config.getfloat(
                 "damping_ratio_" + axis,
                 self.damping_ratio,
@@ -81,9 +79,7 @@ class TypedInputShaperParams:
         if not self.shaper_freq:
             A, T = shaper_defs.get_none_shaper()
         else:
-            A, T = self.shapers[self.shaper_type](
-                self.shaper_freq, self.damping_ratio
-            )
+            A, T = self.shapers[self.shaper_type](self.shaper_freq, self.damping_ratio)
         if self.motor_freq:
             A, T = shaper_defs.convolve(
                 (A, T),
@@ -151,9 +147,7 @@ class CustomInputShaperParams:
         if min([abs(a) for a in A]) < 0.001:
             raise parse_error("All shaper A coefficients must be non-zero")
         if sum(A) < 0.001:
-            raise parse_error(
-                "Shaper A parameter must sum up to a positive number"
-            )
+            raise parse_error("Shaper A parameter must sum up to a positive number")
         T = parse_float_list(custom_t_str)
         if T is None:
             raise parse_error("Invalid shaper T string: '%s'" % (custom_t_str,))
@@ -170,13 +164,9 @@ class CustomInputShaperParams:
             )
         dur = T[-1] - T[0]
         if len(T) > 1 and dur < 0.001:
-            raise parse_error(
-                "Shaper duration is too small (%.6f sec)" % (dur,)
-            )
+            raise parse_error("Shaper duration is too small (%.6f sec)" % (dur,))
         if dur > 0.2:
-            raise parse_error(
-                "Shaper duration is too large (%.6f sec)" % (dur,)
-            )
+            raise parse_error("Shaper duration is too large (%.6f sec)" % (dur,))
         return len(A), A, T
 
     def get_shaper(self):
@@ -223,16 +213,12 @@ class AxisInputShaper:
         ffi_main, ffi_lib = chelper.get_ffi()
         axis = self.get_axis().encode()
         success = (
-            ffi_lib.input_shaper_set_shaper_params(
-                sk, axis, self.n, self.A, self.T
-            )
+            ffi_lib.input_shaper_set_shaper_params(sk, axis, self.n, self.A, self.T)
             == 0
         )
         if not success:
             self.disable_shaping()
-            ffi_lib.input_shaper_set_shaper_params(
-                sk, axis, self.n, self.A, self.T
-            )
+            ffi_lib.input_shaper_set_shaper_params(sk, axis, self.n, self.A, self.T)
         return success
 
     def update_extruder_kinematics(self, sk, exact_mode):
@@ -248,9 +234,7 @@ class AxisInputShaper:
                 == 0
             )
             success = (
-                ffi_lib.extruder_set_shaper_params(
-                    sk, axis, self.n, self.A, self.T
-                )
+                ffi_lib.extruder_set_shaper_params(sk, axis, self.n, self.A, self.T)
                 == 0
             )
         else:
@@ -314,9 +298,7 @@ class TypedInputSmootherParams:
         self.smoother_freq = 0.0
         if config is not None:
             if smoother_type not in self.smoothers:
-                raise config.error(
-                    "Unsupported shaper type: %s" % (smoother_type,)
-                )
+                raise config.error("Unsupported shaper type: %s" % (smoother_type,))
             self.smoother_freq = config.getfloat(
                 "smoother_freq_" + axis, self.smoother_freq, minval=0.0
             )
@@ -378,9 +360,7 @@ class CustomInputSmootherParams:
         if shaper_type != self.SHAPER_TYPE:
             raise gcmd.error("Unsupported shaper type: %s" % (shaper_type,))
         axis = self.axis.upper()
-        self.smooth_time = gcmd.get_float(
-            "SMOOTH_TIME_" + axis, self.smooth_time
-        )
+        self.smooth_time = gcmd.get_float("SMOOTH_TIME_" + axis, self.smooth_time)
         coeffs_str = gcmd.get("COEFFS_" + axis, None)
         if coeffs_str is not None:
             try:
@@ -523,13 +503,9 @@ class ShaperFactory:
         if type_name == CustomInputShaperParams.SHAPER_TYPE:
             return AxisInputShaper(CustomInputShaperParams(axis, config))
         if type_name in TypedInputShaperParams.shapers:
-            return AxisInputShaper(
-                TypedInputShaperParams(axis, type_name, config)
-            )
+            return AxisInputShaper(TypedInputShaperParams(axis, type_name, config))
         if type_name in TypedInputSmootherParams.smoothers:
-            return AxisInputSmoother(
-                TypedInputSmootherParams(axis, type_name, config)
-            )
+            return AxisInputSmoother(TypedInputSmootherParams(axis, type_name, config))
         return None
 
     def create_shaper(self, axis, config):
@@ -650,9 +626,7 @@ class InputShaper:
                     failed_shapers.append(shaper)
             new_delay = ffi_lib.input_shaper_get_step_gen_window(is_sk)
             if old_delay != new_delay:
-                self.toolhead.note_step_generation_scan_time(
-                    new_delay, old_delay
-                )
+                self.toolhead.note_step_generation_scan_time(new_delay, old_delay)
         for e in self.extruders:
             for es in e.get_extruder_steppers():
                 failed_shapers.extend(

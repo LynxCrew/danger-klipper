@@ -32,9 +32,7 @@ class RotaryDeltaKinematics:
             units_in_radians=True,
         )
         self.rails = [rail_a, rail_b, rail_c]
-        self.printer.register_event_handler(
-            "stepper_enable:motor_off", self._motor_off
-        )
+        self.printer.register_event_handler("stepper_enable:motor_off", self._motor_off)
 
         self.printer.register_event_handler(
             "stepper_enable:disable_a", self._set_unhomed
@@ -87,12 +85,8 @@ class RotaryDeltaKinematics:
             for sconfig, angle in zip(stepper_configs, [30.0, 150.0, 270.0])
         ]
         # Setup rotary delta calibration helper
-        endstops = [
-            rail.get_homing_info().position_endstop for rail in self.rails
-        ]
-        stepdists = [
-            rail.get_steppers()[0].get_step_dist() for rail in self.rails
-        ]
+        endstops = [rail.get_homing_info().position_endstop for rail in self.rails]
+        stepdists = [rail.get_steppers()[0].get_step_dist() for rail in self.rails]
         self.calibration = RotaryDeltaCalibration(
             shoulder_radius,
             shoulder_height,
@@ -122,18 +116,13 @@ class RotaryDeltaKinematics:
             r.calc_position_from_coord([0.0, 0.0, ep])
             for r, ep in zip(self.rails, endstops)
         ]
-        self.home_position = tuple(
-            self.calibration.actuator_to_cartesian(eangles)
-        )
+        self.home_position = tuple(self.calibration.actuator_to_cartesian(eangles))
         self.max_z = min(endstops)
         self.min_z = config.getfloat("minimum_z_position", 0, maxval=self.max_z)
         min_ua = min([shoulder_radius + ua for ua in upper_arms])
         min_la = min([la - shoulder_radius for la in lower_arms])
         self.max_xy2 = min(min_ua, min_la) ** 2
-        arm_z = [
-            self.calibration.elbow_coord(i, ea)[2]
-            for i, ea in enumerate(eangles)
-        ]
+        arm_z = [self.calibration.elbow_coord(i, ea)[2] for i, ea in enumerate(eangles)]
         self.limit_z = min([az - la for az, la in zip(arm_z, lower_arms)])
         logging.info(
             "Delta max build height %.2fmm (radius tapered above %.2fmm)"
@@ -323,9 +312,7 @@ class RotaryDeltaCalibration:
         # Return cartesian coordinates for the given stable_position
         spos = [
             ea - sp * sd
-            for ea, sp, sd in zip(
-                self.abs_endstops, stable_position, self.stepdists
-            )
+            for ea, sp, sd in zip(self.abs_endstops, stable_position, self.stepdists)
         ]
         return self.actuator_to_cartesian(spos)
 
@@ -338,22 +325,15 @@ class RotaryDeltaCalibration:
             for sk in self.sks
         ]
         return [
-            (ep - sp) / sd
-            for sd, ep, sp in zip(self.stepdists, self.abs_endstops, pos)
+            (ep - sp) / sd for sd, ep, sp in zip(self.stepdists, self.abs_endstops, pos)
         ]
 
     def save_state(self, configfile):
         # Save the current parameters (for use with SAVE_CONFIG)
-        configfile.set(
-            "printer", "shoulder_radius", "%.6f" % (self.shoulder_radius,)
-        )
-        configfile.set(
-            "printer", "shoulder_height", "%.6f" % (self.shoulder_height,)
-        )
+        configfile.set("printer", "shoulder_radius", "%.6f" % (self.shoulder_radius,))
+        configfile.set("printer", "shoulder_height", "%.6f" % (self.shoulder_height,))
         for i, axis in enumerate("abc"):
-            configfile.set(
-                "stepper_" + axis, "angle", "%.6f" % (self.angles[i],)
-            )
+            configfile.set("stepper_" + axis, "angle", "%.6f" % (self.angles[i],))
             configfile.set(
                 "stepper_" + axis,
                 "position_endstop",

@@ -88,9 +88,7 @@ class Move:
         sin_theta_d2 = math.sqrt(0.5 * (1.0 - junction_cos_theta))
         R_jd = sin_theta_d2 / (1.0 - sin_theta_d2)
         # Approximated circle must contact moves no further away than mid-move
-        tan_theta_d2 = sin_theta_d2 / math.sqrt(
-            0.5 * (1.0 + junction_cos_theta)
-        )
+        tan_theta_d2 = sin_theta_d2 / math.sqrt(0.5 * (1.0 + junction_cos_theta))
         move_centripetal_v2 = 0.5 * self.move_d * tan_theta_d2 * self.accel
         prev_move_centripetal_v2 = (
             0.5 * prev_move.move_d * tan_theta_d2 * prev_move.accel
@@ -169,10 +167,7 @@ class LookAheadQueue:
             smoothed_v2 = min(move.max_smoothed_v2, reachable_smoothed_v2)
             if smoothed_v2 < reachable_smoothed_v2:
                 # It's possible for this move to accelerate
-                if (
-                    smoothed_v2 + move.smooth_delta_v2 > next_smoothed_v2
-                    or delayed
-                ):
+                if smoothed_v2 + move.smooth_delta_v2 > next_smoothed_v2 or delayed:
                     # This move can decelerate or this is a full accel
                     # move after a full decel move
                     if update_flush_count and peak_cruise_v2:
@@ -250,9 +245,7 @@ class ToolHead:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
-        self.all_mcus = [
-            m for n, m in self.printer.lookup_objects(module="mcu")
-        ]
+        self.all_mcus = [m for n, m in self.printer.lookup_objects(module="mcu")]
         self.mcu = self.all_mcus[0]
         self.lookahead = LookAheadQueue(self)
         self.lookahead.set_flush_time(BUFFER_TIME_HIGH)
@@ -262,14 +255,10 @@ class ToolHead:
         self.max_accel = config.getfloat("max_accel", above=0.0)
         min_cruise_ratio = 0.5
         if config.getfloat("minimum_cruise_ratio", None) is None:
-            req_accel_to_decel = config.getfloat(
-                "max_accel_to_decel", None, above=0.0
-            )
+            req_accel_to_decel = config.getfloat("max_accel_to_decel", None, above=0.0)
             if req_accel_to_decel is not None:
                 config.deprecate("max_accel_to_decel")
-                min_cruise_ratio = 1.0 - min(
-                    1.0, (req_accel_to_decel / self.max_accel)
-                )
+                min_cruise_ratio = 1.0 - min(1.0, (req_accel_to_decel / self.max_accel))
         self.min_cruise_ratio = config.getfloat(
             "minimum_cruise_ratio", min_cruise_ratio, below=1.0, minval=0.0
         )
@@ -296,9 +285,7 @@ class ToolHead:
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.do_kick_flush_timer = True
         self.last_flush_time = self.min_restart_time = 0.0
-        self.need_flush_time = self.step_gen_time = self.clear_history_time = (
-            0.0
-        )
+        self.need_flush_time = self.step_gen_time = self.clear_history_time = 0.0
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
         self.kin_flush_times = []
@@ -324,13 +311,9 @@ class ToolHead:
             msg = "Error loading kinematics '%s'" % (kin_name,)
             logging.exception(msg)
             raise config.error(msg)
-        if (
-            config.has_section("dual_carriage")
-            and not self.kin.supports_dual_carriage
-        ):
+        if config.has_section("dual_carriage") and not self.kin.supports_dual_carriage:
             raise config.error(
-                "dual_carriage not compatible with '%s' kinematics system"
-                % (kin_name,)
+                "dual_carriage not compatible with '%s' kinematics system" % (kin_name,)
             )
         # Register commands
         gcode.register_command("G4", self.cmd_G4)
@@ -341,9 +324,7 @@ class ToolHead:
             desc=self.cmd_SET_VELOCITY_LIMIT_help,
         )
         gcode.register_command("M204", self.cmd_M204)
-        self.printer.register_event_handler(
-            "klippy:shutdown", self._handle_shutdown
-        )
+        self.printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
         # Load some default modules
         modules = [
             "gcode_move",
@@ -495,9 +476,7 @@ class ToolHead:
             self.special_queuing_state = "Priming"
             self.need_check_pause = -1.0
             if self.priming_timer is None:
-                self.priming_timer = self.reactor.register_timer(
-                    self._priming_handler
-                )
+                self.priming_timer = self.reactor.register_timer(self._priming_handler)
             wtime = eventtime + max(0.100, buffer_time - BUFFER_TIME_LOW)
             self.reactor.update_timer(self.priming_timer, wtime)
         # Check if there are lots of queued moves and pause if so
@@ -544,8 +523,7 @@ class ToolHead:
             # In "NeedPrime"/"Priming" state - flush queues if needed
             while 1:
                 end_flush = (
-                    self.need_flush_time
-                    + get_danger_options().bgflush_extra_time
+                    self.need_flush_time + get_danger_options().bgflush_extra_time
                 )
                 if self.last_flush_time >= end_flush:
                     self.do_kick_flush_timer = True
@@ -772,17 +750,11 @@ class ToolHead:
             "MINIMUM_CRUISE_RATIO", None, minval=0.0, below=1.0
         )
         if min_cruise_ratio is None:
-            req_accel_to_decel = gcmd.get_float(
-                "ACCEL_TO_DECEL", None, above=0.0
-            )
+            req_accel_to_decel = gcmd.get_float("ACCEL_TO_DECEL", None, above=0.0)
             if req_accel_to_decel is not None and max_accel is not None:
-                min_cruise_ratio = 1.0 - min(
-                    1.0, req_accel_to_decel / max_accel
-                )
+                min_cruise_ratio = 1.0 - min(1.0, req_accel_to_decel / max_accel)
             elif req_accel_to_decel is not None and max_accel is None:
-                min_cruise_ratio = 1.0 - min(
-                    1.0, (req_accel_to_decel / self.max_accel)
-                )
+                min_cruise_ratio = 1.0 - min(1.0, (req_accel_to_decel / self.max_accel))
         if max_velocity is not None:
             self.max_velocity = max_velocity
         if max_accel is not None:

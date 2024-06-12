@@ -46,8 +46,7 @@ class ConfigWrapper:
                     self.access_tracking[acc_id] = default
                 return default
             raise error(
-                "Option '%s' in section '%s' must be specified"
-                % (option, self.section)
+                "Option '%s' in section '%s' must be specified" % (option, self.section)
             )
         try:
             v = parser(self.section, option)
@@ -55,8 +54,7 @@ class ConfigWrapper:
             raise
         except:
             raise error(
-                "Unable to parse option '%s' in section '%s'"
-                % (option, self.section)
+                "Unable to parse option '%s' in section '%s'" % (option, self.section)
             )
         if note_valid:
             self.access_tracking[(self.section.lower(), option.lower())] = v
@@ -171,13 +169,9 @@ class ConfigWrapper:
         def fcparser(section, option):
             return lparser(self.fileconfig.get(section, option), len(seps) - 1)
 
-        return self._get_wrapper(
-            fcparser, option, default, note_valid=note_valid
-        )
+        return self._get_wrapper(fcparser, option, default, note_valid=note_valid)
 
-    def getlist(
-        self, option, default=sentinel, sep=",", count=None, note_valid=True
-    ):
+    def getlist(self, option, default=sentinel, sep=",", count=None, note_valid=True):
         return self.getlists(
             option,
             default,
@@ -228,9 +222,7 @@ class ConfigWrapper:
 
     def get_prefix_options(self, prefix):
         return [
-            o
-            for o in self.fileconfig.options(self.section)
-            if o.startswith(prefix)
+            o for o in self.fileconfig.options(self.section) if o.startswith(prefix)
         ]
 
     def deprecate(self, option, value=None):
@@ -301,8 +293,7 @@ class PrinterConfig:
         # Check for errors and strip line prefixes
         if "\n#*# " in regular_data:
             logging.warning(
-                "Can't read autosave from config file"
-                " - autosave state corrupted"
+                "Can't read autosave from config file" " - autosave state corrupted"
             )
             return data, ""
         out = [""]
@@ -357,9 +348,7 @@ class PrinterConfig:
         else:
             fileconfig.readfp(sbuffer, filename)
 
-    def _resolve_include(
-        self, source_filename, include_spec, fileconfig, visited
-    ):
+    def _resolve_include(self, source_filename, include_spec, fileconfig, visited):
         dirname = os.path.dirname(source_filename)
         include_spec = include_spec.strip()
         include_glob = os.path.join(dirname, include_spec)
@@ -373,9 +362,7 @@ class PrinterConfig:
         include_filenames.sort()
         for include_filename in include_filenames:
             include_data = self._read_config_file(include_filename)
-            self._parse_config(
-                include_data, include_filename, fileconfig, visited
-            )
+            self._parse_config(include_data, include_filename, fileconfig, visited)
         return include_filenames
 
     def _parse_config(self, data, filename, fileconfig, visited):
@@ -398,9 +385,7 @@ class PrinterConfig:
             if header and header.startswith("include "):
                 self._parse_config_buffer(buffer, filename, fileconfig)
                 include_spec = header[8:].strip()
-                self._resolve_include(
-                    filename, include_spec, fileconfig, visited
-                )
+                self._resolve_include(filename, include_spec, fileconfig, visited)
             else:
                 buffer.append(line)
         self._parse_config_buffer(buffer, filename, fileconfig)
@@ -422,9 +407,7 @@ class PrinterConfig:
         return sfile.getvalue().strip()
 
     def read_config(self, filename):
-        return self._build_config_wrapper(
-            self._read_config_file(filename), filename
-        )
+        return self._build_config_wrapper(self._read_config_file(filename), filename)
 
     def read_main_config(self):
         filename = self.printer.get_start_args()["config_file"]
@@ -451,8 +434,7 @@ class PrinterConfig:
             if section not in valid_sections and section not in objects:
                 if error_on_unused:
                     raise error(
-                        "Section '%s' is not a valid config section"
-                        % (section,)
+                        "Section '%s' is not a valid config section" % (section,)
                     )
                 else:
                     self.unused_sections.append(section)
@@ -594,9 +576,7 @@ class PrinterConfig:
         backup_path = backupdir + "/" + cfgname + datestr
         if cfgpath.endswith(".cfg"):
             backup_path = backupdir + "/" + cfgname[:-4] + datestr + ".cfg"
-        logging.info(
-            "SAVE_CONFIG to '%s' (backup in '%s')", cfgpath, backup_path
-        )
+        logging.info("SAVE_CONFIG to '%s' (backup in '%s')", cfgpath, backup_path)
         try:
             if write_backups:
                 # Read the current config into the backup before making changes to
@@ -642,9 +622,7 @@ class PrinterConfig:
                 if not include_filenames and not glob.has_magic(include_glob):
                     # Empty set is OK if wildcard but not for direct file
                     # reference
-                    raise error(
-                        "Include file '%s' does not exist" % (include_glob,)
-                    )
+                    raise error("Include file '%s' does not exist" % (include_glob,))
                 include_filenames.sort()
                 # Read the include files and check them against autosave data.
                 # If autosave data overwites anything we'll update the file

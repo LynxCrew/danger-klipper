@@ -16,9 +16,7 @@ class DeltaKinematics:
         self.improved_axes_def = config.getboolean("improved_axes_def", False)
         # Setup tower rails
         stepper_configs = [config.getsection("stepper_" + a) for a in "abc"]
-        rail_a = stepper.LookupMultiRail(
-            stepper_configs[0], need_position_minmax=False
-        )
+        rail_a = stepper.LookupMultiRail(stepper_configs[0], need_position_minmax=False)
         a_endstop = rail_a.get_homing_info().position_endstop
         rail_b = stepper.LookupMultiRail(
             stepper_configs[1],
@@ -31,9 +29,7 @@ class DeltaKinematics:
             default_position_endstop=a_endstop,
         )
         self.rails = [rail_a, rail_b, rail_c]
-        self.printer.register_event_handler(
-            "stepper_enable:motor_off", self._motor_off
-        )
+        self.printer.register_event_handler("stepper_enable:motor_off", self._motor_off)
 
         self.printer.register_event_handler(
             "stepper_enable:disable_a", self._set_unhomed
@@ -85,10 +81,7 @@ class DeltaKinematics:
         ]
         self.arm2 = [arm**2 for arm in arm_lengths]
         self.abs_endstops = [
-            (
-                rail.get_homing_info().position_endstop
-                + math.sqrt(arm2 - radius**2)
-            )
+            (rail.get_homing_info().position_endstop + math.sqrt(arm2 - radius**2))
             for rail, arm2 in zip(self.rails, self.arm2)
         ]
         # Determine tower locations in cartesian space
@@ -111,9 +104,7 @@ class DeltaKinematics:
         # Setup boundary checks
         self.need_home = True
         self.limit_xy2 = -1.0
-        self.home_position = tuple(
-            self._actuator_to_cartesian(self.abs_endstops)
-        )
+        self.home_position = tuple(self._actuator_to_cartesian(self.abs_endstops))
         self.max_z = min(
             [rail.get_homing_info().position_endstop for rail in self.rails]
         )
@@ -242,15 +233,11 @@ class DeltaKinematics:
             limit_xy2 = -1.0
         if move.axes_d[2]:
             z_ratio = move.move_d / abs(move.axes_d[2])
-            move.limit_speed(
-                self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio
-            )
+            move.limit_speed(self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
             limit_xy2 = -1.0
         # Limit the speed/accel of this move if is is at the extreme
         # end of the build envelope
-        extreme_xy2 = max(
-            end_xy2, move.start_pos[0] ** 2 + move.start_pos[1] ** 2
-        )
+        extreme_xy2 = max(end_xy2, move.start_pos[0] ** 2 + move.start_pos[1] ** 2)
         if extreme_xy2 > self.slow_xy2:
             r = 0.5
             if extreme_xy2 > self.very_slow_xy2:
@@ -270,12 +257,8 @@ class DeltaKinematics:
         }
 
     def get_calibration(self):
-        endstops = [
-            rail.get_homing_info().position_endstop for rail in self.rails
-        ]
-        stepdists = [
-            rail.get_steppers()[0].get_step_dist() for rail in self.rails
-        ]
+        endstops = [rail.get_homing_info().position_endstop for rail in self.rails]
+        stepdists = [rail.get_steppers()[0].get_step_dist() for rail in self.rails]
         return DeltaCalibration(
             self.radius, self.angles, self.arm_lengths, endstops, stepdists
         )
@@ -342,8 +325,7 @@ class DeltaCalibration:
     def calc_stable_position(self, coord):
         # Return a stable_position from a cartesian coordinate
         steppos = [
-            math.sqrt(a**2 - (t[0] - coord[0]) ** 2 - (t[1] - coord[1]) ** 2)
-            + coord[2]
+            math.sqrt(a**2 - (t[0] - coord[0]) ** 2 - (t[1] - coord[1]) ** 2) + coord[2]
             for t, a in zip(self.towers, self.arms)
         ]
         return [
@@ -355,12 +337,8 @@ class DeltaCalibration:
         # Save the current parameters (for use with SAVE_CONFIG)
         configfile.set("printer", "delta_radius", "%.6f" % (self.radius,))
         for i, axis in enumerate("abc"):
-            configfile.set(
-                "stepper_" + axis, "angle", "%.6f" % (self.angles[i],)
-            )
-            configfile.set(
-                "stepper_" + axis, "arm_length", "%.6f" % (self.arms[i],)
-            )
+            configfile.set("stepper_" + axis, "angle", "%.6f" % (self.angles[i],))
+            configfile.set("stepper_" + axis, "arm_length", "%.6f" % (self.arms[i],))
             configfile.set(
                 "stepper_" + axis,
                 "position_endstop",

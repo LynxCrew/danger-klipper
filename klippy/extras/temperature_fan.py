@@ -29,13 +29,9 @@ class TemperatureFan:
         self.sensor.setup_callback(self.temperature_callback)
         pheaters.register_sensor(config, self)
         self.speed_delay = self.sensor.get_report_time_delta()
-        self.max_speed_conf = config.getfloat(
-            "max_speed", 1.0, above=0.0, maxval=1.0
-        )
+        self.max_speed_conf = config.getfloat("max_speed", 1.0, above=0.0, maxval=1.0)
         self.max_speed = self.max_speed_conf
-        self.min_speed_conf = config.getfloat(
-            "min_speed", 0.3, minval=0.0, maxval=1.0
-        )
+        self.min_speed_conf = config.getfloat("min_speed", 0.3, minval=0.0, maxval=1.0)
         self.min_speed = self.min_speed_conf
         self.last_temp = 0.0
         self.measured_min = 99999999.0
@@ -81,9 +77,9 @@ class TemperatureFan:
             value = self.min_speed
         if self.target_temp <= 0.0:
             value = 0.0
-        if (
-            read_time < self.next_speed_time or not self.last_speed_value
-        ) and abs(value - self.last_speed_value) < 0.05:
+        if (read_time < self.next_speed_time or not self.last_speed_value) and abs(
+            value - self.last_speed_value
+        ) < 0.05:
             # No significant change in value - can suppress update
             return
         speed_time = read_time + self.speed_delay
@@ -121,7 +117,9 @@ class TemperatureFan:
             return True
         return False
 
-    cmd_SET_TEMPERATURE_FAN_help = "Sets a temperature fan target and fan speed limits and enable or disable it"
+    cmd_SET_TEMPERATURE_FAN_help = (
+        "Sets a temperature fan target and fan speed limits and enable or disable it"
+    )
 
     def cmd_SET_TEMPERATURE_FAN(self, gcmd):
         target = gcmd.get_float("TARGET", None)
@@ -183,15 +181,9 @@ class ControlBangBang:
 
     def temperature_callback(self, read_time, temp):
         current_temp, target_temp = self.temperature_fan.get_temp(read_time)
-        if (
-            self.heating != self.reverse
-            and temp >= target_temp + self.max_delta
-        ):
+        if self.heating != self.reverse and temp >= target_temp + self.max_delta:
             self.heating = self.reverse
-        elif (
-            self.heating == self.reverse
-            and temp <= target_temp - self.max_delta
-        ):
+        elif self.heating == self.reverse and temp <= target_temp - self.max_delta:
             self.heating = not self.reverse
         if self.heating:
             self.controlled_fan.set_speed(read_time, 0.0)
@@ -241,8 +233,7 @@ class ControlPID:
             temp_deriv = temp_diff / time_diff
         else:
             temp_deriv = (
-                self.prev_temp_deriv * (self.min_deriv_time - time_diff)
-                + temp_diff
+                self.prev_temp_deriv * (self.min_deriv_time - time_diff) + temp_diff
             ) / self.min_deriv_time
         # Calculate accumulated temperature "error"
         temp_err = target_temp - temp
@@ -281,9 +272,7 @@ class ControlCurve:
             temperature_fan if controlled_fan is None else controlled_fan
         )
         self.points = []
-        points = config.getlists(
-            "points", seps=(",", "\n"), parser=float, count=2
-        )
+        points = config.getlists("points", seps=(",", "\n"), parser=float, count=2)
         for temp, pwm in points:
             current_point = [temp, pwm]
             if current_point is None:
@@ -357,14 +346,12 @@ class ControlCurve:
             else:
                 above = config_temp
                 break
-        self.controlled_fan.set_speed(
-            read_time, self.interpolate(below, above, temp)
-        )
+        self.controlled_fan.set_speed(read_time, self.interpolate(below, above, temp))
 
     def interpolate(self, below, above, temp):
-        return (
-            (below[1] * (above[0] - temp)) + (above[1] * (temp - below[0]))
-        ) / (above[0] - below[0])
+        return ((below[1] * (above[0] - temp)) + (above[1] * (temp - below[0]))) / (
+            above[0] - below[0]
+        )
 
     def smooth_temps(self, current_temp):
         if (

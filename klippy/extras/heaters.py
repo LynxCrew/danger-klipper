@@ -47,9 +47,7 @@ class Heater:
         self.configfile = self.printer.lookup_object("configfile")
         # Setup sensor
         self.sensor = sensor
-        self.min_temp = sensor_config.getfloat(
-            "min_temp", minval=KELVIN_TO_CELSIUS
-        )
+        self.min_temp = sensor_config.getfloat("min_temp", minval=KELVIN_TO_CELSIUS)
         self.max_temp = sensor_config.getfloat("max_temp", above=self.min_temp)
         self.max_set_temp = sensor_config.getfloat(
             "max_set_temp",
@@ -67,18 +65,12 @@ class Heater:
             minval=self.min_temp,
             maxval=self.max_temp,
         )
-        is_fileoutput = (
-            self.printer.get_start_args().get("debugoutput") is not None
-        )
+        is_fileoutput = self.printer.get_start_args().get("debugoutput") is not None
         self.can_extrude = self.min_extrude_temp <= 0.0 or is_fileoutput
         self.enabled = True
         self.cold_extrude = False
-        self.max_power = sensor_config.getfloat(
-            "max_power", 1.0, above=0.0, maxval=1.0
-        )
-        self.config_smooth_time = sensor_config.getfloat(
-            "smooth_time", 1.0, above=0.0
-        )
+        self.max_power = sensor_config.getfloat("max_power", 1.0, above=0.0, maxval=1.0)
+        self.config_smooth_time = sensor_config.getfloat("smooth_time", 1.0, above=0.0)
         self.config_smoothing_elements = sensor_config.getint(
             "smoothing_elements", 1, minval=1
         )
@@ -134,9 +126,7 @@ class Heater:
             "mpc": ControlMPC,
         }
         self.pmgr = ProfileManager(self, control_types)
-        self.control = self.lookup_control(
-            self.pmgr.init_default_profile(), True
-        )
+        self.control = self.lookup_control(self.pmgr.init_default_profile(), True)
         self.gcode.register_mux_command(
             "SET_HEATER_TEMPERATURE",
             "HEATER",
@@ -172,9 +162,7 @@ class Heater:
             self.cmd_MPC_SET,
             desc=self.cmd_MPC_SET_help,
         )
-        self.printer.register_event_handler(
-            "klippy:shutdown", self._handle_shutdown
-        )
+        self.printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
 
     def notify_disabled(self, gcmd):
         if gcmd is not None:
@@ -183,9 +171,7 @@ class Heater:
                 "accelerometer being connected." % self.sensor_short_name
             )
 
-        self.printer.register_event_handler(
-            "klippy:shutdown", self._handle_shutdown
-        )
+        self.printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
 
     def lookup_control(self, profile, load_clean=False):
         algos = collections.OrderedDict(
@@ -263,9 +249,7 @@ class Heater:
             self.target_temp = degrees
 
     def get_temp(self, eventtime):
-        print_time = (
-            self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 5.0
-        )
+        print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 5.0
         with self.lock:
             if self.last_temp_time < print_time:
                 return 0.0, self.target_temp
@@ -451,9 +435,7 @@ class ControlPID:
     def init_profile(config_section, name, pmgr):
         temp_profile = {}
         for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
-            can_be_none = (
-                key != "pid_kp" and key != "pid_ki" and key != "pid_kd"
-            )
+            can_be_none = key != "pid_kp" and key != "pid_ki" and key != "pid_kd"
             temp_profile[key] = pmgr._check_value_config(
                 key, config_section, type, can_be_none
             )
@@ -521,8 +503,7 @@ class ControlPID:
             temp_deriv = temp_diff / time_diff
         else:
             temp_deriv = (
-                self.prev_temp_deriv * (self.min_deriv_time - time_diff)
-                + temp_diff
+                self.prev_temp_deriv * (self.min_deriv_time - time_diff) + temp_diff
             ) / self.min_deriv_time
         # Calculate accumulated temperature "error"
         temp_err = target_temp - temp
@@ -579,9 +560,7 @@ class ControlVelocityPID:
     def init_profile(config_section, name, pmgr):
         temp_profile = {}
         for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
-            can_be_none = (
-                key != "pid_kp" and key != "pid_ki" and key != "pid_kd"
-            )
+            can_be_none = key != "pid_kp" and key != "pid_ki" and key != "pid_kd"
             temp_profile[key] = pmgr._check_value_config(
                 key, config_section, type, can_be_none
             )
@@ -661,9 +640,7 @@ class ControlVelocityPID:
         self.temps.pop(0)
         self.temps.append(temp)
         self.smoothed_temps.pop(0)
-        self.smoothed_temps.append(
-            self.median(self.temps[-self.smoothing_elements :])
-        )
+        self.smoothed_temps.append(self.median(self.temps[-self.smoothing_elements :]))
 
         self.times.pop(0)
         self.times.append(read_time)
@@ -710,17 +687,14 @@ class ControlVelocityPID:
         length = len(sorted_temps)
         return float(
             (
-                sorted_temps[length // 2 - 1] / 2.0
-                + sorted_temps[length // 2] / 2.0,
+                sorted_temps[length // 2 - 1] / 2.0 + sorted_temps[length // 2] / 2.0,
                 sorted_temps[length // 2],
             )[length % 2]
         )
 
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
-        return (
-            abs(temp_diff) > PID_SETTLE_DELTA or abs(self.d1) > PID_SETTLE_SLOPE
-        )
+        return abs(temp_diff) > PID_SETTLE_DELTA or abs(self.d1) > PID_SETTLE_SLOPE
 
     def update_smooth_time(self):
         self.smooth_time = self.heater.get_smooth_time()  # smoothing window
@@ -746,9 +720,7 @@ class ControlPositionalPID:
     def init_profile(config_section, name, pmgr):
         temp_profile = {}
         for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
-            can_be_none = (
-                key != "pid_kp" and key != "pid_ki" and key != "pid_kd"
-            )
+            can_be_none = key != "pid_kp" and key != "pid_ki" and key != "pid_kd"
             temp_profile[key] = pmgr._check_value_config(
                 key, config_section, type, can_be_none
             )
@@ -798,13 +770,9 @@ class ControlPositionalPID:
         self.dt = heater.pwm_delay
         self.smooth_time = smooth_time
         self.heater.set_inv_smooth_time(1.0 / smooth_time)
-        self.prev_temp_time = (
-            0.0 if load_clean else self.heater.reactor.monotonic()
-        )
+        self.prev_temp_time = 0.0 if load_clean else self.heater.reactor.monotonic()
         self.prev_temp = (
-            AMBIENT_TEMP
-            if load_clean
-            else self.heater.get_temp(self.prev_temp_time)[0]
+            AMBIENT_TEMP if load_clean else self.heater.get_temp(self.prev_temp_time)[0]
         )
         self.prev_err = 0.0
         self.prev_der = 0.0
@@ -855,8 +823,7 @@ class ControlPositionalPID:
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
         return (
-            abs(temp_diff) > PID_SETTLE_DELTA
-            or abs(self.prev_der) > PID_SETTLE_SLOPE
+            abs(temp_diff) > PID_SETTLE_DELTA or abs(self.prev_der) > PID_SETTLE_SLOPE
         )
 
     def update_smooth_time(self):
@@ -894,9 +861,7 @@ class ControlMPC:
             "target_reach_time": config_section.getfloat(
                 "target_reach_time", above=0.0, default=2.0
             ),
-            "smoothing": config_section.getfloat(
-                "smoothing", above=0.0, default=0.25
-            ),
+            "smoothing": config_section.getfloat("smoothing", above=0.0, default=0.25),
             "sensor_responsiveness": config_section.getfloat(
                 "sensor_responsiveness", above=0.0, default=None
             ),
@@ -919,9 +884,7 @@ class ControlMPC:
             ),
         }
 
-        heater_power = config_section.getfloat(
-            "heater_power", above=0.0, default=None
-        )
+        heater_power = config_section.getfloat("heater_power", above=0.0, default=None)
         heater_powers = config_section.getlists(
             "heater_powers",
             seps=(",", "\n"),
@@ -938,8 +901,7 @@ class ControlMPC:
         if heater_power is not None and heater_powers is not None:
             raise config_section.error(
                 "Option 'heater_power' and 'heater_powers' "
-                "in section '%s' can not be specified both"
-                % config_section.get_name()
+                "in section '%s' can not be specified both" % config_section.get_name()
                 + " "
                 + name
             )
@@ -976,9 +938,7 @@ class ControlMPC:
                 raise config_section.error(
                     f"Unknown part_cooling_fan '{fan_name}' specified"
                 )
-            if not hasattr(fan_obj, "fan") or not hasattr(
-                fan_obj.fan, "set_speed"
-            ):
+            if not hasattr(fan_obj, "fan") or not hasattr(fan_obj.fan, "set_speed"):
                 raise config_section.error(
                     f"part_cooling_fan '{fan_name}' is not a valid fan object"
                 )
@@ -1080,9 +1040,7 @@ class ControlMPC:
         self.heater_max_power = heater.get_max_power() * heater_power
 
         self.want_ambient_refresh = self.ambient_sensor is not None
-        self.state_block_temp = (
-            AMBIENT_TEMP if load_clean else self._heater_temp()
-        )
+        self.state_block_temp = AMBIENT_TEMP if load_clean else self._heater_temp()
         self.state_sensor_temp = self.state_block_temp
         self.state_ambient_temp = AMBIENT_TEMP
 
@@ -1112,9 +1070,7 @@ class ControlMPC:
         self.const_steady_state_rate = self.profile["steady_state_rate"]
         self.const_filament_diameter = self.profile["filament_diameter"]
         self.const_filament_density = self.profile["filament_density"]
-        self.const_filament_heat_capacity = self.profile[
-            "filament_heat_capacity"
-        ]
+        self.const_filament_heat_capacity = self.profile["filament_heat_capacity"]
         self._update_filament_const()
         self.ambient_sensor = self.profile["ambient_temp_sensor"]
         self.cooling_fan = self.profile["cooling_fan"]
@@ -1207,11 +1163,7 @@ class ControlMPC:
 
         # Expected block dT since last period
         expected_block_dT = (
-            (
-                expected_heating
-                - expected_ambient_transfer
-                - expected_filament_transfer
-            )
+            (expected_heating - expected_ambient_transfer - expected_filament_transfer)
             * dt
             / self.const_block_heat_capacity
         )
@@ -1241,13 +1193,9 @@ class ControlMPC:
             expected_block_dT + adjustment_dT
         ) < self.const_steady_state_rate * dt:
             if adjustment_dT > 0.0:
-                ambient_delta = max(
-                    adjustment_dT, self.const_min_ambient_change * dt
-                )
+                ambient_delta = max(adjustment_dT, self.const_min_ambient_change * dt)
             else:
-                ambient_delta = min(
-                    adjustment_dT, -self.const_min_ambient_change * dt
-                )
+                ambient_delta = min(adjustment_dT, -self.const_min_ambient_change * dt)
             self.state_ambient_temp += ambient_delta
 
         # Output
@@ -1330,9 +1278,9 @@ class ControlMPC:
         self.heater.set_pwm(read_time, duty)
 
     def _interpolate(self, below, above, temp):
-        return (
-            (below[1] * (above[0] - temp)) + (above[1] * (temp - below[0]))
-        ) / (above[0] - below[0])
+        return ((below[1] * (above[0] - temp)) + (above[1] * (temp - below[0]))) / (
+            above[0] - below[0]
+        )
 
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         return abs(target_temp - smoothed_temp) > 1.0
@@ -1414,9 +1362,7 @@ class PrinterHeaters:
         # Setup sensor
         sensor = self.setup_sensor(heater_config)
         # Create heater
-        self.heaters[heater_name] = heater = Heater(
-            config, sensor, heater_config
-        )
+        self.heaters[heater_name] = heater = Heater(config, sensor, heater_config)
         self.register_sensor(config, heater, gcode_id)
         self.available_heaters.append(config.get_name())
         return heater
@@ -1426,9 +1372,7 @@ class PrinterHeaters:
 
     def lookup_heater(self, heater_name):
         if heater_name not in self.heaters:
-            raise self.printer.config_error(
-                "Unknown heater '%s'" % (heater_name,)
-            )
+            raise self.printer.config_error("Unknown heater '%s'" % (heater_name,))
         return self.heaters[heater_name]
 
     def setup_sensor(self, config):
@@ -1527,9 +1471,7 @@ class PrinterHeaters:
         max_temp = gcmd.get_float("MAXIMUM", float("inf"), above=min_temp)
         error_on_cancel = gcmd.get("ALLOW_CANCEL", None) is None
         if min_temp == float("-inf") and max_temp == float("inf"):
-            raise gcmd.error(
-                "Error on 'TEMPERATURE_WAIT': missing MINIMUM or MAXIMUM."
-            )
+            raise gcmd.error("Error on 'TEMPERATURE_WAIT': missing MINIMUM or MAXIMUM.")
         if self.printer.get_start_args().get("debugoutput") is not None:
             return
         if sensor_name in self.heaters:

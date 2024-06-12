@@ -19,9 +19,7 @@ class HeatedFan:
         except:
             self.printer.add_object("fan", self)
         else:
-            raise self.printer.config_error(
-                "Can't setup fan and heated_fan together"
-            )
+            raise self.printer.config_error("Can't setup fan and heated_fan together")
 
         # setup heater
         pheaters = self.printer.load_object(config, "heaters")
@@ -31,9 +29,7 @@ class HeatedFan:
 
         # setup fan
         self.fan = fan.Fan(config, default_shutdown_speed=1.0)
-        self.min_speed = config.getfloat(
-            "min_speed", 1.0, minval=0.0, maxval=1.0
-        )
+        self.min_speed = config.getfloat("min_speed", 1.0, minval=0.0, maxval=1.0)
         self.idle_timeout = config.getfloat("idle_timeout", 60.0, minval=0.0)
 
         self.set_speed = 0.0

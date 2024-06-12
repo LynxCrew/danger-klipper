@@ -60,9 +60,7 @@ class LEDHelper:
         if i < 1:
             raise gcmd.error("step can not be less than 1(was '%d')" % i)
         if i > max - min:
-            raise gcmd.error(
-                "Steps can not be bigger than range " "(was '%d')" % i
-            )
+            raise gcmd.error("Steps can not be bigger than range " "(was '%d')" % i)
         return i
 
     def get_indices(self, gcmd, led_count):
@@ -74,14 +72,12 @@ class LEDHelper:
             led_range = index.split("-")
             if len(led_range) > 2:
                 raise gcmd.error(
-                    "More than one '-' found in '%s', "
-                    "only one allowed" % index
+                    "More than one '-' found in '%s', " "only one allowed" % index
                 )
             elif len(led_range) == 1:
                 if "|" in led_range[0]:
                     raise gcmd.error(
-                        "'|' specified without preceding "
-                        "range in '%s'" % index
+                        "'|' specified without preceding " "range in '%s'" % index
                     )
                 indices.add(self.check_index(index, gcmd, led_count))
             else:
@@ -91,8 +87,7 @@ class LEDHelper:
                 range_steps = max_val.split("|")
                 if len(range_steps) > 2:
                     raise gcmd.error(
-                        "More than one '|' found in '%s', "
-                        "only one allowed" % index
+                        "More than one '|' found in '%s', " "only one allowed" % index
                     )
                 elif len(range_steps) == 2:
                     step = range_steps[1]
@@ -100,12 +95,8 @@ class LEDHelper:
                 min = self.check_index(min_val, gcmd, led_count)
                 max = self.check_index(max_val, gcmd, led_count)
                 if max > min:
-                    raise gcmd.error(
-                        "Min value greater than max value in '%s'" % index
-                    )
-                for i in range(
-                    min, (max + 1), self.check_step(step, min, max, gcmd)
-                ):
+                    raise gcmd.error("Min value greater than max value in '%s'" % index)
+                for i in range(min, (max + 1), self.check_step(step, min, max, gcmd)):
                     indices.add(i)
         return indices
 
@@ -189,9 +180,7 @@ class PrinterLED:
             self.cmd_SET_LED_TEMPLATE,
             desc=self.cmd_SET_LED_TEMPLATE_help,
         )
-        self.printer.register_event_handler(
-            "klippy:shutdown", self._handle_shutdown
-        )
+        self.printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
 
     def _handle_shutdown(self):
         self.active_templates = {}
@@ -215,9 +204,7 @@ class PrinterLED:
         reactor = self.printer.get_reactor()
         self.render_timer = reactor.register_timer(self._render, reactor.NOW)
 
-    def _activate_template(
-        self, led_helper, index, template, lparams, tpl_name
-    ):
+    def _activate_template(self, led_helper, index, template, lparams, tpl_name):
         key = (led_helper, index)
         if template is not None:
             uid = (template,) + tuple(sorted(lparams.items()))
@@ -251,9 +238,7 @@ class PrinterLED:
             if color is None:
                 try:
                     text = template.render(context, **lparams)
-                    parts = [
-                        max(0.0, min(1.0, float(f))) for f in text.split(",", 4)
-                    ]
+                    parts = [max(0.0, min(1.0, float(f))) for f in text.split(",", 4)]
                 except Exception as e:
                     logging.exception("led template render error")
                     parts = []
@@ -289,17 +274,13 @@ class PrinterLED:
                     continue
                 p = p.lower()
                 if p not in tparams:
-                    raise gcmd.error(
-                        "Invalid display_template parameter: %s" % (p,)
-                    )
+                    raise gcmd.error("Invalid display_template parameter: %s" % (p,))
                 try:
                     lparams[p] = ast.literal_eval(v)
                 except ValueError as e:
                     raise gcmd.error("Unable to parse '%s' as a literal" % (v,))
         for index in led_helper.get_indices(gcmd, led_count):
-            self._activate_template(
-                led_helper, index, template, lparams, tpl_name
-            )
+            self._activate_template(led_helper, index, template, lparams, tpl_name)
         self._activate_timer()
 
 

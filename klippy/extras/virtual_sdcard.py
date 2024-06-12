@@ -123,9 +123,7 @@ class VirtualSDGCodeProvider:
     def get_file_list(self, check_subdirs=False):
         if check_subdirs:
             flist = []
-            for root, dirs, files in os.walk(
-                self.sdcard_dirname, followlinks=True
-            ):
+            for root, dirs, files in os.walk(self.sdcard_dirname, followlinks=True):
                 for name in files:
                     ext = name[name.rfind(".") + 1 :]
                     if ext not in VALID_GCODE_EXTS:
@@ -240,9 +238,7 @@ DEFAULT_ERROR_GCODE = """
 class VirtualSD:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler(
-            "klippy:shutdown", self.handle_shutdown
-        )
+        self.printer.register_event_handler("klippy:shutdown", self.handle_shutdown)
         # Print Stat Tracking
         self.print_stats = self.printer.load_object(config, "print_stats")
         # sdcard state
@@ -319,9 +315,7 @@ class VirtualSD:
 
     def _set_gcode_provider(self, gcode_provider):
         if self.gcode_provider is not None:
-            raise self.gcode.error(
-                "Print is active when resetting GCode provider"
-            )
+            raise self.gcode.error("Print is active when resetting GCode provider")
         self.gcode_provider = gcode_provider
         self.print_stats.set_current_file(gcode_provider.get_name())
         self.gcode_lines = gcode_provider.get_gcode()
@@ -351,8 +345,7 @@ class VirtualSD:
         self._reset_print()
 
     cmd_SDCARD_PRINT_FILE_help = (
-        "Loads a SD file and starts the print.  May "
-        "include files in subdirectories."
+        "Loads a SD file and starts the print.  May " "include files in subdirectories."
     )
 
     def cmd_SDCARD_PRINT_FILE(self, gcmd):
@@ -362,9 +355,7 @@ class VirtualSD:
         filename = gcmd.get("FILENAME")
         if filename[0] == "/":
             filename = filename[1:]
-        self.virtualsd_gcode_provider.load_file(
-            gcmd, filename, check_subdirs=True
-        )
+        self.virtualsd_gcode_provider.load_file(gcmd, filename, check_subdirs=True)
         self._set_gcode_provider(self.virtualsd_gcode_provider)
         self.do_resume()
 
@@ -376,9 +367,7 @@ class VirtualSD:
         filename = gcmd.get_raw_command_parameters().strip()
         if filename.startswith("/"):
             filename = filename[1:]
-        self.virtualsd_gcode_provider.load_file(
-            gcmd, filename, check_subdirs=True
-        )
+        self.virtualsd_gcode_provider.load_file(gcmd, filename, check_subdirs=True)
         self._set_gcode_provider(self.virtualsd_gcode_provider)
 
     def cmd_M24(self, gcmd):

@@ -42,10 +42,7 @@ class FieldHelper:
             reg_value = self.registers.get(reg_name, 0)
         mask = self.all_fields[reg_name][field_name]
         field_value = (reg_value & mask) >> ffs(mask)
-        if (
-            field_name in self.signed_fields
-            and ((reg_value & mask) << 1) > mask
-        ):
+        if field_name in self.signed_fields and ((reg_value & mask) << 1) > mask:
             field_value -= 1 << field_value.bit_length()
         return field_value
 
@@ -176,9 +173,7 @@ class TMCErrorCheck:
                 irun = self.fields.get_field(self.irun_field)
                 if self.check_timer is None or irun < 4:
                     break
-                if self.irun_field == "irun" and not self.fields.get_field(
-                    "ihold"
-                ):
+                if self.irun_field == "irun" and not self.fields.get_field("ihold"):
                     break
                 # CS_ACTUAL field of zero - indicates a driver reset
             count += 1
@@ -301,9 +296,7 @@ class TMCCommandHelper:
         self.printer.register_event_handler(
             "klippy:mcu_identify", self._handle_mcu_identify
         )
-        self.printer.register_event_handler(
-            "klippy:connect", self._handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         # Set microstep config options
         TMCMicrostepHelper(config, mcu_tmc)
         # Register commands
@@ -356,12 +349,8 @@ class TMCCommandHelper:
             raise gcmd.error("Specify either VALUE or VELOCITY")
         if velocity is not None:
             if self.mcu_tmc.get_tmc_frequency() is None:
-                raise gcmd.error(
-                    "VELOCITY parameter not supported by this driver"
-                )
-            value = TMCtstepHelper(
-                self.mcu_tmc, velocity, pstepper=self.stepper
-            )
+                raise gcmd.error("VELOCITY parameter not supported by this driver")
+            value = TMCtstepHelper(self.mcu_tmc, velocity, pstepper=self.stepper)
         reg_val = self.fields.set_field(field_name, value)
         print_time = self.printer.lookup_object("toolhead").get_last_move_time()
         self.mcu_tmc.set_register(reg_name, reg_val, print_time)
@@ -377,15 +366,9 @@ class TMCCommandHelper:
             max_cur,
             prev_home_cur,
         ) = ch.get_current()
-        run_current = gcmd.get_float(
-            "CURRENT", None, minval=0.0, maxval=max_cur
-        )
-        hold_current = gcmd.get_float(
-            "HOLDCURRENT", None, above=0.0, maxval=max_cur
-        )
-        home_current = gcmd.get_float(
-            "HOMECURRENT", None, above=0.0, maxval=max_cur
-        )
+        run_current = gcmd.get_float("CURRENT", None, minval=0.0, maxval=max_cur)
+        hold_current = gcmd.get_float("HOLDCURRENT", None, above=0.0, maxval=max_cur)
+        home_current = gcmd.get_float("HOMECURRENT", None, above=0.0, maxval=max_cur)
         verbose = gcmd.get("VERBOSE", "low")
         if (
             run_current is not None
@@ -536,9 +519,7 @@ class TMCCommandHelper:
         if not enable_line.has_dedicated_enable():
             self.toff = self.fields.get_field("toff")
             self.fields.set_field("toff", 0)
-            logging.info(
-                "Enabling TMC virtual enable for '%s'", self.stepper_name
-            )
+            logging.info("Enabling TMC virtual enable for '%s'", self.stepper_name)
         # Send init
         try:
             if self.mcu_tmc.mcu.non_critical_disconnected:
@@ -871,14 +852,10 @@ class BaseTMCCurrentHelper:
         )
 
     def set_current_for_homing(self, print_time):
-        self.set_current(
-            self.req_home_current, self.req_hold_current, print_time
-        )
+        self.set_current(self.req_home_current, self.req_hold_current, print_time)
 
     def set_current_for_normal(self, print_time):
-        self.set_current(
-            self.req_run_current, self.req_hold_current, print_time
-        )
+        self.set_current(self.req_run_current, self.req_hold_current, print_time)
 
     def needs_current_changes(self, run_current, hold_current, force=False):
         if (

@@ -14,12 +14,8 @@ class PauseResume:
         self.is_paused = False
         self.sd_paused = False
         self.pause_command_sent = False
-        self.printer.register_event_handler(
-            "klippy:connect", self.handle_connect
-        )
-        self.gcode.register_command(
-            "PAUSE", self.cmd_PAUSE, desc=self.cmd_PAUSE_help
-        )
+        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.gcode.register_command("PAUSE", self.cmd_PAUSE, desc=self.cmd_PAUSE_help)
         self.gcode.register_command(
             "RESUME", self.cmd_RESUME, desc=self.cmd_RESUME_help
         )
@@ -32,15 +28,9 @@ class PauseResume:
             desc=self.cmd_CANCEL_PRINT_help,
         )
         webhooks = self.printer.lookup_object("webhooks")
-        webhooks.register_endpoint(
-            "pause_resume/cancel", self._handle_cancel_request
-        )
-        webhooks.register_endpoint(
-            "pause_resume/pause", self._handle_pause_request
-        )
-        webhooks.register_endpoint(
-            "pause_resume/resume", self._handle_resume_request
-        )
+        webhooks.register_endpoint("pause_resume/cancel", self._handle_cancel_request)
+        webhooks.register_endpoint("pause_resume/pause", self._handle_pause_request)
+        webhooks.register_endpoint("pause_resume/resume", self._handle_resume_request)
 
     def handle_connect(self):
         self.v_sd = self.printer.lookup_object("virtual_sdcard", None)
@@ -101,15 +91,12 @@ class PauseResume:
             return
         velocity = gcmd.get_float("VELOCITY", self.recover_velocity)
         self.gcode.run_script_from_command(
-            "RESTORE_GCODE_STATE NAME=PAUSE_STATE MOVE=1 MOVE_SPEED=%.4f"
-            % (velocity)
+            "RESTORE_GCODE_STATE NAME=PAUSE_STATE MOVE=1 MOVE_SPEED=%.4f" % (velocity)
         )
         self.send_resume_command()
         self.is_paused = False
 
-    cmd_CLEAR_PAUSE_help = (
-        "Clears the current paused state without resuming the print"
-    )
+    cmd_CLEAR_PAUSE_help = "Clears the current paused state without resuming the print"
 
     def cmd_CLEAR_PAUSE(self, gcmd):
         self.is_paused = self.pause_command_sent = False

@@ -19,9 +19,7 @@ class ProfileManager:
             self._init_profile(profile, name)
 
     def _init_profile(self, config_section, name):
-        control = self._check_value_config(
-            "control", config_section, str, False
-        )
+        control = self._check_value_config("control", config_section, str, False)
         if control in self.control_types.keys():
             temp_profile = self.control_types[control].init_profile(
                 config_section, name, self
@@ -61,10 +59,7 @@ class ProfileManager:
             self.outer_instance.sensor_name
             if profile_name == "default"
             else (
-                "heater_profile "
-                + self.outer_instance.sensor_name
-                + " "
-                + profile_name
+                "heater_profile " + self.outer_instance.sensor_name + " " + profile_name
             )
         )
 
@@ -109,9 +104,7 @@ class ProfileManager:
         kp = self._check_value_gcmd("KP", None, gcmd, float, False)
         ki = self._check_value_gcmd("KI", None, gcmd, float, False)
         kd = self._check_value_gcmd("KD", None, gcmd, float, False)
-        smooth_time = self._check_value_gcmd(
-            "SMOOTH_TIME", None, gcmd, float, True
-        )
+        smooth_time = self._check_value_gcmd("SMOOTH_TIME", None, gcmd, float, True)
         smoothing_elements = self._check_value_gcmd(
             "SMOOTHING_ELEMENTS", None, gcmd, int, True
         )
@@ -131,9 +124,7 @@ class ProfileManager:
             "pid_ki": ki,
             "pid_kd": kd,
         }
-        temp_control = self.outer_instance.lookup_control(
-            temp_profile, load_clean
-        )
+        temp_control = self.outer_instance.lookup_control(temp_profile, load_clean)
         self.outer_instance.set_control(temp_control, keep_target)
         msg = (
             "PID Parameters:\n"
@@ -203,8 +194,7 @@ class ProfileManager:
             "LOAD_CLEAN", 0, gcmd, int, True, minval=0, maxval=1
         )
         if (
-            profile_name
-            == self.outer_instance.get_control().get_profile()["name"]
+            profile_name == self.outer_instance.get_control().get_profile()["name"]
             and not load_clean
         ):
             if verbose == "high" or verbose == "low":

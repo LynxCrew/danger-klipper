@@ -23,8 +23,7 @@ class SafeZHoming:
 
         if config.has_section("homing_override"):
             raise config.error(
-                "homing_override and safe_z_homing cannot"
-                + " be used simultaneously"
+                "homing_override and safe_z_homing cannot" + " be used simultaneously"
             )
 
     def cmd_G28(self, gcmd):
@@ -49,9 +48,7 @@ class SafeZHoming:
                 toolhead.manual_move([None, None, self.z_hop], self.z_hop_speed)
 
         # Determine which axes we need to home
-        need_x, need_y, need_z = [
-            gcmd.get(axis, None) is not None for axis in "XYZ"
-        ]
+        need_x, need_y, need_z = [gcmd.get(axis, None) is not None for axis in "XYZ"]
         if not need_x and not need_y and not need_z:
             need_x = need_y = need_z = True
 
@@ -85,9 +82,7 @@ class SafeZHoming:
             if self.z_hop:
                 pos = toolhead.get_position()
                 if pos[2] < self.z_hop:
-                    toolhead.manual_move(
-                        [None, None, self.z_hop], self.z_hop_speed
-                    )
+                    toolhead.manual_move([None, None, self.z_hop], self.z_hop_speed)
             # Move XY back to previous positions
             if self.move_to_previous:
                 toolhead.manual_move(prevpos[:2], self.speed)

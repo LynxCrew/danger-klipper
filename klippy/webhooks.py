@@ -69,11 +69,7 @@ class WebRequest:
         value = self.params.get(item, default)
         if value is Sentinel:
             raise WebRequestError("Missing Argument [%s]" % (item,))
-        if (
-            types is not None
-            and type(value) not in types
-            and item in self.params
-        ):
+        if types is not None and type(value) not in types and item in self.params:
             raise WebRequestError("Invalid Argument Type [%s]" % (item,))
         return value
 
@@ -135,9 +131,7 @@ class ServerSocket:
         self.fd_handle = self.reactor.register_fd(
             self.sock.fileno(), self._handle_accept
         )
-        printer.register_event_handler(
-            "klippy:disconnect", self._handle_disconnect
-        )
+        printer.register_event_handler("klippy:disconnect", self._handle_disconnect)
         printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
 
     def _handle_accept(self, eventtime):
@@ -265,9 +259,7 @@ class ClientConnection:
             try:
                 web_request = WebRequest(self, req)
             except Exception:
-                logging.exception(
-                    "webhooks: Error decoding Server Request %s" % (req)
-                )
+                logging.exception("webhooks: Error decoding Server Request %s" % (req))
                 continue
             self.reactor.register_callback(
                 lambda e, s=self, wr=web_request: s._process_request(wr)
@@ -280,9 +272,7 @@ class ClientConnection:
         except self.printer.command_error as e:
             web_request.set_error(WebRequestError(str(e)))
         except Exception as e:
-            msg = "Internal Error on WebRequest: %s" % (
-                web_request.get_method()
-            )
+            msg = "Internal Error on WebRequest: %s" % (web_request.get_method())
             logging.exception(msg)
             web_request.set_error(WebRequestError(str(e)))
             self.printer.invoke_shutdown(msg)
@@ -333,9 +323,7 @@ class WebHooks:
         self._mux_endpoints = {}
         self.register_endpoint("info", self._handle_info_request)
         self.register_endpoint("emergency_stop", self._handle_estop_request)
-        self.register_endpoint(
-            "register_remote_method", self._handle_rpc_registration
-        )
+        self.register_endpoint("register_remote_method", self._handle_rpc_registration)
         self.sconn = ServerSocket(self, printer)
 
     def register_endpoint(self, path, callback):
@@ -464,12 +452,8 @@ class GCodeHelper:
         wh.register_endpoint("gcode/help", self._handle_help)
         wh.register_endpoint("gcode/script", self._handle_script)
         wh.register_endpoint("gcode/restart", self._handle_restart)
-        wh.register_endpoint(
-            "gcode/firmware_restart", self._handle_firmware_restart
-        )
-        wh.register_endpoint(
-            "gcode/subscribe_output", self._handle_subscribe_output
-        )
+        wh.register_endpoint("gcode/firmware_restart", self._handle_firmware_restart)
+        wh.register_endpoint("gcode/subscribe_output", self._handle_subscribe_output)
 
     def _handle_help(self, web_request):
         web_request.send(self.gcode.get_command_help())
@@ -519,9 +503,7 @@ class QueryStatusHelper:
 
     def _handle_list(self, web_request):
         objects = [
-            n
-            for n, o in self.printer.lookup_objects()
-            if hasattr(o, "get_status")
+            n for n, o in self.printer.lookup_objects() if hasattr(o, "get_status")
         ]
         web_request.send({"objects": objects})
 

@@ -61,8 +61,7 @@ class MCU_queued_pwm:
         config_error = self._mcu.get_printer().config_error
         if self._max_duration and self._start_value != self._shutdown_value:
             raise config_error(
-                "Pin with max duration must have start"
-                " value equal to shutdown value"
+                "Pin with max duration must have start" " value equal to shutdown value"
             )
         cmd_queue = self._mcu.alloc_command_queue()
         curtime = self._mcu.get_printer().get_reactor().monotonic()
@@ -117,8 +116,7 @@ class MCU_queued_pwm:
         )
         self._default_value = int(self._shutdown_value >= 0.5) * cycle_ticks
         self._mcu.add_config_cmd(
-            "set_digital_out_pwm_cycle oid=%d cycle_ticks=%d"
-            % (self._oid, cycle_ticks)
+            "set_digital_out_pwm_cycle oid=%d cycle_ticks=%d" % (self._oid, cycle_ticks)
         )
         self._pwm_max = float(cycle_ticks)
         self._last_value = int(self._start_value * self._pwm_max + 0.5)
@@ -135,9 +133,7 @@ class MCU_queued_pwm:
         self._last_clock = clock = max(self._last_clock, clock)
         self._last_value = val
         data = (self._set_cmd_tag, self._oid, clock & 0xFFFFFFFF, val)
-        ret = self._stepcompress_queue_mq_msg(
-            self._stepqueue, clock, data, len(data)
-        )
+        ret = self._stepcompress_queue_mq_msg(self._stepqueue, clock, data, len(data))
         if ret:
             raise error("Internal error in stepcompress")
         # Notify toolhead so that it will flush this update
@@ -184,13 +180,10 @@ class PrinterOutputPin:
         self.mcu_pin.setup_max_duration(max_mcu_duration)
         # Determine start and shutdown values
         self.last_value = (
-            config.getfloat("value", 0.0, minval=0.0, maxval=self.scale)
-            / self.scale
+            config.getfloat("value", 0.0, minval=0.0, maxval=self.scale) / self.scale
         )
         self.shutdown_value = (
-            config.getfloat(
-                "shutdown_value", 0.0, minval=0.0, maxval=self.scale
-            )
+            config.getfloat("shutdown_value", 0.0, minval=0.0, maxval=self.scale)
             / self.scale
         )
         self.mcu_pin.setup_start_value(self.last_value, self.shutdown_value)

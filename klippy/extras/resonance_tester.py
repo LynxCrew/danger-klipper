@@ -130,9 +130,7 @@ class VibrationPulseTest:
             "max_freq", 10000.0 / 75.0, minval=self.min_freq, maxval=300.0
         )
         self.accel_per_hz = config.getfloat("accel_per_hz", 75.0, above=0.0)
-        self.hz_per_sec = config.getfloat(
-            "hz_per_sec", 1.0, minval=0.1, maxval=2.0
-        )
+        self.hz_per_sec = config.getfloat("hz_per_sec", 1.0, minval=0.1, maxval=2.0)
 
         self.probe_points = config.getlists(
             "probe_points", seps=(",", "\n"), parser=float, count=3
@@ -142,9 +140,7 @@ class VibrationPulseTest:
         return self.probe_points
 
     def prepare_test(self, gcmd):
-        self.freq_start = gcmd.get_float(
-            "FREQ_START", self.min_freq, minval=1.0
-        )
+        self.freq_start = gcmd.get_float("FREQ_START", self.min_freq, minval=1.0)
         self.freq_end = gcmd.get_float(
             "FREQ_END", self.max_freq, minval=self.freq_start, maxval=300.0
         )
@@ -264,9 +260,7 @@ class ResonanceTester:
         for point in test_points:
             toolhead.manual_move(point, self.move_speed)
             if len(test_points) > 1 or test_point is not None:
-                gcmd.respond_info(
-                    "Probing point (%.3f, %.3f, %.3f)" % tuple(point)
-                )
+                gcmd.respond_info("Probing point (%.3f, %.3f, %.3f)" % tuple(point))
             for axis in axes:
                 toolhead.wait_moves()
                 toolhead.dwell(0.500)
@@ -298,8 +292,7 @@ class ResonanceTester:
                         )
                         aclient.write_to_file(raw_name)
                         gcmd.respond_info(
-                            "Writing raw accelerometer data to "
-                            "%s file" % (raw_name,)
+                            "Writing raw accelerometer data to " "%s file" % (raw_name,)
                         )
                 if helper is None:
                     continue
@@ -336,8 +329,7 @@ class ResonanceTester:
         values = aclient.get_samples()
         if not values:
             raise gcmd.error(
-                "No accelerometer measurements found for chip "
-                "[%s]" % chip.name
+                "No accelerometer measurements found for chip " "[%s]" % chip.name
             )
 
     cmd_TEST_RESONANCES_help = "Runs the resonance test for a specifed axis"
@@ -405,9 +397,7 @@ class ResonanceTester:
                 max_freq=self._get_max_calibration_freq(),
                 accel_per_hz=self.test.get_accel_per_hz(),
             )
-            gcmd.respond_info(
-                "Resonances data written to %s file" % (csv_name,)
-            )
+            gcmd.respond_info("Resonances data written to %s file" % (csv_name,))
 
     cmd_SHAPER_CALIBRATE_help = (
         "Simular to TEST_RESONANCES but suggest input shaper config"
@@ -425,12 +415,8 @@ class ResonanceTester:
         chips_str = gcmd.get("CHIPS", None)
         accel_chips = self._parse_chips(chips_str) if chips_str else None
 
-        max_smoothing = gcmd.get_float(
-            "MAX_SMOOTHING", self.max_smoothing, minval=0.05
-        )
-        include_smoothers = gcmd.get_int(
-            "INCLUDE_SMOOTHERS", 0, minval=0, maxval=1
-        )
+        max_smoothing = gcmd.get_float("MAX_SMOOTHING", self.max_smoothing, minval=0.05)
+        include_smoothers = gcmd.get_int("INCLUDE_SMOOTHERS", 0, minval=0, maxval=1)
 
         name_suffix = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
         if not self.is_valid_name_suffix(name_suffix):
@@ -495,9 +481,7 @@ class ResonanceTester:
             "with these parameters and restart the printer."
         )
 
-    cmd_MEASURE_AXES_NOISE_help = (
-        "Measures noise of all enabled accelerometer chips"
-    )
+    cmd_MEASURE_AXES_NOISE_help = "Measures noise of all enabled accelerometer chips"
 
     def cmd_MEASURE_AXES_NOISE(self, gcmd):
         meas_time = gcmd.get_float("MEAS_TIME", 2.0)
@@ -526,9 +510,7 @@ class ResonanceTester:
     def is_valid_name_suffix(self, name_suffix):
         return name_suffix.replace("-", "").replace("_", "").isalnum()
 
-    def get_filename(
-        self, base, name_suffix, axis=None, point=None, chip_name=None
-    ):
+    def get_filename(self, base, name_suffix, axis=None, point=None, chip_name=None):
         name = base
         if axis:
             name += "_" + axis.get_name()

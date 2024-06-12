@@ -31,21 +31,15 @@ class Temperature_HOST:
         if self.printer.get_start_args().get("debugoutput") is not None:
             return
 
-        self.temperature_sample_thread = threading.Thread(
-            target=self._run_sample_timer
-        )
+        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
         try:
             self.file_handle = open(self.path, "r")
         except:
-            raise config.error(
-                "Unable to open temperature file '%s'" % (self.path,)
-            )
+            raise config.error("Unable to open temperature file '%s'" % (self.path,))
 
-        self.printer.register_event_handler(
-            "klippy:connect", self.handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self.handle_connect)
 
     def _run_sample_timer(self):
         wait_time = self._sample_pi_temperature()

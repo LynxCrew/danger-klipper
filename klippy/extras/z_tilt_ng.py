@@ -35,9 +35,7 @@ class ZAdjustHelper:
         self.name = config.get_name()
         self.z_count = z_count
         self.z_steppers = []
-        self.printer.register_event_handler(
-            "klippy:connect", self.handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self.handle_connect)
 
     def handle_connect(self):
         kin = self.printer.lookup_object("toolhead").get_kinematics()
@@ -45,13 +43,11 @@ class ZAdjustHelper:
         if self.z_count is None:
             if len(z_steppers) != 3:
                 raise self.printer.config_error(
-                    "%s z_positions needs exactly 3 items for calibration"
-                    % (self.name)
+                    "%s z_positions needs exactly 3 items for calibration" % (self.name)
                 )
         elif len(z_steppers) != self.z_count:
             raise self.printer.config_error(
-                "%s z_positions needs exactly %d items"
-                % (self.name, len(z_steppers))
+                "%s z_positions needs exactly %d items" % (self.name, len(z_steppers))
             )
         if len(z_steppers) < 2:
             raise self.printer.config_error(
@@ -105,15 +101,9 @@ class ZAdjustHelper:
 class ZAdjustStatus:
     def __init__(self, printer):
         self.applied = False
-        printer.register_event_handler(
-            "stepper_enable:motor_off", self._motor_off
-        )
-        printer.register_event_handler(
-            "stepper_enable:disable_z", self._motor_off
-        )
-        printer.register_event_handler(
-            "unhome:mark_as_unhomed_z", self._motor_off
-        )
+        printer.register_event_handler("stepper_enable:motor_off", self._motor_off)
+        printer.register_event_handler("stepper_enable:disable_z", self._motor_off)
+        printer.register_event_handler("unhome:mark_as_unhomed_z", self._motor_off)
 
     def check_retry_result(self, retry_result):
         if retry_result == "done":
@@ -225,9 +215,7 @@ class ZTilt:
         try:
             self.numpy = importlib.import_module("numpy")
         except ImportError:
-            logging.info(
-                "numpy not installed, Z_TILT_CALIBRATE will not be available"
-            )
+            logging.info("numpy not installed, Z_TILT_CALIBRATE will not be available")
             self.numpy = None
 
         self.z_positions = config.getlists(
@@ -240,9 +228,7 @@ class ZTilt:
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         self.probe_helper.minimum_points(2)
 
-        self.z_offsets = config.getfloatlist(
-            "z_offsets", count=z_count, default=None
-        )
+        self.z_offsets = config.getfloatlist("z_offsets", count=z_count, default=None)
 
         self.z_status = ZAdjustStatus(self.printer)
         self.z_helper = ZAdjustHelper(config, z_count)
@@ -259,12 +245,9 @@ class ZTilt:
         self.ad_helper = probe.ProbePointsHelper(config, self.ad_finalize)
         self.ad_helper.update_probe_points(cal_probe_points, 3)
         self.cal_conf_avg_len = config.getint("averaging_len", 3, minval=1)
-        self.ad_conf_delta = config.getfloat(
-            "autodetect_delta", 1.0, minval=0.1
-        )
+        self.ad_conf_delta = config.getfloat("autodetect_delta", 1.0, minval=0.1)
         if (
-            config.get("autodetect_delta", None) is not None
-            or self.z_positions is None
+            config.get("autodetect_delta", None) is not None or self.z_positions is None
         ) and self.numpy is None:
             raise config.error(self.err_missing_numpy)
 
@@ -288,9 +271,7 @@ class ZTilt:
         )
 
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
-    cmd_Z_TILT_CALIBRATE_help = (
-        "Calibrate Z tilt with additional probing " "points"
-    )
+    cmd_Z_TILT_CALIBRATE_help = "Calibrate Z tilt with additional probing " "points"
     cmd_Z_TILT_AUTODETECT_help = "Autodetect pivot point of Z motors"
     err_missing_numpy = (
         "Failed to import `numpy` module, make sure it was "
@@ -299,9 +280,7 @@ class ZTilt:
 
     def cmd_Z_TILT_ADJUST(self, gcmd):
         if self.z_positions is None:
-            gcmd.respond_info(
-                "No z_positions configured. Run Z_TILT_AUTODETECT first"
-            )
+            gcmd.respond_info("No z_positions configured. Run Z_TILT_AUTODETECT first")
             return
         self.z_status.reset()
         self.retry_helper.start(gcmd)
@@ -321,10 +300,7 @@ class ZTilt:
         def adjusted_height(pos, params):
             x, y, z = pos
             return (
-                z
-                - x * params["x_adjust"]
-                - y * params["y_adjust"]
-                - params["z_adjust"]
+                z - x * params["x_adjust"] - y * params["y_adjust"] - params["z_adjust"]
             )
 
         def errorfunc(params):
@@ -333,13 +309,9 @@ class ZTilt:
                 total_error += adjusted_height(pos, params) ** 2
             return total_error
 
-        new_params = mathutil.coordinate_descent(
-            params.keys(), params, errorfunc
-        )
+        new_params = mathutil.coordinate_descent(params.keys(), params, errorfunc)
 
-        new_params = mathutil.coordinate_descent(
-            params.keys(), params, errorfunc
-        )
+        new_params = mathutil.coordinate_descent(params.keys(), params, errorfunc)
         # Apply results
         speed = self.probe_helper.get_lift_speed()
         logging.info("Calculated bed tilt parameters: %s", new_params)
@@ -364,8 +336,7 @@ class ZTilt:
     def probe_finalize(self, offsets, positions):
         if self.z_offsets is not None:
             positions = [
-                [p[0], p[1], p[2] - o]
-                for (p, o) in zip(positions, self.z_offsets)
+                [p[0], p[1], p[2] - o] for (p, o) in zip(positions, self.z_offsets)
             ]
         new_params = self.perform_coordinate_descent(offsets, positions)
         self.apply_adjustments(offsets, new_params)
@@ -399,8 +370,7 @@ class ZTilt:
         this_error = np.std(self.cal_runs[-avlen:], axis=0)
         this_error = np.std(this_error)
         self.cal_gcmd.respond_info(
-            "previous error: %.6f current error: %.6f"
-            % (prev_error, this_error)
+            "previous error: %.6f current error: %.6f" % (prev_error, this_error)
         )
         if this_error < prev_error:
             return "retry"
@@ -461,9 +431,7 @@ class ZTilt:
         if self.ad_phase in range(4, 7):
             new_params["z_adjust"] += delta / 2
         if self.ad_phase == 0:
-            self.ad_points.append(
-                [z for _, _, z in positions[: self.num_probe_points]]
-            )
+            self.ad_points.append([z for _, _, z in positions[: self.num_probe_points]])
         self.ad_params.append(new_params)
         adjustments = [_a * delta for _a in self.ad_adjustments[self.ad_phase]]
         self.z_helper.adjust_steppers(adjustments, speed)
@@ -536,8 +504,7 @@ class ZTilt:
                 self.ad_gcmd.respond_info("current error: %.6f" % (error))
             else:
                 self.ad_gcmd.respond_info(
-                    "previous error: %.6f current error: %.6f"
-                    % (self.ad_error, error)
+                    "previous error: %.6f current error: %.6f" % (self.ad_error, error)
                 )
             if self.ad_error is not None:
                 if error >= self.ad_error:

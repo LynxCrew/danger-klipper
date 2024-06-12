@@ -64,12 +64,9 @@ class ColdExtrude:
                 "printer config file and restart the "
                 "printer." % (heater.min_extrude_temp, heater.name)
             )
-            logging.info(
-                "COLD_EXTRUDE min_extrude_temp set to [%f]" % min_extrude_temp
-            )
+            logging.info("COLD_EXTRUDE min_extrude_temp set to [%f]" % min_extrude_temp)
         heater.can_extrude = (
-            heater.smoothed_temp >= heater.min_extrude_temp
-            or heater.cold_extrude
+            heater.smoothed_temp >= heater.min_extrude_temp or heater.cold_extrude
         )
 
 

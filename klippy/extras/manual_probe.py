@@ -106,9 +106,7 @@ class ManualProbe:
                 "The SAVE_CONFIG command will update the printer config file\n"
                 "with the above and restart the printer." % (new_calibrate)
             )
-            configfile.set(
-                "stepper_z", "position_endstop", "%.3f" % (new_calibrate,)
-            )
+            configfile.set("stepper_z", "position_endstop", "%.3f" % (new_calibrate,))
 
     def cmd_Z_OFFSET_APPLY_DELTA_ENDSTOPS(self, gcmd):
         offset = self.gcode_move.get_status()["homing_origin"].z
@@ -127,15 +125,9 @@ class ManualProbe:
                 "with the above and restart the printer."
                 % (new_a_calibrate, new_b_calibrate, new_c_calibrate)
             )
-            configfile.set(
-                "stepper_a", "position_endstop", "%.3f" % (new_a_calibrate,)
-            )
-            configfile.set(
-                "stepper_b", "position_endstop", "%.3f" % (new_b_calibrate,)
-            )
-            configfile.set(
-                "stepper_c", "position_endstop", "%.3f" % (new_c_calibrate,)
-            )
+            configfile.set("stepper_a", "position_endstop", "%.3f" % (new_a_calibrate,))
+            configfile.set("stepper_b", "position_endstop", "%.3f" % (new_b_calibrate,))
+            configfile.set("stepper_c", "position_endstop", "%.3f" % (new_c_calibrate,))
 
     cmd_Z_OFFSET_APPLY_ENDSTOP_help = "Adjust the z endstop_position"
 
@@ -171,12 +163,8 @@ class ManualProbeHelper:
             "ACCEPT", self.cmd_ACCEPT, desc=self.cmd_ACCEPT_help
         )
         self.gcode.register_command("NEXT", self.cmd_ACCEPT)
-        self.gcode.register_command(
-            "ABORT", self.cmd_ABORT, desc=self.cmd_ABORT_help
-        )
-        self.gcode.register_command(
-            "TESTZ", self.cmd_TESTZ, desc=self.cmd_TESTZ_help
-        )
+        self.gcode.register_command("ABORT", self.cmd_ABORT, desc=self.cmd_ABORT_help)
+        self.gcode.register_command("TESTZ", self.cmd_TESTZ, desc=self.cmd_TESTZ_help)
         self.gcode.respond_info(
             "Starting manual Z probe. Use TESTZ to adjust position.\n"
             "Finish with ACCEPT or ABORT command."

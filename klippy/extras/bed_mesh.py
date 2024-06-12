@@ -55,8 +55,7 @@ def parse_config_pair(config, option, default, minval=None, maxval=None):
     if len(pair) != 2:
         if len(pair) != 1:
             raise config.error(
-                "bed_mesh: malformed '%s' value: %s"
-                % (option, config.get(option))
+                "bed_mesh: malformed '%s' value: %s" % (option, config.get(option))
             )
         pair = (pair[0], pair[0])
     if minval is not None:
@@ -111,9 +110,7 @@ class BedMesh:
 
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler(
-            "klippy:connect", self.handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self.handle_connect)
         config_file = self.printer.lookup_object("configfile")
         self.last_position = [0.0, 0.0, 0.0, 0.0]
         self.bmc = BedMeshCalibrate(config, self)
@@ -184,10 +181,7 @@ class BedMesh:
             else:
                 self.fade_target = self.base_fade_target
                 min_z, max_z = mesh.get_z_range()
-                if (
-                    not min_z <= self.fade_target <= max_z
-                    and self.fade_target != 0.0
-                ):
+                if not min_z <= self.fade_target <= max_z and self.fade_target != 0.0:
                     # fade target is non-zero, out of mesh range
                     err_target = self.fade_target
                     self.z_mesh = None
@@ -273,9 +267,7 @@ class BedMesh:
                 if split_move:
                     self.toolhead.move(split_move, speed)
                 else:
-                    raise self.gcode.error(
-                        "Mesh Leveling: Error splitting move "
-                    )
+                    raise self.gcode.error("Mesh Leveling: Error splitting move ")
         self.last_position[:] = newpos
 
     def get_status(self, eventtime=None):
@@ -430,9 +422,7 @@ class BedMeshCalibrate:
                     # round bed, check distance from origin
                     dist_from_origin = math.sqrt(pos_x * pos_x + pos_y * pos_y)
                     if dist_from_origin <= self.radius:
-                        points.append(
-                            (self.origin[0] + pos_x, self.origin[1] + pos_y)
-                        )
+                        points.append((self.origin[0] + pos_x, self.origin[1] + pos_y))
             pos_y += y_dist
         self.points = points
         if self.zero_ref_pos is None or probe_method == "manual":
@@ -512,9 +502,7 @@ class BedMeshCalibrate:
         probe = self.printer.lookup_object("probe", None)
         if probe is not None:
             x_offset, y_offset = probe.get_offsets()[:2]
-        print_func(
-            "bed_mesh: generated points\nIndex" " |  Tool Adjusted  |   Probe"
-        )
+        print_func("bed_mesh: generated points\nIndex" " |  Tool Adjusted  |   Probe")
         for i, (x, y) in enumerate(self.points):
             adj_pt = "(%.1f, %.1f)" % (x - x_offset, y - y_offset)
             mesh_pt = "(%.1f, %.1f)" % (x, y)
@@ -538,15 +526,11 @@ class BedMeshCalibrate:
         orig_cfg = self.orig_config
         self.radius = config.getfloat("mesh_radius", None, above=0.0)
         if self.radius is not None:
-            self.origin = config.getfloatlist(
-                "mesh_origin", (0.0, 0.0), count=2
-            )
+            self.origin = config.getfloatlist("mesh_origin", (0.0, 0.0), count=2)
             x_cnt = y_cnt = config.getint("round_probe_count", 5, minval=3)
             # round beds must have an odd number of points along each axis
             if not x_cnt & 1:
-                raise config.error(
-                    "bed_mesh: probe_count must be odd for round beds"
-                )
+                raise config.error("bed_mesh: probe_count must be odd for round beds")
             # radius may have precision to .1mm
             self.radius = math.floor(self.radius * 10) / 10
             orig_cfg["radius"] = self.radius
@@ -575,9 +559,7 @@ class BedMeshCalibrate:
             "bicubic_tension", 0.2, minval=0.0, maxval=2.0
         )
         for i in list(range(1, 100, 1)):
-            start = config.getfloatlist(
-                "faulty_region_%d_min" % (i,), None, count=2
-            )
+            start = config.getfloatlist("faulty_region_%d_min" % (i,), None, count=2)
             if start is None:
                 break
             end = config.getfloatlist("faulty_region_%d_max" % (i,), count=2)
@@ -628,9 +610,7 @@ class BedMeshCalibrate:
         x_pps = params["mesh_x_pps"]
         y_pps = params["mesh_y_pps"]
         if params["algo"] not in self.ALGOS:
-            raise error(
-                "bed_mesh: Unknown algorithm <%s>" % (self.mesh_config["algo"])
-            )
+            raise error("bed_mesh: Unknown algorithm <%s>" % (self.mesh_config["algo"]))
         # Check the algorithm against the current configuration
         max_probe_cnt = max(params["x_count"], params["y_count"])
         min_probe_cnt = min(params["x_count"], params["y_count"])
@@ -713,15 +693,9 @@ class BedMeshCalibrate:
         # Compute a ratio between the adapted and original sizes
         ratio = (
             adjusted_mesh_size[0]
-            / (
-                self.orig_config["mesh_max"][0]
-                - self.orig_config["mesh_min"][0]
-            ),
+            / (self.orig_config["mesh_max"][0] - self.orig_config["mesh_min"][0]),
             adjusted_mesh_size[1]
-            / (
-                self.orig_config["mesh_max"][1]
-                - self.orig_config["mesh_min"][1]
-            ),
+            / (self.orig_config["mesh_max"][1] - self.orig_config["mesh_min"][1]),
         )
 
         gcmd.respond_info(
@@ -733,17 +707,12 @@ class BedMeshCalibrate:
             % (self.mesh_config["x_count"], self.mesh_config["y_count"])
         )
         gcmd.respond_info(
-            "Adapted mesh bounds: (%s,%s)"
-            % (adjusted_mesh_min, adjusted_mesh_max)
+            "Adapted mesh bounds: (%s,%s)" % (adjusted_mesh_min, adjusted_mesh_max)
         )
         gcmd.respond_info("Ratio: (%s, %s)" % ratio)
 
-        new_x_probe_count = int(
-            math.ceil(self.mesh_config["x_count"] * ratio[0])
-        )
-        new_y_probe_count = int(
-            math.ceil(self.mesh_config["y_count"] * ratio[1])
-        )
+        new_x_probe_count = int(math.ceil(self.mesh_config["x_count"] * ratio[0]))
+        new_y_probe_count = int(math.ceil(self.mesh_config["y_count"] * ratio[1]))
 
         # There is one case, where we may have to adjust the probe counts:
         # axis0 < 4 and axis1 > 6 (see _verify_algorithm).
@@ -758,8 +727,7 @@ class BedMeshCalibrate:
         new_y_probe_count = max(min_num_of_probes, new_y_probe_count)
 
         gcmd.respond_info(
-            "Adapted probe count: (%s,%s)"
-            % (new_x_probe_count, new_y_probe_count)
+            "Adapted probe count: (%s,%s)" % (new_x_probe_count, new_y_probe_count)
         )
 
         # If the adapted mesh size is too small, adjust it to something
@@ -771,9 +739,7 @@ class BedMeshCalibrate:
 
         if self.radius is not None:
             adapted_radius = (
-                math.sqrt(
-                    (adjusted_mesh_size[0] ** 2) + (adjusted_mesh_size[1] ** 2)
-                )
+                math.sqrt((adjusted_mesh_size[0] ** 2) + (adjusted_mesh_size[1] ** 2))
                 / 2
             )
             adapted_origin = (
@@ -862,9 +828,7 @@ class BedMeshCalibrate:
             self.print_generated_points(gcmd.respond_info)
             pts = self._get_adjusted_points()
             self.probe_helper.update_probe_points(pts, 3)
-            msg = "\n".join(
-                ["%s: %s" % (k, v) for k, v in self.mesh_config.items()]
-            )
+            msg = "\n".join(["%s: %s" % (k, v) for k, v in self.mesh_config.items()])
             logging.info("Updated Mesh Configuration:\n" + msg)
         else:
             self._generate_points(gcmd.error, probe_method)
@@ -905,8 +869,7 @@ class BedMeshCalibrate:
             ref_pos = positions.pop()
             logging.info(
                 "bed_mesh: z-offset replaced with probed z value at "
-                "position (%.2f, %.2f, %.6f)"
-                % (ref_pos[0], ref_pos[1], ref_pos[2])
+                "position (%.2f, %.2f, %.6f)" % (ref_pos[0], ref_pos[1], ref_pos[2])
             )
             z_offset = ref_pos[2]
         params = dict(self.mesh_config)
@@ -930,9 +893,7 @@ class BedMeshCalibrate:
                 idx = i + idx_offset
                 # Add "normal" points
                 corrected_pts.extend(positions[start_idx:idx])
-                avg_z = sum(
-                    [p[2] for p in positions[idx : idx + len(pts)]]
-                ) / len(pts)
+                avg_z = sum([p[2] for p in positions[idx : idx + len(pts)]]) / len(pts)
                 idx_offset += len(pts) - 1
                 start_idx = idx + len(pts)
                 fpt.append(avg_z)
@@ -953,9 +914,9 @@ class BedMeshCalibrate:
                 )
             for gen_pt, probed in zip(self.points, corrected_pts):
                 off_pt = [p - o for p, o in zip(gen_pt, offsets[:2])]
-                if not isclose(
-                    off_pt[0], probed[0], abs_tol=0.1
-                ) or not isclose(off_pt[1], probed[1], abs_tol=0.1):
+                if not isclose(off_pt[0], probed[0], abs_tol=0.1) or not isclose(
+                    off_pt[1], probed[1], abs_tol=0.1
+                ):
                     self._dump_points(positions, corrected_pts, offsets)
                     raise self.gcode.error(
                         "bed_mesh: point mismatch, orig = (%.2f, %.2f)"
@@ -1053,16 +1014,12 @@ class BedMeshCalibrate:
                 probed_pt = "(%.2f, %.2f, %.4f)" % tuple(probed_pts[i])
             if i < len(corrected_pts):
                 corr_pt = "(%.2f, %.2f, %.4f)" % tuple(corrected_pts[i])
-            logging.info(
-                "  %-4d| %-17s| %-25s| %s" % (i, gen_pt, probed_pt, corr_pt)
-            )
+            logging.info("  %-4d| %-17s| %-25s| %s" % (i, gen_pt, probed_pt, corr_pt))
 
 
 class MoveSplitter:
     def __init__(self, config, gcode):
-        self.split_delta_z = config.getfloat(
-            "split_delta_z", 0.025, minval=0.01
-        )
+        self.split_delta_z = config.getfloat("split_delta_z", 0.025, minval=0.01)
         self.move_check_distance = config.getfloat(
             "move_check_distance", 5.0, minval=3.0
         )
@@ -1100,9 +1057,7 @@ class MoveSplitter:
             )
         for i in range(4):
             if self.axis_move[i]:
-                self.current_pos[i] = lerp(
-                    t, self.prev_pos[i], self.next_pos[i]
-                )
+                self.current_pos[i] = lerp(t, self.prev_pos[i], self.next_pos[i])
 
     def split(self):
         if not self.traverse_complete:
@@ -1178,12 +1133,8 @@ class ZMesh:
             "bed_mesh: Mesh grid size - X:%d, Y:%d"
             % (self.mesh_x_count, self.mesh_y_count)
         )
-        self.mesh_x_dist = (self.mesh_x_max - self.mesh_x_min) / (
-            self.mesh_x_count - 1
-        )
-        self.mesh_y_dist = (self.mesh_y_max - self.mesh_y_min) / (
-            self.mesh_y_count - 1
-        )
+        self.mesh_x_dist = (self.mesh_x_max - self.mesh_x_min) / (self.mesh_x_count - 1)
+        self.mesh_y_dist = (self.mesh_y_max - self.mesh_y_min) / (self.mesh_y_count - 1)
 
     def get_mesh_matrix(self):
         if self.mesh_matrix is not None:
@@ -1509,9 +1460,7 @@ class ProfileManager:
             self.profiles[name] = {}
             zvals = profile.getlists("points", seps=(",", "\n"), parser=float)
             self.profiles[name]["points"] = zvals
-            self.profiles[name]["mesh_params"] = params = (
-                collections.OrderedDict()
-            )
+            self.profiles[name]["mesh_params"] = params = collections.OrderedDict()
             for key, t in PROFILE_OPTIONS.items():
                 if t is int:
                     params[key] = profile.getint(key)
@@ -1576,8 +1525,7 @@ class ProfileManager:
         self.gcode.respond_info(
             "Bed Mesh state has been saved to profile [%s]\n"
             "for the current session.  The SAVE_CONFIG command will\n"
-            "update the printer config file and restart the printer."
-            % (prof_name)
+            "update the printer config file and restart the printer." % (prof_name)
         )
 
     def load_profile(self, prof_name):
@@ -1607,9 +1555,7 @@ class ProfileManager:
                 "configuration and restart the printer" % (prof_name)
             )
         else:
-            self.gcode.respond_info(
-                "No profile named [%s] to remove" % (prof_name)
-            )
+            self.gcode.respond_info("No profile named [%s] to remove" % (prof_name))
 
     cmd_BED_MESH_PROFILE_help = "Bed Mesh Persistent Storage management"
 

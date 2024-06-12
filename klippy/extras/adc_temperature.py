@@ -93,8 +93,7 @@ class LinearInterpolate:
 
     def reverse_interpolate(self, value):
         values = [
-            key * gain + offset
-            for key, (gain, offset) in zip(self.keys, self.slopes)
+            key * gain + offset for key, (gain, offset) in zip(self.keys, self.slopes)
         ]
         if values[0] < values[-2]:
             valid = [i for i in range(len(values)) if values[i] >= value]
@@ -593,9 +592,7 @@ AD8497 = [
 def calc_pt100(base=100.0):
     # Calc PT100/PT1000 resistances using Callendar-Van Dusen formula
     A, B = (3.9083e-3, -5.775e-7)
-    return [
-        (float(t), base * (1.0 + A * t + B * t * t)) for t in range(0, 500, 10)
-    ]
+    return [(float(t), base * (1.0 + A * t + B * t * t)) for t in range(0, 500, 10)]
 
 
 def calc_ina826_pt100():
@@ -622,17 +619,13 @@ def load_config(config):
     for sensor_type, params in DefaultVoltageSensors:
 
         def func(config, params=params):
-            return PrinterADCtoTemperature(
-                config, LinearVoltage(config, params)
-            )
+            return PrinterADCtoTemperature(config, LinearVoltage(config, params))
 
         pheaters.add_sensor_factory(sensor_type, func)
     for sensor_type, params in DefaultResistanceSensors:
 
         def func(config, params=params):
-            return PrinterADCtoTemperature(
-                config, LinearResistance(config, params)
-            )
+            return PrinterADCtoTemperature(config, LinearResistance(config, params))
 
         pheaters.add_sensor_factory(sensor_type, func)
 

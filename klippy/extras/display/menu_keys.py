@@ -33,9 +33,7 @@ class MenuKeys:
                 self.encoder_ccw_callback,
                 encoder_steps_per_detent,
             )
-        self.encoder_fast_rate = config.getfloat(
-            "encoder_fast_rate", 0.030, above=0.0
-        )
+        self.encoder_fast_rate = config.getfloat("encoder_fast_rate", 0.030, above=0.0)
         self.last_encoder_cw_eventtime = 0
         self.last_encoder_ccw_eventtime = 0
         # Register click button
@@ -96,9 +94,7 @@ class MenuKeys:
     def click_callback(self, eventtime, state):
         if state:
             self.is_short_click = True
-            self.reactor.update_timer(
-                self.click_timer, eventtime + LONG_PRESS_DURATION
-            )
+            self.reactor.update_timer(self.click_timer, eventtime + LONG_PRESS_DURATION)
         elif self.is_short_click:
             self.reactor.update_timer(self.click_timer, self.reactor.NEVER)
             self.callback("click", eventtime)

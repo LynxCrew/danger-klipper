@@ -16,13 +16,9 @@ class ControllerFan:
     def __init__(self, config, defined_fan=None):
         self.name = config.get_name().split()[1]
         self.printer = config.get_printer()
-        self.printer.register_event_handler(
-            "klippy:connect", self.handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self.handle_connect)
         if defined_fan is None:
-            self.printer.register_event_handler(
-                "klippy:ready", self.handle_ready
-            )
+            self.printer.register_event_handler("klippy:ready", self.handle_ready)
             self.fan = fan.Fan(config)
         else:
             self.fan = defined_fan
@@ -41,9 +37,7 @@ class ControllerFan:
         self.last_on = self.idle_timeout
         self.last_speed = 0.0
         self.enabled = True
-        self.temperature_sample_thread = threading.Thread(
-            target=self._run_sample_timer
-        )
+        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "SET_CONTROLLER_FAN",
@@ -67,9 +61,7 @@ class ControllerFan:
                 pheaters.lookup_heater(n) for n in pheaters.available_heaters
             ]
         else:
-            self.heaters = [
-                pheaters.lookup_heater(n) for n in self.heater_names
-            ]
+            self.heaters = [pheaters.lookup_heater(n) for n in self.heater_names]
         # Stepper lookup
         all_steppers = self.stepper_enable.get_steppers()
         if self.stepper_names is None:

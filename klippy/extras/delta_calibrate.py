@@ -42,25 +42,18 @@ def measurements_to_distances(measured_params, delta_params):
     scale = mp["SCALE"][0]
     cpw = mp["CENTER_PILLAR_WIDTHS"]
     center_widths = [cpw[0], cpw[2], cpw[1], cpw[0], cpw[2], cpw[1]]
-    center_dists = [
-        od - cw for od, cw in zip(mp["CENTER_DISTS"], center_widths)
-    ]
+    center_dists = [od - cw for od, cw in zip(mp["CENTER_DISTS"], center_widths)]
     outer_dists = [
-        od - opw
-        for od, opw in zip(mp["OUTER_DISTS"], mp["OUTER_PILLAR_WIDTHS"])
+        od - opw for od, opw in zip(mp["OUTER_DISTS"], mp["OUTER_PILLAR_WIDTHS"])
     ]
     # Convert angles in degrees to an XY multiplier
     obj_angles = list(map(math.radians, MeasureAngles))
     xy_angles = list(zip(map(math.cos, obj_angles), map(math.sin, obj_angles)))
     # Calculate stable positions for center measurements
     inner_ridge = MeasureRidgeRadius * scale
-    inner_pos = [
-        (ax * inner_ridge, ay * inner_ridge, 0.0) for ax, ay in xy_angles
-    ]
+    inner_pos = [(ax * inner_ridge, ay * inner_ridge, 0.0) for ax, ay in xy_angles]
     outer_ridge = (MeasureOuterRadius + MeasureRidgeRadius) * scale
-    outer_pos = [
-        (ax * outer_ridge, ay * outer_ridge, 0.0) for ax, ay in xy_angles
-    ]
+    outer_pos = [(ax * outer_ridge, ay * outer_ridge, 0.0) for ax, ay in xy_angles]
     center_positions = [
         (cd, dp.calc_stable_position(ip), dp.calc_stable_position(op))
         for cd, ip, op in zip(center_dists, inner_pos, outer_pos)
@@ -92,9 +85,7 @@ def measurements_to_distances(measured_params, delta_params):
 class DeltaCalibrate:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler(
-            "klippy:connect", self.handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self.handle_connect)
         # Calculate default probing points
         radius = config.getfloat("radius", above=0.0)
         points = [(0.0, 0.0)]
@@ -121,9 +112,7 @@ class DeltaCalibrate:
             height = config.getfloat("manual_height%d" % (i,), None)
             if height is None:
                 break
-            height_pos = load_config_stable(
-                config, "manual_height%d_pos" % (i,)
-            )
+            height_pos = load_config_stable(config, "manual_height%d_pos" % (i,))
             self.manual_heights.append((height, height_pos))
         # Restore distance measurements
         self.delta_analyze_entry = {"SCALE": (1.0,)}
@@ -233,9 +222,7 @@ class DeltaCalibrate:
                 for dist, stable_pos1, stable_pos2 in distances:
                     x1, y1, z1 = getpos(stable_pos1)
                     x2, y2, z2 = getpos(stable_pos2)
-                    d = math.sqrt(
-                        (x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2
-                    )
+                    d = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
                     total_error += (d - dist) ** 2
                 return total_error
             except ValueError:
@@ -257,14 +244,10 @@ class DeltaCalibrate:
         for dist, spos1, spos2 in distances:
             x1, y1, z1 = orig_delta_params.get_position_from_stable(spos1)
             x2, y2, z2 = orig_delta_params.get_position_from_stable(spos2)
-            orig_dist = math.sqrt(
-                (x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2
-            )
+            orig_dist = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
             x1, y1, z1 = new_delta_params.get_position_from_stable(spos1)
             x2, y2, z2 = new_delta_params.get_position_from_stable(spos2)
-            new_dist = math.sqrt(
-                (x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2
-            )
+            new_dist = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
             logging.info(
                 "distance orig: %.6f new: %.6f goal: %.6f",
                 orig_dist,
@@ -346,9 +329,7 @@ class DeltaCalibrate:
             except:
                 raise gcmd.error("Unable to parse parameter '%s'" % (name,))
             if len(parts) != count:
-                raise gcmd.error(
-                    "Parameter '%s' must have %d values" % (name, count)
-                )
+                raise gcmd.error("Parameter '%s' must have %d values" % (name, count))
             self.delta_analyze_entry[name] = parts
             logging.info("DELTA_ANALYZE %s = %s", name, parts)
         # Perform analysis if requested

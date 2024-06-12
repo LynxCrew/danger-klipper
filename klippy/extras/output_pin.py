@@ -51,9 +51,7 @@ class PrinterOutputPin:
                 / self.scale
             )
             self.shutdown_value = (
-                config.getfloat(
-                    "shutdown_value", 0.0, minval=0.0, maxval=self.scale
-                )
+                config.getfloat("shutdown_value", 0.0, minval=0.0, maxval=self.scale)
                 / self.scale
             )
         self.mcu_pin.setup_start_value(self.last_value, self.shutdown_value)

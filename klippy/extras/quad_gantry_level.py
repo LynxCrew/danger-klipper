@@ -33,18 +33,14 @@ class QuadGantryLevel:
         self.horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         if len(self.probe_helper.probe_points) != 4:
-            raise config.error(
-                "Need exactly 4 probe points for quad_gantry_level"
-            )
+            raise config.error("Need exactly 4 probe points for quad_gantry_level")
         self.z_status = z_tilt.ZAdjustStatus(self.printer)
         self.z_helper = z_tilt.ZAdjustHelper(config, 4)
         self.gantry_corners = config.getlists(
             "gantry_corners", parser=float, seps=(",", "\n"), count=2
         )
         if len(self.gantry_corners) < 2:
-            raise config.error(
-                "quad_gantry_level requires at least two gantry_corners"
-            )
+            raise config.error("quad_gantry_level requires at least two gantry_corners")
         # Register QUAD_GANTRY_LEVEL command
         self.gcode = self.printer.lookup_object("gcode")
         self.gcode.register_command(
@@ -83,9 +79,7 @@ class QuadGantryLevel:
         ppx1 = [positions[1][0] + offsets[0], z_positions[1]]
         ppx2 = [positions[2][0] + offsets[0], z_positions[2]]
         slope_x_pp12 = self.linefit(ppx1, ppx2)
-        logging.info(
-            "quad_gantry_level f1: %s, f2: %s" % (slope_x_pp03, slope_x_pp12)
-        )
+        logging.info("quad_gantry_level f1: %s, f2: %s" % (slope_x_pp03, slope_x_pp12))
         # Calculate gantry slope along Y axis between stepper 0 and 1
         a1 = [
             positions[0][1] + offsets[1],
@@ -106,9 +100,7 @@ class QuadGantryLevel:
             self.plot(slope_x_pp12, self.gantry_corners[1][0]),
         ]
         slope_y_s23 = self.linefit(b1, b2)
-        logging.info(
-            "quad_gantry_level af: %s, bf: %s" % (slope_y_s01, slope_y_s23)
-        )
+        logging.info("quad_gantry_level af: %s, bf: %s" % (slope_y_s01, slope_y_s23))
         # Calculate z height of each stepper
         z_height = [0, 0, 0, 0]
         z_height[0] = self.plot(slope_y_s01, self.gantry_corners[0][1])
@@ -131,8 +123,7 @@ class QuadGantryLevel:
             raise self.gcode.error(
                 "Aborting quad_gantry_level"
                 " required adjustment %0.6f"
-                " is greater than max_adjust %0.6f"
-                % (adjust_max, self.max_adjust)
+                " is greater than max_adjust %0.6f" % (adjust_max, self.max_adjust)
             )
 
         speed = self.probe_helper.get_lift_speed()

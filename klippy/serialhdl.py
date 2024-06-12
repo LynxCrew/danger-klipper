@@ -62,9 +62,7 @@ class SerialReader:
                     hdl = self.handlers.get(hdl, self.handle_default)
                     hdl(params)
             except:
-                logging.exception(
-                    "%sException in serial callback", self.warn_prefix
-                )
+                logging.exception("%sException in serial callback", self.warn_prefix)
 
     def _error(self, msg, *params):
         raise error(self.warn_prefix + (msg % params))
@@ -77,9 +75,7 @@ class SerialReader:
             try:
                 params = self.send_with_response(msg, "identify_response")
             except error as e:
-                logging.exception(
-                    "%sWait for identify_response", self.warn_prefix
-                )
+                logging.exception("%sWait for identify_response", self.warn_prefix)
                 return None
             if params["offset"] == len(identify_data):
                 msgdata = params["data"]
@@ -115,9 +111,7 @@ class SerialReader:
         else:
             wire_freq = msgparser.get_constant_float("SERIAL_BAUD", None)
         if wire_freq is not None:
-            self.ffi_lib.serialqueue_set_wire_frequency(
-                self.serialqueue, wire_freq
-            )
+            self.ffi_lib.serialqueue_set_wire_frequency(self.serialqueue, wire_freq)
         receive_window = msgparser.get_constant_int("RECEIVE_WINDOW", None)
         if receive_window is not None:
             self.ffi_lib.serialqueue_set_receive_window(
@@ -125,9 +119,7 @@ class SerialReader:
             )
         return True
 
-    def check_canbus_connect(
-        self, canbus_uuid, canbus_nodeid, canbus_iface="can0"
-    ):
+    def check_canbus_connect(self, canbus_uuid, canbus_nodeid, canbus_iface="can0"):
         import can  # XXX
 
         logging.getLogger("can").setLevel(logging.WARN)
@@ -182,9 +174,7 @@ class SerialReader:
                 or msg.data[0] != RESP_NEED_NODEID
             ):
                 continue
-            found_uuid = sum(
-                [v << ((5 - i) * 8) for i, v in enumerate(msg.data[1:7])]
-            )
+            found_uuid = sum([v << ((5 - i) * 8) for i, v in enumerate(msg.data[1:7])])
             logging.info(f"found_uuid: {found_uuid}")
             if found_uuid == uuid:
                 self.disconnect()
@@ -229,9 +219,7 @@ class SerialReader:
                 )
                 bus.send(set_id_msg)
             except (can.CanError, os.error) as e:
-                logging.warning(
-                    "%sUnable to open CAN port: %s", self.warn_prefix, e
-                )
+                logging.warning("%sUnable to open CAN port: %s", self.warn_prefix, e)
                 self.reactor.pause(self.reactor.monotonic() + 5.0)
                 continue
             bus.close = bus.shutdown  # XXX
@@ -245,12 +233,8 @@ class SerialReader:
                 if got_uuid == bytearray(uuid):
                     break
             except:
-                logging.exception(
-                    "%sError in canbus_uuid check", self.warn_prefix
-                )
-            logging.info(
-                "%sFailed to match canbus_uuid - retrying..", self.warn_prefix
-            )
+                logging.exception("%sError in canbus_uuid check", self.warn_prefix)
+            logging.info("%sFailed to match canbus_uuid - retrying..", self.warn_prefix)
             self.disconnect()
 
     def connect_pipe(self, filename):
@@ -262,9 +246,7 @@ class SerialReader:
             try:
                 fd = os.open(filename, os.O_RDWR | os.O_NOCTTY)
             except OSError as e:
-                logging.warning(
-                    "%sUnable to open port: %s", self.warn_prefix, e
-                )
+                logging.warning("%sUnable to open port: %s", self.warn_prefix, e)
                 self.reactor.pause(self.reactor.monotonic() + 5.0)
                 continue
             serial_dev = os.fdopen(fd, "rb+", 0)
@@ -277,23 +259,17 @@ class SerialReader:
         logging.info("%sStarting serial connect", self.warn_prefix)
         start_time = self.reactor.monotonic()
         while 1:
-            if (
-                self.serialqueue is not None
-            ):  # if we're already connected, don't recon
+            if self.serialqueue is not None:  # if we're already connected, don't recon
                 break
             if self.reactor.monotonic() > start_time + 90.0:
                 self._error("Unable to connect")
             try:
-                serial_dev = serial.Serial(
-                    baudrate=baud, timeout=0, exclusive=True
-                )
+                serial_dev = serial.Serial(baudrate=baud, timeout=0, exclusive=True)
                 serial_dev.port = serialport
                 serial_dev.rts = rts
                 serial_dev.open()
             except (OSError, IOError, serial.SerialException) as e:
-                logging.warning(
-                    "%sUnable to open serial port: %s", self.warn_prefix, e
-                )
+                logging.warning("%sUnable to open serial port: %s", self.warn_prefix, e)
                 self.reactor.pause(self.reactor.monotonic() + 5.0)
                 continue
             stk500v2_leave(serial_dev, self.reactor)
@@ -423,9 +399,7 @@ class SerialReader:
     # Dumping debug lists
     def dump_debug(self):
         out = []
-        out.append(
-            "Dumping serial stats: %s" % (self.stats(self.reactor.monotonic()),)
-        )
+        out.append("Dumping serial stats: %s" % (self.stats(self.reactor.monotonic()),))
         sdata = self.ffi_main.new("struct pull_queue_message[1024]")
         rdata = self.ffi_main.new("struct pull_queue_message[1024]")
         scount = self.ffi_lib.serialqueue_extract_old(
@@ -470,9 +444,7 @@ class SerialReader:
         )
 
     def handle_output(self, params):
-        logging.info(
-            "%s%s: %s", self.warn_prefix, params["#name"], params["#msg"]
-        )
+        logging.info("%s%s: %s", self.warn_prefix, params["#name"], params["#msg"])
 
     def handle_default(self, params):
         if get_danger_options().log_serial_reader_warnings:
@@ -497,9 +469,7 @@ class SerialRetryCommand:
         while True:
             for cmd in cmds[:-1]:
                 self.serial.raw_send(cmd, minclock, reqclock, cmd_queue)
-            self.serial.raw_send_wait_ack(
-                cmds[-1], minclock, reqclock, cmd_queue
-            )
+            self.serial.raw_send_wait_ack(cmds[-1], minclock, reqclock, cmd_queue)
             params = self.last_params
             if params is not None:
                 self.serial.register_response(None, self.name, self.oid)

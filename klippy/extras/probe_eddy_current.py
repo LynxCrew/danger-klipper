@@ -18,10 +18,7 @@ class EddyCalibration:
         self.cal_zpos = []
         cal = config.get("calibrate", None)
         if cal is not None:
-            cal = [
-                list(map(float, d.strip().split(":", 1)))
-                for d in cal.split(",")
-            ]
+            cal = [list(map(float, d.strip().split(":", 1))) for d in cal.split(",")]
             self.load_calibration(cal)
         # Probe calibrate state
         self.probe_speed = 0.0
@@ -68,9 +65,7 @@ class EddyCalibration:
         rev_freqs = list(reversed(self.cal_freqs))
         pos = bisect.bisect(rev_zpos, height)
         if pos == 0 or pos >= len(rev_zpos):
-            raise self.printer.command_error(
-                "Invalid probe_eddy_current height"
-            )
+            raise self.printer.command_error("Invalid probe_eddy_current height")
         this_freq = rev_freqs[pos]
         prev_freq = rev_freqs[pos - 1]
         this_zpos = rev_zpos[pos]
@@ -116,8 +111,7 @@ class EddyCalibration:
             # Find Z position based on actual commanded stepper position
             toolhead.flush_step_generation()
             kin_spos = {
-                s.get_name(): s.get_commanded_position()
-                for s in kin.get_steppers()
+                s.get_name(): s.get_commanded_position() for s in kin.get_steppers()
             }
             kin_pos = kin.calc_position(kin_spos)
             times.append((start_query_time, end_query_time, kin_pos[2]))
@@ -204,9 +198,7 @@ class EddyCalibration:
     def cmd_EDDY_CALIBRATE(self, gcmd):
         self.probe_speed = gcmd.get_float("PROBE_SPEED", 5.0, above=0.0)
         # Start manual probe
-        manual_probe.ManualProbeHelper(
-            self.printer, gcmd, self.post_manual_probe
-        )
+        manual_probe.ManualProbeHelper(self.printer, gcmd, self.post_manual_probe)
 
 
 # Helper for implementing PROBE style commands
@@ -287,9 +279,7 @@ class EddyEndstopWrapper:
         self._stop_measurements(is_home=True)
         res = self._dispatch.stop()
         if res >= mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
-            raise self._printer.command_error(
-                "Communication timeout during homing"
-            )
+            raise self._printer.command_error("Communication timeout during homing")
         if res != mcu.MCU_trsync.REASON_ENDSTOP_HIT:
             return 0.0
         if self._mcu.is_fileoutput():
@@ -317,9 +307,7 @@ class EddyEndstopWrapper:
             systime = reactor.monotonic()
             est_print_time = self._mcu.estimated_print_time(systime)
             if est_print_time > self._trigger_time + 1.0:
-                raise self._printer.command_error(
-                    "probe_eddy_current sensor outage"
-                )
+                raise self._printer.command_error("probe_eddy_current sensor outage")
             reactor.pause(systime + 0.010)
         # Find position since trigger
         samples = self._samples
@@ -349,9 +337,7 @@ class EddyEndstopWrapper:
 
     def multi_probe_begin(self):
         if not self._calibration.is_calibrated():
-            raise self._printer.command_error(
-                "Must calibrate probe_eddy_current first"
-            )
+            raise self._printer.command_error("Must calibrate probe_eddy_current first")
         self._start_measurements()
 
     def multi_probe_end(self):
@@ -377,9 +363,7 @@ class PrinterEddyProbe:
         sensor_type = config.getchoice("sensor_type", {s: s for s in sensors})
         self.sensor_helper = sensors[sensor_type](config, self.calibration)
         # Probe interface
-        self.probe = EddyEndstopWrapper(
-            config, self.sensor_helper, self.calibration
-        )
+        self.probe = EddyEndstopWrapper(config, self.sensor_helper, self.calibration)
         self.printer.add_object("probe", probe.PrinterProbe(config, self.probe))
 
     def add_client(self, cb):

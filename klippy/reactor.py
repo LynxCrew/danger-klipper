@@ -196,9 +196,7 @@ class SelectReactor:
 
     # Asynchronous (from another thread) callbacks and completions
     def register_async_callback(self, callback, waketime=NOW):
-        self._async_queue.put_nowait(
-            (ReactorCallback, (self, callback, waketime))
-        )
+        self._async_queue.put_nowait((ReactorCallback, (self, callback, waketime)))
         try:
             os.write(self._pipe_fds[1], b".")
         except os.error:

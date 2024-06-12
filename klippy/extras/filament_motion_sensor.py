@@ -15,9 +15,7 @@ class EncoderSensor:
         self.gcode = self.printer.lookup_object("gcode")
         switch_pin = config.get("switch_pin")
         self.extruder_name = config.get("extruder")
-        self.detection_length = config.getfloat(
-            "detection_length", 7.0, above=0.0
-        )
+        self.detection_length = config.getfloat("detection_length", 7.0, above=0.0)
         # Configure pins
         buttons = self.printer.load_object(config, "buttons")
         buttons.register_buttons([switch_pin], self.encoder_event)
@@ -76,15 +74,11 @@ class EncoderSensor:
 
     def _handle_printing(self, *args):
         if not self.runout_helper.smart:
-            self.reactor.update_timer(
-                self._extruder_pos_update_timer, self.reactor.NOW
-            )
+            self.reactor.update_timer(self._extruder_pos_update_timer, self.reactor.NOW)
 
     def _handle_printing_smart(self, *args):
         if self.runout_helper.smart:
-            self.reactor.update_timer(
-                self._extruder_pos_update_timer, self.reactor.NOW
-            )
+            self.reactor.update_timer(self._extruder_pos_update_timer, self.reactor.NOW)
 
     def _handle_not_printing(self, *args):
         if not self.runout_helper.smart:
@@ -128,11 +122,7 @@ class EncoderSensor:
             "Always Fire Events: %s"
             % (
                 self.runout_helper.name,
-                (
-                    "enabled"
-                    if self.runout_helper.sensor_enabled > 0
-                    else "disabled"
-                ),
+                ("enabled" if self.runout_helper.sensor_enabled > 0 else "disabled"),
                 "true" if self.runout_helper.filament_present else "false",
                 self.detection_length,
                 "true" if self.runout_helper.smart else "false",

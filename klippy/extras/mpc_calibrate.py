@@ -53,17 +53,14 @@ class MpcCalibrate:
         threshold_temp = gcmd.get_float(
             "THRESHOLD", max(50.0, min(100, target_temp - 100.0))
         )
-        ambient_sensor_name = gcmd.get(
-            "AMBIENT_TEMP_SENSOR", self.ambient_sensor_name
-        )
+        ambient_sensor_name = gcmd.get("AMBIENT_TEMP_SENSOR", self.ambient_sensor_name)
         ambient_sensor = None
         if ambient_sensor_name is not None:
             try:
                 ambient_sensor = self.printer.lookup_object(ambient_sensor_name)
             except Exception:
                 raise self.config.error(
-                    f"Unknown ambient_temp_sensor '{ambient_sensor_name}' "
-                    f"specified"
+                    f"Unknown ambient_temp_sensor '{ambient_sensor_name}' " f"specified"
                 )
 
         control = TuningControl(self.heater)
@@ -145,9 +142,7 @@ class MpcCalibrate:
                 f"  ambient_transfer={ambient_transfer:#.6g} [W/K]\n"
                 f"  fan_ambient_transfer={fan_ambient_transfer} [W/K]\n"
             )
-            self.heater.pmgr.save_profile(
-                profile_name=profile_name, verbose=False
-            )
+            self.heater.pmgr.save_profile(profile_name=profile_name, verbose=False)
 
         except self.printer.command_error as e:
             raise gcmd.error("%s failed: %s" % (gcmd.get_command(), e))
@@ -189,8 +184,7 @@ class MpcCalibrate:
                 ret = temp > target
                 if ret and not reported[0]:
                     gcmd.respond_info(
-                        f"Waiting for heater to drop below {target} "
-                        f"degrees celcius"
+                        f"Waiting for heater to drop below {target} " f"degrees celcius"
                     )
                     reported[0] = True
                 return ret
@@ -236,8 +230,7 @@ class MpcCalibrate:
         target_temp = round(first_pass_results["post_block_temp"])
         self.heater.set_temp(target_temp)
         gcmd.respond_info(
-            "Performing ambient transfer tests, target is %.1f degrees"
-            % (target_temp,)
+            "Performing ambient transfer tests, target is %.1f degrees" % (target_temp,)
         )
 
         self.wait_settle(0.2)
@@ -282,9 +275,7 @@ class MpcCalibrate:
         last_time = [None]
 
         def process(eventtime):
-            dt = eventtime - (
-                last_time[0] if last_time[0] is not None else eventtime
-            )
+            dt = eventtime - (last_time[0] if last_time[0] is not None else eventtime)
             last_time[0] = eventtime
             status = self.heater.get_status(eventtime)
             samples.append((dt, status["control_stats"]["power"] * dt))
@@ -360,17 +351,11 @@ class MpcCalibrate:
             )
 
         # Differential method
-        if (
-            not use_analytic
-            or block_heat_capacity < 0
-            or sensor_responsiveness < 0
-        ):
+        if not use_analytic or block_heat_capacity < 0 or sensor_responsiveness < 0:
             fastest_rate = self.fastest_rate(samples)
             block_heat_capacity = heater_power / fastest_rate[2]
             sensor_responsiveness = fastest_rate[2] / (
-                fastest_rate[2] * fastest_rate[0]
-                + ambient_temp
-                - fastest_rate[0]
+                fastest_rate[2] * fastest_rate[0] + ambient_temp - fastest_rate[0]
             )
 
         heat_time = all_samples[-1][0] - all_samples[0][0]
@@ -394,9 +379,7 @@ class MpcCalibrate:
             "dt": dt,
         }
 
-    def process_second_pass(
-        self, first_res, transfer_res, ambient_temp, heater_power
-    ):
+    def process_second_pass(self, first_res, transfer_res, ambient_temp, heater_power):
         target_ambient_temp = transfer_res["target_temp"] - ambient_temp
         ambient_transfer = transfer_res["base_power"] / target_ambient_temp
         asymp_T = ambient_temp + heater_power / ambient_transfer

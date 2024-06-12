@@ -14,9 +14,7 @@ class ExcludeObject:
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object("gcode")
         self.gcode_move = self.printer.load_object(config, "gcode_move")
-        self.printer.register_event_handler(
-            "klippy:connect", self._handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.printer.register_event_handler(
             "virtual_sdcard:reset_file", self._reset_file
         )
@@ -56,9 +54,7 @@ class ExcludeObject:
                 )
                 return
 
-            self.next_transform = self.gcode_move.set_move_transform(
-                self, force=True
-            )
+            self.next_transform = self.gcode_move.set_move_transform(self, force=True)
             self.extrusion_offsets = {}
             self.max_position_extruded = 0
             self.max_position_excluded = 0
@@ -99,14 +95,10 @@ class ExcludeObject:
         self._unregister_transform()
 
     def _get_extrusion_offsets(self):
-        offset = self.extrusion_offsets.get(
-            self.toolhead.get_extruder().get_name()
-        )
+        offset = self.extrusion_offsets.get(self.toolhead.get_extruder().get_name())
         if offset is None:
             offset = [0.0, 0.0, 0.0, 0.0]
-            self.extrusion_offsets[self.toolhead.get_extruder().get_name()] = (
-                offset
-            )
+            self.extrusion_offsets[self.toolhead.get_extruder().get_name()] = offset
         return offset
 
     def get_position(self):
@@ -119,10 +111,7 @@ class ExcludeObject:
     def _normal_move(self, newpos, speed):
         offset = self._get_extrusion_offsets()
 
-        if (
-            self.initial_extrusion_moves > 0
-            and self.last_position[3] != newpos[3]
-        ):
+        if self.initial_extrusion_moves > 0 and self.last_position[3] != newpos[3]:
             # Since the transform is not loaded until there is a request to
             # exclude an object, the transform needs to track a few extrusions
             # to get the state of the extruder
@@ -152,10 +141,7 @@ class ExcludeObject:
         if offset[2] != 0 and newpos[2] != self.last_position_excluded[2]:
             offset[2] = 0
 
-        if (
-            self.extruder_adj != 0
-            and newpos[3] != self.last_position_excluded[3]
-        ):
+        if self.extruder_adj != 0 and newpos[3] != self.last_position_excluded[3]:
             offset[3] += self.extruder_adj
             self.extruder_adj = 0
 
@@ -235,8 +221,7 @@ class ExcludeObject:
     def cmd_EXCLUDE_OBJECT_END(self, gcmd):
         if self.current_object is None and self.next_transform:
             gcmd.respond_info(
-                "EXCLUDE_OBJECT_END called, but no object is"
-                " currently active"
+                "EXCLUDE_OBJECT_END called, but no object is" " currently active"
             )
             return
         name = gcmd.get("NAME", default=None)
@@ -306,9 +291,7 @@ class ExcludeObject:
             self._list_objects(gcmd)
 
     def _add_object_definition(self, definition):
-        self.objects = sorted(
-            self.objects + [definition], key=lambda o: o["name"]
-        )
+        self.objects = sorted(self.objects + [definition], key=lambda o: o["name"])
 
     def _exclude_object(self, name):
         self._register_transform()

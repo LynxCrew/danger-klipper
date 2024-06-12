@@ -40,9 +40,7 @@ class CartKinematics:
             self.dual_carriage_axis = {"x": 0, "y": 1}[dc_axis]
             # setup second dual carriage rail
             self.rails.append(stepper.LookupMultiRail(dc_config))
-            self.rails[3].setup_itersolve(
-                "cartesian_stepper_alloc", dc_axis.encode()
-            )
+            self.rails[3].setup_itersolve("cartesian_stepper_alloc", dc_axis.encode())
             dc_rail_0 = idex_modes.DualCarriagesRail(
                 self.rails[self.dual_carriage_axis],
                 axis=self.dual_carriage_axis,
@@ -57,9 +55,7 @@ class CartKinematics:
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        self.printer.register_event_handler(
-            "stepper_enable:motor_off", self._motor_off
-        )
+        self.printer.register_event_handler("stepper_enable:motor_off", self._motor_off)
 
         self.printer.register_event_handler(
             "stepper_enable:disable_x", self._set_unhomed_x
@@ -156,9 +152,7 @@ class CartKinematics:
             forcepos[axis] += 1.5 * (position_max - hi.position_endstop)
         # Perform homing
         axis_name = (
-            "x"
-            if axis == 0
-            else "y" if axis == 1 else "z" if axis == 2 else None
+            "x" if axis == 0 else "y" if axis == 1 else "z" if axis == 2 else None
         )
         if axis_name is not None:
             self.printer.send_event("homing:homing_move_begin_%s" % axis_name)
@@ -223,9 +217,7 @@ class CartKinematics:
         # Move with Z - update velocity and accel for slower Z axis
         self._check_endstops(move)
         z_ratio = move.move_d / abs(move.axes_d[2])
-        move.limit_speed(
-            self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio
-        )
+        move.limit_speed(self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
 
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]

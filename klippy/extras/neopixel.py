@@ -46,9 +46,7 @@ class PrinterNeoPixel:
             raise config.error("neopixel chain too long")
         # Initialize color data
         pled = printer.load_object(config, "led")
-        self.led_helper = pled.setup_helper(
-            config, self.update_leds, chain_count
-        )
+        self.led_helper = pled.setup_helper(config, self.update_leds, chain_count)
         self.color_data = bytearray(len(self.color_map))
         self.update_color_data(self.led_helper.get_status()["color_data"])
         self.old_color_data = bytearray([d ^ 1 for d in self.color_data])
@@ -97,9 +95,7 @@ class PrinterNeoPixel:
         if new_data == old_data:
             return
         # Find the position of all changed bytes in this framebuffer
-        diffs = [
-            [i, 1] for i, (n, o) in enumerate(zip(new_data, old_data)) if n != o
-        ]
+        diffs = [[i, 1] for i, (n, o) in enumerate(zip(new_data, old_data)) if n != o]
         # Batch together changes that are close to each other
         for i in range(len(diffs) - 2, -1, -1):
             pos, count = diffs[i]

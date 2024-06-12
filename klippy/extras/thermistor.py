@@ -36,9 +36,7 @@ class Thermistor:
         )
         if self.c3 <= 0.0:
             beta = ln_r13 / inv_t13
-            logging.warning(
-                "Using thermistor beta %.3f in heater %s", beta, name
-            )
+            logging.warning("Using thermistor beta %.3f in heater %s", beta, name)
             self.setup_coefficients_beta(t1, r1, beta)
             return
         self.c2 = (inv_t12 - self.c3 * ln3_r12) / ln_r12
@@ -82,9 +80,7 @@ def PrinterThermistor(config, params):
     inline_resistor = config.getfloat("inline_resistor", 0.0, minval=0.0)
     thermistor = Thermistor(pullup, inline_resistor)
     if "beta" in params:
-        thermistor.setup_coefficients_beta(
-            params["t1"], params["r1"], params["beta"]
-        )
+        thermistor.setup_coefficients_beta(params["t1"], params["r1"], params["beta"])
     else:
         thermistor.setup_coefficients(
             params["t1"],

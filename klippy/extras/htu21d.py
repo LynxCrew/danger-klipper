@@ -111,14 +111,10 @@ class HTU21D:
             )
         self.deviceId = config.get("sensor_type")
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.0
-        self.temperature_sample_thread = threading.Thread(
-            target=self._run_sample_timer
-        )
+        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("htu21d " + self.name, self)
-        self.printer.register_event_handler(
-            "klippy:connect", self.handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self.handle_connect)
 
     def _run_sample_timer(self):
         wait_time = self._sample_htu21d()
@@ -200,9 +196,7 @@ class HTU21D:
             rtemp = response[0] << 8
             rtemp |= response[1]
             if self._chekCRC8(rtemp) != response[2]:
-                logging.warning(
-                    "htu21d: Checksum error on Temperature reading!"
-                )
+                logging.warning("htu21d: Checksum error on Temperature reading!")
             else:
                 self.temp = 0.002681 * float(rtemp) - 46.85
                 logging.debug("htu21d: Temperature %.2f " % self.temp)
@@ -253,9 +247,7 @@ class HTU21D:
             self.temp = self.humidity = 0.0
             return 0
 
-        if (
-            self.temp < self.min_temp or self.temp > self.max_temp
-        ) and not self.ignore:
+        if (self.temp < self.min_temp or self.temp > self.max_temp) and not self.ignore:
             self.printer.invoke_shutdown(
                 "HTU21D temperature %0.1f outside range of %0.1f:%.01f"
                 % (self.temp, self.min_temp, self.max_temp)

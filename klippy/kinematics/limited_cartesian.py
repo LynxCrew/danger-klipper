@@ -74,9 +74,7 @@ class LimitedCartKinematics(cartesian.CartKinematics):
             for ax in "xyz"
         ]
         self.max_accels = [
-            config.getfloat(
-                f"max_{ax}_accel", max_accel, above=0.0, maxval=max_accel
-            )
+            config.getfloat(f"max_{ax}_accel", max_accel, above=0.0, maxval=max_accel)
             for ax in "xyz"
         ]
         self.xy_hypot_accel = hypot(*self.max_accels[:2])
@@ -111,9 +109,7 @@ class LimitedCartKinematics(cartesian.CartKinematics):
             f"x,y,z max_accels: {self.max_accels!r}",
         ]
         if self.scale_per_axis:
-            msg.append(
-                "Per axis accelerations limits scale with current acceleration."
-            )
+            msg.append("Per axis accelerations limits scale with current acceleration.")
         else:
             msg.append(
                 "Per axis accelerations limits are independent of current acceleration."

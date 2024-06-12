@@ -12,22 +12,16 @@ class PrinterLEDGroup:
         self.config_chains = self.config_leds.split("\n")
         self.leds = []
         self.led_helpers = []
-        self.printer.register_event_handler(
-            "klippy:connect", self._handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
     def _handle_connect(self):
         for chain in self.config_chains:
             chain = chain.strip()
             parms = [
-                parameter.strip()
-                for parameter in chain.split()
-                if parameter.strip()
+                parameter.strip() for parameter in chain.split() if parameter.strip()
             ]
             if parms:
-                led_helper = self.printer_led.lookup_led_helper(
-                    parms[0], self.config
-                )
+                led_helper = self.printer_led.lookup_led_helper(parms[0], self.config)
                 led_count = led_helper.get_led_count()
                 led_indices = "".join(parms[1:]).strip("()").split(",")
                 for led in led_indices:
@@ -52,9 +46,7 @@ class PrinterLEDGroup:
                             elif stop > start:
                                 led_list = list(range(start - 1, stop))
                             else:
-                                led_list = list(
-                                    reversed(range(stop - 1, start))
-                                )
+                                led_list = list(reversed(range(stop - 1, start)))
                             for i in led_list:
                                 self.leds.append((led_helper, int(i)))
                         else:

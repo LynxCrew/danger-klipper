@@ -152,8 +152,7 @@ class GCodeMacro:
     def __init__(self, config):
         if len(config.get_name().split()) > 2:
             raise config.error(
-                "Name of section '%s' contains illegal whitespace"
-                % (config.get_name())
+                "Name of section '%s' contains illegal whitespace" % (config.get_name())
             )
         name = config.get_name().split()[1]
         self.alias = name.upper()
@@ -171,13 +170,9 @@ class GCodeMacro:
                     "G-Code macro rename of different types ('%s' vs '%s')"
                     % (self.alias, self.rename_existing)
                 )
-            printer.register_event_handler(
-                "klippy:connect", self.handle_connect
-            )
+            printer.register_event_handler("klippy:connect", self.handle_connect)
         else:
-            self.gcode.register_command(
-                self.alias, self.cmd, desc=self.cmd_desc
-            )
+            self.gcode.register_command(self.alias, self.cmd, desc=self.cmd_desc)
         self.gcode.register_mux_command(
             "SET_GCODE_VARIABLE",
             "MACRO",
@@ -210,8 +205,7 @@ class GCodeMacro:
         prev_cmd = self.gcode.register_command(self.alias, None)
         if prev_cmd is None:
             raise self.printer.config_error(
-                "Existing command '%s' not found in gcode_macro rename"
-                % (self.alias,)
+                "Existing command '%s' not found in gcode_macro rename" % (self.alias,)
             )
         pdesc = "Renamed builtin of '%s'" % (self.alias,)
         self.gcode.register_command(self.rename_existing, prev_cmd, desc=pdesc)
@@ -231,9 +225,7 @@ class GCodeMacro:
             literal = ast.literal_eval(value)
             json.dumps(literal, separators=(",", ":"))
         except (SyntaxError, TypeError, ValueError) as e:
-            raise gcmd.error(
-                "Unable to parse '%s' as a literal: %s" % (value, e)
-            )
+            raise gcmd.error("Unable to parse '%s' as a literal: %s" % (value, e))
         v = dict(self.variables)
         v[variable] = literal
         self.variables = v

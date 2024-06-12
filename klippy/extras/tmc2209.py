@@ -48,9 +48,7 @@ FieldFormatters = dict(tmc2208.FieldFormatters)
 class TMC2209:
     def __init__(self, config):
         # Setup mcu communication
-        self.fields = tmc.FieldHelper(
-            Fields, tmc2208.SignedFields, FieldFormatters
-        )
+        self.fields = tmc.FieldHelper(Fields, tmc2208.SignedFields, FieldFormatters)
         self.mcu_tmc = tmc_uart.MCU_TMC_uart(
             config, Registers, self.fields, 3, TMC_FREQUENCY
         )

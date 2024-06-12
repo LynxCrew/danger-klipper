@@ -19,9 +19,7 @@ class HybridCoreXYKinematics:
             stepper.LookupMultiRail(config.getsection("stepper_y")),
             stepper.LookupMultiRail(config.getsection("stepper_z")),
         ]
-        self.rails[1].get_endstops()[0][0].add_stepper(
-            self.rails[0].get_steppers()[0]
-        )
+        self.rails[1].get_endstops()[0][0].add_stepper(self.rails[0].get_steppers()[0])
         self.rails[0].setup_itersolve("corexy_stepper_alloc", b"-")
         self.rails[1].setup_itersolve("cartesian_stepper_alloc", b"y")
         self.rails[2].setup_itersolve("cartesian_stepper_alloc", b"z")
@@ -40,9 +38,7 @@ class HybridCoreXYKinematics:
                 self.rails[3].get_steppers()[0]
             )
             self.rails[3].setup_itersolve("corexy_stepper_alloc", b"+")
-            dc_rail_0 = idex_modes.DualCarriagesRail(
-                self.rails[0], axis=0, active=True
-            )
+            dc_rail_0 = idex_modes.DualCarriagesRail(self.rails[0], axis=0, active=True)
             dc_rail_1 = idex_modes.DualCarriagesRail(
                 self.rails[3], axis=0, active=False
             )
@@ -52,9 +48,7 @@ class HybridCoreXYKinematics:
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        self.printer.register_event_handler(
-            "stepper_enable:motor_off", self._motor_off
-        )
+        self.printer.register_event_handler("stepper_enable:motor_off", self._motor_off)
 
         self.printer.register_event_handler(
             "stepper_enable:disable_x", self._disable_xy
@@ -153,9 +147,7 @@ class HybridCoreXYKinematics:
             forcepos[axis] += 1.5 * (position_max - hi.position_endstop)
         # Perform homing
         axis_name = (
-            "x"
-            if axis == 0
-            else "y" if axis == 1 else "z" if axis == 2 else None
+            "x" if axis == 0 else "y" if axis == 1 else "z" if axis == 2 else None
         )
         if axis_name is not None:
             self.printer.send_event("homing:homing_move_begin_%s" % axis_name)
@@ -223,9 +215,7 @@ class HybridCoreXYKinematics:
         # Move with Z - update velocity and accel for slower Z axis
         self._check_endstops(move)
         z_ratio = move.move_d / abs(move.axes_d[2])
-        move.limit_speed(
-            self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio
-        )
+        move.limit_speed(self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
 
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]

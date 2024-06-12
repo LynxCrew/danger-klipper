@@ -51,9 +51,7 @@ class CoreXYKinematics:
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        self.printer.register_event_handler(
-            "stepper_enable:motor_off", self._motor_off
-        )
+        self.printer.register_event_handler("stepper_enable:motor_off", self._motor_off)
 
         if self.improved_axes_def:
             self.printer.register_event_handler(
@@ -109,6 +107,13 @@ class CoreXYKinematics:
     def get_rails(self):
         return self.rails
 
+    def get_connected_rails(self, axis):
+        if axis == 0 or axis == 1:
+            return [self.rails[0], self.rails[1]]
+        elif axis == 2:
+            return [self.rails[2]]
+        raise IndexError("Rail does not exist")
+
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
 
@@ -143,16 +148,12 @@ class CoreXYKinematics:
             # Perform homing
             axis_name = AXIS_NAMES[axis] if axis in AXIS_NAMES else None
             if axis_name is not None:
-                self.printer.send_event(
-                    "homing:homing_move_begin_%s" % axis_name
-                )
+                self.printer.send_event("homing:homing_move_begin_%s" % axis_name)
             try:
                 homing_state.home_rails([rail], forcepos, homepos)
             finally:
                 if axis_name is not None:
-                    self.printer.send_event(
-                        "homing:homing_move_end_%s" % axis_name
-                    )
+                    self.printer.send_event("homing:homing_move_end_%s" % axis_name)
 
     def _motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
@@ -205,9 +206,7 @@ class CoreXYKinematics:
         # Move with Z - update velocity and accel for slower Z axis
         self._check_endstops(move)
         z_ratio = move.move_d / abs(move.axes_d[2])
-        move.limit_speed(
-            self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio
-        )
+        move.limit_speed(self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
 
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]

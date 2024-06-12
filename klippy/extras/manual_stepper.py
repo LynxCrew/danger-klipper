@@ -21,9 +21,7 @@ class ManualStepper:
             self.rail = stepper.PrinterStepper(config)
             self.steppers = [self.rail]
         self.velocity = config.getfloat("velocity", 5.0, above=0.0)
-        self.accel = self.homing_accel = config.getfloat(
-            "accel", 0.0, minval=0.0
-        )
+        self.accel = self.homing_accel = config.getfloat("accel", 0.0, minval=0.0)
         self.next_cmd_time = 0.0
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -104,16 +102,12 @@ class ManualStepper:
 
     def do_homing_move(self, movepos, speed, accel, triggered, check_trigger):
         if not self.can_home:
-            raise self.printer.command_error(
-                "No endstop for this manual stepper"
-            )
+            raise self.printer.command_error("No endstop for this manual stepper")
         self.homing_accel = accel
         pos = [movepos, 0.0, 0.0, 0.0]
         endstops = self.rail.get_endstops()
         phoming = self.printer.lookup_object("homing")
-        phoming.manual_home(
-            self, endstops, pos, speed, triggered, check_trigger
-        )
+        phoming.manual_home(self, endstops, pos, speed, triggered, check_trigger)
 
     cmd_MANUAL_STEPPER_help = "Command a manually configured stepper"
 

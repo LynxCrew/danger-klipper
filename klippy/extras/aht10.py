@@ -40,14 +40,10 @@ class AHT10:
         )
         self.report_time = config.getint("aht10_report_time", 30, minval=5)
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.0
-        self.temperature_sample_thread = threading.Thread(
-            target=self._run_sample_timer
-        )
+        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("aht10 " + self.name, self)
-        self.printer.register_event_handler(
-            "klippy:connect", self.handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self.handle_connect)
         self.is_calibrated = False
         self.init_sent = False
 
@@ -102,9 +98,7 @@ class AHT10:
                 # Read data
                 read = self.i2c.i2c_read([], 6)
                 if read is None:
-                    logging.warning(
-                        "aht10: received data from" + " i2c_read is None"
-                    )
+                    logging.warning("aht10: received data from" + " i2c_read is None")
                     continue
                 data = bytearray(read["response"])
                 if len(data) < 6:
@@ -165,9 +159,7 @@ class AHT10:
             self.temp = self.humidity = 0.0
             return 0
 
-        if (
-            self.temp < self.min_temp or self.temp > self.max_temp
-        ) and not self.ignore:
+        if (self.temp < self.min_temp or self.temp > self.max_temp) and not self.ignore:
             self.printer.invoke_shutdown(
                 "AHT10 temperature %0.1f outside range of %0.1f:%.01f"
                 % (self.temp, self.min_temp, self.max_temp)

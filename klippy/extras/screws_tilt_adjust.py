@@ -26,9 +26,7 @@ class ScrewsTiltAdjust:
             screw_name = config.get(prefix + "_name", screw_name)
             self.screws.append((screw_coord, screw_name))
         if len(self.screws) < 3:
-            raise config.error(
-                "screws_tilt_adjust: Must have " "at least three screws"
-            )
+            raise config.error("screws_tilt_adjust: Must have " "at least three screws")
         self.threads = {
             "CW-M3": 0,
             "CCW-M3": 1,
@@ -41,9 +39,7 @@ class ScrewsTiltAdjust:
             "CW-M8": 8,
             "CCW-M8": 9,
         }
-        self.thread = config.getchoice(
-            "screw_thread", self.threads, default="CW-M3"
-        )
+        self.thread = config.getchoice("screw_thread", self.threads, default="CW-M3")
         # Initialize ProbePointsHelper
         points = [coord for coord, name in self.screws]
         self.probe_helper = probe.ProbePointsHelper(

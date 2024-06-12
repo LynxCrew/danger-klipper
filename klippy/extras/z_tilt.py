@@ -19,17 +19,14 @@ class ZAdjustHelper:
         self.name = config.get_name()
         self.z_count = z_count
         self.z_steppers = []
-        self.printer.register_event_handler(
-            "klippy:connect", self.handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self.handle_connect)
 
     def handle_connect(self):
         kin = self.printer.lookup_object("toolhead").get_kinematics()
         z_steppers = [s for s in kin.get_steppers() if s.is_active_axis("z")]
         if len(z_steppers) != self.z_count:
             raise self.printer.config_error(
-                "%s z_positions needs exactly %d items"
-                % (self.name, len(z_steppers))
+                "%s z_positions needs exactly %d items" % (self.name, len(z_steppers))
             )
         if len(z_steppers) < 2:
             raise self.printer.config_error(
@@ -83,15 +80,9 @@ class ZAdjustHelper:
 class ZAdjustStatus:
     def __init__(self, printer):
         self.applied = False
-        printer.register_event_handler(
-            "stepper_enable:motor_off", self._motor_off
-        )
-        printer.register_event_handler(
-            "stepper_enable:disable_z", self._motor_off
-        )
-        printer.register_event_handler(
-            "unhome:mark_as_unhomed_z", self._motor_off
-        )
+        printer.register_event_handler("stepper_enable:motor_off", self._motor_off)
+        printer.register_event_handler("stepper_enable:disable_z", self._motor_off)
+        printer.register_event_handler("unhome:mark_as_unhomed_z", self._motor_off)
 
     def check_retry_result(self, retry_result):
         if retry_result == "done":
@@ -236,10 +227,7 @@ class ZTilt:
         def adjusted_height(pos, params):
             x, y, z = pos
             return (
-                z
-                - x * params["x_adjust"]
-                - y * params["y_adjust"]
-                - params["z_adjust"]
+                z - x * params["x_adjust"] - y * params["y_adjust"] - params["z_adjust"]
             )
 
         def errorfunc(params):
@@ -248,9 +236,7 @@ class ZTilt:
                 total_error += adjusted_height(pos, params) ** 2
             return total_error
 
-        new_params = mathutil.coordinate_descent(
-            params.keys(), params, errorfunc
-        )
+        new_params = mathutil.coordinate_descent(params.keys(), params, errorfunc)
         # Apply results
         speed = self.probe_helper.get_lift_speed()
         logging.info("Calculated bed tilt parameters: %s", new_params)

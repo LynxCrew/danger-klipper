@@ -33,28 +33,18 @@ class DeltesianKinematics:
         self.rails[2] = stepper.LookupMultiRail(stepper_configs[2])
         arm_x = self.arm_x = [None] * 2
         arm_x[0] = stepper_configs[0].getfloat("arm_x_length", above=0.0)
-        arm_x[1] = stepper_configs[1].getfloat(
-            "arm_x_length", arm_x[0], above=0.0
-        )
+        arm_x[1] = stepper_configs[1].getfloat("arm_x_length", arm_x[0], above=0.0)
         arm = [None] * 2
         arm[0] = stepper_configs[0].getfloat("arm_length", above=arm_x[0])
-        arm[1] = stepper_configs[1].getfloat(
-            "arm_length", arm[0], above=arm_x[1]
-        )
+        arm[1] = stepper_configs[1].getfloat("arm_length", arm[0], above=arm_x[1])
         arm2 = self.arm2 = [a**2 for a in arm]
-        self.rails[0].setup_itersolve(
-            "deltesian_stepper_alloc", arm2[0], -arm_x[0]
-        )
-        self.rails[1].setup_itersolve(
-            "deltesian_stepper_alloc", arm2[1], arm_x[1]
-        )
+        self.rails[0].setup_itersolve("deltesian_stepper_alloc", arm2[0], -arm_x[0])
+        self.rails[1].setup_itersolve("deltesian_stepper_alloc", arm2[1], arm_x[1])
         self.rails[2].setup_itersolve("cartesian_stepper_alloc", b"y")
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        self.printer.register_event_handler(
-            "stepper_enable:motor_off", self._motor_off
-        )
+        self.printer.register_event_handler("stepper_enable:motor_off", self._motor_off)
 
         self.printer.register_event_handler(
             "stepper_enable:disable_left", self._disable_towers
@@ -87,9 +77,7 @@ class DeltesianKinematics:
         )
         self.limits = [(1.0, -1.0)] * 3
         # X axis limits
-        min_angle = config.getfloat(
-            "min_angle", MIN_ANGLE, minval=0.0, maxval=90.0
-        )
+        min_angle = config.getfloat("min_angle", MIN_ANGLE, minval=0.0, maxval=90.0)
         cos_angle = math.cos(math.radians(min_angle))
         x_kin_min = math.ceil(-min(arm_x[0], cos_angle * arm[1] - arm_x[1]))
         x_kin_max = math.floor(min(arm_x[1], cos_angle * arm[0] - arm_x[0]))
@@ -137,8 +125,7 @@ class DeltesianKinematics:
             )
             logging.info(
                 "Deltesian kinematics: moves slowed past %.2fmm"
-                " and %.2fmm"
-                % (math.sqrt(self.slow_x2), math.sqrt(self.very_slow_x2))
+                " and %.2fmm" % (math.sqrt(self.slow_x2), math.sqrt(self.very_slow_x2))
             )
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
@@ -216,16 +203,12 @@ class DeltesianKinematics:
             dz2 = [(a2 - ax**2) for a2, ax in zip(self.arm2, self.arm_x)]
             forcepos[2] = -1.5 * math.sqrt(max(dz2))
             for axis_name in ("x", "z"):
-                self.printer.send_event(
-                    "homing:homing_move_begin_%s" % axis_name
-                )
+                self.printer.send_event("homing:homing_move_begin_%s" % axis_name)
             try:
                 homing_state.home_rails(self.rails[:2], forcepos, homepos)
             finally:
                 for axis_name in ("x", "z"):
-                    self.printer.send_event(
-                        "homing:homing_move_end_%s" % axis_name
-                    )
+                    self.printer.send_event("homing:homing_move_end_%s" % axis_name)
         if home_y:
             position_min, position_max = self.rails[2].get_range()
             hi = self.rails[2].get_homing_info()
@@ -285,20 +268,14 @@ class DeltesianKinematics:
                     raise move.move_error()
         if move.axes_d[2]:
             z_ratio = move.move_d / abs(move.axes_d[2])
-            move.limit_speed(
-                self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio
-            )
+            move.limit_speed(self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
         # Limit the speed/accel if is is at the extreme values of the x axis
         if move.axes_d[0] and self.slow_x2 and self.very_slow_x2:
             move_x2 = max(spos[0] ** 2, epos[0] ** 2)
             if move_x2 > self.very_slow_x2:
-                move.limit_speed(
-                    self.max_velocity * 0.25, self.max_accel * 0.25
-                )
+                move.limit_speed(self.max_velocity * 0.25, self.max_accel * 0.25)
             elif move_x2 > self.slow_x2:
-                move.limit_speed(
-                    self.max_velocity * 0.50, self.max_accel * 0.50
-                )
+                move.limit_speed(self.max_velocity * 0.50, self.max_accel * 0.50)
 
     def get_status(self, eventtime):
         axes = [a for a, b in zip("xyz", self.homed_axis) if b]

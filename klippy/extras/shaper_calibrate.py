@@ -54,9 +54,7 @@ class CalibrationData:
         for psd, other_psd in zip(self._psd_list, other._psd_list):
             # `other` data may be defined at different frequency bins,
             # interpolating to fix that.
-            other_normalized = np.interp(
-                self.freq_bins, other.freq_bins, other_psd
-            )
+            other_normalized = np.interp(self.freq_bins, other.freq_bins, other_psd)
             psd[:] = np.maximum(psd, other_normalized)
 
     def set_numpy(self, numpy):
@@ -66,9 +64,7 @@ class CalibrationData:
         freq_bins = self.freq_bins
         for psd in self._psd_list:
             # Avoid division by zero errors and remove low-frequency noise
-            psd *= self.numpy.tanh(0.5 / MIN_FREQ * freq_bins) / (
-                freq_bins + 0.1
-            )
+            psd *= self.numpy.tanh(0.5 / MIN_FREQ * freq_bins) / (freq_bins + 0.1)
 
     def get_psd(self, axis="all"):
         return self._psd_map[axis]
@@ -137,9 +133,7 @@ def estimate_shaper(np, shaper, test_damping_ratio, test_freqs):
         s_r = step_response(np, time - T[i], omega, test_damping_ratio)
         response += A[i] * s_r
     response *= inv_D
-    velocity = (response[:, 1:] - response[:, :-1]) / (omega * dt)[
-        :, np.newaxis
-    ]
+    velocity = (response[:, 1:] - response[:, :-1]) / (omega * dt)[:, np.newaxis]
     res = np.zeros(shape=test_freqs.shape)
     res[test_freqs > 0.0] = -velocity.min(axis=-1) / min_v
     res[test_freqs <= 0.0] = 1.0
@@ -207,9 +201,7 @@ def estimate_smoother(np, smoother, test_damping_ratio, test_freqs):
     s_r = step_response(np, time, omega, test_damping_ratio)
     w_dt = w[:, wm:wp] * (np.reciprocal(norms) * dt)[:, np.newaxis]
     response = np.einsum("ijk,ik->ij", get_windows(s_r, wp - wm), w_dt[:, ::-1])
-    velocity = (response[:, 1:] - response[:, :-1]) / (omega * dt)[
-        :, np.newaxis
-    ]
+    velocity = (response[:, 1:] - response[:, :-1]) / (omega * dt)[:, np.newaxis]
     res = np.zeros(shape=test_freqs.shape)
     res[test_freqs > 0.0] = -velocity.min(axis=-1) / min_v
     res[test_freqs <= 0.0] = 1.0
@@ -375,13 +367,9 @@ class ShaperCalibrate:
         for i in range(n):
             if T[i] >= ts:
                 # Calculate offset for one of the axes
-                offset_90_x += (
-                    A[i] * (scv + half_accel * (T[i] - ts)) * (T[i] - ts)
-                )
+                offset_90_x += A[i] * (scv + half_accel * (T[i] - ts)) * (T[i] - ts)
             else:
-                offset_90_y += (
-                    A[i] * (scv - half_accel * (T[i] - ts)) * (T[i] - ts)
-                )
+                offset_90_y += A[i] * (scv - half_accel * (T[i] - ts)) * (T[i] - ts)
             offset_180 += A[i] * half_accel * (T[i] - ts) ** 2
         offset_90 = inv_D * math.sqrt(offset_90_x**2 + offset_90_y**2)
         offset_180 *= inv_D
@@ -429,9 +417,7 @@ class ShaperCalibrate:
             shaper_freqs = (None, None, None)
         if isinstance(shaper_freqs, tuple):
             freq_end = shaper_freqs[1] or MAX_SHAPER_FREQ
-            freq_start = min(
-                shaper_freqs[0] or shaper_cfg.min_freq, freq_end - 1e-7
-            )
+            freq_start = min(shaper_freqs[0] or shaper_cfg.min_freq, freq_end - 1e-7)
             freq_step = shaper_freqs[2] or 0.2
             test_freqs = np.arange(freq_start, freq_end, freq_step)
         else:
@@ -495,8 +481,7 @@ class ShaperCalibrate:
         selected = best_res
         for res in results[::-1]:
             if res.score < selected.score and (
-                res.vibrs < best_res.vibrs * 1.2
-                or res.vibrs < best_res.vibrs + 0.0075
+                res.vibrs < best_res.vibrs * 1.2 or res.vibrs < best_res.vibrs + 0.0075
             ):
                 selected = res
         return selected
@@ -524,8 +509,7 @@ class ShaperCalibrate:
         # for max_accel without much smoothing
         TARGET_SMOOTHING = 0.12
         max_accel = self._bisect(
-            lambda test_accel: get_smoothing(s, test_accel, scv)
-            <= TARGET_SMOOTHING,
+            lambda test_accel: get_smoothing(s, test_accel, scv) <= TARGET_SMOOTHING,
             1e-2,
         )
         return max_accel

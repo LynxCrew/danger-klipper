@@ -52,15 +52,9 @@ class LimitedCoreXYKinematics(corexy.CoreXYKinematics):
     cmd_SET_KINEMATICS_LIMIT_help = "Set/get CoreXY per axis velocity limits"
 
     def cmd_SET_KINEMATICS_LIMIT(self, gcmd):
-        self.max_x_accel = gcmd.get_float(
-            "X_ACCEL", self.max_x_accel, above=0.0
-        )
-        self.max_y_accel = gcmd.get_float(
-            "Y_ACCEL", self.max_y_accel, above=0.0
-        )
-        self.max_z_accel = gcmd.get_float(
-            "Z_ACCEL", self.max_z_accel, above=0.0
-        )
+        self.max_x_accel = gcmd.get_float("X_ACCEL", self.max_x_accel, above=0.0)
+        self.max_y_accel = gcmd.get_float("Y_ACCEL", self.max_y_accel, above=0.0)
+        self.max_z_accel = gcmd.get_float("Z_ACCEL", self.max_z_accel, above=0.0)
         self.scale_per_axis = bool(
             gcmd.get_int("SCALE", self.scale_per_axis, minval=0, maxval=1)
         )
@@ -74,16 +68,12 @@ class LimitedCoreXYKinematics(corexy.CoreXYKinematics):
             return
         msg = [f"x,y,z max_accels: {max_accels!r}"]
         if self.scale_per_axis:
-            msg.append(
-                "Per axis accelerations limits scale with current acceleration."
-            )
+            msg.append("Per axis accelerations limits scale with current acceleration.")
         else:
             msg.append(
                 "Per axis accelerations limits are independent of current acceleration."
             )
-        min_accel = 1 / sqrt(
-            self.max_x_accel ** (-2) + self.max_y_accel ** (-2)
-        )
+        min_accel = 1 / sqrt(self.max_x_accel ** (-2) + self.max_y_accel ** (-2))
         min_angle = atan2(self.max_x_accel, self.max_y_accel)
         msg.append(
             f"Minimum XY acceleration of {min_accel:.0f} mm/s² reached on {180 * min_angle / pi:.0f}° diagonals."

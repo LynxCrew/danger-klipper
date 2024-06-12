@@ -24,13 +24,9 @@ class ShellCommand:
         self.verbose = config.getboolean("verbose", False)
         self.on_success_template = self.on_failure_template = None
         if config.get("success", None) is not None:
-            self.on_success_template = gcode_macro.load_template(
-                config, "success", ""
-            )
+            self.on_success_template = gcode_macro.load_template(config, "success", "")
         if config.get("failure", None) is not None:
-            self.on_failure_template = gcode_macro.load_template(
-                config, "failure", ""
-            )
+            self.on_failure_template = gcode_macro.load_template(config, "failure", "")
         self.proc_fd = None
         self.partial_output = ""
         self.values = {}
@@ -94,9 +90,7 @@ class ShellCommand:
                 stderr=subprocess.STDOUT,
             )
         except Exception:
-            logging.exception(
-                "shell_command: Command {%s} failed" % (self.name)
-            )
+            logging.exception("shell_command: Command {%s} failed" % (self.name))
             raise self.gcode.error("Error running command {%s}" % (self.name))
         self.proc_fd = proc.stdout.fileno()
         hdl = reactor.register_fd(self.proc_fd, self._process_output)

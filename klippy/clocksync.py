@@ -93,21 +93,15 @@ class ClockSync:
                 self.clock_est[2],
             )
         # Filter out samples that are extreme outliers
-        exp_clock = (sent_time - self.time_avg) * self.clock_est[
-            2
-        ] + self.clock_avg
+        exp_clock = (sent_time - self.time_avg) * self.clock_est[2] + self.clock_avg
         clock_diff2 = (clock - exp_clock) ** 2
         if (
             clock_diff2 > 25.0 * self.prediction_variance
             and clock_diff2 > (0.000500 * self.mcu_freq) ** 2
         ):
-            if (
-                clock > exp_clock
-                and sent_time < self.last_prediction_time + 10.0
-            ):
+            if clock > exp_clock and sent_time < self.last_prediction_time + 10.0:
                 logging.debug(
-                    "Ignoring clock sample %.3f:"
-                    " freq=%d diff=%d stddev=%.3f",
+                    "Ignoring clock sample %.3f:" " freq=%d diff=%d stddev=%.3f",
                     sent_time,
                     self.clock_est[2],
                     clock - exp_clock,
@@ -115,8 +109,7 @@ class ClockSync:
                 )
                 return
             logging.info(
-                "Resetting prediction variance %.3f:"
-                " freq=%d diff=%d stddev=%.3f",
+                "Resetting prediction variance %.3f:" " freq=%d diff=%d stddev=%.3f",
                 sent_time,
                 self.clock_est[2],
                 clock - exp_clock,

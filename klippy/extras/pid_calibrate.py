@@ -123,9 +123,7 @@ class ControlAutoTune:
         if self.done:
             return
         # store test data
-        self.data.append(
-            (read_time, temp, self.heater.last_pwm_value, self.target)
-        )
+        self.data.append((read_time, temp, self.heater.last_pwm_value, self.target))
         # ensure the starting temp is low enough to run the test.
         if not self.started and temp >= self.temp_low:
             self.errored = True
@@ -310,9 +308,7 @@ class ControlAutoTune:
         Km = -math.sqrt(tau**2 * Wu**2 + 1.0) / Ku
         # log the extra details
         logging.info("Ziegler-Nichols constants: Ku=%f Tu=%f", Ku, Tu)
-        logging.info(
-            "Cohen-Coon constants: Km=%f Theta=%f Tau=%f", Km, theta, tau
-        )
+        logging.info("Cohen-Coon constants: Km=%f Theta=%f Tau=%f", Km, theta, tau)
         # Use Ziegler-Nichols method to generate PID parameters
         Ti = 0.5 * Tu
         Td = 0.125 * Tu

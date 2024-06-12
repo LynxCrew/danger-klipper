@@ -30,23 +30,17 @@ class StateNotify:
         self.gcode_macro = self.printer.load_object(config, "gcode_macro")
         self.idle_gcode = config.get("on_idle_gcode", "")
         self.gcode_templates = {
-            "ready": self.gcode_macro.load_template(
-                config, "on_ready_gcode", ""
-            ),
-            "active": self.gcode_macro.load_template(
-                config, "on_active_gcode", ""
-            ),
-            "inactive": self.gcode_macro.load_template(
-                config, "on_inactive_gcode", ""
-            ),
+            "ready": self.gcode_macro.load_template(config, "on_ready_gcode", ""),
+            "active": self.gcode_macro.load_template(config, "on_active_gcode", ""),
+            "inactive": self.gcode_macro.load_template(config, "on_inactive_gcode", ""),
         }
         self.ignore_change = False
         self.trigger_on_sync_update = False
         self.state = "none"
         self.menu = self.sdcard = self.print_stats = None
-        self.menu_check_timer = self.inactive_timer = (
-            self.delayed_gcode_timer
-        ) = self.pause_timer = None
+        self.menu_check_timer = self.inactive_timer = self.delayed_gcode_timer = (
+            self.pause_timer
+        ) = None
         self.gcode.register_command(
             "STATE_NOTIFY_STATE",
             self.cmd_STATE_NOTIFY_STATE,
@@ -90,9 +84,7 @@ class StateNotify:
                 self._inactive_timer_handler,
                 self.reactor.monotonic() + self.inactive_timeout,
             )
-            self.pause_timer = self.reactor.register_timer(
-                self._print_pause_handler
-            )
+            self.pause_timer = self.reactor.register_timer(self._print_pause_handler)
 
             self.menu = self.printer.lookup_object("menu", None)
             if self.menu:
@@ -166,22 +158,15 @@ class StateNotify:
             self.reactor.update_timer(self.inactive_timer, self.reactor.NEVER)
             state = "idle"
             if self.menu:
-                self.reactor.update_timer(
-                    self.menu_check_timer, self.reactor.NEVER
-                )
+                self.reactor.update_timer(self.menu_check_timer, self.reactor.NEVER)
                 self.menu.exit()
         elif state == "idle_ready" or state == "menu_exit":
             menu_is_running = False
             if self.menu:
                 menu_is_running = self.menu.is_running()
-            if (
-                self.state in ("ready", "active", "printing")
-                and not menu_is_running
-            ):
+            if self.state in ("ready", "active", "printing") and not menu_is_running:
                 if self.state == "printing":
-                    self.reactor.update_timer(
-                        self.pause_timer, self.reactor.NEVER
-                    )
+                    self.reactor.update_timer(self.pause_timer, self.reactor.NEVER)
                     self.handle_state_change("active", eventtime)
                 self.reactor.update_timer(
                     self.inactive_timer,

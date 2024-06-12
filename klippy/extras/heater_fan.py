@@ -16,9 +16,7 @@ class PrinterHeaterFan:
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.heater_names = config.getlist("heater", ("extruder",))
         self.heater_temp = config.getfloat("heater_temp", 50.0)
-        self.heater_temp_off_offset = config.getfloat(
-            "heater_temp_off_offset", 0.0
-        )
+        self.heater_temp_off_offset = config.getfloat("heater_temp_off_offset", 0.0)
         self.heaters = []
         self.fan = fan.Fan(config, default_shutdown_speed=1.0)
         self.config_fan_speed = config.getfloat(
@@ -40,9 +38,7 @@ class PrinterHeaterFan:
         pheaters = self.printer.lookup_object("heaters")
         self.heaters = [pheaters.lookup_heater(n) for n in self.heater_names]
         reactor = self.printer.get_reactor()
-        reactor.register_timer(
-            self.callback, reactor.monotonic() + PIN_MIN_TIME
-        )
+        reactor.register_timer(self.callback, reactor.monotonic() + PIN_MIN_TIME)
 
     def get_status(self, eventtime):
         status = self.fan.get_status(eventtime)
@@ -57,8 +53,7 @@ class PrinterHeaterFan:
                 self.last_speed > 0
                 and (
                     target_temp
-                    or current_temp
-                    > self.heater_temp - self.heater_temp_off_offset
+                    or current_temp > self.heater_temp - self.heater_temp_off_offset
                 )
             ):
                 speed = self.fan_speed
@@ -74,9 +69,7 @@ class PrinterHeaterFan:
 
     def cmd_SET_HEATER_FAN(self, gcmd):
         self.enabled = gcmd.get_int("ENABLE", self.enabled, minval=0, maxval=1)
-        self.fan_speed = gcmd.get_float(
-            "FAN_SPEED", self.fan_speed, minval=0, maxval=1
-        )
+        self.fan_speed = gcmd.get_float("FAN_SPEED", self.fan_speed, minval=0, maxval=1)
         if self.enabled:
             curtime = self.printer.get_reactor().monotonic()
             print_time = self.fan.get_mcu().estimated_print_time(curtime)

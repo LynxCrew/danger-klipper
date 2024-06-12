@@ -30,9 +30,7 @@ class PrinterServo:
         self.width_to_value = 1.0 / SERVO_SIGNAL_PERIOD
         self.last_value = self.last_value_time = 0.0
         initial_pwm = 0.0
-        iangle = config.getfloat(
-            "initial_angle", None, minval=0.0, maxval=360.0
-        )
+        iangle = config.getfloat("initial_angle", None, minval=0.0, maxval=360.0)
         if iangle is not None:
             initial_pwm = self._get_pwm_from_angle(iangle)
         else:
@@ -127,9 +125,7 @@ class PrinterServo:
             angle = min(self.max_angle, float(parts[1].strip()))
             self._set_pwm(eventtime, self._get_pwm_from_angle(angle))
         elif parts[0].upper() == "WIDTH":
-            width = max(
-                self.min_width, min(self.max_width, float(parts[1].strip()))
-            )
+            width = max(self.min_width, min(self.max_width, float(parts[1].strip())))
             self._set_pwm(eventtime, self._get_pwm_from_pulse_width(width))
         return eventtime + RENDER_TIME
 
@@ -160,9 +156,7 @@ class PrinterServo:
                     continue
                 p = p.lower()
                 if p not in tparams:
-                    raise gcmd.error(
-                        "Invalid display_template parameter: %s" % (p,)
-                    )
+                    raise gcmd.error("Invalid display_template parameter: %s" % (p,))
                 try:
                     lparams[p] = ast.literal_eval(v)
                 except ValueError as e:

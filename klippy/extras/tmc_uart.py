@@ -99,9 +99,7 @@ class MCU_TMC_uart_bitbang:
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.analog_mux = None
         if select_pins_desc is not None:
-            self.analog_mux = MCU_analog_mux(
-                self.mcu, self.cmd_queue, select_pins_desc
-            )
+            self.analog_mux = MCU_analog_mux(self.mcu, self.cmd_queue, select_pins_desc)
         self.instances = {}
         self.tmcuart_send_cmd = None
         self.mcu.register_config_callback(self.build_config)
@@ -124,9 +122,7 @@ class MCU_TMC_uart_bitbang:
             is_async=True,
         )
 
-    def register_instance(
-        self, rx_pin_params, tx_pin_params, select_pins_desc, addr
-    ):
+    def register_instance(self, rx_pin_params, tx_pin_params, select_pins_desc, addr):
         if (
             rx_pin_params["pin"] != self.rx_pin
             or tx_pin_params["pin"] != self.tx_pin
@@ -252,9 +248,7 @@ def lookup_tmc_uart_bitbang(config, max_addr):
     addr = config.getint("uart_address", 0, minval=0, maxval=max_addr)
     mcu_uart = rx_pin_params.get("class")
     if mcu_uart is None:
-        mcu_uart = MCU_TMC_uart_bitbang(
-            rx_pin_params, tx_pin_params, select_pins_desc
-        )
+        mcu_uart = MCU_TMC_uart_bitbang(rx_pin_params, tx_pin_params, select_pins_desc)
         rx_pin_params["class"] = mcu_uart
     instance_id = mcu_uart.register_instance(
         rx_pin_params, tx_pin_params, select_pins_desc, addr

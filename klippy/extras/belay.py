@@ -14,9 +14,7 @@ class Belay:
 
         # initial type-specific setup
         type_options = ["trad_rack", "extruder_stepper"]
-        self.type = config.getchoice(
-            "extruder_type", {t: t for t in type_options}
-        )
+        self.type = config.getchoice("extruder_type", {t: t for t in type_options})
         if self.type == "trad_rack":
             enable_events = ["trad_rack:synced_to_extruder"]
             disable_events = ["trad_rack:unsyncing_from_extruder"]
@@ -28,9 +26,7 @@ class Belay:
             self.enable_initial = True
 
         # register event handlers
-        self.printer.register_event_handler(
-            "klippy:connect", self.handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self.handle_connect)
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         for event in enable_events:
             self.printer.register_event_handler(event, self.handle_enable)
@@ -63,9 +59,7 @@ class Belay:
         self.disable_conditions = [lambda: self.enabled]
         self.gcode = self.printer.lookup_object("gcode")
         self.toolhead = None
-        self.update_direction_timer = self.reactor.register_timer(
-            self.update_direction
-        )
+        self.update_direction_timer = self.reactor.register_timer(self.update_direction)
 
         # register commands
         self.gcode.register_mux_command(
@@ -132,9 +126,7 @@ class Belay:
             if not condition():
                 return
         self.reset_multiplier()
-        self.reactor.update_timer(
-            self.update_direction_timer, self.reactor.NEVER
-        )
+        self.reactor.update_timer(self.update_direction_timer, self.reactor.NEVER)
         self.enabled = False
 
     def sensor_callback(self, eventtime, state):
@@ -193,9 +185,7 @@ class Belay:
     )
 
     def cmd_BELAY_SET_MULTIPLIER(self, gcmd):
-        self.multiplier_high = gcmd.get_float(
-            "HIGH", self.multiplier_high, minval=1.0
-        )
+        self.multiplier_high = gcmd.get_float("HIGH", self.multiplier_high, minval=1.0)
         self.multiplier_low = gcmd.get_float(
             "LOW", self.multiplier_low, minval=0.0, maxval=1.0
         )

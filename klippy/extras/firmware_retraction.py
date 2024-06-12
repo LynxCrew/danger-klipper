@@ -19,9 +19,7 @@ class FirmwareRetraction:
         # Get retraction params from config, used also in clear retraction
         self._get_config_params()
         # Initialize variables
-        self.unretract_length = (
-            self.retract_length + self.unretract_extra_length
-        )
+        self.unretract_length = self.retract_length + self.unretract_extra_length
         self.currentPos = []
         self.currentZ = 0.0
         self.z_hop_Z = 0.0  # Z coordinate of zhop move
@@ -64,9 +62,7 @@ class FirmwareRetraction:
         self.retract_length = self.config_ref.getfloat(
             "retract_length", 0.0, minval=0.0
         )
-        self.retract_speed = self.config_ref.getfloat(
-            "retract_speed", 20.0, minval=1
-        )
+        self.retract_speed = self.config_ref.getfloat("retract_speed", 20.0, minval=1)
         self.unretract_extra_length = self.config_ref.getfloat(
             "unretract_extra_length", 0.0, minval=0.0
         )
@@ -74,9 +70,7 @@ class FirmwareRetraction:
             "unretract_speed", 10.0, minval=1
         )
         # Zero min. and stand. zhop valueto ensure compatibility with macros
-        self.z_hop_height = self.config_ref.getfloat(
-            "z_hop_height", 0.0, minval=0.0
-        )
+        self.z_hop_height = self.config_ref.getfloat("z_hop_height", 0.0, minval=0.0)
 
     # Helper method to register commands and instantiate required objects
     def _handle_ready(self):
@@ -89,9 +83,7 @@ class FirmwareRetraction:
         self.printer.register_event_handler(
             "homing:homing_move_begin", self._evaluate_retraction
         )
-        self.printer.register_event_handler(
-            "homing:home", self._evaluate_retraction
-        )
+        self.printer.register_event_handler("homing:home", self._evaluate_retraction)
         self.printer.register_event_handler(
             "stepper_enable:motor_off", self._evaluate_retraction
         )
@@ -183,9 +175,7 @@ class FirmwareRetraction:
         self.z_hop_height = gcmd.get_float(
             "Z_HOP_HEIGHT", self.z_hop_height, minval=0.0
         )  # z_hop_height with 0mm min. to prevent nozzle crash
-        self.unretract_length = (
-            self.retract_length + self.unretract_extra_length
-        )
+        self.unretract_length = self.retract_length + self.unretract_extra_length
 
     # Command to report the current firmware retraction parameters
     cmd_GET_RETRACTION_help = "Report firmware retraction paramters"
@@ -261,9 +251,7 @@ class FirmwareRetraction:
                 "G90\n"  # Switch to absolute mode (just in case)
                 "{}"
                 "RESTORE_GCODE_STATE NAME=_retract_state"
-            ).format(
-                self.retract_length, int(self.retract_speed * 60), zhop_gcode
-            )
+            ).format(self.retract_length, int(self.retract_speed * 60), zhop_gcode)
 
             self.gcode.run_script_from_command(retract_gcode)
             self.is_retracted = True
@@ -272,9 +260,7 @@ class FirmwareRetraction:
                 # Swap original G1 handlers if z_hop enabled to offset following
                 # moves in eiter absolute or relative mode
                 self._unregister_G1()
-                self.G1_toggle_state = (
-                    True  # Prevent repeat unregister with flag
-                )
+                self.G1_toggle_state = True  # Prevent repeat unregister with flag
 
         else:
             gcmd.respond_info("Printer is already retracted. Command ignored!")

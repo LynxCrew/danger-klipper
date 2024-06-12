@@ -27,9 +27,7 @@ class PrinterDotstar:
         # Initialize color data
         self.chain_count = config.getint("chain_count", 1, minval=1)
         pled = printer.load_object(config, "led")
-        self.led_helper = pled.setup_helper(
-            config, self.update_leds, self.chain_count
-        )
+        self.led_helper = pled.setup_helper(config, self.update_leds, self.chain_count)
         self.prev_data = None
         # Register commands
         printer.register_event_handler("klippy:connect", self.handle_connect)
@@ -55,9 +53,7 @@ class PrinterDotstar:
         if print_time is not None:
             minclock = self.spi.get_mcu().print_time_to_clock(print_time)
         for d in [data[i : i + 20] for i in range(0, len(data), 20)]:
-            self.spi.spi_send(
-                d, minclock=minclock, reqclock=BACKGROUND_PRIORITY_CLOCK
-            )
+            self.spi.spi_send(d, minclock=minclock, reqclock=BACKGROUND_PRIORITY_CLOCK)
 
     def get_status(self, eventtime):
         return self.led_helper.get_status(eventtime)

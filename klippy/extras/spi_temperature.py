@@ -34,9 +34,7 @@ class SensorBase:
         self.mcu = mcu = self.spi.get_mcu()
         # Reader chip configuration
         self.oid = oid = mcu.create_oid()
-        mcu.register_response(
-            self._handle_spi_response, "thermocouple_result", oid
-        )
+        mcu.register_response(self._handle_spi_response, "thermocouple_result", oid)
         mcu.register_config_callback(self._build_config)
 
     def setup_minmax(self, min_temp, max_temp):
@@ -155,9 +153,7 @@ MAX31856_MULT = 0.0078125
 
 class MAX31856(SensorBase):
     def __init__(self, config):
-        SensorBase.__init__(
-            self, config, "MAX31856", self.build_spi_init(config)
-        )
+        SensorBase.__init__(self, config, "MAX31856", self.build_spi_init(config))
 
     def handle_fault(self, adc, fault):
         if fault & MAX31856_FAULT_CJRANGE:
@@ -346,13 +342,9 @@ class MAX31865(SensorBase):
                 "Max31865 VREF- is greater than 0.85 * VBIAS, FORCE- open"
             )
         if fault & 0x10:
-            self.report_fault(
-                "Max31865 VREF- is less than 0.85 * VBIAS, FORCE- open"
-            )
+            self.report_fault("Max31865 VREF- is less than 0.85 * VBIAS, FORCE- open")
         if fault & 0x08:
-            self.report_fault(
-                "Max31865 VRTD- is less than 0.85 * VBIAS, FORCE- open"
-            )
+            self.report_fault("Max31865 VRTD- is less than 0.85 * VBIAS, FORCE- open")
         if fault & 0x04:
             self.report_fault("Max31865 Overvoltage or undervoltage fault")
         if not fault & 0xFC:
@@ -383,9 +375,7 @@ class MAX31865(SensorBase):
 
     def build_spi_init(self, config):
         value = (
-            MAX31865_CONFIG_BIAS
-            | MAX31865_CONFIG_MODEAUTO
-            | MAX31865_CONFIG_FAULTCLEAR
+            MAX31865_CONFIG_BIAS | MAX31865_CONFIG_MODEAUTO | MAX31865_CONFIG_FAULTCLEAR
         )
         if config.getboolean("rtd_use_50Hz_filter", False):
             value |= MAX31865_CONFIG_FILT50HZ

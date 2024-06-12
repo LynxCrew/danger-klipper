@@ -8,9 +8,7 @@
 class HomingHeaters:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler(
-            "klippy:connect", self.handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self.handle_connect)
         self.printer.register_event_handler(
             "homing:homing_move_begin", self.handle_homing_move_begin
         )
@@ -40,8 +38,7 @@ class HomingHeaters:
             return
         if not all(x in all_steppers for x in self.flaky_steppers):
             raise self.printer.config_error(
-                "One or more of these steppers are unknown: %s"
-                % (self.flaky_steppers,)
+                "One or more of these steppers are unknown: %s" % (self.flaky_steppers,)
             )
 
     def check_eligible(self, endstops):

@@ -31,19 +31,13 @@ Commands = {
 class BLTouchEndstopWrapper:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler(
-            "klippy:connect", self.handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self.handle_connect)
         self.printer.register_event_handler(
             "klippy:mcu_identify", self.handle_mcu_identify
         )
         self.position_endstop = config.getfloat("z_offset", minval=0.0)
-        self.stow_on_each_sample = config.getboolean(
-            "stow_on_each_sample", True
-        )
-        self.probe_touch_mode = config.getboolean(
-            "probe_with_touch_mode", False
-        )
+        self.stow_on_each_sample = config.getboolean("stow_on_each_sample", True)
+        self.probe_touch_mode = config.getboolean("probe_with_touch_mode", False)
         # Create a pwm object to handle the control pin
         ppins = self.printer.lookup_object("pins")
         self.mcu_pwm = ppins.setup_pin("pwm", config.get("control_pin"))
@@ -144,9 +138,7 @@ class BLTouchEndstopWrapper:
             triggered=triggered,
         )
         try:
-            trigger_time = self.mcu_endstop.home_wait(
-                self.action_end_time + 0.100
-            )
+            trigger_time = self.mcu_endstop.home_wait(self.action_end_time + 0.100)
         except self.printer.command_error as e:
             return False
         return trigger_time > 0.0
@@ -167,9 +159,7 @@ class BLTouchEndstopWrapper:
                 # The "probe raised" test completed successfully
                 break
             if retry >= 2:
-                raise self.printer.command_error(
-                    "BLTouch failed to raise probe"
-                )
+                raise self.printer.command_error("BLTouch failed to raise probe")
             msg = "Failed to verify BLTouch probe is raised; retrying."
             self.gcode.respond_info(msg)
             self.sync_mcu_print_time()

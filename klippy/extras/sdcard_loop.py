@@ -56,9 +56,7 @@ class SDCardLoop:
         ):
             # Can only run inside of an SD file
             return False
-        self.loop_stack.append(
-            (count, self.sdcard_gcode_provider.get_file_position())
-        )
+        self.loop_stack.append((count, self.sdcard_gcode_provider.get_file_position()))
         return True
 
     def loop_end(self):
@@ -87,10 +85,7 @@ class SDCardLoop:
         return True
 
     def loop_desist(self):
-        if (
-            self.sdcard.is_cmd_from_sd()
-            and self.sdcard_gcode_provider.is_active()
-        ):
+        if self.sdcard.is_cmd_from_sd() and self.sdcard_gcode_provider.is_active():
             # Can only run outside of an SD file
             return False
         logging.info("Desisting existing SD loops")
