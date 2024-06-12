@@ -39,9 +39,7 @@ class StepperEnablePin:
             toolhead = self.printer.lookup_object("toolhead")
             toolhead.wait_moves()
             toolhead.dwell(DISABLE_STALL_TIME)
-            toolhead.register_lookahead_callback(
-                lambda pt: self._set_pin(pt, 0)
-            )
+            toolhead.register_lookahead_callback(lambda pt: self._set_pin(pt, 0))
 
     def _set_pin(self, print_time, value, is_resend=False):
         if value == self.last_value and not is_resend:
@@ -78,9 +76,7 @@ def setup_enable_pin(printer, pin, max_enable_time=0.0):
         enable.is_dedicated = False
         return enable
     ppins = printer.lookup_object("pins")
-    pin_params = ppins.lookup_pin(
-        pin, can_invert=True, share_type="stepper_enable"
-    )
+    pin_params = ppins.lookup_pin(pin, can_invert=True, share_type="stepper_enable")
     enable = pin_params.get("class")
     if enable is not None:
         # Shared enable line
@@ -185,23 +181,27 @@ class PrinterStepperEnable:
         if 3 in axes:
             if "extruder" in self.enable_lines:
                 self.stepper_off("extruder", print_time, "extruder")
-                for i in range(1, 99):
-                    extruder_name = "extruder" + str(i)
-                    if extruder_name not in self.enable_lines:
-                        break
+                i = 1
+                extruder_name = f"extruder{i}"
+                while extruder_name in self.enable_lines:
                     self.stepper_off(extruder_name, print_time, "extruder")
-        for axis in axes:
-            try:
-                rails = kin.get_connected_rails(axis)
-                for rail in rails:
-                    steppers = rail.get_steppers()
-                    rail_name = rail.mcu_stepper.get_name(True)
-                    for stepper in steppers:
-                        self.stepper_off(
-                            stepper.get_name(), print_time, rail_name
-                        )
-            except IndexError:
-                continue
+                    i += 1
+                    extruder_name = f"extruder{i}"
+        if hasattr(kin, "get_connected_rails"):
+            for axis in axes:
+                try:
+                    rails = kin.get_connected_rails(axis)
+                    for rail in rails:
+                        steppers = rail.get_steppers()
+                        rail_name = rail.mcu_stepper.get_name(True)
+                        for stepper in steppers:
+                            self.stepper_off(stepper.get_name(), print_time, rail_name)
+                except IndexError:
+                    continue
+        else:
+            for axis_name, el in self.enable_lines.items():
+                if not axis_name.startswith("extruder"):
+                    el.motor_disable(print_time)
         self.printer.send_event("stepper_enable:axes_off", print_time)
         toolhead.dwell(DISABLE_STALL_TIME)
 
@@ -210,6 +210,8 @@ class PrinterStepperEnable:
         toolhead.dwell(DISABLE_STALL_TIME)
         print_time = toolhead.get_last_move_time()
         kin = toolhead.get_kinematics()
+        if not hasattr(kin, "get_rails"):
+            notify = False
         for stepper_name in steppers:
             el = self.enable_lines[stepper_name]
             if enable:
@@ -234,8 +236,7 @@ class PrinterStepperEnable:
 
     def get_status(self, eventtime):
         steppers = {
-            name: et.is_motor_enabled()
-            for (name, et) in self.enable_lines.items()
+            name: et.is_motor_enabled() for (name, et) in self.enable_lines.items()
         }
         return {"steppers": steppers}
 
