@@ -202,6 +202,7 @@ class PrinterStepperEnable:
             for axis_name, el in self.enable_lines.items():
                 if not axis_name.startswith("extruder"):
                     el.motor_disable(print_time)
+            self.printer.send_event("stepper_enable:motor_off", print_time)
         self.printer.send_event("stepper_enable:axes_off", print_time)
         toolhead.dwell(DISABLE_STALL_TIME)
 
