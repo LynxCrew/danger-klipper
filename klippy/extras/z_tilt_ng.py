@@ -549,14 +549,15 @@ class ZTilt:
         )
 
     def cmd_Z_TILT_SET_OFFSETS(self, gcmd):
-        reset = gcmd.get_int("RESET", default=0, minval=0, maxval=1)
-        if reset:
+        z_offset_string = gcmd.get("OFFSETS", default=None)
+        if z_offset_string is None:
             self.z_offsets = self.config_z_offsets
         else:
-            z_offset_string = gcmd.get("OFFSETS", default=None)
             offsets = z_offset_string.split(",")
             if len(offsets) != self.z_count:
-                raise gcmd.error("Offsets have to match amount of z_positions.")
+                raise gcmd.error("Offsets have to match amount of z_positions."
+                                 "\nAmount of z_positions is [%d], but [%d] "
+                                 "were given." % (self.z_count, len(offsets)))
             else:
                 self.z_offsets = offsets
         gcmd.respond_info("Current z_offsets are: %s" % str(self.z_offsets))
