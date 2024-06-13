@@ -554,6 +554,7 @@ class ZTilt:
             gcmd.respond_error("Offsets have to match amount of z_positions.")
             return
         self.z_offsets = offsets
+        gcmd.respond_info("Current z_offsets are: %s" % str(self.z_offsets))
 
 
     def get_status(self, eventtime):
