@@ -228,7 +228,8 @@ class ZTilt:
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         self.probe_helper.minimum_points(2)
 
-        self.z_offsets = config.getfloatlist("z_offsets", count=self.z_count, default=None)
+        self.config_z_offsets = config.getfloatlist("z_offsets", count=self.z_count, default=None)
+        self.z_offsets = self.config_z_offsets
 
         self.z_status = ZAdjustStatus(self.printer)
         self.z_helper = ZAdjustHelper(config, self.z_count)
@@ -548,12 +549,16 @@ class ZTilt:
         )
 
     def cmd_Z_TILT_SET_OFFSETS(self, gcmd):
-        z_offset_string = gcmd.get("OFFSETS", default=None)
-        offsets = z_offset_string.split(",")
-        if len(offsets) != self.z_count:
-            gcmd.respond_error("Offsets have to match amount of z_positions.")
-            return
-        self.z_offsets = offsets
+        reset = gcmd.get_int("RESET", default=0, minval=0, maxval=1)
+        if reset:
+            self.z_offsets = self.config_z_offsets
+        else:
+            z_offset_string = gcmd.get("OFFSETS", default=None)
+            offsets = z_offset_string.split(",")
+            if len(offsets) != self.z_count:
+                gcmd.respond_error("Offsets have to match amount of z_positions.")
+            else:
+                self.z_offsets = offsets
         gcmd.respond_info("Current z_offsets are: %s" % str(self.z_offsets))
 
 
