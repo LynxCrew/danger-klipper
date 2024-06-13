@@ -553,7 +553,7 @@ class ZTilt:
         if z_offset_string is None:
             self.z_offsets = self.config_z_offsets
         else:
-            offsets = z_offset_string.split(",")
+            offsets = [float(offset) for offset in z_offset_string.split(",")]
             if len(offsets) != self.z_count:
                 raise gcmd.error("Offsets have to match amount of z_positions."
                                  "\nAmount of z_positions is [%d], but [%d] "
