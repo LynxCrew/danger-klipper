@@ -556,7 +556,7 @@ class ZTilt:
             z_offset_string = gcmd.get("OFFSETS", default=None)
             offsets = z_offset_string.split(",")
             if len(offsets) != self.z_count:
-                gcmd.respond_error("Offsets have to match amount of z_positions.")
+                raise gcmd.error("Offsets have to match amount of z_positions.")
             else:
                 self.z_offsets = offsets
         gcmd.respond_info("Current z_offsets are: %s" % str(self.z_offsets))
