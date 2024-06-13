@@ -560,7 +560,11 @@ class ZTilt:
                                  "were given." % (self.z_count, len(offsets)))
             else:
                 self.z_offsets = offsets
-        gcmd.respond_info("Current z_offsets are: %s" % self.z_offsets)
+        z_offset_string = ""
+        for i in range(0, len(self.z_offsets)):
+            z_offset_string += "%.6f, " % self.z_offsets[i]
+        z_offset_string += "%.6f" % self.z_offsets[-1]
+        gcmd.respond_info("Current z_offsets are: %s" % z_offset_string)
 
 
     def get_status(self, eventtime):
