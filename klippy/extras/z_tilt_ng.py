@@ -222,16 +222,16 @@ class ZTilt:
             "z_positions", seps=(",", "\n"), parser=float, count=2
         )
         self.use_offsets = config.getboolean("use_offsets", False)
-        z_count = len(self.z_positions)
+        self.z_count = len(self.z_positions)
 
         self.retry_helper = RetryHelper(config)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         self.probe_helper.minimum_points(2)
 
-        self.z_offsets = config.getfloatlist("z_offsets", count=z_count, default=None)
+        self.z_offsets = config.getfloatlist("z_offsets", count=self.z_count, default=None)
 
         self.z_status = ZAdjustStatus(self.printer)
-        self.z_helper = ZAdjustHelper(config, z_count)
+        self.z_helper = ZAdjustHelper(config, self.z_count)
         # probe points for calibrate/autodetect
         cal_probe_points = list(self.probe_helper.get_probe_points())
         self.num_probe_points = len(cal_probe_points)
@@ -269,10 +269,16 @@ class ZTilt:
             self.cmd_Z_TILT_AUTODETECT,
             desc=self.cmd_Z_TILT_AUTODETECT_help,
         )
+        gcode.register_command(
+            "Z_TILT_SET_OFFSETS",
+            self.cmd_Z_TILT_SET_OFFSETS,
+            desc=self.cmd_Z_TILT_SET_OFFSETS_help,
+        )
 
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
     cmd_Z_TILT_CALIBRATE_help = "Calibrate Z tilt with additional probing " "points"
     cmd_Z_TILT_AUTODETECT_help = "Autodetect pivot point of Z motors"
+    cmd_Z_TILT_SET_OFFSETS_help = "Set the offsets for the z_positions"
     err_missing_numpy = (
         "Failed to import `numpy` module, make sure it was "
         "installed via `~/klippy-env/bin/pip install`"
@@ -540,6 +546,15 @@ class ZTilt:
             "The SAVE_CONFIG command will update the printer config\n"
             "file with these parameters and restart the printer."
         )
+
+    def cmd_Z_TILT_SET_OFFSETS(self, gcmd):
+        z_offset_string = gcmd.get("OFFSETS", default=None)
+        offsets = z_offset_string.split(",")
+        if len(offsets) != self.z_count:
+            gcmd.respond_error("Offsets have to match amount of z_positions.")
+            return
+        self.z_offsets = offsets
+
 
     def get_status(self, eventtime):
         return self.z_status.get_status(eventtime)
