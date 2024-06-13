@@ -563,8 +563,8 @@ class ZTilt:
         if len(self.z_offsets) > 0:
             z_offset_string = "%.6f" % self.z_offsets[0]
             for i in range(1, len(self.z_offsets)):
-                z_offset_string += "%.6f, " % self.z_offsets[i]
-            gcmd.respond_info("Current z_offsets are: %s" % z_offset_string)
+                z_offset_string += ", %.6f" % self.z_offsets[i]
+            gcmd.respond_info("Current z_offsets are: (%s)" % z_offset_string)
             return
         raise gcmd.error("No z_offsets defined")
 
