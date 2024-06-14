@@ -32,7 +32,7 @@ class PrinterSensorCombined:
         # set default values
         self.last_temp = self.min_temp = self.max_temp = 0.0
         self.measured_min = 99999999.0
-        self.measured_max = 0.0
+        self.measured_max = -99999999.0
         self.temperature_callback = None
         # add object
         self.printer.add_object("temperature_combined " + self.name, self)
