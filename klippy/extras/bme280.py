@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import threading
+import multiprocessing
 
 from . import bus
 
@@ -192,7 +192,9 @@ class BME280:
         self.max_sample_time = None
         self.dig = None
         self.sample_timer = None
-        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
+        self.temperature_sample_thread = multiprocessing.Process(
+            target=self._run_sample_timer
+        )
         self.chip_type = "BMP280"
         self.chip_registers = BME280_REGS
         self.printer.add_object("bme280 " + self.name, self)

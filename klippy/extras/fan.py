@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import threading
+import multiprocessing
 import time
 
 from . import pulse_counter
@@ -221,7 +221,9 @@ class Fan:
         if self.min_rpm > 0 and (force or not self.self_checking):
             if pwm_value > 0:
                 if self.fan_check_thread is None:
-                    self.fan_check_thread = threading.Thread(target=self._run_fan_check)
+                    self.fan_check_thread = multiprocessing.Process(
+                        target=self._run_fan_check
+                    )
                     self.fan_check_thread.start()
             else:
                 if self.fan_check_thread is not None:

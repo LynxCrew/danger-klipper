@@ -3,8 +3,7 @@
 # Copyright (C) 2019  Nils Friedchen <nils.friedchen@googlemail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
-import threading
+import multiprocessing
 import time
 
 from . import fan
@@ -37,7 +36,9 @@ class ControllerFan:
         self.last_on = self.idle_timeout
         self.last_speed = 0.0
         self.enabled = True
-        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
+        self.temperature_sample_thread = multiprocessing.Process(
+            target=self._run_sample_timer
+        )
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "SET_CONTROLLER_FAN",

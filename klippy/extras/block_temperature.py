@@ -1,4 +1,4 @@
-import threading
+import multiprocessing
 import time
 
 from extras.danger_options import get_danger_options
@@ -23,7 +23,9 @@ class MPC_BLOCK_TEMP_WRAPPER:
 
         self.reactor = self.printer.get_reactor()
 
-        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
+        self.temperature_sample_thread = multiprocessing.Process(
+            target=self._run_sample_timer
+        )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
         self.printer.register_event_handler("klippy:ready", self.handle_ready)

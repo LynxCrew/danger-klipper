@@ -3,7 +3,7 @@
 # Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import threading
+import multiprocessing
 import time
 
 from extras.danger_options import get_danger_options
@@ -25,7 +25,9 @@ class PrinterTemperatureDriver:
 
         self.reactor = self.printer.get_reactor()
 
-        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
+        self.temperature_sample_thread = multiprocessing.Process(
+            target=self._run_sample_timer
+        )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
         self.printer.register_event_handler("klippy:connect", self.handle_connect)

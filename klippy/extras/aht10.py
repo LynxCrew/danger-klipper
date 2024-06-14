@@ -4,11 +4,10 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import threading
+import multiprocessing
 import time
 
 from . import bus
-from extras.danger_options import get_danger_options
 
 from extras.danger_options import get_danger_options
 
@@ -40,7 +39,9 @@ class AHT10:
         )
         self.report_time = config.getint("aht10_report_time", 30, minval=5)
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.0
-        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
+        self.temperature_sample_thread = multiprocessing.Process(
+            target=self._run_sample_timer
+        )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("aht10 " + self.name, self)
         self.printer.register_event_handler("klippy:connect", self.handle_connect)

@@ -5,10 +5,8 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 import logging
-import threading
+import multiprocessing
 import time
-
-from extras.danger_options import get_danger_options
 
 from extras.danger_options import get_danger_options
 
@@ -31,7 +29,9 @@ class Temperature_HOST:
         if self.printer.get_start_args().get("debugoutput") is not None:
             return
 
-        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
+        self.temperature_sample_thread = multiprocessing.Process(
+            target=self._run_sample_timer
+        )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
         try:
