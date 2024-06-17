@@ -196,7 +196,7 @@ class Printer:
         for section_config in config.get_prefix_sections(""):
             self.load_object(config, section_config.get_name(), None)
         # dangerklipper on-by-default extras
-        for section_config in ["force_move"]:
+        for section_config in ["force_move", "respond", "exclude_object"]:
             self.load_object(config, section_config, None)
         for m in [toolhead]:
             m.add_printer_objects(config)

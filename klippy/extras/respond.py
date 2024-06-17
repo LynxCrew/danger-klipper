@@ -21,6 +21,10 @@ class HostResponder:
         self.reactor = self.printer.get_reactor()
         self.default_prefix = config.getchoice("default_type", respond_types, "echo")
         self.default_prefix = config.get("default_prefix", self.default_prefix)
+
+        if not config.getboolean("enable_respond", True):
+            return
+
         gcode = self.printer.lookup_object("gcode")
         gcode.register_command("M118", self.cmd_M118, True)
         gcode.register_command(
