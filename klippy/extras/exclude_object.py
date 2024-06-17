@@ -18,9 +18,7 @@ class ExcludeObject:
         if not config.getboolean("enable_exclude_object", True):
             return
 
-        self.printer.register_event_handler(
-            "klippy:connect", self._handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.printer.register_event_handler(
             "virtual_sdcard:reset_file", self._reset_file
         )

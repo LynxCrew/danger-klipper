@@ -35,7 +35,7 @@ class TemperatureFan:
         self.min_speed = self.min_speed_conf
         self.last_temp = 0.0
         self.measured_min = 99999999.0
-        self.measured_max = 0.0
+        self.measured_max = -99999999.0
         self.last_temp_time = 0.0
         self.target_temp_conf = config.getfloat(
             "target_temp",

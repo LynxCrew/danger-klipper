@@ -32,8 +32,7 @@ class LimitedCoreXZKinematics(corexz.CoreXZKinematics):
             for ax in "xyz"
         ]
         self.max_accels = [
-            config.getfloat("max_%s_accel" % ax, max_accel, above=0.0)
-            for ax in "xyz"
+            config.getfloat("max_%s_accel" % ax, max_accel, above=0.0) for ax in "xyz"
         ]
         self.xy_hypot_accel = hypot(*self.max_accels[:2])
         self.scale_per_axis = config.getboolean("scale_xy_accel", False)

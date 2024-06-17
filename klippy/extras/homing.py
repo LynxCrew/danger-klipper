@@ -299,57 +299,41 @@ class Homing:
             retract_r = min(1.0, retract_dist / move_d)
             retractpos = [hp - ad * retract_r for hp, ad in zip(homepos, axes_d)]
             self.toolhead.move(retractpos, hi.retract_speed)
-            if not hi.use_sensorless_homing or needs_rehome:
-                # Home again
-                startpos = [
-                    rp - ad * retract_r for rp, ad in zip(retractpos, axes_d)
-                ]
-                self.toolhead.set_position(startpos)
-                print_time = self.toolhead.get_last_move_time()
-                for endstop in endstops:
-                    # re-querying a tmc endstop seems to reset the state
-                    # otherwise it triggers almost immediately upon second home
-                    # this seems to be an adequate substitute for a 2 second dwell.
-                    endstop[0].query_endstop(print_time)
-                hmove = HomingMove(self.printer, endstops)
-                hmove.homing_move(homepos, hi.second_homing_speed)
-                try:
-                    if hmove.check_no_movement() is not None:
-                        raise self.printer.command_error(
-                            "Endstop %s still triggered after retract"
-                            % (hmove.check_no_movement(),)
-                        )
-                    if (
-                        hi.use_sensorless_homing
-                        and needs_rehome
-                        and hmove.moved_less_than_dist(
-                            hi.min_home_dist, homing_axes
-                        )
-                    ):
-                        raise self.printer.command_error(
-                            "Early homing trigger on second home!"
-                        )
-                finally:
-                    self._set_current_homing(homing_axes, pre_homing=False)
-                if hi.retract_dist:
-                    # Retract (again)
-                    startpos = self._fill_coord(forcepos)
-                    homepos = self._fill_coord(movepos)
-                    axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
-                    move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
-                    retract_r = min(1.0, hi.retract_dist / move_d)
-                    retractpos = [
-                        hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
-                    ]
-                    self.toolhead.move(retractpos, hi.retract_speed)
-                if hi.post_retract_dist:
-                    startpos = self._fill_coord(forcepos)
-                    homepos = self._fill_coord(movepos)
-                    axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
-                    move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
-                    retract_r = min(1.0, hi.post_retract_dist / move_d)
-                    retractpos = [hp - ad * retract_r for hp, ad in zip(homepos, axes_d)]
-                    self.toolhead.move(retractpos, hi.post_retract_speed)
+            # Home again
+            startpos = [rp - ad * retract_r for rp, ad in zip(retractpos, axes_d)]
+            self.toolhead.set_position(startpos)
+            print_time = self.toolhead.get_last_move_time()
+            for endstop in endstops:
+                # re-querying a tmc endstop seems to reset the state
+                # otherwise it triggers almost immediately upon second home
+                # this seems to be an adequate substitute for a 2 second dwell.
+                endstop[0].query_endstop(print_time)
+            hmove = HomingMove(self.printer, endstops)
+            hmove.homing_move(homepos, hi.second_homing_speed)
+            try:
+                if hmove.check_no_movement() is not None:
+                    raise self.printer.command_error(
+                        "Endstop %s still triggered after retract"
+                        % (hmove.check_no_movement(),)
+                    )
+                if (
+                    hi.use_sensorless_homing
+                    and needs_rehome
+                    and hmove.moved_less_than_dist(hi.min_home_dist, homing_axes)
+                ):
+                    raise self.printer.command_error(
+                        "Early homing trigger on second home!"
+                    )
+            finally:
+                self._set_current_homing(homing_axes, pre_homing=False)
+        if hi.post_retract_dist:
+            startpos = self._fill_coord(forcepos)
+            homepos = self._fill_coord(movepos)
+            axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
+            move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
+            retract_r = min(1.0, hi.post_retract_dist / move_d)
+            retractpos = [hp - ad * retract_r for hp, ad in zip(homepos, axes_d)]
+            self.toolhead.move(retractpos, hi.post_retract_speed)
 
         self._set_current_homing(homing_axes, pre_homing=False)
         # Signal home operation complete
