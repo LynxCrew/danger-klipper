@@ -10,8 +10,6 @@ import time
 
 from extras.danger_options import get_danger_options
 
-from extras.danger_options import get_danger_options
-
 HOST_REPORT_TIME = 1.0
 RPI_PROC_TEMP_FILE = "/sys/class/thermal/thermal_zone0/temp"
 

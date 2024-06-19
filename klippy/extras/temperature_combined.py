@@ -9,8 +9,6 @@ import time
 
 from extras.danger_options import get_danger_options
 
-from extras.danger_options import get_danger_options
-
 REPORT_TIME = 0.300
 
 
