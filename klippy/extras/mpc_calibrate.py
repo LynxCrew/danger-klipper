@@ -170,15 +170,19 @@ class MpcCalibrate:
                 below_target = False
             elif not below_target and temp < target - 0.015:
                 below_target = True
-            if above_target >= cycles and (self.printer.reactor.monotonic() - starttime) > 30.0:
+            if (
+                above_target >= cycles
+                and (self.printer.reactor.monotonic() - starttime) > 30.0
+            ):
                 return False
             if above_target > 0 and abs(target - temp) < 0.1:
                 on_target += 1
             else:
                 on_target = 0
-            if on_target >= 150: # in case the heating is super consistent
+            if on_target >= 150:  # in case the heating is super consistent
                 return False
             return True
+
         self.printer.wait_while(process, True, 0.2)
 
     def wait_settle(self, max_rate):
@@ -263,8 +267,7 @@ class MpcCalibrate:
         target_temp = round(first_pass_results["post_block_temp"])
         self.heater.set_temp(target_temp)
         gcmd.respond_info(
-            "Performing ambient transfer tests, target is %.1f degrees"
-            % (target_temp,)
+            "Performing ambient transfer tests, target is %.1f degrees" % (target_temp,)
         )
 
         self.wait_stable(5)
@@ -286,7 +289,9 @@ class MpcCalibrate:
                     fan.set_speed(print_time + PIN_MIN_TIME, speed)
                     gcmd.respond_info("Waiting for temperature to stabilize")
                     self.wait_stable(3)
-                    gcmd.respond_info(f"Temperature stable, measuring power usage with {speed*100.:.0f}% fan speed")
+                    gcmd.respond_info(
+                        f"Temperature stable, measuring power usage with {speed*100.:.0f}% fan speed"
+                    )
                     power = self.measure_power(
                         ambient_max_measure_time, ambient_measure_sample_time
                     )
@@ -311,9 +316,7 @@ class MpcCalibrate:
         last_time = [None]
 
         def process(eventtime):
-            dt = eventtime - (
-                last_time[0] if last_time[0] is not None else eventtime
-            )
+            dt = eventtime - (last_time[0] if last_time[0] is not None else eventtime)
             last_time[0] = eventtime
             status = self.heater.get_status(eventtime)
             samples.append((dt, status["control_stats"]["power"] * dt))
@@ -389,17 +392,11 @@ class MpcCalibrate:
             )
 
         # Differential method
-        if (
-            not use_analytic
-            or block_heat_capacity < 0
-            or sensor_responsiveness < 0
-        ):
+        if not use_analytic or block_heat_capacity < 0 or sensor_responsiveness < 0:
             fastest_rate = self.fastest_rate(samples)
             block_heat_capacity = heater_power / fastest_rate[2]
             sensor_responsiveness = fastest_rate[2] / (
-                fastest_rate[2] * fastest_rate[0]
-                + ambient_temp
-                - fastest_rate[0]
+                fastest_rate[2] * fastest_rate[0] + ambient_temp - fastest_rate[0]
             )
 
         heat_time = all_samples[-1][0] - all_samples[0][0]
@@ -423,9 +420,7 @@ class MpcCalibrate:
             "dt": dt,
         }
 
-    def process_second_pass(
-        self, first_res, transfer_res, ambient_temp, heater_power
-    ):
+    def process_second_pass(self, first_res, transfer_res, ambient_temp, heater_power):
         target_ambient_temp = transfer_res["target_temp"] - ambient_temp
         ambient_transfer = transfer_res["base_power"] / target_ambient_temp
         asymp_T = ambient_temp + heater_power / ambient_transfer

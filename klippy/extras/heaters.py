@@ -1194,11 +1194,7 @@ class ControlMPC:
 
         # Expected block dT since last period
         expected_block_dT = (
-            (
-                expected_heating
-                - expected_ambient_transfer
-                - expected_filament_transfer
-            )
+            (expected_heating - expected_ambient_transfer - expected_filament_transfer)
             * dt
             / self.const_block_heat_capacity
         )
@@ -1228,13 +1224,9 @@ class ControlMPC:
             expected_block_dT + adjustment_dT
         ) < self.const_steady_state_rate * dt:
             if adjustment_dT > 0.0:
-                ambient_delta = max(
-                    adjustment_dT, self.const_min_ambient_change * dt
-                )
+                ambient_delta = max(adjustment_dT, self.const_min_ambient_change * dt)
             else:
-                ambient_delta = min(
-                    adjustment_dT, -self.const_min_ambient_change * dt
-                )
+                ambient_delta = min(adjustment_dT, -self.const_min_ambient_change * dt)
             self.state_ambient_temp += ambient_delta
 
         # Output
@@ -1328,10 +1320,7 @@ class ControlMPC:
         src = self.filament_temp_src
         if src[0] == FILAMENT_TEMP_SRC_FIXED:
             return src[1]
-        elif (
-            src[0] == FILAMENT_TEMP_SRC_SENSOR
-            and self.ambient_sensor is not None
-        ):
+        elif src[0] == FILAMENT_TEMP_SRC_SENSOR and self.ambient_sensor is not None:
             return self.ambient_sensor.get_temp(read_time)[0]
         else:
             return ambient_temp
