@@ -1139,25 +1139,30 @@ class ControlMPC:
             return
 
         dt = read_time - self.last_temp_time
-        if self.last_temp_time == 0.0:
+        if self.last_temp_time == 0.0 or dt < 0.0 or dt > 1.0:
             dt = 0.1
 
         # Extruder position
         extrude_speed_prev = 0.0
         extrude_speed_next = 0.0
-        if self.toolhead is None:
-            self.toolhead = self.printer.lookup_object("toolhead")
-        if self.toolhead is not None:
-            extruder = self.toolhead.get_extruder()
-            if (
-                hasattr(extruder, "find_past_position")
-                and extruder.get_heater() == self.heater
-            ):
-                pos_prev = extruder.find_past_position(read_time - dt)
-                pos = extruder.find_past_position(read_time)
-                pos_next = extruder.find_past_position(read_time + dt)
-                extrude_speed_prev = max(0.0, (pos - pos_prev)) / dt
-                extrude_speed_next = max(0.0, (pos_next - pos)) / dt
+        if target_temp != 0.0:
+            if self.toolhead is None:
+                self.toolhead = self.printer.lookup_object("toolhead")
+            if self.toolhead is not None:
+                extruder = self.toolhead.get_extruder()
+                if (
+                    hasattr(extruder, "find_past_position")
+                    and extruder.get_heater() == self.heater
+                ):
+                    pos = extruder.find_past_position(read_time)
+
+                    pos_prev = extruder.find_past_position(read_time - dt)
+                    pos_moved = max(-self.const_maximum_retract, pos - pos_prev)
+                    extrude_speed_prev = pos_moved / dt
+
+                    pos_next = extruder.find_past_position(read_time + dt)
+                    pos_move = max(-self.const_maximum_retract, pos_next - pos)
+                    extrude_speed_next = pos_move / dt
 
         # Modulate ambient transfer coefficient with fan speed
         ambient_transfer = self.const_ambient_transfer
@@ -1189,7 +1194,11 @@ class ControlMPC:
 
         # Expected block dT since last period
         expected_block_dT = (
-            (expected_heating - expected_ambient_transfer - expected_filament_transfer)
+            (
+                expected_heating
+                - expected_ambient_transfer
+                - expected_filament_transfer
+            )
             * dt
             / self.const_block_heat_capacity
         )
@@ -1219,9 +1228,13 @@ class ControlMPC:
             expected_block_dT + adjustment_dT
         ) < self.const_steady_state_rate * dt:
             if adjustment_dT > 0.0:
-                ambient_delta = max(adjustment_dT, self.const_min_ambient_change * dt)
+                ambient_delta = max(
+                    adjustment_dT, self.const_min_ambient_change * dt
+                )
             else:
-                ambient_delta = min(adjustment_dT, -self.const_min_ambient_change * dt)
+                ambient_delta = min(
+                    adjustment_dT, -self.const_min_ambient_change * dt
+                )
             self.state_ambient_temp += ambient_delta
 
         # Output
@@ -1236,8 +1249,11 @@ class ControlMPC:
         # Losses (+ = lost from block, - = gained to block)
         block_ambient_delta = self.state_block_temp - self.state_ambient_temp
         loss_ambient = block_ambient_delta * ambient_transfer
+        block_filament_delta = self.state_block_temp - self.filament_temp(
+            read_time, self.state_ambient_temp
+        )
         loss_filament = (
-            block_ambient_delta
+            block_filament_delta
             * extrude_speed_next
             * self.const_filament_cross_section_heat_capacity
         )
@@ -1308,6 +1324,18 @@ class ControlMPC:
             above[0] - below[0]
         )
 
+    def filament_temp(self, read_time, ambient_temp):
+        src = self.filament_temp_src
+        if src[0] == FILAMENT_TEMP_SRC_FIXED:
+            return src[1]
+        elif (
+            src[0] == FILAMENT_TEMP_SRC_SENSOR
+            and self.ambient_sensor is not None
+        ):
+            return self.ambient_sensor.get_temp(read_time)[0]
+        else:
+            return ambient_temp
+
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         return abs(target_temp - smoothed_temp) > 1.0
 
@@ -1328,6 +1356,7 @@ class ControlMPC:
             "power": self.last_power,
             "loss_ambient": self.last_loss_ambient,
             "loss_filament": self.last_loss_filament,
+            "filament_temp": self.filament_temp_src,
         }
 
 
