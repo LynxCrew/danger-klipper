@@ -1062,6 +1062,7 @@ class ControlMPC:
         else:
             heater_power = self.const_heater_powers
         self.heater_max_power = heater.get_max_power() * heater_power
+        self.max_power = heater.get_max_power()
 
         self.want_ambient_refresh = self.ambient_sensor is not None
         self.state_block_temp = AMBIENT_TEMP if load_clean else self._heater_temp()
@@ -1285,7 +1286,7 @@ class ControlMPC:
                 heater_power = self._interpolate(below, above, temp)
         else:
             heater_power = self.const_heater_power
-        duty = max(0.0, min(self.heater_max_power, power / heater_power))
+        duty = max(0.0, min(self.max_power, power / heater_power))
 
         # logging.info(
         #     "mpc: [%.3f/%.3f] %.2f => %.2f / %.2f / %.2f = %.2f[%.2f+%.2f+%.2f] / %.2f, dT %.2f, E %.2f=>%.2f",
