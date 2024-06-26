@@ -31,6 +31,9 @@ PID_PROFILE_OPTIONS = {
     "pid_ki": (float, "%.3f"),
     "pid_kd": (float, "%.3f"),
 }
+FILAMENT_TEMP_SRC_AMBIENT = "ambient"
+FILAMENT_TEMP_SRC_FIXED = "fixed"
+FILAMENT_TEMP_SRC_SENSOR = "sensor"
 
 
 class Heater:
@@ -882,6 +885,9 @@ class ControlMPC:
                     "filament_heat_capacity", above=0.0, default=0.0
                 )
             ),
+            "maximum_retract": (
+                config_section.getfloat("maximum_retract", above=0.0, default=2.0)
+            ),
         }
 
         heater_power = config_section.getfloat("heater_power", above=0.0, default=None)
@@ -915,6 +921,24 @@ class ControlMPC:
             count=2,
             default=None,
         )
+
+        filament_temp_src_raw = config_section.get(
+            "filament_temperature_source", "ambient"
+        )
+        temp = filament_temp_src_raw.lower().strip()
+        if temp == "sensor":
+            filament_temp_src = (FILAMENT_TEMP_SRC_SENSOR,)
+        elif temp == "ambient":
+            filament_temp_src = (FILAMENT_TEMP_SRC_AMBIENT,)
+        else:
+            try:
+                value = float(temp)
+            except ValueError:
+                raise config_section.error(
+                    f"Unable to parse option 'filament_temperature_source' in section '{config_section.get_name()}'"
+                )
+            filament_temp_src = (FILAMENT_TEMP_SRC_FIXED, value)
+        temp_profile["filament_temp_src"] = filament_temp_src
 
         ambient_sensor_name = config_section.get("ambient_temp_sensor", None)
         ambient_sensor = None
@@ -1071,6 +1095,8 @@ class ControlMPC:
         self.const_filament_diameter = self.profile["filament_diameter"]
         self.const_filament_density = self.profile["filament_density"]
         self.const_filament_heat_capacity = self.profile["filament_heat_capacity"]
+        self.const_maximum_retract = self.profile["maximum_retract"]
+        self.filament_temp_src = self.profile["filament_temp_src"]
         self._update_filament_const()
         self.ambient_sensor = self.profile["ambient_temp_sensor"]
         self.cooling_fan = self.profile["cooling_fan"]
