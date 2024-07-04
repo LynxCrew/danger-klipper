@@ -152,7 +152,7 @@ mv ~/klipper ~/klipper_old
 Then clone the Danger Klipper repo and restart the klipper service:
 
 ```bash
-git clone https://github.com/DangerKlippers/danger-klipper.git ~/klipper
+git clone https://github.com/LynxCrew/danger-klipper.git ~/klipper
 sudo systemctl restart klipper
 ```
 
@@ -163,7 +163,7 @@ For users that are not comfortable using Git directly, [KIAUH](https://github.co
 To do this, add the Danger Klipper repo to KIAUH's repo list and run the script with the following commands:
 
 ```bash
-echo "DangerKlippers/danger-klipper" >> ~/kiauh/klipper_repos.txt
+echo "LynxCrew/danger-klipper" >> ~/kiauh/klipper_repos.txt
 ~/kiauh/kiauh.sh
 ```
 
@@ -181,7 +181,7 @@ Can switch back to mainline klipper at any time via a `git checkout upstream_mas
 
 ```bash
 cd ~/klipper
-git remote add danger https://github.com/DangerKlippers/danger-klipper.git
+git remote add danger https://github.com/LynxCrew/danger-klipper.git
 git checkout -b upstream-master origin/master
 git branch -D master
 git checkout -b master danger/master
