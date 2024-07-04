@@ -6,7 +6,7 @@
 import logging
 
 PIN_MIN_TIME = 0.100
-RESEND_HOST_TIME = 0.900 + PIN_MIN_TIME
+RESEND_HOST_TIME = 1.100 + PIN_MIN_TIME
 MAX_ENABLE_TIME = 60.0
 DISABLE_STALL_TIME = 0.100
 
@@ -148,7 +148,7 @@ class PrinterStepperEnable:
     def register_stepper(self, config, mcu_stepper):
         name = mcu_stepper.get_name()
         max_enable_time = config.getfloat(
-            "max_enable_time", 0.0, minval=2.0, maxval=MAX_ENABLE_TIME
+            "max_enable_time", 0.0, minval=2.5, maxval=MAX_ENABLE_TIME
         )
         disable_on_error = config.getboolean("disable_on_error", False)
         if disable_on_error:
