@@ -34,7 +34,13 @@ class SensorBase:
         self.mcu = mcu = self.spi.get_mcu()
         # Reader chip configuration
         self.oid = oid = mcu.create_oid()
-        mcu.register_response(self._handle_spi_response, "thermocouple_result", oid)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
+        mcu.register_response(
+            self._handle_spi_response, "thermocouple_result", oid
+        )
+        self._is_connected = False
         mcu.register_config_callback(self._build_config)
 
     def setup_minmax(self, min_temp, max_temp):
@@ -47,6 +53,9 @@ class SensorBase:
 
     def get_report_time_delta(self):
         return REPORT_TIME
+
+    def _handle_connect(self):
+        self._is_connected = True
 
     def _build_config(self):
         if self.name in get_danger_options().temp_ignore_limits:
@@ -81,6 +90,8 @@ class SensorBase:
         )
 
     def _handle_spi_response(self, params):
+        if not self._is_connected:
+            return
         if params["fault"]:
             self.handle_fault(params["value"], params["fault"])
             return

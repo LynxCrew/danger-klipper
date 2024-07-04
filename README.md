@@ -44,6 +44,8 @@ See the [Danger Features document](https://dangerklipper.io/Danger_Features.html
 
 - [gcode: HEATER_INTERRUPT gcode command](https://github.com/DangerKlippers/danger-klipper/pull/94)
 
+- [gcode: RELOAD_GCODE_MACROS command](https://github.com/DangerKlippers/danger-klipper/pull/305)
+
 - [probe: dockable Probe](https://github.com/DangerKlippers/danger-klipper/pull/43) ([klipper#4328](https://github.com/Klipper3d/klipper/pull/4328))
 
 - [probe: drop the first result](https://github.com/DangerKlippers/danger-klipper/pull/2) ([klipper#3397](https://github.com/Klipper3d/klipper/issues/3397))
@@ -109,6 +111,8 @@ See the [Danger Features document](https://dangerklipper.io/Danger_Features.html
 - [temperature_fan: curve control algorithm](https://github.com/DangerKlippers/danger-klipper/pull/193)
 
 - [shaper_calibrate: store and expose accel_per_hz](https://github.com/DangerKlippers/danger-klipper/pull/224)
+
+- [resonance_tester: accepts ACCEL_PER_HZ in TEST_RESONANCES](https://github.com/DangerKlippers/danger-klipper/pull/312)
 
 - [mcu: support for AT32F403](https://github.com/DangerKlippers/danger-klipper/pull/284)
 
