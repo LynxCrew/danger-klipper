@@ -94,9 +94,7 @@ class Template:
         return getattr(self.function, name)
 
     def reload(self, script):
-        self.function = TemplateWrapper(
-            self.printer, self.env, self.name, script
-        )
+        self.function = TemplateWrapper(self.printer, self.env, self.name, script)
 
 
 # Main gcode macro template tracking
@@ -116,9 +114,7 @@ class PrinterGCodeMacro:
         self.env.filters["repr"] = repr
         self.env.filters["shell_quote"] = pipes.quote
         self.gcode = self.printer.lookup_object("gcode")
-        self.gcode.register_command(
-            "RELOAD_GCODE_MACROS", self.cmd_RELOAD_GCODE_MACROS
-        )
+        self.gcode.register_command("RELOAD_GCODE_MACROS", self.cmd_RELOAD_GCODE_MACROS)
 
     def boolean(self, value):
         lowercase_value = str(value).lower()
@@ -171,8 +167,7 @@ class PrinterGCodeMacro:
                 continue
 
             if name in [
-                s.get_name()
-                for s in new_config.get_prefix_sections("gcode_macro")
+                s.get_name() for s in new_config.get_prefix_sections("gcode_macro")
             ]:
                 template = obj.template
                 new_script = new_section.get("gcode").strip()

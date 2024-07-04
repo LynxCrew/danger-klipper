@@ -34,12 +34,8 @@ class SensorBase:
         self.mcu = mcu = self.spi.get_mcu()
         # Reader chip configuration
         self.oid = oid = mcu.create_oid()
-        self.printer.register_event_handler(
-            "klippy:connect", self._handle_connect
-        )
-        mcu.register_response(
-            self._handle_spi_response, "thermocouple_result", oid
-        )
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        mcu.register_response(self._handle_spi_response, "thermocouple_result", oid)
         self._is_connected = False
         mcu.register_config_callback(self._build_config)
 
