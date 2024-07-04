@@ -20,13 +20,6 @@
  * Shaper initialization
  ****************************************************************/
 
-struct shaper_pulses {
-    int num_pulses;
-    struct {
-        double t, a;
-    } pulses[25];
-};
-
 // Shift pulses around 'mid-point' t=0 so that the input shaper is an identity
 // transformation for constant-speed motion (i.e. input_shaper(v * T) = v * T)
 static void
