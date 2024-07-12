@@ -571,7 +571,7 @@ class ProbePointsHelper:
                         if self.probe_offsets[2] > self.min_horizontal_move_z
                         else self.min_horizontal_move_z
                     )
-                    self.horizontal_move_z = error + min_offset
+                    self.horizontal_move_z = error + self.min_horizontal_move_z
             elif res != "retry":
                 return True
             self.results = []
