@@ -446,9 +446,7 @@ class MessageParser:
             msgid_bytes = []
             self.msgid_parser.encode(msgid_bytes, msgid)
             if msgtype == "output":
-                self.messages_by_id[msgid] = OutputFormat(
-                    msgid_bytes, msgformat
-                )
+                self.messages_by_id[msgid] = OutputFormat(msgid_bytes, msgformat)
             else:
                 msg = MessageFormat(msgid_bytes, msgformat, self.enumerations)
                 self.messages_by_id[msgid] = msg

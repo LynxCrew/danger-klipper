@@ -115,7 +115,7 @@ class Fan:
             )
         if self.startup_check_rpm is not None and self.startup_check is None:
             raise config.error(
-                "'startup_check' must be enabled before enabling " "'startup_check_rpm'"
+                "'startup_check' must be enabled before enabling 'startup_check_rpm'"
             )
 
         self.min_rpm = 0 if self.min_rpm is None else self.min_rpm
