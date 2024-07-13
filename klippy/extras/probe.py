@@ -565,7 +565,7 @@ class ProbePointsHelper:
                     result = True
                 if self.adaptive_horizontal_move_z:
                     # then res is error
-                    error = math.ceil(res)
+                    error = math.ceil(res) or 1.0
                     min_offset = (
                         self.probe_offsets[2]
                         if self.probe_offsets[2] > self.min_horizontal_move_z
