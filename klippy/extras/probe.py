@@ -575,9 +575,9 @@ class ProbePointsHelper:
             elif res != "retry":
                 result = True
             self.results = []
+        toolhead.manual_move([None, None, self.horizontal_move_z], speed)
         if result:
             return True
-        toolhead.manual_move([None, None, self.horizontal_move_z], speed)
         # Move to next XY probe point
         nextpos = list(self.probe_points[len(self.results)])
         if self.use_offsets:
