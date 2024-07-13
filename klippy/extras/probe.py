@@ -516,7 +516,7 @@ class ProbePointsHelper:
                 "'adaptive_horizontal_move_z' must be enabled before enabling 'min_horizontal_move_z'"
             )
         self.def_min_horizontal_move_z = (
-            5.0
+            0.0
             if self.def_min_horizontal_move_z is None
             else self.def_min_horizontal_move_z
         )
@@ -595,11 +595,21 @@ class ProbePointsHelper:
         self.horizontal_move_z = gcmd.get_float(
             "HORIZONTAL_MOVE_Z", self.default_horizontal_move_z
         )
-        self.min_horizontal_move_z = gcmd.get_float(
-            "MIN_HORIZONTAL_MOVE_Z", self.def_min_horizontal_move_z
-        )
         self.adaptive_horizontal_move_z = gcmd.get_int(
             "ADAPTIVE_HORIZONTAL_MOVE_Z", self.def_adaptive_horizontal_move_z
+        )
+        self.min_horizontal_move_z = gcmd.get_float("MIN_HORIZONTAL_MOVE_Z",
+                                                    None)
+        if (self.min_horizontal_move_z is None
+                and not self.adaptive_horizontal_move_z):
+            raise gcmd.error(
+                "min_horizontal_move_z can not be set when "
+                "adaptive_horizontal_move_z is disabled"
+            )
+        self.min_horizontal_move_z = (
+            self.def_min_horizontal_move_z
+            if self.min_horizontal_move_z is None
+            else self.min_horizontal_move_z
         )
         if probe is None or method != "automatic":
             # Manual probe

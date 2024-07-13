@@ -1372,6 +1372,12 @@ extended [G-Code command](G-Codes.md#z_tilt) becomes available.
 #increasing_threshold: 0.0000001
 #   Sets the threshold that probe points can increase before z_tilt aborts.
 #   To disable the validation, set this parameter to a high value.
+#adaptive_horizontal_move_z: false
+#   When enabled the horizontal_move_z will be dynamically adjusted after
+#   each round of probing to be minimal in order to safe time (minimum move
+#   will be the probe z-offset)
+#min_horizontal_move_z: 0.0
+#   Minimum horizontal_move_z for adaptive horizontal_move_z.
 ```
 
 #### [z_tilt_ng]
@@ -1399,6 +1405,10 @@ extended [G-Code command](G-Codes.md#z_tilt) becomes available.
 #retry_tolerance: 0
 # See [z_tilt]
 #increasing_threshold: 0.0000001
+# See [z_tilt]
+#adaptive_horizontal_move_z: false
+# See [z_tilt]
+#min_horizontal_move_z: 0.0
 # See [z_tilt]
 #extra_points:
 #   A list in the same format as "points" above. This list contains
@@ -1480,6 +1490,12 @@ Where x is the 0, 0 point on the bed
 #increasing_threshold: 0.0000001
 #   Sets the threshold that probe points can increase before qgl aborts.
 #   To disable the validation, set this parameter to a high value.
+#adaptive_horizontal_move_z: false
+#   When enabled the horizontal_move_z will be dynamically adjusted after
+#   each round of probing to be minimal in order to safe time (minimum move
+#   will be the probe z-offset)
+#min_horizontal_move_z: 0.0
+#   Minimum horizontal_move_z for adaptive horizontal_move_z.
 ```
 
 ### [skew_correction]
