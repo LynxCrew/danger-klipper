@@ -598,10 +598,8 @@ class ProbePointsHelper:
         self.adaptive_horizontal_move_z = gcmd.get_int(
             "ADAPTIVE_HORIZONTAL_MOVE_Z", self.def_adaptive_horizontal_move_z
         )
-        self.min_horizontal_move_z = gcmd.get_float("MIN_HORIZONTAL_MOVE_Z",
-                                                    None)
-        if (self.min_horizontal_move_z is None
-                and not self.adaptive_horizontal_move_z):
+        self.min_horizontal_move_z = gcmd.get_float("MIN_HORIZONTAL_MOVE_Z", None)
+        if self.min_horizontal_move_z is None and not self.adaptive_horizontal_move_z:
             raise gcmd.error(
                 "min_horizontal_move_z can not be set when "
                 "adaptive_horizontal_move_z is disabled"
