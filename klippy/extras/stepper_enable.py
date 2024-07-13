@@ -16,7 +16,14 @@ DISABLE_STALL_TIME = 0.100
 
 
 class StepperEnablePin:
-    def __init__(self, mcu_enable, enable_count, printer, max_enable_time=0.0):
+    def __init__(
+        self,
+        mcu_enable,
+        enable_count,
+        printer,
+        max_enable_time=0.0,
+        resend_interval=MIN_ENABLE_TIME / 2,
+    ):
         self.printer = printer
         self.reactor = self.printer.get_reactor()
         self.mcu_enable = mcu_enable
@@ -24,7 +31,7 @@ class StepperEnablePin:
         self.is_dedicated = True
         self.last_value = 0
         self.resend_timer = None
-        self.resend_interval = (MIN_ENABLE_TIME / 2) if max_enable_time else 0.0
+        self.resend_interval = resend_interval if max_enable_time else 0.0
         self.last_print_time = 0.0
 
     def set_enable(self, print_time):
@@ -68,7 +75,9 @@ class StepperEnablePin:
         return systime + self.resend_interval
 
 
-def setup_enable_pin(printer, pin, max_enable_time=0.0):
+def setup_enable_pin(
+    printer, pin, max_enable_time=0.0, resend_interval=MIN_ENABLE_TIME / 2
+):
     if pin is None:
         # No enable line (stepper always enabled)
         enable = StepperEnablePin(None, 9999, printer)
@@ -85,7 +94,7 @@ def setup_enable_pin(printer, pin, max_enable_time=0.0):
     mcu_enable.setup_max_duration(max_enable_time)
     # mcu_enable.setup_start_value(0, 0)
     enable = pin_params["class"] = StepperEnablePin(
-        mcu_enable, 0, printer, max_enable_time
+        mcu_enable, 0, printer, max_enable_time, resend_interval
     )
     return enable
 
@@ -149,13 +158,22 @@ class PrinterStepperEnable:
         max_enable_time = config.getfloat(
             "max_enable_time", 0.0, minval=MIN_ENABLE_TIME, maxval=MAX_ENABLE_TIME
         )
+        resend_interval = config.getfloat(
+            "resend_interval",
+            MIN_ENABLE_TIME / 2,
+            minval=MIN_ENABLE_TIME / 2,
+            maxval=MIN_ENABLE_TIME,
+        )
         disable_on_error = config.getboolean("disable_on_error", False)
         if disable_on_error:
             config.deprecate("disable_on_error")
             if not max_enable_time:
                 max_enable_time = 5.0
         enable = setup_enable_pin(
-            self.printer, config.get("enable_pin", None), max_enable_time
+            self.printer,
+            config.get("enable_pin", None),
+            max_enable_time,
+            resend_interval,
         )
         self.enable_lines[name] = EnableTracking(mcu_stepper, enable)
 
