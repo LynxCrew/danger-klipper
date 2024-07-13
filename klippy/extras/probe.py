@@ -504,13 +504,13 @@ class ProbePointsHelper:
             )
         self.move_z_speed = config.getfloat("horizontal_move_z_speed", None, above=0.0)
         self.default_horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
-        self.adaptive_horizontal_move_z = config.getboolean(
+        self.def_adaptive_horizontal_move_z = config.getboolean(
             "adaptive_horizontal_move_z", False
         )
         self.def_min_horizontal_move_z = config.getfloat("min_horizontal_move_z", None)
         if (
             self.def_min_horizontal_move_z is not None
-            and not self.adaptive_horizontal_move_z
+            and not self.def_adaptive_horizontal_move_z
         ):
             raise config.error(
                 "'adaptive_horizontal_move_z' must be enabled before enabling 'min_horizontal_move_z'"
@@ -555,14 +555,14 @@ class ProbePointsHelper:
             speed = self.speed
         elif self.move_z_speed is not None:
             speed = self.move_z_speed
-        toolhead.manual_move([None, None, self.horizontal_move_z], speed)
+        result = False
         # Check if done probing
         if len(self.results) >= len(self.probe_points):
             toolhead.get_last_move_time()
             res = self.finalize_callback(self.probe_offsets, self.results)
             if isinstance(res, (int, float)):
                 if res == 0:
-                    return True
+                    result = True
                 if self.adaptive_horizontal_move_z:
                     # then res is error
                     error = math.ceil(res)
@@ -573,8 +573,11 @@ class ProbePointsHelper:
                     )
                     self.horizontal_move_z = error + min_offset
             elif res != "retry":
-                return True
+                result = True
             self.results = []
+        if result:
+            return True
+        toolhead.manual_move([None, None, self.horizontal_move_z], speed)
         # Move to next XY probe point
         nextpos = list(self.probe_points[len(self.results)])
         if self.use_offsets:
@@ -594,6 +597,9 @@ class ProbePointsHelper:
         )
         self.min_horizontal_move_z = gcmd.get_float(
             "MIN_HORIZONTAL_MOVE_Z", self.def_min_horizontal_move_z
+        )
+        self.adaptive_horizontal_move_z = gcmd.get_int(
+            "ADAPTIVE_HORIZONTAL_MOVE_Z", self.def_adaptive_horizontal_move_z
         )
         if probe is None or method != "automatic":
             # Manual probe
