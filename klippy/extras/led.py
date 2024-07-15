@@ -205,8 +205,8 @@ class PrinterLED:
     def _activate_timer(self):
         if self.render_timer is not None or not self.active_templates:
             return
-        self.render_timer = threading.Thread(target=self._run_render_timer())
-        self.render_timer.start()
+        # self.render_timer = threading.Thread(target=self._run_render_timer())
+        # self.render_timer.start()
 
     def _run_render_timer(self):
         wait_time = self._render()
