@@ -129,6 +129,8 @@ class ConfigWrapper:
         )
 
     def getchoice(self, option, choices, default=sentinel, note_valid=True):
+        if isinstance(choices, list):
+            choices = {i: i for i in choices}
         if choices and isinstance(list(choices.keys())[0], int):
             c = self.getint(option, default, note_valid=note_valid)
         else:
