@@ -97,7 +97,7 @@ class LEDHelper:
                     max_val = range_steps[0]
                 min = self.check_index(min_val, gcmd, led_count)
                 max = self.check_index(max_val, gcmd, led_count)
-                if max > min:
+                if max < min:
                     raise gcmd.error("Min value greater than max value in '%s'" % index)
                 for i in range(min, (max + 1), self.check_step(step, min, max, gcmd)):
                     indices.add(i)
