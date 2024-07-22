@@ -69,7 +69,7 @@ class LEDHelper:
     def get_indices(self, gcmd, led_count):
         given_indices = gcmd.get("INDEX", None)
         if given_indices is None:
-            return range(1, (led_count + 1))
+            return range(1, led_count)
         indices = set()
         for index in given_indices.split(","):
             led_range = index.split("-")
