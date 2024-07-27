@@ -431,7 +431,8 @@ class PrinterRail:
         self.endstop_map = {}
         stepper_config = config if stepper_config is None else stepper_config
         if init_steppers:
-            self.steppers = init_steppers
+            for stepper in init_steppers:
+                self.add_extra_stepper(stepper_config, config, stepper)
         else:
             self.add_extra_stepper(stepper_config, config)
         self.mcu_stepper = self.steppers[0]
@@ -562,9 +563,10 @@ class PrinterRail:
     def get_endstops(self):
         return list(self.endstops)
 
-    def add_extra_stepper(self, config, axis_config=None):
+    def add_extra_stepper(self, config, axis_config=None, stepper=None):
         axis_config = config if axis_config is None else axis_config
-        stepper = PrinterStepper(config, self.stepper_units_in_radians)
+        if stepper is None:
+            stepper = PrinterStepper(config, self.stepper_units_in_radians)
         self.steppers.append(stepper)
         if self.endstops and axis_config.get("endstop_pin", None) is None:
             # No endstop defined - use primary endstop
