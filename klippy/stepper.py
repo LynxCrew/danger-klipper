@@ -616,6 +616,16 @@ class PrinterRail:
             stepper.set_position(coord)
 
 
+def LookUpRail(
+    config,
+    need_position_minmax=True,
+    default_position_endstop=None,
+    units_in_radians=False,
+):
+    return PrinterRail(
+        config, need_position_minmax, default_position_endstop, units_in_radians
+    )
+
 # Wrapper for dual stepper motor support
 def LookupMultiRail(
     config,
