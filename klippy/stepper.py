@@ -616,7 +616,7 @@ class PrinterRail:
             stepper.set_position(coord)
 
 
-def LookUpRail(
+def LookupRail(
     config,
     need_position_minmax=True,
     default_position_endstop=None,
