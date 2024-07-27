@@ -21,17 +21,19 @@ class CoreXYKinematics:
         self.rails[0].setup_itersolve("corexy_stepper_alloc", b"+")
         self.rails[1].setup_itersolve("corexy_stepper_alloc", b"-")
         self.rails[2].setup_itersolve("cartesian_stepper_alloc", b"z")
-        front_z = config.getlist("front_z")
-        self.rails[3] = stepper.LookupRail(config.getsection("stepper_z"), init_stepper=False)
-        for z in front_z:
+        front_z_steppers = []
+        for z in config.getlist("front_z"):
             for z_stepper in self.rails[2].steppers:
                 if z_stepper._name == ("stepper_" + z):
-                    self.rails[3].steppers.append(z_stepper)
-        self.rails[4] = stepper.LookupRail(config.getsection("stepper_z"), init_stepper=False)
-        for z in front_z:
+                    front_z_steppers.append(z_stepper)
+        self.rails[3] = stepper.LookupRail(config.getsection("stepper_z"), init_stepper=front_z_steppers)
+        back_z_steppers = []
+        for z in config.getlist("back_z"):
             for z_stepper in self.rails[2].steppers:
                 if z_stepper._name == ("stepper_" + z):
-                    self.rails[4].steppers.append(z_stepper)
+                    back_z_steppers.append(z_stepper)
+        self.rails[4] = stepper.LookupRail(config.getsection("stepper_z"), init_stepper=back_z_steppers)
+
 
 
         for s in self.get_steppers():
