@@ -26,13 +26,13 @@ class CoreXYKinematics:
             for z_stepper in self.rails[2].steppers:
                 if z_stepper._name == ("stepper_" + z):
                     front_z_steppers.append(z_stepper)
-        self.rails[3] = stepper.LookupRail(config.getsection("stepper_z"), init_stepper=front_z_steppers)
+        self.rails[3] = stepper.LookupRail(config.getsection("stepper_z"), init_steppers=front_z_steppers)
         back_z_steppers = []
         for z in config.getlist("back_z"):
             for z_stepper in self.rails[2].steppers:
                 if z_stepper._name == ("stepper_" + z):
                     back_z_steppers.append(z_stepper)
-        self.rails[4] = stepper.LookupRail(config.getsection("stepper_z"), init_stepper=back_z_steppers)
+        self.rails[4] = stepper.LookupRail(config.getsection("stepper_z"), init_steppers=back_z_steppers)
 
 
 
