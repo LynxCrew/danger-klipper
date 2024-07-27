@@ -422,6 +422,7 @@ class PrinterRail:
         default_position_endstop=None,
         units_in_radians=False,
         stepper_config=None,
+        init_stepper=True,
     ):
         # Primary stepper and endstop
         self.stepper_units_in_radians = units_in_radians
@@ -429,7 +430,8 @@ class PrinterRail:
         self.endstops = []
         self.endstop_map = {}
         stepper_config = config if stepper_config is None else stepper_config
-        self.add_extra_stepper(stepper_config, config)
+        if init_stepper:
+            self.add_extra_stepper(stepper_config, config)
         self.mcu_stepper = self.steppers[0]
         self._tmc_current_helpers = None
         self.get_name = self.mcu_stepper.get_name
@@ -621,9 +623,16 @@ def LookupRail(
     need_position_minmax=True,
     default_position_endstop=None,
     units_in_radians=False,
+    stepper_config=None,
+    init_stepper=True,
 ):
     return PrinterRail(
-        config, need_position_minmax, default_position_endstop, units_in_radians
+        config,
+        need_position_minmax,
+        default_position_endstop,
+        units_in_radians,
+        stepper_config,
+        init_stepper
     )
 
 # Wrapper for dual stepper motor support
@@ -633,6 +642,7 @@ def LookupMultiRail(
     default_position_endstop=None,
     units_in_radians=False,
     stepper_config=None,
+    init_stepper=True,
 ):
     rail = PrinterRail(
         config,
@@ -640,6 +650,7 @@ def LookupMultiRail(
         default_position_endstop,
         units_in_radians,
         stepper_config,
+        init_stepper
     )
     for i in range(1, 99):
         stepper_config = config if stepper_config is None else stepper_config

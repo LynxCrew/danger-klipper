@@ -3,6 +3,7 @@
 # Copyright (C) 2017-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+
 import stepper
 
 
@@ -21,13 +22,18 @@ class CoreXYKinematics:
         self.rails[1].setup_itersolve("corexy_stepper_alloc", b"-")
         self.rails[2].setup_itersolve("cartesian_stepper_alloc", b"z")
         front_z = config.getlist("front_z")
-        self.rails[3] = stepper.LookupRail(config.getsection("stepper_" + front_z[0]))
-        for i in range(1, len(front_z)):
-            self.rails[3].add_extra_stepper(config.getsection("stepper_" + front_z[i]))
-        back_z = config.getlist("back_z")
-        self.rails[4] = stepper.LookupRail(config.getsection("stepper_" + back_z[0]))
-        for i in range(1, len(front_z)):
-            self.rails[4].add_extra_stepper(config.getsection("stepper_" + back_z[i]))
+        self.rails[3] = stepper.LookupRail(config.getsection("stepper_z"), init_stepper=False)
+        for z in front_z:
+            for z_stepper in self.rails[2].steppers:
+                if z_stepper._name == ("stepper_" + z):
+                    self.rails[3].steppers.append(z_stepper)
+        self.rails[4] = stepper.LookupRail(config.getsection("stepper_z"), init_stepper=False)
+        for z in front_z:
+            for z_stepper in self.rails[2].steppers:
+                if z_stepper._name == ("stepper_" + z):
+                    self.rails[4].steppers.append(z_stepper)
+
+
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
