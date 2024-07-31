@@ -49,15 +49,9 @@ class PrinterProbe:
             "sample_retract_dist", 2.0, above=0.0
         )
         atypes = ["median", "average"]
-        self.samples_result = config.getchoice(
-            "samples_result", atypes, "average"
-        )
-        self.samples_tolerance = config.getfloat(
-            "samples_tolerance", 0.100, minval=0.0
-        )
-        self.samples_retries = config.getint(
-            "samples_tolerance_retries", 0, minval=0
-        )
+        self.samples_result = config.getchoice("samples_result", atypes, "average")
+        self.samples_tolerance = config.getfloat("samples_tolerance", 0.100, minval=0.0)
+        self.samples_retries = config.getint("samples_tolerance_retries", 0, minval=0)
         # Register z_virtual_endstop pin
         self.printer.lookup_object("pins").register_chip("probe", self)
         # Register homing event handlers
@@ -605,7 +599,10 @@ class ProbePointsHelper:
             "ADAPTIVE_HORIZONTAL_MOVE_Z", self.def_adaptive_horizontal_move_z
         )
         self.min_horizontal_move_z = gcmd.get_float("MIN_HORIZONTAL_MOVE_Z", None)
-        if self.min_horizontal_move_z is not None and not self.adaptive_horizontal_move_z:
+        if (
+            self.min_horizontal_move_z is not None
+            and not self.adaptive_horizontal_move_z
+        ):
             raise gcmd.error(
                 "min_horizontal_move_z can not be set when "
                 "adaptive_horizontal_move_z is disabled"

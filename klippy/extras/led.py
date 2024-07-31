@@ -226,11 +226,11 @@ class PrinterLED:
             led_helper.set_active_template(None)
 
     def _render(self):
-        eventtime = self.reactor.monotonic()
         if not self.active_templates:
             # Nothing to do - unregister timer
             self.render_timer = None
             return 0
+        eventtime = self.reactor.monotonic()
         # Setup gcode_macro template context
         context = self.create_template_context(eventtime)
 
