@@ -20,7 +20,7 @@ class KlipperThreads:
         self.printer = printer
 
     def is_running(self):
-        return self.printer is not None and not self.printer.is_shutdown()
+        return self.printer is not None
 
     def register_job(
         self, group=None, target=None, name=None, args=(), kwargs=None, *, daemon=None
