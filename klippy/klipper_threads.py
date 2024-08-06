@@ -5,22 +5,26 @@ import time
 
 
 class KlipperThreads:
+    class DummyPrinter:
+        def __init__(self):
+            pass
+
+        def is_shutdown(self):
+            return False
+
     def __init__(self):
-        self.running = False
         self.printer = None
         self.registered_threads = []
 
     def run(self, printer):
         self.printer = printer
-        self.running = True
 
     def is_running(self):
-        return self.running and (self.printer is None or not self.printer.is_shutdown())
+        return self.printer is not None and not self.printer.is_shutdown()
 
     def register_job(
         self, group=None, target=None, name=None, args=(), kwargs=None, *, daemon=None
     ):
-        logging.info("MEOW" + str(self.running))
         return KlipperThread(
             self,
             group=group,
@@ -32,7 +36,7 @@ class KlipperThreads:
         )
 
     def end(self):
-        self.running = False
+        self.printer = None
 
     def finalize(self):
         for k_thread in self.registered_threads:

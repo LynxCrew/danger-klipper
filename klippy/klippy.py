@@ -371,8 +371,8 @@ class Printer:
     def request_exit(self, result):
         if self.run_result is None:
             self.run_result = result
-        self.reactor.end()
         self.klipper_threads.end()
+        self.reactor.end()
 
     wait_interrupted = WaitInterruption
 
@@ -555,8 +555,8 @@ def main():
         if res in ["exit", "error_exit"]:
             break
         time.sleep(1.0)
-        main_reactor.finalize()
         k_threads.finalize()
+        main_reactor.finalize()
         main_reactor = k_threads = printer = None
         logging.info("Restarting printer")
         start_args["start_reason"] = res
