@@ -71,7 +71,6 @@ class KlipperThread:
                 wait_time = job(*args, **kwargs)
         finally:
             self.k_threads.registered_threads.remove(self)
-            del self.thread
             self.thread = None
             sys.exit()
 
