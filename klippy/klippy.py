@@ -69,7 +69,7 @@ class Printer:
         self.bglogger = bglogger
         self.start_args = start_args
         self.reactor = main_reactor
-        self.klipper_threads = klipper_threads
+        self.klipper_threads = klipper_threads.init(self)
         self.reactor.register_callback(self._connect)
         self.state_message = message_startup
         self.in_shutdown_state = False

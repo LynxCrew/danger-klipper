@@ -194,9 +194,7 @@ class BME280:
         self.printer.add_object("bme280 " + self.name, self)
         if self.printer.get_start_args().get("debugoutput") is not None:
             return
-        self.printer.register_event_handler(
-            "klippy:connect", self.handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self.handle_connect)
 
     def handle_connect(self):
         self._init_bmxx80()
@@ -324,8 +322,7 @@ class BME280:
         else:
             self.chip_type = BME_CHIPS[chip_id]
             logging.info(
-                "bme280: Found Chip %s at %#x"
-                % (self.chip_type, self.i2c.i2c_address)
+                "bme280: Found Chip %s at %#x" % (self.chip_type, self.i2c.i2c_address)
             )
 
         # Reset chip
@@ -345,9 +342,7 @@ class BME280:
             self.sample_timer = self.reactor.register_timer(self._sample_bme680)
             self.chip_registers = BME680_REGS
         elif self.chip_type == "BMP180":
-            self.max_sample_time = (
-                1.25 + ((2.3 * self.os_pres) + 0.575)
-            ) / 1000
+            self.max_sample_time = (1.25 + ((2.3 * self.os_pres) + 0.575)) / 1000
             self.sample_timer = self.reactor.register_timer(self._sample_bmp180)
             self.chip_registers = BMP180_REGS
         elif self.chip_type == "BMP388":
@@ -411,9 +406,7 @@ class BME280:
             # wait until results are ready
             status = self.read_register("STATUS", 1)[0]
             while status & STATUS_MEASURING:
-                self.reactor.pause(
-                    self.reactor.monotonic() + self.max_sample_time
-                )
+                self.reactor.pause(self.reactor.monotonic() + self.max_sample_time)
                 status = self.read_register("STATUS", 1)[0]
 
             if self.chip_type == "BME280":
@@ -541,9 +534,7 @@ class BME280:
             # wait until results are ready
             status = self.read_register("EAS_STATUS_0", 1)[0]
             while not data_ready(status):
-                self.reactor.pause(
-                    self.reactor.monotonic() + self.max_sample_time
-                )
+                self.reactor.pause(self.reactor.monotonic() + self.max_sample_time)
                 status = self.read_register("EAS_STATUS_0", 1)[0]
 
             data = self.read_register("PRESSURE_MSB", 8)
@@ -558,9 +549,7 @@ class BME280:
             self.temp = self._compensate_temp(temp_raw)
         pressure_raw = (data[0] << 12) | (data[1] << 4) | (data[2] >> 4)
         if pressure_raw != 0x80000:
-            self.pressure = (
-                self._compensate_pressure_bme680(pressure_raw) / 100.0
-            )
+            self.pressure = self._compensate_pressure_bme680(pressure_raw) / 100.0
         humid_raw = (data[6] << 8) | data[7]
         self.humidity = self._compensate_humidity_bme680(humid_raw)
 
@@ -638,9 +627,7 @@ class BME280:
         var2 = var1 * var1 * dig["P6"] / 32768.0
         var2 = var2 + var1 * dig["P5"] * 2.0
         var2 = var2 / 4.0 + (dig["P4"] * 65536.0)
-        var1 = (
-            dig["P3"] * var1 * var1 / 524288.0 + dig["P2"] * var1
-        ) / 524288.0
+        var1 = (dig["P3"] * var1 * var1 / 524288.0 + dig["P2"] * var1) / 524288.0
         var1 = (1.0 + var1 / 32768.0) * dig["P1"]
         if var1 == 0:
             return 0.0
@@ -699,9 +686,7 @@ class BME280:
         dig = self.dig
         temp_comp = self.temp
 
-        var1 = raw_humidity - (
-            (dig["H1"] * 16.0) + ((dig["H3"] / 2.0) * temp_comp)
-        )
+        var1 = raw_humidity - ((dig["H1"] * 16.0) + ((dig["H3"] / 2.0) * temp_comp))
         var2 = var1 * (
             (dig["H2"] / 262144.0)
             * (
@@ -717,12 +702,8 @@ class BME280:
 
     def _compensate_gas(self, gas_raw, gas_range):
         gas_switching_error = self.read_register("RANGE_SWITCHING_ERROR", 1)[0]
-        var1 = (1340.0 + 5.0 * gas_switching_error) * BME680_GAS_CONSTANTS[
-            gas_range
-        ][0]
-        gas = (
-            var1 * BME680_GAS_CONSTANTS[gas_range][1] / (gas_raw - 512.0 + var1)
-        )
+        var1 = (1340.0 + 5.0 * gas_switching_error) * BME680_GAS_CONSTANTS[gas_range][0]
+        gas = var1 * BME680_GAS_CONSTANTS[gas_range][1] / (gas_raw - 512.0 + var1)
         return gas
 
     def _calculate_gas_heater_resistance(self, target_temp):
