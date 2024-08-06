@@ -4,17 +4,21 @@ import time
 
 
 class KlipperThreads:
+    class DummyPrinter:
+        def is_shutdown(self):
+            return False
+
     def __init__(self):
-        self.running = True
-        self.printer = None
+        self.running = False
+        self.printer = self.DummyPrinter()
         self.registered_threads = []
 
-    def init(self, printer):
+    def run(self, printer):
+        self.printer = True
         self.printer = printer
-        return self
 
     def is_running(self):
-        return self.running and (self.printer is None or not self.printer.is_shutdown())
+        return self.running and not self.printer.is_shutdown()
 
     def register_job(
         self, group=None, target=None, name=None, args=(), kwargs=None, *, daemon=None
