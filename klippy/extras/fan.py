@@ -18,6 +18,7 @@ class Fan:
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object("gcode")
         self.reactor = self.printer.get_reactor()
+        self.klipper_threads = self.printer.get_klipper_threads()
         self.last_fan_value = 0.0
         self.pwm_value = 0.0
         self.last_fan_time = 0.0
@@ -148,12 +149,6 @@ class Fan:
             desc=self.cmd_SET_FAN_help,
         )
 
-    def _run_fan_check(self):
-        wait_time = self.fan_check()
-        while wait_time > 0 and not self.printer.is_shutdown():
-            time.sleep(wait_time)
-            wait_time = self.fan_check()
-
     def handle_ready(self):
         if self.startup_check:
             self.self_checking = True
@@ -227,7 +222,9 @@ class Fan:
         if self.min_rpm > 0 and (force or not self.self_checking):
             if pwm_value > 0:
                 if self.fan_check_thread is None:
-                    self.fan_check_thread = threading.Thread(target=self._run_fan_check)
+                    self.fan_check_thread = self.klipper_threads.register_job(
+                        target=self.fan_check
+                    )
                     self.fan_check_thread.start()
             else:
                 if self.fan_check_thread is not None:

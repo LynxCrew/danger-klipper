@@ -16,6 +16,7 @@ class ControllerFan:
     def __init__(self, config, defined_fan=None):
         self.name = config.get_name().split()[1]
         self.printer = config.get_printer()
+        self.klipper_threads = self.printer.get_klipper_threads()
         self.printer.register_event_handler("klippy:connect", self.handle_connect)
         if defined_fan is None:
             self.printer.register_event_handler("klippy:ready", self.handle_ready)
@@ -37,7 +38,9 @@ class ControllerFan:
         self.last_on = self.idle_timeout
         self.last_speed = 0.0
         self.enabled = True
-        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
+        self.temperature_sample_thread = self.klipper_threads.register_job(
+            target=self.callback
+        )
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "SET_CONTROLLER_FAN",
@@ -46,12 +49,6 @@ class ControllerFan:
             self.cmd_SET_CONTROLLER_FAN,
             desc=self.cmd_SET_CONTROLLER_FAN_help,
         )
-
-    def _run_sample_timer(self):
-        wait_time = self.callback()
-        while wait_time > 0 and not self.printer.is_shutdown():
-            time.sleep(wait_time)
-            wait_time = self.callback()
 
     def handle_connect(self):
         # Heater lookup

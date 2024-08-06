@@ -18,6 +18,7 @@ class Temperature_HOST:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
+        self.klipper_threads = self.printer.get_klipper_threads()
         self.name = config.get_name().split()[-1]
         self.path = config.get("sensor_path", RPI_PROC_TEMP_FILE)
 
@@ -29,7 +30,9 @@ class Temperature_HOST:
         if self.printer.get_start_args().get("debugoutput") is not None:
             return
 
-        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
+        self.temperature_sample_thread = self.klipper_threads.register_job(
+            target=self._sample_pi_temperature
+        )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
         try:

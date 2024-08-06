@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, gc, optparse, logging, time, collections, importlib, importlib.util
-import util, reactor, queuelogger, msgproto
+import util, reactor, queuelogger, msgproto, klipper_threads
 import gcode, configfile, pins, mcu, toolhead, webhooks, non_critical_mcus
 from extras.danger_options import get_danger_options
 
@@ -61,7 +61,7 @@ class Printer:
     config_error = configfile.error
     command_error = gcode.CommandError
 
-    def __init__(self, main_reactor, bglogger, start_args):
+    def __init__(self, main_reactor, klipper_threads, bglogger, start_args):
         if sys.version_info[0] < 3:
             logging.error("DangerKlipper requires Python 3")
             sys.exit(1)
@@ -69,6 +69,7 @@ class Printer:
         self.bglogger = bglogger
         self.start_args = start_args
         self.reactor = main_reactor
+        self.klipper_threads = klipper_threads
         self.reactor.register_callback(self._connect)
         self.state_message = message_startup
         self.in_shutdown_state = False
@@ -84,6 +85,9 @@ class Printer:
 
     def get_reactor(self):
         return self.reactor
+
+    def get_klipper_threads(self):
+        return self.klipper_threads
 
     def get_state_message(self):
         if self.state_message == message_ready:
@@ -366,6 +370,7 @@ class Printer:
         if self.run_result is None:
             self.run_result = result
         self.reactor.end()
+        self.klipper_threads.end()
 
     wait_interrupted = WaitInterruption
 
@@ -542,13 +547,15 @@ def main():
             bglogger.set_rollover_info("versions", versions)
         gc.collect()
         main_reactor = reactor.Reactor(gc_checking=True)
-        printer = Printer(main_reactor, bglogger, start_args)
+        k_threads = klipper_threads.KlipperThreads()
+        printer = Printer(main_reactor, k_threads, bglogger, start_args)
         res = printer.run()
         if res in ["exit", "error_exit"]:
             break
         time.sleep(1.0)
         main_reactor.finalize()
-        main_reactor = printer = None
+        k_threads.finalize()
+        main_reactor = k_threads = printer = None
         logging.info("Restarting printer")
         start_args["start_reason"] = res
         if options.rotate_log_at_restart and bglogger is not None:
