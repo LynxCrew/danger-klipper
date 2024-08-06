@@ -69,7 +69,7 @@ class Printer:
         self.bglogger = bglogger
         self.start_args = start_args
         self.reactor = main_reactor
-        self.klipper_threads = klipper_threads
+        self.klipper_threads = klipper_threads.init(self)
         self.reactor.register_callback(self._connect)
         self.state_message = message_startup
         self.in_shutdown_state = False
@@ -317,7 +317,7 @@ class Printer:
         # Enter main reactor loop
         try:
             self.reactor.run()
-            self.klipper_threads.run(self)
+            self.klipper_threads.run()
         except:
             msg = "Unhandled exception during run"
             logging.exception(msg)
@@ -325,7 +325,7 @@ class Printer:
             try:
                 self.reactor.register_callback((lambda e: self.invoke_shutdown(msg)))
                 self.reactor.run()
-                self.klipper_threads.run(self)
+                self.klipper_threads.run()
             except:
                 logging.exception("Repeat unhandled exception during run")
                 # Another exception - try to exit
