@@ -50,7 +50,6 @@ class KlipperThread:
         daemon=None
     ):
         self.k_threads = k_threads
-        self.k_threads.registered_threads.append(self)
         self.thread = threading.Thread(
             group=group,
             target=self._run_job,
@@ -59,6 +58,7 @@ class KlipperThread:
             kwargs=kwargs,
             daemon=daemon,
         )
+        self.k_threads.registered_threads.append(self)
 
     def start(self):
         self.thread.start()
