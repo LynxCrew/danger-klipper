@@ -5,13 +5,13 @@ import time
 
 class KlipperThreads:
     def __init__(self):
-        self.running = True
+        self.running = False
         self.printer = None
         self.registered_threads = []
 
-    def init(self, printer):
+    def run(self, printer):
         self.printer = printer
-        return self
+        self.running = True
 
     def is_running(self):
         return self.running and (self.printer is None or not self.printer.is_shutdown())
