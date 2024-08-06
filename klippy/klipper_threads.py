@@ -14,7 +14,7 @@ class KlipperThreads:
         self.registered_threads = []
 
     def run(self, printer):
-        self.printer = True
+        self.running = True
         self.printer = printer
 
     def is_running(self):
