@@ -5,22 +5,15 @@ import time
 
 
 class KlipperThreads:
-    class DummyPrinter:
-        def __init__(self):
-            pass
-
-        def is_shutdown(self):
-            return False
-
     def __init__(self):
-        self.printer = None
+        self.running = False
         self.registered_threads = []
 
-    def run(self, printer):
-        self.printer = printer
+    def run(self):
+        self.running = True
 
     def is_running(self):
-        return self.printer is not None
+        return self.running
 
     def register_job(
         self, group=None, target=None, name=None, args=(), kwargs=None, *, daemon=None
@@ -36,7 +29,7 @@ class KlipperThreads:
         )
 
     def end(self):
-        self.printer = None
+        self.running = False
 
     def finalize(self):
         for k_thread in self.registered_threads:
