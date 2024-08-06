@@ -316,16 +316,16 @@ class Printer:
         )
         # Enter main reactor loop
         try:
-            self.reactor.run()
             self.klipper_threads.run(self)
+            self.reactor.run()
         except:
             msg = "Unhandled exception during run"
             logging.exception(msg)
             # Exception from a reactor callback - try to shutdown
             try:
                 self.reactor.register_callback((lambda e: self.invoke_shutdown(msg)))
-                self.reactor.run()
                 self.klipper_threads.run(self)
+                self.reactor.run()
             except:
                 logging.exception("Repeat unhandled exception during run")
                 # Another exception - try to exit
