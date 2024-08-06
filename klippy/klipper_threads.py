@@ -1,3 +1,4 @@
+import logging
 import sys
 import threading
 import time
@@ -19,6 +20,7 @@ class KlipperThreads:
     def register_job(
         self, group=None, target=None, name=None, args=(), kwargs=None, *, daemon=None
     ):
+        logging.info("MEOW" + str(self.running))
         return KlipperThread(
             self,
             group=group,
