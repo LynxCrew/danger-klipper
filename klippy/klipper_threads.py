@@ -63,11 +63,11 @@ class KlipperThread:
     def start(self):
         self.thread.start()
 
-    def _run_job(self, job, args=(), kwargs=None):
-        wait_time = job(*args, **kwargs)
+    def _run_job(self, job, args=()):
+        wait_time = job(*args)
         while wait_time > 0 and self.k_threads.is_running():
             time.sleep(wait_time)
-            wait_time = job(*args, **kwargs)
+            wait_time = job(*args)
         self.k_threads.registered_threads.remove(self)
         sys.exit()
 
