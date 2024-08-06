@@ -64,12 +64,16 @@ class KlipperThread:
         self.thread.start()
 
     def _run_job(self, job, args=(), **kwargs):
-        wait_time = job(*args, **kwargs)
-        while wait_time > 0 and self.k_threads.is_running():
-            time.sleep(wait_time)
+        try:
             wait_time = job(*args, **kwargs)
-        self.k_threads.registered_threads.remove(self)
-        sys.exit()
+            while wait_time > 0 and self.k_threads.is_running():
+                time.sleep(wait_time)
+                wait_time = job(*args, **kwargs)
+        finally:
+            self.k_threads.registered_threads.remove(self)
+            del self.thread
+            self.thread = None
+            sys.exit()
 
     def finalize(self):
         if self.thread is not None and self.thread.is_alive():
