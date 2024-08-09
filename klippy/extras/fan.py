@@ -242,11 +242,11 @@ class Fan:
                     self.fan_check_thread = None
 
     def _unlock_lock(self, eventtime):
-        self.locking = False
         if self.queued_speed is not None:
             self._set_speed(eventtime, self.queued_speed, self.queued_force)
             self.queued_speed = None
             self.queued_force = False
+        self.locking = False
         return self.reactor.NEVER
 
     def set_speed_from_command(self, value, force=False):
