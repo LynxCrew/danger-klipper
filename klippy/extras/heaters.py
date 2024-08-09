@@ -383,8 +383,8 @@ class ControlBangBang:
         profile_version = config_section.getint("profile_version", None)
         if HEATER_PROFILE_VERSION != profile_version:
             logging.info(
-                "bed_mesh: Profile [%s] not compatible with this version\n"
-                "of bed_mesh.  Profile Version: %d Current Version: %d "
+                "heater_profile: Profile [%s] not compatible with this version\n"
+                "of heater_profile.  Profile Version: %d Current Version: %d "
                 % (name, profile_version, HEATER_PROFILE_VERSION)
             )
             return
@@ -446,8 +446,8 @@ class ControlPID:
         profile_version = config_section.getint("profile_version", None)
         if HEATER_PROFILE_VERSION != profile_version:
             logging.info(
-                "bed_mesh: Profile [%s] not compatible with this version\n"
-                "of bed_mesh.  Profile Version: %d Current Version: %d "
+                "heater_profile: Profile [%s] not compatible with this version\n"
+                "of heater_profile.  Profile Version: %d Current Version: %d "
                 % (name, profile_version, HEATER_PROFILE_VERSION)
             )
             return
@@ -851,8 +851,8 @@ class ControlMPC:
         profile_version = config_section.getint("profile_version", None)
         if HEATER_PROFILE_VERSION != profile_version:
             logging.info(
-                "bed_mesh: Profile [%s] not compatible with this version\n"
-                "of bed_mesh.  Profile Version: %d Current Version: %d "
+                "heater_profile: Profile [%s] not compatible with this version\n"
+                "of heater_profile.  Profile Version: %d Current Version: %d "
                 % (name, profile_version, HEATER_PROFILE_VERSION)
             )
             return
