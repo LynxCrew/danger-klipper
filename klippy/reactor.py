@@ -138,9 +138,8 @@ class SelectReactor:
         return tuple(self._last_gc_times)
 
     # Timers
-    def update_timer(self, timer_handler, waketime, args=()):
+    def update_timer(self, timer_handler, waketime):
         timer_handler.waketime = waketime
-        timer_handler.args = args
         self._next_timer = min(self._next_timer, waketime)
 
     def set_args(self, timer_handler, args=()):
