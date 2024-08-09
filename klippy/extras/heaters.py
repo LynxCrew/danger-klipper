@@ -19,7 +19,7 @@ MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.0
 PIN_MIN_TIME = 0.100
 PID_PARAM_BASE = 255.0
-PID_PROFILE_VERSION = 1
+HEATER_PROFILE_VERSION = 1
 PID_PROFILE_OPTIONS = {
     "pid_target": (float, "%.2f"),
     "pid_tolerance": (float, "%.4f"),
@@ -452,7 +452,7 @@ class ControlPID:
             profile_name = temp_profile["name"]
         section_name = pmgr._compute_section_name(profile_name)
         pmgr.outer_instance.configfile.set(
-            section_name, "pid_version", PID_PROFILE_VERSION
+            section_name, "profile_version", HEATER_PROFILE_VERSION
         )
         for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
             value = temp_profile[key]
@@ -577,7 +577,7 @@ class ControlVelocityPID:
             profile_name = temp_profile["name"]
         section_name = pmgr._compute_section_name(profile_name)
         pmgr.outer_instance.configfile.set(
-            section_name, "pid_version", PID_PROFILE_VERSION
+            section_name, "profile_version", HEATER_PROFILE_VERSION
         )
         for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
             value = temp_profile[key]
@@ -737,7 +737,7 @@ class ControlPositionalPID:
             profile_name = temp_profile["name"]
         section_name = pmgr._compute_section_name(profile_name)
         pmgr.outer_instance.configfile.set(
-            section_name, "pid_version", PID_PROFILE_VERSION
+            section_name, "profile_version", HEATER_PROFILE_VERSION
         )
         for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
             value = temp_profile[key]
