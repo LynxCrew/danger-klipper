@@ -847,7 +847,7 @@ class ControlPositionalPID:
 
 class ControlMPC:
     @staticmethod
-    def init_profile(config_section, name=None, pmgr=None):
+    def init_profile(config_section, name, pmgr=None):
         profile_version = config_section.getint("profile_version", None)
         if HEATER_PROFILE_VERSION != profile_version:
             logging.info(
