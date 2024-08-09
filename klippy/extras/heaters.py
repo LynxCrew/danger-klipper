@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import collections
+import logging
 import os
 import threading
 import math
@@ -379,6 +380,14 @@ class Heater:
 class ControlBangBang:
     @staticmethod
     def init_profile(config_section, name=None, pmgr=None):
+        profile_version = config_section.getint("profile_version", None)
+        if HEATER_PROFILE_VERSION != profile_version:
+            logging.info(
+                "bed_mesh: Profile [%s] not compatible with this version\n"
+                "of bed_mesh.  Profile Version: %d Current Version: %d "
+                % (name, profile_version, HEATER_PROFILE_VERSION)
+            )
+            return
         temp_profile = {
             "max_delta": config_section.getfloat("max_delta", 2.0, above=0.0)
         }
@@ -434,6 +443,14 @@ PID_SETTLE_SLOPE = 0.1
 class ControlPID:
     @staticmethod
     def init_profile(config_section, name, pmgr):
+        profile_version = config_section.getint("profile_version", None)
+        if HEATER_PROFILE_VERSION != profile_version:
+            logging.info(
+                "bed_mesh: Profile [%s] not compatible with this version\n"
+                "of bed_mesh.  Profile Version: %d Current Version: %d "
+                % (name, profile_version, HEATER_PROFILE_VERSION)
+            )
+            return
         temp_profile = {}
         for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
             can_be_none = key != "pid_kp" and key != "pid_ki" and key != "pid_kd"
@@ -559,16 +576,7 @@ class ControlPID:
 class ControlVelocityPID:
     @staticmethod
     def init_profile(config_section, name, pmgr):
-        temp_profile = {}
-        for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
-            can_be_none = key != "pid_kp" and key != "pid_ki" and key != "pid_kd"
-            temp_profile[key] = pmgr._check_value_config(
-                key, config_section, type, can_be_none
-            )
-        if name == "default":
-            temp_profile["smooth_time"] = None
-            temp_profile["smoothing_elements"] = None
-        return temp_profile
+        return ControlPID.init_profile(config_section, name, pmgr)
 
     @staticmethod
     def save_profile(pmgr, temp_profile, profile_name=None, verbose=True):
@@ -719,16 +727,7 @@ class ControlVelocityPID:
 class ControlPositionalPID:
     @staticmethod
     def init_profile(config_section, name, pmgr):
-        temp_profile = {}
-        for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
-            can_be_none = key != "pid_kp" and key != "pid_ki" and key != "pid_kd"
-            temp_profile[key] = pmgr._check_value_config(
-                key, config_section, type, can_be_none
-            )
-        if name == "default":
-            temp_profile["smooth_time"] = None
-            temp_profile["smoothing_elements"] = None
-        return temp_profile
+        return ControlPID.init_profile(config_section, name, pmgr)
 
     @staticmethod
     def save_profile(pmgr, temp_profile, profile_name=None, verbose=True):
@@ -849,6 +848,14 @@ class ControlPositionalPID:
 class ControlMPC:
     @staticmethod
     def init_profile(config_section, name=None, pmgr=None):
+        profile_version = config_section.getint("profile_version", None)
+        if HEATER_PROFILE_VERSION != profile_version:
+            logging.info(
+                "bed_mesh: Profile [%s] not compatible with this version\n"
+                "of bed_mesh.  Profile Version: %d Current Version: %d "
+                % (name, profile_version, HEATER_PROFILE_VERSION)
+            )
+            return
         temp_profile = {
             "block_heat_capacity": config_section.getfloat(
                 "block_heat_capacity", above=0.0, default=None
