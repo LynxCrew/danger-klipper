@@ -186,7 +186,7 @@ class Fan:
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
 
-    def set_speed(self, print_time, value, force=False, end_print=False):
+    def set_speed(self, orig_print_time, value, force=False, end_print=False):
         if value > 0:
             # Scale value between min_power and max_power
             pwm_value = value * (self.max_power - self.min_power) + self.min_power
@@ -195,7 +195,7 @@ class Fan:
             pwm_value = 0
         if pwm_value == self.pwm_value and not force:
             return
-        print_time = max(self.last_fan_time + FAN_MIN_TIME, print_time)
+        print_time = max(self.last_fan_time + FAN_MIN_TIME, orig_print_time)
         if force or not self.self_checking:
             if self.enable_pin:
                 if value > 0 and self.last_fan_value == 0:
@@ -215,7 +215,7 @@ class Fan:
                 self.mcu_fan.set_pwm(print_time, self.max_power)
                 print_time += self.kick_start_time
             self.mcu_fan.set_pwm(print_time, pwm_value)
-        self.last_fan_time = print_time
+        self.last_fan_time = orig_print_time
         self.last_fan_value = value
         self.pwm_value = pwm_value
 
