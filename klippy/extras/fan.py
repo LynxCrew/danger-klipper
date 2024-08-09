@@ -226,7 +226,9 @@ class Fan:
                 # Run fan at full speed for specified kick_start_time
                 self.mcu_fan.set_pwm(print_time, self.max_power)
                 print_time += self.kick_start_time
-            self.reactor.update_timer(self.unlock_timer, print_time, args=force)
+                self.reactor.update_timer(self.unlock_timer, FAN_MIN_TIME + self.kick_start_time)
+            else:
+                self.reactor.update_timer(self.unlock_timer, FAN_MIN_TIME)
             self.mcu_fan.set_pwm(print_time, pwm_value)
         self.last_fan_time = print_time
         self.last_fan_value = value
@@ -243,10 +245,10 @@ class Fan:
                 if self.fan_check_thread is not None:
                     self.fan_check_thread = None
 
-    def _unlock_lock(self, eventtime, force):
+    def _unlock_lock(self, eventtime):
         self.locking = False
         if self.queued_speed is not None:
-            self._set_speed(eventtime, self.queued_speed, force)
+            self._set_speed(eventtime, self.queued_speed, self.queued_speed)
             self.queued_speed = None
         return self.reactor.NEVER
 

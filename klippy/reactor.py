@@ -12,10 +12,9 @@ _NEVER = 9999999999999999.0
 
 
 class ReactorTimer:
-    def __init__(self, callback, waketime, args=()):
+    def __init__(self, callback, waketime):
         self.callback = callback
         self.waketime = waketime
-        self.args = args
 
 
 class ReactorCompletion:
@@ -142,11 +141,8 @@ class SelectReactor:
         timer_handler.waketime = waketime
         self._next_timer = min(self._next_timer, waketime)
 
-    def set_args(self, timer_handler, args=()):
-        timer_handler.args = args
-
-    def register_timer(self, callback, waketime=NEVER, args=()):
-        timer_handler = ReactorTimer(callback, waketime, args)
+    def register_timer(self, callback, waketime=NEVER):
+        timer_handler = ReactorTimer(callback, waketime)
         timers = list(self._timers)
         timers.append(timer_handler)
         self._timers = timers
@@ -182,7 +178,7 @@ class SelectReactor:
             waketime = t.waketime
             if eventtime >= waketime:
                 t.waketime = self.NEVER
-                t.waketime = waketime = t.callback(eventtime, *t.args)
+                t.waketime = waketime = t.callback(eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._next_timer = min(self._next_timer, waketime)
                     self._end_greenlet(g_dispatch)
