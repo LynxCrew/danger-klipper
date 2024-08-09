@@ -5,7 +5,6 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import collections
 import os
-import logging
 import threading
 import math
 from extras.heater_profile_manager import ProfileManager
@@ -173,8 +172,6 @@ class Heater:
                 "Heater [%s] is disabled due to an "
                 "accelerometer being connected." % self.sensor_short_name
             )
-
-        self.printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
 
     def lookup_control(self, profile, load_clean=False):
         algos = collections.OrderedDict(

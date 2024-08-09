@@ -25,6 +25,14 @@ class PIDCalibrate:
         tune_pid_delta = gcmd.get_float("TUNE_PID_DELTA", 5.0)
         write_file = gcmd.get_int("WRITE_FILE", 0)
         tolerance = gcmd.get_float("TOLERANCE", TUNE_PID_TOL, above=0.0)
+        calculation_method = gcmd.get(
+            "CALCULATION_METHOD", list(CALCULATION_METHODS.keys())[0]
+        ).upper()
+        if calculation_method not in list(CALCULATION_METHODS.keys()):
+            raise gcmd.error(
+                "Invalid calculation method, valid methods are: %s"
+                % list(CALCULATION_METHODS.keys())
+            )
         profile_name = gcmd.get("PROFILE", "default")
         pheaters = self.printer.lookup_object("heaters")
         try:
@@ -45,7 +53,7 @@ class PIDCalibrate:
         if calibrate.check_busy(0.0, 0.0, 0.0):
             raise gcmd.error("pid_calibrate interrupted")
         # Log and report results
-        Kp, Ki, Kd = calibrate.calc_pid()
+        Kp, Ki, Kd = calibrate.calc_pid(calculation_method)
         logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
         gcmd.respond_info(
             "PID parameters for %.2f\xb0C: "
@@ -75,9 +83,27 @@ class PIDCalibrate:
         heater.pmgr.save_profile(profile_name=profile_name, verbose=False)
 
 
+def calculate_ziegler_nichols(tu, ku):
+    ti = 0.5 * tu
+    td = 0.125 * tu
+    kp = 0.6 * ku * heaters.PID_PARAM_BASE
+    return ti, td, kp
+
+
+def calculate_tyreus_luyben(tu, ku):
+    ti = 2.2 * tu
+    td = tu / 6.3
+    kp = (ku / 2.2) * heaters.PID_PARAM_BASE
+    return ti, td, kp
+
+
 TUNE_PID_TOL = 0.02
 TUNE_PID_SAMPLES = 3
 TUNE_PID_MAX_PEAKS = 60
+CALCULATION_METHODS = {
+    "ZN": calculate_ziegler_nichols,
+    "TL": calculate_tyreus_luyben,
+}
 
 
 class ControlAutoTune:
@@ -286,7 +312,7 @@ class ControlAutoTune:
         f.write("\n".join(data))
         f.close()
 
-    def calc_pid(self):
+    def calc_pid(self, calculation_method):
         temp_diff = 0.0
         time_diff = 0.0
         theta = 0.0
@@ -309,10 +335,7 @@ class ControlAutoTune:
         # log the extra details
         logging.info("Ziegler-Nichols constants: Ku=%f Tu=%f", Ku, Tu)
         logging.info("Cohen-Coon constants: Km=%f Theta=%f Tau=%f", Km, theta, tau)
-        # Use Ziegler-Nichols method to generate PID parameters
-        Ti = 0.5 * Tu
-        Td = 0.125 * Tu
-        Kp = 0.6 * Ku * heaters.PID_PARAM_BASE
+        Ti, Td, Kp = CALCULATION_METHODS[calculation_method](Tu, Ku)
         Ki = Kp / Ti
         Kd = Kp * Td
         return Kp, Ki, Kd
