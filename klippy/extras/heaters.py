@@ -88,6 +88,7 @@ class Heater:
         self.last_pwm_value = 0.0
         # Those are necessary so the klipper config check does not complain
         sensor_config.get("control", None)
+        sensor_config.getint("profile_version", None)
         sensor_config.getfloat("pid_kp", None)
         sensor_config.getfloat("pid_ki", None)
         sensor_config.getfloat("pid_kd", None)
