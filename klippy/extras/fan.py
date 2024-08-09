@@ -21,8 +21,8 @@ class Fan:
         self.klipper_threads = self.printer.get_klipper_threads()
         self.last_fan_value = 0.0
         self.pwm_value = 0.0
-        self.last_fan_time = 0.0
         self.queued_speed = None
+        self.queued_force = False
         self.locking = False
         self.unlock_timer = None
         # Read config
@@ -153,9 +153,7 @@ class Fan:
         )
 
     def handle_ready(self):
-        self.unlock_timer = self.reactor.register_timer(
-            self._unlock_lock
-        )
+        self.unlock_timer = self.reactor.register_timer(self._unlock_lock)
         if self.startup_check:
             self.self_checking = True
             toolhead = self.printer.lookup_object("toolhead")
@@ -195,6 +193,7 @@ class Fan:
     def set_speed(self, print_time, value, force=False):
         if self.locking:
             self.queued_speed = value
+            self.queued_force = force
         else:
             self._set_speed(print_time, value, force)
 
@@ -226,11 +225,8 @@ class Fan:
                 # Run fan at full speed for specified kick_start_time
                 self.mcu_fan.set_pwm(print_time, self.max_power)
                 print_time += self.kick_start_time
-                self.reactor.update_timer(self.unlock_timer, FAN_MIN_TIME + self.kick_start_time)
-            else:
-                self.reactor.update_timer(self.unlock_timer, FAN_MIN_TIME)
+            self.reactor.update_timer(self.unlock_timer, print_time + FAN_MIN_TIME)
             self.mcu_fan.set_pwm(print_time, pwm_value)
-        self.last_fan_time = print_time
         self.last_fan_value = value
         self.pwm_value = pwm_value
 
@@ -248,8 +244,9 @@ class Fan:
     def _unlock_lock(self, eventtime):
         self.locking = False
         if self.queued_speed is not None:
-            self._set_speed(eventtime, self.queued_speed, self.queued_speed)
+            self._set_speed(eventtime, self.queued_speed, self.queued_force)
             self.queued_speed = None
+            self.queued_force = False
         return self.reactor.NEVER
 
     def set_speed_from_command(self, value, force=False):
