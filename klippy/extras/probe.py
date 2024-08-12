@@ -546,7 +546,7 @@ class ProbePointsHelper:
     def get_lift_speed(self):
         return self.lift_speed
 
-    def _move_next(self):
+    def _lift_toolhead(self):
         toolhead = self.printer.lookup_object("toolhead")
         # Lift toolhead
         speed = self.lift_speed
@@ -555,28 +555,29 @@ class ProbePointsHelper:
             speed = self.speed
         elif self.move_z_speed is not None:
             speed = self.move_z_speed
-        result = False
+        toolhead.manual_move([None, None, self.horizontal_move_z], speed)
+
+    def _move_next(self):
+        toolhead = self.printer.lookup_object("toolhead")
+        done = False
         # Check if done probing
         if len(self.results) >= len(self.probe_points):
             toolhead.get_last_move_time()
             res = self.finalize_callback(self.probe_offsets, self.results)
             if isinstance(res, (int, float)):
                 if res == 0:
-                    result = True
+                    done = True
                 if self.adaptive_horizontal_move_z:
                     # then res is error
                     error = math.ceil(res) or 1.0
-                    min_offset = (
-                        self.probe_offsets[2]
-                        if self.probe_offsets[2] > self.min_horizontal_move_z
-                        else self.min_horizontal_move_z
+                    self.horizontal_move_z = error + max(
+                        self.probe_offsets[2], self.min_horizontal_move_z
                     )
-                    self.horizontal_move_z = error + min_offset
             elif res != "retry":
-                result = True
+                done = True
             self.results = []
-        toolhead.manual_move([None, None, self.horizontal_move_z], speed)
-        if result:
+        self._lift_toolhead()
+        if done:
             return True
         # Move to next XY probe point
         nextpos = list(self.probe_points[len(self.results)])
