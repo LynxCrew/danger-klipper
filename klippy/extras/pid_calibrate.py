@@ -6,6 +6,12 @@
 import math, logging
 from . import heaters
 
+ALGORITHMS = [
+    "pid",
+    "pid_v",
+    "pid_p",
+]
+
 
 class PIDCalibrate:
     def __init__(self, config):
@@ -33,6 +39,9 @@ class PIDCalibrate:
                 "Invalid calculation method, valid methods are: %s"
                 % list(CALCULATION_METHODS.keys())
             )
+        algorithm = gcmd.get("ALGORITHM", None)
+        if algorithm is not None and algorithm not in ALGORITHMS:
+            raise gcmd.error("Invalid algorithm, valid algorithms are: %s" % ALGORITHMS)
         profile_name = gcmd.get("PROFILE", "default")
         pheaters = self.printer.lookup_object("heaters")
         try:
@@ -42,6 +51,11 @@ class PIDCalibrate:
         self.printer.lookup_object("toolhead").get_last_move_time()
         calibrate = ControlAutoTune(heater, target, tolerance, tune_pid_delta)
         old_control = heater.set_control(calibrate, False)
+        if algorithm is None:
+            if old_control.get_type() in ALGORITHMS:
+                algorithm = old_control.get_type()
+            else:
+                algorithm = "pid"
         try:
             pheaters.set_temperature(heater, target, True, gcmd=gcmd)
         except self.printer.command_error as e:
@@ -65,7 +79,7 @@ class PIDCalibrate:
             "with these parameters and restart the printer."
             % (target, Kp, Ki, Kd, heater_name, tolerance, profile_name)
         )
-        control = "pid_v" if old_control.get_type() == "pid_v" else "pid"
+        control = algorithm
 
         profile = {
             "pid_target": target,
