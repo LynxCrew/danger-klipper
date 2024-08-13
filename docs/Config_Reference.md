@@ -1023,11 +1023,11 @@ sensor_pin:
 #   be smoothed to reduce the impact of measurement noise. The default
 #   is 1 seconds.
 control:
-#   Control algorithm (either pid, pid_v, watermark or mpc). This parameter must
-#   be provided. pid_v should only be used on well calibrated heaters with
-#   low to moderate noise.
+#   Control algorithm (either pid, pid_v, pid_p, watermark or mpc). This
+#   parameter must be provided. pid_v should only be used on well calibrated
+#   heaters with low to moderate noise.
 #
-#   If control: pid or pid_v
+#   If control: pid, pid_v or pid_p
 #pid_Kp:
 #pid_Ki:
 #pid_Kd:
@@ -1415,10 +1415,6 @@ extended [G-Code command](G-Codes.md#z_tilt) becomes available.
 # See [z_tilt]
 #horizontal_move_z: 5
 # See [z_tilt]
-#min_horizontal_move_z: 1.0
-# See [z_tilt]
-#adaptive_horizontal_move_z: False
-# See [z_tilt]
 #retries: 0
 # See [z_tilt]
 #retry_tolerance: 0
@@ -1497,15 +1493,6 @@ Where x is the 0, 0 point on the bed
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
-#min_horizontal_move_z: 1.0
-#   minimum value for horizontal move z 
-#   (only used when adaptive_horizontal_move_z is True)
-#adaptive_horizontal_move_z: False
-#   if we should adjust horizontal move z after the first adjustment round,
-#   based on error.
-#   when set to True, initial horizontal_move_z is the config value, 
-#   subsequent iterations will set horizontal_move_z to
-#   the ceil of error, or min_horizontal_move_z - whichever is greater.
 #max_adjust: 4
 #   Safety limit if an adjustment greater than this value is requested
 #   quad_gantry_level will abort.
