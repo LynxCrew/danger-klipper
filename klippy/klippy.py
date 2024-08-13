@@ -384,7 +384,7 @@ class Printer:
 
     wait_interrupted = WaitInterruption
 
-    def wait_while(self, condition_cb, error_on_cancel=True):
+    def wait_while(self, condition_cb, error_on_cancel=True, interval=1.0):
         """
         receives a callback
         waits until callback returns False
@@ -399,7 +399,7 @@ class Printer:
                     raise WaitInterruption("Command interrupted")
                 else:
                     return
-            eventtime = self.reactor.pause(eventtime + 1.0)
+            eventtime = self.reactor.pause(eventtime + interval)
 
 
 ######################################################################

@@ -559,8 +559,8 @@ class ProbePointsHelper:
 
     def _move_next(self):
         toolhead = self.printer.lookup_object("toolhead")
-        done = False
         # Check if done probing
+        done = False
         if len(self.results) >= len(self.probe_points):
             toolhead.get_last_move_time()
             res = self.finalize_callback(self.probe_offsets, self.results)
