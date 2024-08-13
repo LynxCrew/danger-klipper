@@ -94,11 +94,10 @@ A collection of DangerKlipper-specific system options
 #   Tolerance (in mm) for distance moved in the second homing. Ensures the
 #   second homing distance closely matches the `min_home_dist` when using
 #   sensorless homing. The default is 0.5mm.
-#temp_ignore_limits: False
-#   When set to true, this parameter ignores the min_value and max_value
-#   limits for temperature sensors. It prevents shutdowns due to
-#   'ADC out of range' and similar errors by allowing readings outside the
-#   specified range without triggering a shutdown. The default is False.
+#temp_ignore_limits:
+#   A list of temperature sensors which min and max temps should be ignored.
+#   This feature prevents shutdowns due to 'ADC out of range' and similar errors
+#   and thus should be used with extreme caution.
 #autosave_includes: False
 #   When set to true, SAVE_CONFIG will recursively read [include ...] blocks
 #   for conflicts to autosave data. Any configurations updated will be backed
@@ -935,7 +934,8 @@ The extruder section is used to describe the heater parameters for the
 nozzle hotend along with the stepper controlling the extruder. See the
 [command reference](G-Codes.md#extruder) for additional information.
 See the [pressure advance guide](Pressure_Advance.md) for information
-on tuning pressure advance.
+on tuning pressure advance. See [PID](PID.md) or [MPC](MPC.md) for more
+detailed information about the control methods.
 
 ```
 [extruder]
@@ -1022,12 +1022,14 @@ sensor_pin:
 #   be smoothed to reduce the impact of measurement noise. The default
 #   is 1 seconds.
 control:
-#   Control algorithm (either pid, pid_v or watermark). This parameter must
-#   be provided. pid_v should only be used on well calibrated heaters with
-#   low to moderate noise.
-pid_Kp:
-pid_Ki:
-pid_Kd:
+#   Control algorithm (either pid, pid_v, pid_p, watermark or mpc). This
+#   parameter must be provided. pid_v should only be used on well calibrated
+#   heaters with low to moderate noise.
+#
+#   If control: pid, pid_v or pid_p
+#pid_Kp:
+#pid_Ki:
+#pid_Kd:
 #   The proportional (pid_Kp), integral (pid_Ki), and derivative
 #   (pid_Kd) settings for the PID feedback control system. Klipper
 #   evaluates the PID settings with the following general formula:
@@ -1037,11 +1039,23 @@ pid_Kd:
 #   off and 1.0 being full on. Consider using the PID_CALIBRATE
 #   command to obtain these parameters. The pid_Kp, pid_Ki, and pid_Kd
 #   parameters must be provided for PID heaters.
+#
+#   If control: watermark
 #max_delta: 2.0
 #   On 'watermark' controlled heaters this is the number of degrees in
 #   Celsius above the target temperature before disabling the heater
 #   as well as the number of degrees below the target before
 #   re-enabling the heater. The default is 2 degrees Celsius.
+#
+#   If control: mpc
+#   See MPC.md for details about these parameters.
+#heater_power:
+#cooling_fan:
+#ambient_temp_sensor:
+#filament_diameter: 1.75
+#filament_density: 1.2
+#filament_heat_capacity: 1.8
+#
 #pwm_cycle_time: 0.100
 #   Time in seconds for each software PWM cycle of the heater. It is
 #   not recommended to set this unless there is an electrical
