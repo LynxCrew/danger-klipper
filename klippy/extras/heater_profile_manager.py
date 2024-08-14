@@ -24,16 +24,17 @@ class ProfileManager:
             temp_profile = self.control_types[control].init_profile(
                 config_section, name, self
             )
+            if temp_profile is not None:
+                temp_profile["control"] = control
+                temp_profile["name"] = name
+                self.profiles[name] = temp_profile
+            return temp_profile
         else:
             raise self.outer_instance.printer.config_error(
                 "Unknown control type '%s' "
                 "in [heater_profile %s %s]."
                 % (control, self.outer_instance.sensor_name, name)
             )
-        temp_profile["control"] = control
-        temp_profile["name"] = name
-        self.profiles[name] = temp_profile
-        return temp_profile
 
     def _check_value_config(self, key, config_section, type, can_be_none):
         if type is int:
@@ -185,7 +186,11 @@ class ProfileManager:
     def save_profile(self, profile_name=None, gcmd=None, verbose=True):
         temp_profile = self.outer_instance.get_control().get_profile()
         self.control_types[temp_profile["control"]].save_profile(
-            self, temp_profile, profile_name, gcmd, verbose
+            pmgr=self,
+            temp_profile=temp_profile,
+            profile_name=profile_name,
+            gcmd=gcmd,
+            verbose=verbose,
         )
 
     def load_profile(self, profile_name, gcmd, verbose):

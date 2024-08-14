@@ -16,6 +16,7 @@ class PrinterSensorCombined:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
+        self.klipper_threads = self.printer.get_klipper_threads()
         self.name = config.get_name().split()[-1]
         # get sensor names
         self.sensor_names = config.getlist("sensor_list")
@@ -39,16 +40,12 @@ class PrinterSensorCombined:
         # time-controlled sensor update
         self.initialized = False
 
-        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
+        self.temperature_sample_thread = self.klipper_threads.register_job(
+            target=self._temperature_update_event
+        )
 
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
-
-    def _run_sample_timer(self):
-        wait_time = self._temperature_update_event()
-        while wait_time > 0 and not self.printer.is_shutdown():
-            time.sleep(wait_time)
-            wait_time = self._temperature_update_event()
 
     def _handle_connect(self):
         for sensor_name in self.sensor_names:

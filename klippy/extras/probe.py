@@ -49,15 +49,9 @@ class PrinterProbe:
             "sample_retract_dist", 2.0, above=0.0
         )
         atypes = ["median", "average"]
-        self.samples_result = config.getchoice(
-            "samples_result", atypes, "average"
-        )
-        self.samples_tolerance = config.getfloat(
-            "samples_tolerance", 0.100, minval=0.0
-        )
-        self.samples_retries = config.getint(
-            "samples_tolerance_retries", 0, minval=0
-        )
+        self.samples_result = config.getchoice("samples_result", atypes, "average")
+        self.samples_tolerance = config.getfloat("samples_tolerance", 0.100, minval=0.0)
+        self.samples_retries = config.getint("samples_tolerance_retries", 0, minval=0)
         # Register z_virtual_endstop pin
         self.printer.lookup_object("pins").register_chip("probe", self)
         # Register homing event handlers
@@ -552,7 +546,7 @@ class ProbePointsHelper:
     def get_lift_speed(self):
         return self.lift_speed
 
-    def _move_next(self):
+    def _lift_toolhead(self):
         toolhead = self.printer.lookup_object("toolhead")
         # Lift toolhead
         speed = self.lift_speed
@@ -561,28 +555,29 @@ class ProbePointsHelper:
             speed = self.speed
         elif self.move_z_speed is not None:
             speed = self.move_z_speed
-        result = False
+        toolhead.manual_move([None, None, self.horizontal_move_z], speed)
+
+    def _move_next(self):
+        toolhead = self.printer.lookup_object("toolhead")
         # Check if done probing
+        done = False
         if len(self.results) >= len(self.probe_points):
             toolhead.get_last_move_time()
             res = self.finalize_callback(self.probe_offsets, self.results)
             if isinstance(res, (int, float)):
                 if res == 0:
-                    result = True
+                    done = True
                 if self.adaptive_horizontal_move_z:
                     # then res is error
                     error = math.ceil(res) or 1.0
-                    min_offset = (
-                        self.probe_offsets[2]
-                        if self.probe_offsets[2] > self.min_horizontal_move_z
-                        else self.min_horizontal_move_z
+                    self.horizontal_move_z = error + max(
+                        self.probe_offsets[2], self.min_horizontal_move_z
                     )
-                    self.horizontal_move_z = error + min_offset
             elif res != "retry":
-                result = True
+                done = True
             self.results = []
-        toolhead.manual_move([None, None, self.horizontal_move_z], speed)
-        if result:
+        self._lift_toolhead()
+        if done:
             return True
         # Move to next XY probe point
         nextpos = list(self.probe_points[len(self.results)])
@@ -605,7 +600,10 @@ class ProbePointsHelper:
             "ADAPTIVE_HORIZONTAL_MOVE_Z", self.def_adaptive_horizontal_move_z
         )
         self.min_horizontal_move_z = gcmd.get_float("MIN_HORIZONTAL_MOVE_Z", None)
-        if self.min_horizontal_move_z is not None and not self.adaptive_horizontal_move_z:
+        if (
+            self.min_horizontal_move_z is not None
+            and not self.adaptive_horizontal_move_z
+        ):
             raise gcmd.error(
                 "min_horizontal_move_z can not be set when "
                 "adaptive_horizontal_move_z is disabled"

@@ -4,8 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import collections
-import os
 import logging
+import os
 import threading
 import math
 from extras.heater_profile_manager import ProfileManager
@@ -18,9 +18,8 @@ from extras.heater_profile_manager import ProfileManager
 KELVIN_TO_CELSIUS = -273.15
 MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.0
-PIN_MIN_TIME = 0.100
 PID_PARAM_BASE = 255.0
-PID_PROFILE_VERSION = 1
+HEATER_PROFILE_VERSION = 1
 PID_PROFILE_OPTIONS = {
     "pid_target": (float, "%.2f"),
     "pid_tolerance": (float, "%.4f"),
@@ -89,6 +88,7 @@ class Heater:
         self.last_pwm_value = 0.0
         # Those are necessary so the klipper config check does not complain
         sensor_config.get("control", None)
+        sensor_config.getint("profile_version", None)
         sensor_config.getfloat("pid_kp", None)
         sensor_config.getfloat("pid_ki", None)
         sensor_config.getfloat("pid_kd", None)
@@ -130,6 +130,8 @@ class Heater:
         }
         self.pmgr = ProfileManager(self, control_types)
         self.control = self.lookup_control(self.pmgr.init_default_profile(), True)
+        if self.control is None:
+            raise self.config.error("Default Heater-Profile could not be loaded.")
         self.gcode.register_mux_command(
             "SET_HEATER_TEMPERATURE",
             "HEATER",
@@ -173,8 +175,6 @@ class Heater:
                 "Heater [%s] is disabled due to an "
                 "accelerometer being connected." % self.sensor_short_name
             )
-
-        self.printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
 
     def lookup_control(self, profile, load_clean=False):
         algos = collections.OrderedDict(
@@ -380,14 +380,23 @@ class Heater:
 
 class ControlBangBang:
     @staticmethod
-    def init_profile(config_section, name=None, pmgr=None):
+    def init_profile(config_section, name, pmgr=None):
         temp_profile = {
             "max_delta": config_section.getfloat("max_delta", 2.0, above=0.0)
         }
+        if name != "default":
+            profile_version = config_section.getint("profile_version", None)
+            if HEATER_PROFILE_VERSION != profile_version:
+                logging.info(
+                    "heater_profile: Profile [%s] not compatible with this version\n"
+                    "of heater_profile.  Profile Version: %d Current Version: %d "
+                    % (name, profile_version, HEATER_PROFILE_VERSION)
+                )
+                return None
         return temp_profile
 
     @staticmethod
-    def save_profile(pmgr, temp_profile, profile_name=None, verbose=True):
+    def save_profile(pmgr, temp_profile, profile_name=None, gcmd=None, verbose=True):
         if profile_name is None:
             profile_name = temp_profile["name"]
         section_name = pmgr._compute_section_name(profile_name)
@@ -445,16 +454,27 @@ class ControlPID:
         if name == "default":
             temp_profile["smooth_time"] = None
             temp_profile["smoothing_elements"] = None
+        else:
+            profile_version = config_section.getint("profile_version", None)
+            if HEATER_PROFILE_VERSION != profile_version:
+                logging.info(
+                    "heater_profile: Profile [%s] not compatible with this version\n"
+                    "of heater_profile.  Profile Version: %d Current Version: %d "
+                    % (name, profile_version, HEATER_PROFILE_VERSION)
+                )
+                return None
         return temp_profile
 
     @staticmethod
-    def save_profile(pmgr, temp_profile, profile_name=None, verbose=True):
+    def save_profile(
+        pmgr, temp_profile=None, profile_name=None, gcmd=None, verbose=True
+    ):
         temp_profile = pmgr.outer_instance.get_control().get_profile()
         if profile_name is None:
             profile_name = temp_profile["name"]
         section_name = pmgr._compute_section_name(profile_name)
         pmgr.outer_instance.configfile.set(
-            section_name, "pid_version", PID_PROFILE_VERSION
+            section_name, "profile_version", HEATER_PROFILE_VERSION
         )
         for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
             value = temp_profile[key]
@@ -464,9 +484,9 @@ class ControlPID:
                 )
         temp_profile["name"] = profile_name
         pmgr.profiles[profile_name] = temp_profile
-        if verbose:
-            pmgr.outer_instance.gcode.respond_info(
-                "Current PID profile for heater [%s] "
+        if verbose and gcmd is not None:
+            gcmd.respond_info(
+                "Current Heater profile for heater [%s] "
                 "has been saved to profile [%s] "
                 "for the current session.  The SAVE_CONFIG command will\n"
                 "update the printer config file and restart the printer."
@@ -561,25 +581,18 @@ class ControlPID:
 class ControlVelocityPID:
     @staticmethod
     def init_profile(config_section, name, pmgr):
-        temp_profile = {}
-        for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
-            can_be_none = key != "pid_kp" and key != "pid_ki" and key != "pid_kd"
-            temp_profile[key] = pmgr._check_value_config(
-                key, config_section, type, can_be_none
-            )
-        if name == "default":
-            temp_profile["smooth_time"] = None
-            temp_profile["smoothing_elements"] = None
-        return temp_profile
+        return ControlPID.init_profile(config_section, name, pmgr)
 
     @staticmethod
-    def save_profile(pmgr, temp_profile, profile_name=None, verbose=True):
+    def save_profile(
+        pmgr, temp_profile=None, profile_name=None, gcmd=None, verbose=True
+    ):
         temp_profile = pmgr.outer_instance.get_control().get_profile()
         if profile_name is None:
             profile_name = temp_profile["name"]
         section_name = pmgr._compute_section_name(profile_name)
         pmgr.outer_instance.configfile.set(
-            section_name, "pid_version", PID_PROFILE_VERSION
+            section_name, "profile_version", HEATER_PROFILE_VERSION
         )
         for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
             value = temp_profile[key]
@@ -589,9 +602,9 @@ class ControlVelocityPID:
                 )
         temp_profile["name"] = profile_name
         pmgr.profiles[profile_name] = temp_profile
-        if verbose:
-            pmgr.outer_instance.gcode.respond_info(
-                "Current PID profile for heater [%s] "
+        if verbose and gcmd is not None:
+            gcmd.respond_info(
+                "Current Heater profile for heater [%s] "
                 "has been saved to profile [%s] "
                 "for the current session.  The SAVE_CONFIG command will\n"
                 "update the printer config file and restart the printer."
@@ -721,25 +734,18 @@ class ControlVelocityPID:
 class ControlPositionalPID:
     @staticmethod
     def init_profile(config_section, name, pmgr):
-        temp_profile = {}
-        for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
-            can_be_none = key != "pid_kp" and key != "pid_ki" and key != "pid_kd"
-            temp_profile[key] = pmgr._check_value_config(
-                key, config_section, type, can_be_none
-            )
-        if name == "default":
-            temp_profile["smooth_time"] = None
-            temp_profile["smoothing_elements"] = None
-        return temp_profile
+        return ControlPID.init_profile(config_section, name, pmgr)
 
     @staticmethod
-    def save_profile(pmgr, temp_profile, profile_name=None, verbose=True):
+    def save_profile(
+        pmgr, temp_profile=None, profile_name=None, gcmd=None, verbose=True
+    ):
         temp_profile = pmgr.outer_instance.get_control().get_profile()
         if profile_name is None:
             profile_name = temp_profile["name"]
         section_name = pmgr._compute_section_name(profile_name)
         pmgr.outer_instance.configfile.set(
-            section_name, "pid_version", PID_PROFILE_VERSION
+            section_name, "profile_version", HEATER_PROFILE_VERSION
         )
         for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
             value = temp_profile[key]
@@ -749,9 +755,9 @@ class ControlPositionalPID:
                 )
         temp_profile["name"] = profile_name
         pmgr.profiles[profile_name] = temp_profile
-        if verbose:
-            pmgr.outer_instance.gcode.respond_info(
-                "Current PID profile for heater [%s] "
+        if verbose and gcmd is not None:
+            gcmd.respond_info(
+                "Current Heater profile for heater [%s] "
                 "has been saved to profile [%s] "
                 "for the current session.  The SAVE_CONFIG command will\n"
                 "update the printer config file and restart the printer."
@@ -850,7 +856,7 @@ class ControlPositionalPID:
 
 class ControlMPC:
     @staticmethod
-    def init_profile(config_section, name=None, pmgr=None):
+    def init_profile(config_section, name, pmgr=None):
         temp_profile = {
             "block_heat_capacity": config_section.getfloat(
                 "block_heat_capacity", above=0.0, default=None
@@ -972,10 +978,21 @@ class ControlMPC:
         temp_profile["fan_ambient_transfer"] = config_section.getfloatlist(
             "fan_ambient_transfer", []
         )
+        if name != "default":
+            profile_version = config_section.getint("profile_version", None)
+            if HEATER_PROFILE_VERSION != profile_version:
+                logging.info(
+                    "heater_profile: Profile [%s] not compatible with this version\n"
+                    "of heater_profile.  Profile Version: %d Current Version: %d "
+                    % (name, profile_version, HEATER_PROFILE_VERSION)
+                )
+                return None
         return temp_profile
 
     @staticmethod
-    def save_profile(pmgr, temp_profile, profile_name=None, verbose=True):
+    def save_profile(
+        pmgr, temp_profile=None, profile_name=None, gcmd=None, verbose=True
+    ):
         temp_profile = pmgr.outer_instance.get_control().get_profile()
         if profile_name is None:
             profile_name = temp_profile["name"]
@@ -1044,9 +1061,9 @@ class ControlMPC:
         )
         temp_profile["name"] = profile_name
         pmgr.profiles[profile_name] = temp_profile
-        if verbose:
-            pmgr.outer_instance.gcode.respond_info(
-                "Current PID profile for heater [%s] "
+        if verbose and gcmd is not None:
+            gcmd.respond_info(
+                "Current Heater profile for heater [%s] "
                 "has been saved to profile [%s] "
                 "for the current session.  The SAVE_CONFIG command will\n"
                 "update the printer config file and restart the printer."
@@ -1286,6 +1303,7 @@ class ControlMPC:
                 heater_power = self._interpolate(below, above, temp)
         else:
             heater_power = self.const_heater_power
+
         duty = max(0.0, min(self.max_power, power / heater_power))
 
         # logging.info(

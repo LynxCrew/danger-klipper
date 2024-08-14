@@ -24,17 +24,14 @@ class PrinterTemperatureDriver:
         self.report_time = DRIVER_REPORT_TIME
 
         self.reactor = self.printer.get_reactor()
+        self.klipper_threads = self.printer.get_klipper_threads()
 
-        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
+        self.temperature_sample_thread = self.klipper_threads.register_job(
+            target=self._sample_driver_temperature
+        )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
         self.printer.register_event_handler("klippy:connect", self.handle_connect)
-
-    def _run_sample_timer(self):
-        wait_time = self._sample_driver_temperature()
-        while wait_time > 0 and not self.printer.is_shutdown():
-            time.sleep(wait_time)
-            wait_time = self._sample_driver_temperature()
 
     def handle_connect(self):
         self.driver = self.printer.lookup_object(self.driver_name)

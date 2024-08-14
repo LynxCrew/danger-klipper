@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 import ast
+import sys
 import threading
 import time
 
@@ -169,6 +170,7 @@ class PrinterLED:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
+        self.klipper_threads = self.printer.get_klipper_threads()
         self.led_helpers = {}
         self.active_templates = {}
         self.render_timer = None
@@ -205,14 +207,8 @@ class PrinterLED:
     def _activate_timer(self):
         if self.render_timer is not None or not self.active_templates:
             return
-        self.render_timer = threading.Thread(target=self._run_render_timer)
+        self.render_timer = self.klipper_threads.register_job(target=self._render)
         self.render_timer.start()
-
-    def _run_render_timer(self):
-        wait_time = self._render()
-        while wait_time > 0 and not self.printer.is_shutdown():
-            time.sleep(wait_time)
-            wait_time = self._render()
 
     def _activate_template(self, led_helper, index, template, lparams, tpl_name):
         key = (led_helper, index)
@@ -226,11 +222,11 @@ class PrinterLED:
             led_helper.set_active_template(None)
 
     def _render(self):
-        eventtime = self.reactor.monotonic()
         if not self.active_templates:
             # Nothing to do - unregister timer
             self.render_timer = None
             return 0
+        eventtime = self.reactor.monotonic()
         # Setup gcode_macro template context
         context = self.create_template_context(eventtime)
 

@@ -98,6 +98,7 @@ class HTU21D:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.reactor = self.printer.get_reactor()
+        self.klipper_threads = self.printer.get_klipper_threads()
         self.i2c = bus.MCU_I2C_from_config(
             config, default_addr=HTU21D_I2C_ADDR, default_speed=100000
         )
@@ -111,16 +112,12 @@ class HTU21D:
             )
         self.deviceId = config.get("sensor_type")
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.0
-        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
+        self.temperature_sample_thread = self.klipper_threads.register_job(
+            target=self._sample_htu21d
+        )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("htu21d " + self.name, self)
         self.printer.register_event_handler("klippy:connect", self.handle_connect)
-
-    def _run_sample_timer(self):
-        wait_time = self._sample_htu21d()
-        while wait_time > 0 and not self.printer.is_shutdown():
-            time.sleep(wait_time)
-            wait_time = self._sample_htu21d()
 
     def handle_connect(self):
         self._init_htu21d()

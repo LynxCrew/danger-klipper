@@ -32,22 +32,19 @@ class LM75:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.reactor = self.printer.get_reactor()
+        self.klipper_threads = self.printer.get_klipper_threads()
         self.i2c = bus.MCU_I2C_from_config(config, LM75_CHIP_ADDR, LM75_I2C_SPEED)
         self.mcu = self.i2c.get_mcu()
         self.report_time = config.getfloat(
             "lm75_report_time", LM75_REPORT_TIME, minval=LM75_MIN_REPORT_TIME
         )
         self.temp = self.min_temp = self.max_temp = 0.0
-        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
+        self.temperature_sample_thread = self.klipper_threads.register_job(
+            target=self._sample_lm75
+        )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("lm75 " + self.name, self)
         self.printer.register_event_handler("klippy:connect", self.handle_connect)
-
-    def _run_sample_timer(self):
-        wait_time = self._sample_lm75()
-        while wait_time > 0 and not self.printer.is_shutdown():
-            time.sleep(wait_time)
-            wait_time = self._sample_lm75()
 
     def handle_connect(self):
         self._init_lm75()

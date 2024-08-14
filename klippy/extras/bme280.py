@@ -4,8 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import threading
-
 from . import bus
 
 from extras.danger_options import get_danger_options
@@ -190,9 +188,7 @@ class BME280:
         self.min_temp = self.max_temp = self.range_switching_error = 0.0
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.max_sample_time = None
-        self.dig = None
-        self.sample_timer = None
-        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
+        self.dig = self.sample_timer = None
         self.chip_type = "BMP280"
         self.chip_registers = BME280_REGS
         self.printer.add_object("bme280 " + self.name, self)
@@ -200,12 +196,9 @@ class BME280:
             return
         self.printer.register_event_handler("klippy:connect", self.handle_connect)
 
-    def _run_sample_timer(self):
-        self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
-
     def handle_connect(self):
         self._init_bmxx80()
-        self.temperature_sample_thread.start()
+        self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
 
     def setup_minmax(self, min_temp, max_temp):
         self.min_temp = min_temp

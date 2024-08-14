@@ -22,17 +22,14 @@ class MPC_BLOCK_TEMP_WRAPPER:
         self.temp = self.min_temp = self.max_temp = 0.0
 
         self.reactor = self.printer.get_reactor()
+        self.klipper_threads = self.printer.get_klipper_threads()
 
-        self.temperature_sample_thread = threading.Thread(target=self._run_sample_timer)
+        self.temperature_sample_thread = self.klipper_threads.register_job(
+            target=self._sample_block_temperature
+        )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
-
-    def _run_sample_timer(self):
-        wait_time = self._sample_block_temperature()
-        while wait_time > 0 and not self.printer.is_shutdown():
-            time.sleep(wait_time)
-            wait_time = self._sample_block_temperature()
 
     def handle_ready(self):
         pheaters = self.printer.lookup_object("heaters")
