@@ -21,6 +21,7 @@ class HostResponder:
         self.reactor = self.printer.get_reactor()
         self.default_prefix = config.getchoice("default_type", respond_types, "echo")
         self.default_prefix = config.get("default_prefix", self.default_prefix)
+        self.no_space = config.getboolean("no_space", False)
 
         if not config.getboolean("enable_respond", True):
             return
@@ -47,6 +48,8 @@ class HostResponder:
                 prefix = respond_types[respond_type]
             elif respond_type in respond_types_no_space:
                 prefix = respond_types_no_space[respond_type]
+                no_space = True
+            elif self.no_space:
                 no_space = True
             else:
                 raise gcmd.error(
