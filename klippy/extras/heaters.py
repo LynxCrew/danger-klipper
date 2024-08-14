@@ -455,7 +455,7 @@ class ControlPID:
             temp_profile["smooth_time"] = None
             temp_profile["smoothing_elements"] = None
         else:
-            profile_version = config_section.getint("profile_version", None)
+            profile_version = config_section.getint("profile_version", 0)
             if HEATER_PROFILE_VERSION != profile_version:
                 logging.info(
                     "heater_profile: Profile [%s] not compatible with this version\n"
