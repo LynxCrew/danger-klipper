@@ -39,7 +39,7 @@ class HostResponder:
     cmd_RESPOND_help = "Echo the message prepended with a prefix"
 
     def cmd_RESPOND(self, gcmd):
-        no_space = False
+        no_space = self.no_space
         respond_type = gcmd.get("TYPE", None)
         prefix = self.default_prefix
         if respond_type is not None:
@@ -48,8 +48,6 @@ class HostResponder:
                 prefix = respond_types[respond_type]
             elif respond_type in respond_types_no_space:
                 prefix = respond_types_no_space[respond_type]
-                no_space = True
-            elif self.no_space:
                 no_space = True
             else:
                 raise gcmd.error(
