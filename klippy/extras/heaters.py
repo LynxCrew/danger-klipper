@@ -884,11 +884,11 @@ class ControlMPC:
                 "filament_diameter", above=0.0, default=1.75
             ),
             "filament_density": config_section.getfloat(
-                "filament_density", above=0.0, default=0.0
+                "filament_density", above=0.0, default=1.2
             ),
             "filament_heat_capacity": (
                 config_section.getfloat(
-                    "filament_heat_capacity", above=0.0, default=0.0
+                    "filament_heat_capacity", above=0.0, default=1.8
                 )
             ),
             "maximum_retract": (
