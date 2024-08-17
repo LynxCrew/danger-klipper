@@ -159,17 +159,17 @@ class PrinterStepperEnable:
         max_enable_time = config.getfloat(
             "max_enable_time", 0.0, minval=MIN_ENABLE_TIME, maxval=MAX_ENABLE_TIME
         )
+        disable_on_error = config.getboolean("disable_on_error", False)
+        if disable_on_error:
+            config.deprecate("disable_on_error")
+            if not max_enable_time:
+                max_enable_time = 5.0
         resend_interval = config.getfloat(
             "resend_interval",
             MIN_RESEND_INTERVAL,
             minval=MIN_RESEND_INTERVAL,
             maxval=max_enable_time - 0.5,
         )
-        disable_on_error = config.getboolean("disable_on_error", False)
-        if disable_on_error:
-            config.deprecate("disable_on_error")
-            if not max_enable_time:
-                max_enable_time = 5.0
         enable = setup_enable_pin(
             self.printer,
             config.get("enable_pin", None),
