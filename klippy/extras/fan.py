@@ -4,8 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import threading
-import time
 
 from . import pulse_counter
 
@@ -21,10 +19,7 @@ class Fan:
         self.klipper_threads = self.printer.get_klipper_threads()
         self.last_fan_value = 0.0
         self.pwm_value = 0.0
-        self.queued_speed = None
-        self.queued_force = False
-        self.locking = False
-        self.unlock_timer = None
+        self.last_fan_time = 0.0
         # Read config
         self.kick_start_time = config.getfloat("kick_start_time", 0.1, minval=0.0)
         self.kick_start_threshold = config.getfloat(
@@ -153,7 +148,6 @@ class Fan:
         )
 
     def handle_ready(self):
-        self.unlock_timer = self.reactor.register_timer(self._unlock_lock)
         if self.startup_check:
             self.self_checking = True
             toolhead = self.printer.lookup_object("toolhead")
@@ -190,14 +184,7 @@ class Fan:
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
 
-    def set_speed(self, print_time, value, force=False):
-        if self.locking:
-            self.queued_speed = value
-            self.queued_force = force
-        else:
-            self._set_speed(print_time, value, force)
-
-    def _set_speed(self, print_time, value, force=False):
+    def set_speed(self, print_time, value, force=False, end_print=False):
         if value > 0:
             # Scale value between min_power and max_power
             pwm_value = value * (self.max_power - self.min_power) + self.min_power
@@ -206,8 +193,8 @@ class Fan:
             pwm_value = 0
         if pwm_value == self.pwm_value and not force:
             return
+        print_time = max(self.last_fan_time + FAN_MIN_TIME, print_time)
         if force or not self.self_checking:
-            self.locking = True
             if self.enable_pin:
                 if value > 0 and self.last_fan_value == 0:
                     self.enable_pin.set_digital(print_time, 1)
@@ -226,7 +213,7 @@ class Fan:
                 self.mcu_fan.set_pwm(print_time, self.max_power)
                 print_time += self.kick_start_time
             self.mcu_fan.set_pwm(print_time, pwm_value)
-            self.reactor.update_timer(self.unlock_timer, print_time + FAN_MIN_TIME)
+        self.last_fan_time = print_time
         self.last_fan_value = value
         self.pwm_value = pwm_value
 
@@ -241,24 +228,10 @@ class Fan:
                 if self.fan_check_thread is not None:
                     self.fan_check_thread = None
 
-    def _unlock_lock(self, eventtime):
-        if self.queued_speed is not None:
-            speed = self.queued_speed
-            force = self.queued_force
-            self.queued_speed = None
-            self.queued_force = False
-            self._set_speed(
-                self.get_mcu().estimated_print_time(self.reactor.monotonic()),
-                speed,
-                force,
-            )
-        self.locking = False
-        return self.reactor.NEVER
-
-    def set_speed_from_command(self, value, force=False):
+    def set_speed_from_command(self, value, force=False, end_print=False):
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.register_lookahead_callback(
-            (lambda pt: self.set_speed(pt, value, force))
+            (lambda pt: self.set_speed(pt, value, force, end_print))
         )
 
     def _handle_request_restart(self, print_time):
@@ -356,7 +329,8 @@ class PrinterFan:
     def cmd_M107(self, gcmd):
         # Turn fan off
         force = gcmd.get_int("F", 0, minval=0, maxval=1)
-        self.fan.set_speed_from_command(0.0, force)
+        end_print = gcmd.get_int("E", 0, minval=0, maxval=1)
+        self.fan.set_speed_from_command(0.0, force, end_print)
 
 
 def load_config(config):
