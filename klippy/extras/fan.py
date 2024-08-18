@@ -247,7 +247,7 @@ class Fan:
             force = self.queued_force
             self.queued_speed = None
             self.queued_force = False
-            self._set_speed(eventtime, speed, force)
+            self._set_speed(self.reactor.monotonic, speed, force)
         self.locking = False
         return self.reactor.NEVER
 
