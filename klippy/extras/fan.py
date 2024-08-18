@@ -4,12 +4,10 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import threading
-import time
 
 from . import pulse_counter
 
-FAN_MIN_TIME = 0.100
+FAN_MIN_TIME = 0.250
 SAFETY_CHECK_INIT_TIME = 3.0
 
 
@@ -292,7 +290,7 @@ class Fan:
                     self.gcode.run_script_from_command(self.on_error_gcode)
                 else:
                     self.printer.invoke_shutdown(msg)
-                    return self.printer.get_reactor().NEVER
+                    return 0
         else:
             self.num_err = 0
         if self.last_fan_value:
