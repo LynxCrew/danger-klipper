@@ -9,8 +9,6 @@ import time
 
 from . import fan
 
-PIN_MIN_TIME = 0.100
-
 
 class ControllerFan:
     def __init__(self, config, defined_fan=None):
@@ -102,7 +100,7 @@ class ControllerFan:
         speed = self.get_speed(print_time)
         if self.enabled and speed != self.last_speed:
             self.last_speed = speed
-            self.fan.set_speed(print_time + PIN_MIN_TIME, speed)
+            self.fan.set_speed(print_time, speed)
         return 1.0
 
     cmd_SET_CONTROLLER_FAN_help = "Enable or Disable a controller_fan"
@@ -112,7 +110,7 @@ class ControllerFan:
         if not self.enabled:
             curtime = self.printer.get_reactor().monotonic()
             print_time = self.fan.get_mcu().estimated_print_time(curtime)
-            self.fan.set_speed(print_time + PIN_MIN_TIME, 0.0)
+            self.fan.set_speed(print_time, 0.0)
 
 
 def load_config_prefix(config):
