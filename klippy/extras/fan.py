@@ -9,7 +9,7 @@ import threading
 from . import pulse_counter
 
 FAN_MIN_TIME = 0.100
-FAN_REPORT_TIME = 0.250
+FAN_REPORT_TIME = 0.300
 SAFETY_CHECK_INIT_TIME = 3.0
 
 
