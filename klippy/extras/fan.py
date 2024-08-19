@@ -247,7 +247,7 @@ class Fan:
             self.queued_speed = None
             self.queued_force = False
             self._set_speed(
-                self.get_mcu().estimated_print_time(self.reactor.monotonic()),
+                eventtime,
                 speed,
                 force,
             )
