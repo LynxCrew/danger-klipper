@@ -62,7 +62,7 @@ class PrinterHeaterFan:
             self.last_speed = speed
             curtime = self.printer.get_reactor().monotonic()
             print_time = self.fan.get_mcu().estimated_print_time(curtime)
-            self.fan.set_speed(print_time, speed)
+            self.fan.set_speed(print_time + PIN_MIN_TIME, speed)
         return eventtime + 1.0
 
     cmd_SET_HEATER_FAN_help = "Enable or Disable a heater_fan"
@@ -73,11 +73,11 @@ class PrinterHeaterFan:
         if self.enabled:
             curtime = self.printer.get_reactor().monotonic()
             print_time = self.fan.get_mcu().estimated_print_time(curtime)
-            self.fan.set_speed(print_time, self.fan_speed)
+            self.fan.set_speed(print_time + PIN_MIN_TIME, self.fan_speed)
         if not self.enabled:
             curtime = self.printer.get_reactor().monotonic()
             print_time = self.fan.get_mcu().estimated_print_time(curtime)
-            self.fan.set_speed(print_time, 0.0)
+            self.fan.set_speed(print_time + PIN_MIN_TIME, 0.0)
 
 
 def load_config_prefix(config):

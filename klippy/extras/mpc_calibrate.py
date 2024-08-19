@@ -1,6 +1,8 @@
 import math
 import logging
 
+PIN_MIN_TIME = 0.100
+
 
 class MPCCalibrate:
     def __init__(self, config):
@@ -282,7 +284,7 @@ class MpcCalibrate:
                     speed = idx / (fan_breakpoints - 1)
                     curtime = self.heater.reactor.monotonic()
                     print_time = fan.get_mcu().estimated_print_time(curtime)
-                    fan.set_speed(print_time, speed)
+                    fan.set_speed(print_time + PIN_MIN_TIME, speed)
                     gcmd.respond_info("Waiting for temperature to stabilize")
                     self.wait_stable(3)
                     gcmd.respond_info(
@@ -297,7 +299,7 @@ class MpcCalibrate:
                     fan_powers.append((speed, power))
                 curtime = self.heater.reactor.monotonic()
                 print_time = fan.get_mcu().estimated_print_time(curtime)
-                fan.set_speed(print_time, 0.0)
+                fan.set_speed(print_time + PIN_MIN_TIME, 0.0)
             power_base = fan_powers[0][1]
 
         return {
