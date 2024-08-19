@@ -163,10 +163,9 @@ class Fan:
 
     def set_startup_fan_speed(self, print_time):
         self.mcu_fan.set_pwm(print_time, self.max_power)
-        reactor = self.printer.get_reactor()
-        self.startup_check_timer = reactor.register_timer(
+        self.startup_check_timer = self.reactor.register_timer(
             self.startup_self_check,
-            reactor.monotonic() + self.startup_check_delay,
+            self.reactor.monotonic() + self.startup_check_delay,
         )
 
     def startup_self_check(self, eventtime):
@@ -183,9 +182,9 @@ class Fan:
             (lambda pt: self.set_speed(pt, self.pwm_value, force=True))
         )
         self.self_checking = False
-        self.printer.get_reactor().unregister_timer(self.startup_check_timer)
+        self.reactor.unregister_timer(self.startup_check_timer)
         self.startup_check_timer = None
-        return self.printer.get_reactor().NEVER
+        return self.reactor.NEVER
 
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
@@ -292,7 +291,7 @@ class Fan:
                     self.gcode.run_script_from_command(self.on_error_gcode)
                 else:
                     self.printer.invoke_shutdown(msg)
-                    return self.printer.get_reactor().NEVER
+                    return self.reactor.NEVER
         else:
             self.num_err = 0
         if self.last_fan_value:
@@ -309,7 +308,7 @@ class Fan:
             "MAX_POWER", self.max_power, above=self.min_power, maxval=1.0
         )
         self.min_rpm = gcmd.get_float("MIN_RPM", self.min_rpm, minval=0.0)
-        curtime = self.printer.get_reactor().monotonic()
+        curtime = self.reactor.monotonic()
         print_time = self.get_mcu().estimated_print_time(curtime)
         self.set_speed(print_time, self.last_fan_value, force=True)
 
