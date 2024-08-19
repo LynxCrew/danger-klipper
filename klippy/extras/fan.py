@@ -9,6 +9,7 @@ import threading
 from . import pulse_counter
 
 FAN_MIN_TIME = 0.100
+FAN_REPORT_TIME = 0.250
 SAFETY_CHECK_INIT_TIME = 3.0
 
 
@@ -317,7 +318,7 @@ class RealTimeFan:
 
     def callback(self, eventtime):
         self._callback(eventtime)
-        return FAN_MIN_TIME
+        return FAN_REPORT_TIME
 
     def _callback(self, eventtime):
         with self.lock:
