@@ -242,10 +242,10 @@ class TMCErrorCheck:
     def get_status(self, eventtime=None):
         if self.check_timer is None:
             measured_min = (
-                99999999.0 if self.measured_min is None else round(self.measured_min, 2)
+                0.0 if self.measured_min is None else round(self.measured_min, 2)
             )
             measured_max = (
-                99999999.0 if self.measured_max is None else round(self.measured_max, 2)
+                0.0 if self.measured_max is None else round(self.measured_max, 2)
             )
             return {
                 "drv_status": None,
@@ -267,10 +267,10 @@ class TMCErrorCheck:
                 0.0 if self.measured_max is None else self.measured_max, temp
             )
         measured_min = (
-            99999999.0 if self.measured_min is None else round(self.measured_min, 2)
+            0.0 if self.measured_min is None else round(self.measured_min, 2)
         )
         measured_max = (
-            99999999.0 if self.measured_max is None else round(self.measured_max, 2)
+            0.0 if self.measured_max is None else round(self.measured_max, 2)
         )
         return {
             "drv_status": self.last_drv_fields,
