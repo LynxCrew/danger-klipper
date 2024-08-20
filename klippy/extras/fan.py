@@ -255,6 +255,7 @@ class Fan:
                 or not self.queued_force
             ):
                 print_time = self.estimated_print_time(eventtime)
+                logging.info("UNLOCK_FAN")
                 return self._set_speed(print_time + FAN_MIN_TIME, value, pwm_value, force, True)
         self.locking = False
         return self.reactor.NEVER
