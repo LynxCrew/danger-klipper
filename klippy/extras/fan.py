@@ -18,6 +18,7 @@ class Fan:
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object("gcode")
         self.reactor = self.printer.get_reactor()
+        self.estimated_print_time = None
         self.klipper_threads = self.printer.get_klipper_threads()
         self.last_fan_value = 0.0
         self.last_pwm_value = 0.0
@@ -153,6 +154,7 @@ class Fan:
         )
 
     def handle_ready(self):
+        self.estimated_print_time = self.get_mcu().estimated_print_time
         if self.startup_check:
             self.self_checking = True
             toolhead = self.printer.lookup_object("toolhead")
@@ -252,6 +254,7 @@ class Fan:
                 or self.queued_pwm_value != self.last_pwm_value
                 or not self.queued_force
             ):
+                self.estimated_print_time(eventtime)
                 return self._set_speed(eventtime, value, pwm_value, force, True)
         self.locking = False
         return self.reactor.NEVER
