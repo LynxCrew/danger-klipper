@@ -98,6 +98,7 @@ class Heater:
         sensor_config.getfloat("target_reach_time", None)
         sensor_config.getfloat("smoothing", None)
         sensor_config.getfloat("heater_power", None)
+        sensor_config.getfloat("heater_powers", None)
         sensor_config.getfloat("sensor_responsiveness", None)
         sensor_config.getfloat("min_ambient_change", None)
         sensor_config.getfloat("steady_state_rate", None)
