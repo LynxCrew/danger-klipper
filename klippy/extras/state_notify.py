@@ -203,7 +203,7 @@ class StateNotify:
         if not self.menu.is_running():
             self._state_handler("menu_exit", eventtime)
             return self.reactor.NEVER
-        return self.reactor.monotonic() + TIMER_DURATION
+        return eventtime + TIMER_DURATION
 
     # Timer to monitor print statistics for state changes. This is needed to catch
     # print pauses.
