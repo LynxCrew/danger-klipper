@@ -225,7 +225,7 @@ class Fan:
                 print_time += self.kick_start_time
             self.mcu_fan.set_pwm(print_time, pwm_value)
             if not resend:
-                self.reactor.update_timer(self.unlock_timer, print_time + FAN_MIN_TIME)
+                self.reactor.update_timer(self.unlock_timer, self.reactor.monotonic() + FAN_MIN_TIME)
         self.last_fan_value = value
         self.last_pwm_value = pwm_value
 
