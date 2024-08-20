@@ -22,6 +22,7 @@ class Fan:
         self.klipper_threads = self.printer.get_klipper_threads()
         self.last_fan_value = 0.0
         self.last_pwm_value = 0.0
+        self.last_fan_time = 0.
         self.queued_value = None
         self.queued_pwm_value = None
         self.queued_force = False
@@ -229,6 +230,7 @@ class Fan:
                 self.reactor.update_timer(self.unlock_timer, self.reactor.monotonic() + FAN_MIN_TIME)
         self.last_fan_value = value
         self.last_pwm_value = pwm_value
+        self.last_fan_time = print_time
 
         if self.min_rpm > 0 and (force or not self.self_checking):
             if pwm_value > 0:
@@ -257,7 +259,7 @@ class Fan:
             ):
                 print_time = self.estimated_print_time(eventtime)
                 logging.info("UNLOCK_FAN=%f" % print_time)
-                return self._set_speed(print_time, value, pwm_value, force, True)
+                return self._set_speed(self.last_fan_time + FAN_MIN_TIME, value, pwm_value, force, True)
         self.locking = False
         return self.reactor.NEVER
 
