@@ -193,7 +193,7 @@ class Fan:
         else:
             self._set_speed(print_time, value, force)
 
-    def _set_speed(self, print_time, value, force=False):
+    def _set_speed(self, print_time, value, force=False, resend=False):
         if value > 0:
             # Scale value between min_power and max_power
             pwm_value = value * (self.max_power - self.min_power) + self.min_power
@@ -222,7 +222,8 @@ class Fan:
                 self.mcu_fan.set_pwm(print_time, self.max_power)
                 print_time += self.kick_start_time
             self.mcu_fan.set_pwm(print_time, pwm_value)
-            self.reactor.update_timer(self.unlock_timer, print_time + FAN_MIN_TIME)
+            if not resend:
+                self.reactor.update_timer(self.unlock_timer, print_time + FAN_MIN_TIME)
         self.last_fan_value = value
         self.pwm_value = pwm_value
         self.last_fan_time = print_time + FAN_MIN_TIME
@@ -239,8 +240,6 @@ class Fan:
                     self.fan_check_thread = None
 
     def _unlock_lock(self, eventtime):
-        if eventtime < self.last_fan_time:
-            return eventtime + FAN_MIN_TIME
         if self.queued_speed is not None:
             speed = self.queued_speed
             force = self.queued_force
@@ -250,7 +249,9 @@ class Fan:
                 eventtime,
                 speed,
                 force,
+                True
             )
+            return eventtime + FAN_MIN_TIME
         self.locking = False
         return self.reactor.NEVER
 
