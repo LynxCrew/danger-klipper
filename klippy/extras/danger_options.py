@@ -22,11 +22,16 @@ class DangerOptions:
         self.error_on_unused_config_options = config.getboolean(
             "error_on_unused_config_options", True
         )
-        self.jinja_boolean_filter = config.getlist("jinja_boolean_filter", ["true", "1"])
+        self.jinja_boolean_filter = config.getlist(
+            "jinja_boolean_filter", ["true", "1"]
+        )
         self.jinja_extensions = config.getlist("jinja_extensions", [])
         self.allow_plugin_override = config.getboolean("allow_plugin_override", False)
         self.multi_mcu_trsync_timeout = config.getfloat(
             "multi_mcu_trsync_timeout", 0.025, minval=0.0
+        )
+        self.drip_move_wait_time = config.getfloat(
+            "drip_move_wait_time", default=0.0, minval=0.0, maxval=0.3
         )
         self.homing_elapsed_distance_tolerance = config.getfloat(
             "homing_elapsed_distance_tolerance", 0.5, minval=0.0
