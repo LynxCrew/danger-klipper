@@ -19,9 +19,9 @@ class Fan:
         self.gcode = self.printer.lookup_object("gcode")
         self.reactor = self.printer.get_reactor()
         self.klipper_threads = self.printer.get_klipper_threads()
-        self.last_fan_time = 0.0
         self.last_fan_value = 0.0
         self.pwm_value = 0.0
+        self.last_fan_time = 0.0
         self.queued_speed = None
         self.queued_force = False
         self.locking = False
@@ -229,6 +229,7 @@ class Fan:
             self.reactor.update_timer(self.unlock_timer, print_time + FAN_MIN_TIME)
         self.last_fan_value = value
         self.pwm_value = pwm_value
+        self.last_fan_time = print_time + FAN_MIN_TIME
 
         if self.min_rpm > 0 and (force or not self.self_checking):
             if pwm_value > 0:
@@ -242,6 +243,8 @@ class Fan:
                     self.fan_check_thread = None
 
     def _unlock_lock(self, eventtime):
+        if eventtime < self.last_fan_time:
+            return eventtime + FAN_MIN_TIME
         if self.queued_speed is not None:
             speed = self.queued_speed
             force = self.queued_force
