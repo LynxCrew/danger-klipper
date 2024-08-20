@@ -20,12 +20,13 @@ class Fan:
         self.reactor = self.printer.get_reactor()
         self.klipper_threads = self.printer.get_klipper_threads()
         self.last_fan_value = 0.0
-        self.pwm_value = 0.0
+        self.last_pwm_value = 0.0
         self.last_fan_time = 0.0
-        self.queued_speed = None
+        self.queued_value = None
+        self.queued_pwm_value = None
         self.queued_force = False
         self.locking = False
-        self.unlock_timer = None
+        self.unlock_timer = self.reactor.register_timer(self._unlock_lock)
         # Read config
         self.kick_start_time = config.getfloat("kick_start_time", 0.1, minval=0.0)
         self.kick_start_threshold = config.getfloat(
@@ -153,7 +154,6 @@ class Fan:
         )
 
     def handle_ready(self):
-        self.unlock_timer = self.reactor.register_timer(self._unlock_lock)
         if self.startup_check:
             self.self_checking = True
             toolhead = self.printer.lookup_object("toolhead")
@@ -179,7 +179,7 @@ class Fan:
             logging.error(msg)
             self.printer.invoke_shutdown(msg)
         self.printer.lookup_object("toolhead").register_lookahead_callback(
-            (lambda pt: self.set_speed(pt, self.pwm_value, force=True))
+            (lambda pt: self.set_speed(pt, self.last_pwm_value, force=True))
         )
         self.self_checking = False
 
@@ -187,20 +187,21 @@ class Fan:
         return self.mcu_fan.get_mcu()
 
     def set_speed(self, print_time, value, force=False):
-        if self.locking:
-            self.queued_speed = value
-            self.queued_force = force
-        else:
-            self._set_speed(print_time, value, force)
-
-    def _set_speed(self, print_time, value, force=False, resend=False):
         if value > 0:
             # Scale value between min_power and max_power
             pwm_value = value * (self.max_power - self.min_power) + self.min_power
             pwm_value = max(self.min_power, min(self.max_power, pwm_value))
         else:
             pwm_value = 0
-        if pwm_value == self.pwm_value and not force:
+        if self.locking:
+            self.queued_value = value
+            self.queued_pwm_value = pwm_value
+            self.queued_force = force
+        else:
+            self._set_speed(print_time, value, pwm_value, force)
+
+    def _set_speed(self, print_time, value, pwm_value, force=False, resend=False):
+        if value == self.last_fan_value and pwm_value == self.last_pwm_value and not force:
             return
         if force or not self.self_checking:
             self.locking = True
@@ -225,7 +226,7 @@ class Fan:
             if not resend:
                 self.reactor.update_timer(self.unlock_timer, print_time + FAN_MIN_TIME)
         self.last_fan_value = value
-        self.pwm_value = pwm_value
+        self.last_pwm_value = pwm_value
         self.last_fan_time = print_time + FAN_MIN_TIME
 
         if self.min_rpm > 0 and (force or not self.self_checking):
@@ -240,13 +241,19 @@ class Fan:
                     self.fan_check_thread = None
 
     def _unlock_lock(self, eventtime):
-        if self.queued_speed is not None:
-            speed = self.queued_speed
+        if self.queued_pwm_value is not None:
+            value = self.queued_value
+            pwm_value = self.queued_pwm_value
             force = self.queued_force
-            self.queued_speed = None
+            self.queued_value = None
+            self.queued_pwm_value = None
             self.queued_force = False
-            if self.queued_speed != self.last_fan_value and not self.queued_force:
-                self._set_speed(eventtime, speed, force, True)
+            if (
+                self.queued_value != self.last_fan_value
+                or self.queued_pwm_value != self.last_pwm_value
+                or not self.queued_force
+            ):
+                self._set_speed(eventtime, value, pwm_value, force, True)
                 return eventtime + FAN_MIN_TIME
         self.locking = False
         return self.reactor.NEVER
@@ -263,7 +270,7 @@ class Fan:
     def get_status(self, eventtime):
         tachometer_status = self.tachometer.get_status(eventtime)
         return {
-            "speed": self.pwm_value,
+            "speed": self.last_pwm_value,
             "normalized_speed": self.last_fan_value,
             "rpm": tachometer_status["rpm"],
         }
