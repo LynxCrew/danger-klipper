@@ -251,7 +251,7 @@ class Fan:
             self.queued_speed = None
             self.queued_force = False
             self._set_speed(
-                eventtime + FAN_MIN_TIME,
+                eventtime,
                 speed,
                 force,
             )
