@@ -19,6 +19,7 @@ class Fan:
         self.gcode = self.printer.lookup_object("gcode")
         self.reactor = self.printer.get_reactor()
         self.klipper_threads = self.printer.get_klipper_threads()
+        self.last_fan_time = 0.0
         self.last_fan_value = 0.0
         self.pwm_value = 0.0
         self.queued_speed = None
@@ -247,7 +248,7 @@ class Fan:
             self.queued_speed = None
             self.queued_force = False
             self._set_speed(
-                eventtime,
+                eventtime + FAN_MIN_TIME,
                 speed,
                 force,
             )

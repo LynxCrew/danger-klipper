@@ -8,6 +8,8 @@ import traceback, logging, ast, copy, json
 import jinja2, math
 import configfile
 
+from extras.danger_options import get_danger_options
+
 ######################################################################
 # Template handling
 ######################################################################
@@ -101,12 +103,14 @@ class Template:
 class PrinterGCodeMacro:
     def __init__(self, config):
         self.printer = config.get_printer()
+        extensions = ["jinja2.ext.do", "jinja2.ext.loopcontrols"]
+        extensions.extend(get_danger_options().jinja_extensions)
         self.env = jinja2.Environment(
             "{%",
             "%}",
             "{",
             "}",
-            extensions=["jinja2.ext.do", "jinja2.ext.loopcontrols"],
+            extensions=extensions,
         )
 
         self.env.filters["bool"] = self.boolean
@@ -118,7 +122,7 @@ class PrinterGCodeMacro:
 
     def boolean(self, value):
         lowercase_value = str(value).lower()
-        return lowercase_value in ["true", "1"]
+        return lowercase_value in get_danger_options().jinja_boolean_filter
 
     def load_template(self, config, option, default=None):
         name = "%s:%s" % (config.get_name(), option)
