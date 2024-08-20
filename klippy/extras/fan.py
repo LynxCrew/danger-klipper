@@ -245,7 +245,7 @@ class Fan:
             force = self.queued_force
             self.queued_speed = None
             self.queued_force = False
-            if self.queued_speed != self.last_fan_value:
+            if self.queued_speed != self.last_fan_value and not self.queued_force:
                 self._set_speed(
                     eventtime,
                     speed,
