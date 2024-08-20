@@ -9,7 +9,7 @@ import time
 
 from . import pulse_counter
 
-FAN_MIN_TIME = 0.100
+FAN_MIN_TIME = 1.0
 SAFETY_CHECK_INIT_TIME = 3.0
 
 
