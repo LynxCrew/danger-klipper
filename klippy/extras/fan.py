@@ -21,7 +21,6 @@ class Fan:
         self.klipper_threads = self.printer.get_klipper_threads()
         self.last_fan_value = 0.0
         self.last_pwm_value = 0.0
-        self.last_fan_time = 0.0
         self.queued_value = None
         self.queued_pwm_value = None
         self.queued_force = False
@@ -206,9 +205,9 @@ class Fan:
         if force or not self.self_checking:
             self.locking = True
             if self.enable_pin:
-                if value > 0 and self.last_fan_value == 0:
+                if value > 0 and self.last_pwm_value == 0:
                     self.enable_pin.set_digital(print_time, 1)
-                elif value == 0 and self.last_fan_value > 0:
+                elif value == 0 and self.last_pwm_value > 0:
                     self.enable_pin.set_digital(print_time, 0)
             if (
                 value
@@ -227,7 +226,6 @@ class Fan:
                 self.reactor.update_timer(self.unlock_timer, print_time + FAN_MIN_TIME)
         self.last_fan_value = value
         self.last_pwm_value = pwm_value
-        self.last_fan_time = print_time + FAN_MIN_TIME
 
         if self.min_rpm > 0 and (force or not self.self_checking):
             if pwm_value > 0:
@@ -239,6 +237,7 @@ class Fan:
             else:
                 if self.fan_check_thread is not None:
                     self.fan_check_thread = None
+        return print_time + FAN_MIN_TIME
 
     def _unlock_lock(self, eventtime):
         if self.queued_pwm_value is not None:
@@ -253,8 +252,7 @@ class Fan:
                 or self.queued_pwm_value != self.last_pwm_value
                 or not self.queued_force
             ):
-                self._set_speed(eventtime, value, pwm_value, force, True)
-                return eventtime + FAN_MIN_TIME
+                return self._set_speed(eventtime, value, pwm_value, force, True)
         self.locking = False
         return self.reactor.NEVER
 
