@@ -9,7 +9,7 @@ import time
 
 from . import pulse_counter
 
-FAN_MIN_TIME = 1.0
+FAN_MIN_TIME = 0.100
 SAFETY_CHECK_INIT_TIME = 3.0
 
 
@@ -254,8 +254,8 @@ class Fan:
                 or self.queued_pwm_value != self.last_pwm_value
                 or not self.queued_force
             ):
-                print_time = self.estimated_print_time(self.reactor.monotonic())
-                return self._set_speed(print_time, value, pwm_value, force, True)
+                print_time = self.estimated_print_time(eventtime)
+                return self._set_speed(print_time + FAN_MIN_TIME, value, pwm_value, force, True)
         self.locking = False
         return self.reactor.NEVER
 
