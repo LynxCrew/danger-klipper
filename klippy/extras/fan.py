@@ -200,15 +200,19 @@ class Fan:
             self.queued_pwm_value = pwm_value
             self.queued_force = force
         else:
-            self._set_speed(print_time, value, pwm_value, force)
+            self._set_speed(
+                print_time=print_time, value=value, pwm_value=pwm_value, force=force
+            )
 
-    def _set_speed(self, print_time, value, pwm_value, force=False, resend=False):
+    def _set_speed(
+        self, print_time, value, pwm_value, force=False, resend=False, eventtime=0.0
+    ):
         if (
             value == self.last_fan_value
             and pwm_value == self.last_pwm_value
             and not force
         ):
-            return
+            return eventtime + FAN_MIN_TIME
         if force or not self.self_checking:
             self.locking = True
             if self.enable_pin:
@@ -228,11 +232,10 @@ class Fan:
                 # Run fan at full speed for specified kick_start_time
                 self.mcu_fan.set_pwm(print_time, self.max_power)
                 print_time += self.kick_start_time
+                eventtime += self.kick_start_time
             self.mcu_fan.set_pwm(print_time, pwm_value)
             if not resend:
-                self.reactor.update_timer(
-                    self.unlock_timer, self.reactor.monotonic() + FAN_MIN_TIME
-                )
+                self.reactor.update_timer(self.unlock_timer, eventtime + FAN_MIN_TIME)
         self.last_fan_value = value
         self.last_pwm_value = pwm_value
         self.last_fan_time = print_time
@@ -248,6 +251,7 @@ class Fan:
                 if self.fan_check_thread is not None:
                     self.fan_check_thread.unregister()
                     self.fan_check_thread = None
+        return eventtime + FAN_MIN_TIME
 
     def _unlock_lock(self, eventtime):
         if self.queued_pwm_value is not None:
@@ -262,10 +266,14 @@ class Fan:
                 or self.queued_pwm_value != self.last_pwm_value
                 or not self.queued_force
             ):
-                self._set_speed(
-                    self.last_fan_time + FAN_MIN_TIME, value, pwm_value, force, True
+                return self._set_speed(
+                    print_time=self.last_fan_time + FAN_MIN_TIME,
+                    value=value,
+                    pwm_value=pwm_value,
+                    force=force,
+                    resend=True,
+                    eventtime=eventtime,
                 )
-                return eventtime + FAN_MIN_TIME
         self.locking = False
         return self.reactor.NEVER
 
