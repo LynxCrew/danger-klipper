@@ -201,7 +201,7 @@ class Fan:
         else:
             self._set_speed(print_time, value, pwm_value, force)
 
-    def _set_speed(self, print_time, value, pwm_value, force=False, resend=False, eventtime=0.0):
+    def _set_speed(self, print_time, value, pwm_value, force=False, resend=False):
         if value == self.last_fan_value and pwm_value == self.last_pwm_value and not force:
             return
         if force or not self.self_checking:
@@ -239,7 +239,7 @@ class Fan:
             else:
                 if self.fan_check_thread is not None:
                     self.fan_check_thread = None
-        return eventtime + FAN_MIN_TIME
+        return self.reactor.monotonic() + FAN_MIN_TIME
 
     def _unlock_lock(self, eventtime):
         if self.queued_pwm_value is not None:
@@ -255,7 +255,7 @@ class Fan:
                 or not self.queued_force
             ):
                 print_time = self.estimated_print_time(eventtime)
-                return self._set_speed(print_time, value, pwm_value, force, True, eventtime)
+                return self._set_speed(print_time, value, pwm_value, force, True)
         self.locking = False
         return self.reactor.NEVER
 
