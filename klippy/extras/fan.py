@@ -295,7 +295,7 @@ class Fan:
                     self.gcode.run_script_from_command(self.on_error_gcode)
                 else:
                     self.printer.invoke_shutdown(msg)
-                    return self.reactor.NEVER
+                    return 0
         else:
             self.num_err = 0
         if self.last_fan_value:
