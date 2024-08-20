@@ -137,7 +137,6 @@ class Fan:
             self.min_rpm if self.startup_check_rpm is None else self.startup_check_rpm
         )
         self.self_checking = False
-        self.startup_check_timer = None
 
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         # Register callbacks
@@ -164,7 +163,7 @@ class Fan:
 
     def set_startup_fan_speed(self, print_time):
         self.mcu_fan.set_pwm(print_time, self.max_power)
-        self.startup_check_timer = self.reactor.register_timer(
+        self.reactor.register_callback(
             self.startup_self_check,
             self.reactor.monotonic() + self.startup_check_delay,
         )
@@ -183,9 +182,6 @@ class Fan:
             (lambda pt: self.set_speed(pt, self.pwm_value, force=True))
         )
         self.self_checking = False
-        self.reactor.unregister_timer(self.startup_check_timer)
-        self.startup_check_timer = None
-        return self.reactor.NEVER
 
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
