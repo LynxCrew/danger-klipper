@@ -241,11 +241,17 @@ class TMCErrorCheck:
 
     def get_status(self, eventtime=None):
         if self.check_timer is None:
+            measured_min = (
+                None if self.measured_min is None else round(self.measured_min, 2)
+            )
+            measured_max = (
+                None if self.measured_max is None else round(self.measured_max, 2)
+            )
             return {
                 "drv_status": None,
                 "temperature": None,
-                "measured_min_temp": 0,
-                "measured_max_temp": 0,
+                "measured_min_temp": measured_min,
+                "measured_max_temp": measured_max,
             }
         temp = self.get_temperature()
         last_value, reg_name = self.drv_status_reg_info[:2]
@@ -255,16 +261,22 @@ class TMCErrorCheck:
             self.last_drv_fields = {n: v for n, v in fields.items() if v}
         if temp:
             self.measured_min = min(
-                self.measured_min if self.measured_min else 99999999.0, temp
+                99999999.0 if self.measured_min is None else self.measured_min, temp
             )
             self.measured_max = max(
-                self.measured_max if self.measured_max else 0.0, temp
+                0.0 if self.measured_max is None else self.measured_max, temp
             )
+        measured_min = (
+            None if self.measured_min is None else round(self.measured_min, 2)
+        )
+        measured_max = (
+            None if self.measured_max is None else round(self.measured_max, 2)
+        )
         return {
             "drv_status": self.last_drv_fields,
             "temperature": temp,
-            "measured_min_temp": 0,
-            "measured_max_temp": 0,
+            "measured_min_temp": measured_min,
+            "measured_max_temp": measured_max,
         }
 
 
