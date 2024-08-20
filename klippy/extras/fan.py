@@ -254,8 +254,8 @@ class Fan:
                 or self.queued_pwm_value != self.last_pwm_value
                 or not self.queued_force
             ):
-                self.estimated_print_time(eventtime)
-                return self._set_speed(eventtime, value, pwm_value, force, True)
+                print_time = self.estimated_print_time(eventtime)
+                return self._set_speed(print_time, value, pwm_value, force, True)
         self.locking = False
         return self.reactor.NEVER
 
