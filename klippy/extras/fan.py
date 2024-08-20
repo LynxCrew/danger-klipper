@@ -245,13 +245,14 @@ class Fan:
             force = self.queued_force
             self.queued_speed = None
             self.queued_force = False
-            self._set_speed(
-                eventtime,
-                speed,
-                force,
-                True
-            )
-            return eventtime + FAN_MIN_TIME
+            if self.queued_speed != self.last_fan_value:
+                self._set_speed(
+                    eventtime,
+                    speed,
+                    force,
+                    True
+                )
+                return eventtime + FAN_MIN_TIME
         self.locking = False
         return self.reactor.NEVER
 
