@@ -225,7 +225,9 @@ class Fan:
                 print_time += self.kick_start_time
             self.mcu_fan.set_pwm(print_time, pwm_value)
             if not resend:
-                self.reactor.update_timer(self.unlock_timer, self.reactor.monotonic() + FAN_MIN_TIME)
+                w_time = self.reactor.monotonic()
+                logging.info("w_time=%f" % w_time)
+                self.reactor.update_timer(self.unlock_timer, w_time + FAN_MIN_TIME)
         self.last_fan_value = value
         self.last_pwm_value = pwm_value
 
@@ -255,8 +257,8 @@ class Fan:
                 or not self.queued_force
             ):
                 print_time = self.estimated_print_time(eventtime)
-                logging.info("UNLOCK_FAN")
-                return self._set_speed(print_time + FAN_MIN_TIME, value, pwm_value, force, True)
+                logging.info("UNLOCK_FAN=%f" % eventtime)
+                return self._set_speed(print_time, value, pwm_value, force, True)
         self.locking = False
         return self.reactor.NEVER
 
