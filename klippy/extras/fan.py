@@ -207,6 +207,8 @@ class Fan:
     def _set_speed(
         self, print_time, value, pwm_value, force=False, resend=False, eventtime=0.0
     ):
+        if not resend:
+            eventtime = self.reactor.monotonic()
         if (
             value == self.last_fan_value
             and pwm_value == self.last_pwm_value
