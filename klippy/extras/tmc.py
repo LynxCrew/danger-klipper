@@ -250,8 +250,8 @@ class TMCErrorCheck:
             return {
                 "drv_status": None,
                 "temperature": None,
-                "measured_min_temp": None,
-                "measured_max_temp": None,
+                "measured_min_temp": measured_min,
+                "measured_max_temp": measured_max,
             }
         temp = self.get_temperature()
         last_value, reg_name = self.drv_status_reg_info[:2]
