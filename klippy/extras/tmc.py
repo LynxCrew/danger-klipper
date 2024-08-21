@@ -266,12 +266,8 @@ class TMCErrorCheck:
             self.measured_max = max(
                 0.0 if self.measured_max is None else self.measured_max, temp
             )
-        measured_min = (
-            0.0 if self.measured_min is None else round(self.measured_min, 2)
-        )
-        measured_max = (
-            0.0 if self.measured_max is None else round(self.measured_max, 2)
-        )
+        measured_min = 0.0 if self.measured_min is None else round(self.measured_min, 2)
+        measured_max = 0.0 if self.measured_max is None else round(self.measured_max, 2)
         return {
             "drv_status": self.last_drv_fields,
             "temperature": temp,

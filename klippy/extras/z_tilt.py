@@ -85,7 +85,9 @@ class ZAdjustStatus:
         printer.register_event_handler("unhome:mark_as_unhomed_z", self._motor_off)
 
     def check_retry_result(self, retry_result):
-        if not retry_result:
+        if (isinstance(retry_result, str) and retry_result == "done") or (
+            isinstance(retry_result, (int, float)) and not retry_result
+        ):
             self.applied = True
         return retry_result
 
