@@ -4,8 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import threading
-import time
 
 from . import pulse_counter
 
@@ -27,7 +25,6 @@ class Fan:
         self.queued_pwm_value = None
         self.queued_force = False
         self.locking = False
-        self.resend_delay = None
         self.unlock_timer = self.reactor.register_timer(self._unlock_lock)
         # Read config
         self.kick_start_time = config.getfloat("kick_start_time", 0.1, minval=0.0)
@@ -206,8 +203,10 @@ class Fan:
             )
 
     def _set_speed(
-        self, print_time, value, pwm_value, force=False, resend=False, eventtime=0.0
+        self, print_time, value, pwm_value, force=False, resend=False, eventtime=None
     ):
+        if eventtime is None:
+            eventtime = self.reactor.monotonic()
         if (
             value == self.last_fan_value
             and pwm_value == self.last_pwm_value
@@ -236,8 +235,7 @@ class Fan:
                 eventtime += self.kick_start_time
             self.mcu_fan.set_pwm(print_time, pwm_value)
             if not resend:
-                self.resend_delay = eventtime + FAN_MIN_TIME
-                self.reactor.update_timer(self.unlock_timer, self.reactor.NOW)
+                self.reactor.update_timer(self.unlock_timer, eventtime + FAN_MIN_TIME)
         self.last_fan_value = value
         self.last_pwm_value = pwm_value
         self.last_fan_time = print_time
@@ -256,10 +254,6 @@ class Fan:
         return eventtime + FAN_MIN_TIME
 
     def _unlock_lock(self, eventtime):
-        if self.resend_delay is not None:
-            delay = self.resend_delay
-            self.resend_delay = None
-            return eventtime + delay
         if self.queued_pwm_value is not None:
             value = self.queued_value
             pwm_value = self.queued_pwm_value
