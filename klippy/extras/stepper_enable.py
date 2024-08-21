@@ -66,14 +66,15 @@ class StepperEnablePin:
             self.resend_timer = None
             return self.reactor.NEVER
 
-        systime = self.reactor.monotonic()
-        print_time = self.mcu_enable.get_mcu().estimated_print_time(systime)
+        # systime = self.reactor.monotonic()
+        # print_time = self.mcu_enable.get_mcu().estimated_print_time(eventtime)
+        print_time = self.last_print_time + self.resend_interval
         time_diff = (self.last_print_time + self.resend_interval) - print_time
         if time_diff > 0.0:
             # Reschedule for resend time
-            return systime + time_diff
+            return eventtime + time_diff
         self._set_pin(print_time + PIN_MIN_TIME, self.last_value, True)
-        return systime + self.resend_interval
+        return eventtime + self.resend_interval
 
 
 def setup_enable_pin(
