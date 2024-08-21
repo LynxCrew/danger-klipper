@@ -205,7 +205,7 @@ class Fan:
             )
 
     def _set_speed(
-        self, print_time, value, pwm_value, force=False, resend=False, eventtime=0.0
+        self, print_time, value, pwm_value, force=False, eventtime=0.0
     ):
         if (
             value == self.last_fan_value
@@ -277,7 +277,6 @@ class Fan:
                     value=value,
                     pwm_value=pwm_value,
                     force=force,
-                    resend=True,
                     eventtime=eventtime,
                 )
         self.locking = False
