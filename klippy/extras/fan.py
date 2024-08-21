@@ -273,7 +273,7 @@ class Fan:
                 or not self.queued_force
             ):
                 return self._set_speed(
-                    print_time=self.last_fan_time + FAN_MIN_TIME,
+                    print_time=self.last_fan_time,
                     value=value,
                     pwm_value=pwm_value,
                     force=force,
