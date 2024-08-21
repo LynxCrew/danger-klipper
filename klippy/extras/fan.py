@@ -27,7 +27,8 @@ class Fan:
         self.queued_pwm_value = None
         self.queued_force = False
         self.locking = False
-        self.unlock_timer = None
+        self.resend_delay = None
+        self.unlock_timer = self.reactor.register_timer(self._unlock_lock)
         # Read config
         self.kick_start_time = config.getfloat("kick_start_time", 0.1, minval=0.0)
         self.kick_start_threshold = config.getfloat(
@@ -205,7 +206,7 @@ class Fan:
             )
 
     def _set_speed(
-        self, print_time, value, pwm_value, force=False, eventtime=0.0
+        self, print_time, value, pwm_value, force=False, resend=False, eventtime=0.0
     ):
         if (
             value == self.last_fan_value
@@ -234,8 +235,9 @@ class Fan:
                 print_time += self.kick_start_time
                 eventtime += self.kick_start_time
             self.mcu_fan.set_pwm(print_time, pwm_value)
-            if self.unlock_timer is None:
-                self.reactor.register_callback(self._init_unlock, self.reactor.NOW)
+            if not resend:
+                self.resend_delay = eventtime + FAN_MIN_TIME
+                self.reactor.update_timer(self.unlock_timer, self.reactor.NOW)
         self.last_fan_value = value
         self.last_pwm_value = pwm_value
         self.last_fan_time = print_time
@@ -253,13 +255,11 @@ class Fan:
                     self.fan_check_thread = None
         return eventtime + FAN_MIN_TIME
 
-    def _init_unlock(self, eventtime):
-        if self.unlock_timer is None:
-            self.unlock_timer = self.reactor.register_timer(
-                self._unlock_lock, eventtime + FAN_MIN_TIME
-            )
-
     def _unlock_lock(self, eventtime):
+        if self.resend_delay is not None:
+            delay = self.resend_delay
+            self.resend_delay = None
+            return eventtime + delay
         if self.queued_pwm_value is not None:
             value = self.queued_value
             pwm_value = self.queued_pwm_value
@@ -277,11 +277,10 @@ class Fan:
                     value=value,
                     pwm_value=pwm_value,
                     force=force,
+                    resend=True,
                     eventtime=eventtime,
                 )
         self.locking = False
-        self.reactor.unregister_timer(self.unlock_timer)
-        self.unlock_timer = None
         return self.reactor.NEVER
 
     def set_speed_from_command(self, value, force=False):
