@@ -67,8 +67,7 @@ class StepperEnablePin:
             return self.reactor.NEVER
 
         # systime = self.reactor.monotonic()
-        # print_time = self.mcu_enable.get_mcu().estimated_print_time(eventtime)
-        print_time = self.last_print_time + self.resend_interval
+        print_time = self.mcu_enable.get_mcu().estimated_print_time(eventtime)
         time_diff = (self.last_print_time + self.resend_interval) - print_time
         if time_diff > 0.0:
             # Reschedule for resend time
