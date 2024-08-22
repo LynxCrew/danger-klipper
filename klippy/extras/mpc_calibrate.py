@@ -224,9 +224,7 @@ class MpcCalibrate:
 
             self.printer.wait_while(process)
             self.heater.alter_target(0.0)
-            return self.orig_control.ambient_sensor.get_temp(
-                self.heater.reactor.monotonic()
-            )[0]
+            return ambient_sensor.get_temp(self.heater.reactor.monotonic())[0]
 
         gcmd.respond_info("Waiting for heater to settle at ambient temperature")
         ambient_temp = self.wait_settle(0.01)
