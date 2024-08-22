@@ -772,14 +772,14 @@ class ControlPositionalPID:
         self.Kp = profile["pid_kp"] / PID_PARAM_BASE
         self.Ki = profile["pid_ki"] / PID_PARAM_BASE
         self.Kd = profile["pid_kd"] / PID_PARAM_BASE
+        self.dt = heater.pwm_delay
         smooth_time = (
             self.heater.get_smooth_time()
             if profile["smooth_time"] is None
             else profile["smooth_time"]
         )
-        self.dt = heater.pwm_delay
-        self.smooth_time = smooth_time
         self.heater.set_inv_smooth_time(1.0 / smooth_time)
+        self.smooth_time = smooth_time  # smoothing window
         self.prev_temp_time = 0.0 if load_clean else self.heater.reactor.monotonic()
         self.prev_temp = (
             AMBIENT_TEMP if load_clean else self.heater.get_temp(self.prev_temp_time)[0]
@@ -837,7 +837,7 @@ class ControlPositionalPID:
         )
 
     def update_smooth_time(self):
-        self.smooth = 1.0 + self.heater.get_smooth_time() / self.dt
+        self.smooth_time = self.heater.get_smooth_time()  # smoothing window
 
     def set_pid_kp(self, kp):
         self.Kp = kp / PID_PARAM_BASE
