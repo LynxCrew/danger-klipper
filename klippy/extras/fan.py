@@ -254,7 +254,7 @@ class Fan:
         return eventtime + FAN_MIN_TIME
 
     def _unlock_lock(self, eventtime):
-        if self.queued_pwm_value is not None:
+        if self.queued_value is not None:
             value = self.queued_value
             pwm_value = self.queued_pwm_value
             force = self.queued_force
@@ -285,6 +285,7 @@ class Fan:
 
     def _handle_request_restart(self, print_time):
         self.reactor.update_timer(self.unlock_timer, self.reactor.NEVER)
+        self.queued_value = None
         self.mcu_fan.set_pwm(print_time, self.shutdown_power)
 
     def get_status(self, eventtime):
