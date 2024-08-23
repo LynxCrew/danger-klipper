@@ -284,7 +284,8 @@ class Fan:
         )
 
     def _handle_request_restart(self, print_time):
-        self.set_speed(print_time, 0.0)
+        self.reactor.update_timer(self.unlock_timer, self.reactor.NEVER)
+        self.set_speed(print_time, self.shutdown_power)
 
     def get_status(self, eventtime):
         tachometer_status = self.tachometer.get_status(eventtime)
