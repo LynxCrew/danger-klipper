@@ -31,9 +31,6 @@ class RunoutHelper:
             self.insert_gcode = gcode_macro.load_template(config, "insert_gcode")
         self.pause_delay = config.getfloat("pause_delay", 0.5, minval=0.0)
         self.event_delay = config.getfloat("event_delay", 3.0, minval=0.0)
-        # self.check_runout_timeout = self.config.getfloat(
-        #     "check_runout_timeout", None, above=0
-        # )
         self.check_runout_timeout = CHECK_RUNOUT_TIMEOUT
         if get_danger_options().modify_check_runout_timeout:
             self.check_runout_timeout = self.config.getfloat(
@@ -68,15 +65,15 @@ class RunoutHelper:
 
     def _handle_ready(self):
         self.min_event_systime = self.reactor.monotonic() + 2.0
-        if (
-            self.check_runout_timeout is not None
-            and not get_danger_options().modify_check_runout_timeout
-        ):
-            raise self.config.error(
-                "'modify_check_runout_timeout' is not enabled in 'danger_options'"
-            )
-        if self.check_runout_timeout is None:
-            self.check_runout_timeout = CHECK_RUNOUT_TIMEOUT
+        # if (
+        #     self.check_runout_timeout is not None
+        #     and not get_danger_options().modify_check_runout_timeout
+        # ):
+        #     raise self.config.error(
+        #         "'modify_check_runout_timeout' is not enabled in 'danger_options'"
+        #     )
+        # if self.check_runout_timeout is None:
+        #     self.check_runout_timeout = CHECK_RUNOUT_TIMEOUT
 
     def _runout_event_handler(self, eventtime):
         if self.immediate_runout_gcode is not None:
