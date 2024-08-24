@@ -48,13 +48,18 @@ class StateNotify:
             desc=self.cmd_STATE_NOTIFY_STATE_help,
         )
         self.printer.register_event_handler(
-            "klippy:ready", lambda: self._klippy_handler("ready")
+            "klippy:mcu_identify", self._register_ready_handler
         )
         self.printer.register_event_handler(
             "klippy:shutdown", lambda: self._klippy_handler("shutdown")
         )
         self.printer.register_event_handler(
             "klippy:disconnect", lambda: self._klippy_handler("disconnect")
+        )
+
+    def _register_ready_handler(self):
+        self.printer.register_event_handler(
+            "klippy:ready", lambda: self._klippy_handler("ready")
         )
 
     def _klippy_handler(self, state):
@@ -69,12 +74,10 @@ class StateNotify:
             self.print_stats = self.printer.lookup_object("print_stats")
             self.pheaters = self.printer.lookup_object("heaters")
             self.printer.register_event_handler(
-                "idle_timeout:idle",
-                lambda e: self._state_handler("idle_idle", e),
+                "idle_timeout:idle", lambda e: self._state_handler("idle_idle", e)
             )
             self.printer.register_event_handler(
-                "idle_timeout:ready",
-                lambda e: self._state_handler("idle_ready", e),
+                "idle_timeout:ready", lambda e: self._state_handler("idle_ready", e)
             )
             self.printer.register_event_handler(
                 "idle_timeout:printing",
@@ -111,10 +114,7 @@ class StateNotify:
                 + self.idle_gcode
             )
             idle_timeout.idle_gcode = TemplateWrapper(
-                self.printer,
-                self.gcode_macro.env,
-                "idle_timeout:gcode",
-                idle_gcode,
+                self.printer, self.gcode_macro.env, "idle_timeout:gcode", idle_gcode
             )
 
             # Handle a corner case in which we may miss a transition to "active"
@@ -177,8 +177,7 @@ class StateNotify:
             self.reactor.update_timer(self.inactive_timer, self.reactor.NEVER)
             if state == "menu_begin":
                 self.reactor.update_timer(
-                    self.menu_check_timer,
-                    self.reactor.monotonic() + TIMER_DURATION,
+                    self.menu_check_timer, self.reactor.monotonic() + TIMER_DURATION
                 )
             state = "active"
             self.reactor.update_timer(self.pause_timer, self.reactor.NEVER)
