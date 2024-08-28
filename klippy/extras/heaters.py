@@ -106,6 +106,10 @@ class Heater:
         sensor_config.getfloat("filament_density", None)
         sensor_config.getfloat("filament_heat_capacity", None)
         sensor_config.get("ambient_temp_sensor", None)
+        sensor_config.getfloat("calibrate_max_error", None)
+        sensor_config.getfloat("calibrate_check_gain_time", None)
+        sensor_config.getfloat("calibrate_hysteresis", None)
+        sensor_config.getfloat("calibrate_heating_gain", None)
         sensor_config.get("cooling_fan", None)
         sensor_config.getfloatlist("fan_ambient_transfer", None)
         # Setup output heater pin
