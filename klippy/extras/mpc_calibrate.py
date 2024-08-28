@@ -36,6 +36,11 @@ class MpcCalibrate:
         self.pmgr = heater.pmgr
         self.orig_control = heater.get_control()
         self.ambient_sensor_name = self.config.get("ambient_temp_sensor", None)
+        self.max_error = self.config.getfloat("calibrate_max_error", None)
+        self.check_gain_time = self.config.getfloat("calibrate_check_gain_time", None)
+        self.hysteresis = self.config.getfloat("calibrate_hysteresis", None)
+        self.heating_gain = self.config.getfloat("calibrate_heating_gain", None)
+
 
     def run(self, gcmd):
         profile_name = gcmd.get("PROFILE", "default")
@@ -60,6 +65,28 @@ class MpcCalibrate:
                 raise self.config.error(
                     f"Unknown ambient_temp_sensor '{ambient_sensor_name}' " f"specified"
                 )
+        max_error = gcmd.get_float("MAX_ERROR", self.max_error)
+        check_gain_time = gcmd.get_float("CHECK_GAIN_TIME", self.check_gain_time)
+        hysteresis = gcmd.get_float("HYSTERESIS", self.hysteresis)
+        heating_gain = gcmd.get_float("HEATING_GAIN", self.heating_gain)
+
+        verify_heater = self.printer.lookup_object("VERIFY_HEATER %s" % self.heater.short_name, None)
+        old_max_error = None
+        old_check_gain_time = None
+        old_hysteresis = None
+        old_heating_gain = None
+        if max_error is not None:
+            old_max_error = verify_heater.max_error
+            verify_heater.max_error = max_error
+        if check_gain_time is not None:
+            old_check_gain_time = verify_heater.check_gain_time
+            verify_heater.check_gain_time = check_gain_time
+        if hysteresis is not None:
+            old_hysteresis = verify_heater.hysteresis
+            verify_heater.hysteresis = hysteresis
+        if heating_gain is not None:
+            old_heating_gain = verify_heater.heating_gain
+            verify_heater.heating_gain = heating_gain
 
         control = TuningControl(self.heater)
         old_control = self.heater.set_control(control)
@@ -145,6 +172,14 @@ class MpcCalibrate:
         except self.printer.command_error as e:
             raise gcmd.error("%s failed: %s" % (gcmd.get_command(), e))
         finally:
+            if old_max_error is not None:
+                verify_heater.max_error = old_max_error
+            if old_check_gain_time is not None:
+                verify_heater.check_gain_time = old_check_gain_time
+            if old_hysteresis is not None:
+                verify_heater.hysteresis = old_hysteresis
+            if old_heating_gain is not None:
+                verify_heater.heating_gain = old_heating_gain
             self.heater.set_control(old_control)
             self.heater.alter_target(0.0)
 
