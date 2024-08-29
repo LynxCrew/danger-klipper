@@ -254,7 +254,7 @@ class Fan:
         return eventtime + FAN_MIN_TIME
 
     def _unlock_lock(self, eventtime):
-        if self.queued_value is not None:
+        if self.queued_value is not None or self.queued_pwm_value is not None:
             value = self.queued_value
             pwm_value = self.queued_pwm_value
             force = self.queued_force
