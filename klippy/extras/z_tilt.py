@@ -194,7 +194,7 @@ class ZTilt:
         self.z_positions = config.getlists(
             "z_positions", seps=(",", "\n"), parser=float, count=2
         )
-        self.use_offsets = config.getboolean("use_probe_offsets", False)
+        self.use_probe_offsets = config.getboolean("use_probe_offsets", False)
         self.retry_helper = RetryHelper(config)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         self.probe_helper.minimum_points(2)
@@ -213,11 +213,11 @@ class ZTilt:
     def cmd_Z_TILT_ADJUST(self, gcmd):
         self.z_status.reset()
         self.retry_helper.start(gcmd)
-        use_offsets = self.probe_helper.use_offsets
-        if self.use_offsets:
+        use_probe_offsets = self.probe_helper.use_offsets
+        if self.use_probe_offsets:
             self.probe_helper.use_xy_offsets(True)
         self.probe_helper.start_probe(gcmd)
-        self.probe_helper.use_xy_offsets(use_offsets)
+        self.probe_helper.use_xy_offsets(use_probe_offsets)
 
     def probe_finalize(self, offsets, positions):
         # Setup for coordinate descent analysis
