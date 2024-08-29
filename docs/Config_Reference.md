@@ -1453,6 +1453,13 @@ extended [G-Code command](G-Codes.md#z_tilt) becomes available.
 #   values yield better results, but can also lead to situations where the
 #   bed is tilted in a way that the nozzle touched the bed before the probe.
 #   The default is conservative.
+#use_probe_offsets: false
+#   If set to true the probe x&y offsets will be taken into acccount when
+#   positioning the toolhead (that way if you define a point, your probe will
+#   at the given coordinates instead of the nozzle)
+#   (usefull for probes like beacon where the offsets switch when using
+#   scan/dive mode vs contact, that way the actually probed points will always
+#   stay the same since the probe offset dynamically changes)
 ```
 
 ### [quad_gantry_level]
