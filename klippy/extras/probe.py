@@ -520,6 +520,21 @@ class ProbePointsHelper:
             if self.def_min_horizontal_move_z is None
             else self.def_min_horizontal_move_z
         )
+        self.def_additional_horizontal_move_z = config.getfloat(
+            "additional_horizontal_move_z", None
+        )
+        if (
+            self.def_additional_horizontal_move_z is not None
+            and not self.def_adaptive_horizontal_move_z
+        ):
+            raise config.error(
+                "'adaptive_horizontal_move_z' must be enabled before enabling 'additional_horizontal_move_z'"
+            )
+        self.def_additional_horizontal_move_z = (
+            0.0
+            if self.def_additional_horizontal_move_z is None
+            else self.def_additional_horizontal_move_z
+        )
         self.speed = config.getfloat("speed", 50.0, above=0.0)
         self.use_offsets = False
         # Internal probing state
@@ -570,8 +585,10 @@ class ProbePointsHelper:
                 if self.adaptive_horizontal_move_z:
                     # then res is error
                     error = math.ceil(res) or 1.0
-                    self.horizontal_move_z = error + max(
-                        self.probe_offsets[2], self.min_horizontal_move_z
+                    self.horizontal_move_z = (
+                        error
+                        + max(self.probe_offsets[2], self.min_horizontal_move_z)
+                        + self.additional_horizontal_move_z
                     )
             elif res != "retry":
                 done = True
@@ -612,6 +629,22 @@ class ProbePointsHelper:
             self.def_min_horizontal_move_z
             if self.min_horizontal_move_z is None
             else self.min_horizontal_move_z
+        )
+        self.additional_horizontal_move_z = gcmd.get_float(
+            "ADDITIONAL_HORIZONTAL_MOVE_Z", None
+        )
+        if (
+            self.additional_horizontal_move_z is not None
+            and not self.adaptive_horizontal_move_z
+        ):
+            raise gcmd.error(
+                "additional_horizontal_move_z can not be set when "
+                "adaptive_horizontal_move_z is disabled"
+            )
+        self.additional_horizontal_move_z = (
+            self.def_additional_horizontal_move_z
+            if self.additional_horizontal_move_z is None
+            else self.additional_horizontal_move_z
         )
         if probe is None or method != "automatic":
             # Manual probe
