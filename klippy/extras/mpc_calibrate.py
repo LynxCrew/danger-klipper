@@ -41,7 +41,6 @@ class MpcCalibrate:
         self.hysteresis = self.config.getfloat("calibrate_hysteresis", None)
         self.heating_gain = self.config.getfloat("calibrate_heating_gain", None)
 
-
     def run(self, gcmd):
         profile_name = gcmd.get("PROFILE", "default")
         use_analytic = gcmd.get("USE_DELTA", None) is not None
@@ -70,7 +69,9 @@ class MpcCalibrate:
         hysteresis = gcmd.get_float("HYSTERESIS", self.hysteresis)
         heating_gain = gcmd.get_float("HEATING_GAIN", self.heating_gain)
 
-        verify_heater = self.printer.lookup_object("VERIFY_HEATER %s" % self.heater.short_name, None)
+        verify_heater = self.printer.lookup_object(
+            "VERIFY_HEATER %s" % self.heater.short_name, None
+        )
         old_max_error = None
         old_check_gain_time = None
         old_hysteresis = None
