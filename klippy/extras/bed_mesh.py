@@ -575,6 +575,8 @@ class BedMeshCalibrate:
             default_y=pps[1],
         )
 
+        self.contact_speed = config.getfloat("contact_speed", None, above=0.0)
+
         orig_cfg["algo"] = mesh_cfg["algo"] = (
             config.get("algorithm", "lagrange").strip().lower()
         )
@@ -889,7 +891,10 @@ class BedMeshCalibrate:
             raise gcmd.error("Value for parameter 'PROFILE' must be specified")
         self.bedmesh.set_mesh(None)
         self.update_config(gcmd)
-        self.probe_helper.start_probe(gcmd)
+        speed = (
+            self.contact_speed if gcmd.get("METHOD", "automatic") == "contact" else None
+        )
+        self.probe_helper.start_probe(gcmd, speed)
 
     def probe_finalize(self, offsets, positions):
         x_offset, y_offset, z_offset = offsets
