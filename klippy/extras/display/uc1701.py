@@ -227,7 +227,7 @@ class SSD1306(DisplayBase):
         else:
             io = SPI4wire(config, "dc_pin")
             io_bus = io.spi
-        self.mcu = io.spi.get_mcu()
+        self.mcu = io_bus.get_mcu()
         self.reset = ResetHelper(config.get("reset_pin", None), io_bus)
         DisplayBase.__init__(self, io, columns, x_offset)
         self.contrast = config.getint("contrast", 239, minval=0, maxval=255)
