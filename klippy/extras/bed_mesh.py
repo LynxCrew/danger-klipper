@@ -895,8 +895,8 @@ class BedMeshCalibrate:
         if beacon is not None:
             beacon_scan = (
                 gcmd.get("PROBE_METHOD", beacon.default_mesh_method).lower()
-                != "contact"
-                or self.bedmesh.horizontal_move_z <= beacon.trigger_dive_threshold
+                == "proximity"
+                and self.bedmesh.horizontal_move_z <= beacon.trigger_dive_threshold
             )
         self.update_config(gcmd, beacon_scan=beacon_scan)
         speed = self.scan_speed if beacon_scan else None
