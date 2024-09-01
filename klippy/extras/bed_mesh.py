@@ -50,8 +50,12 @@ def lerp(t, v0, v1):
 
 
 # retreive commma separated pair from config
-def parse_config_pair(config, option, default, minval=None, maxval=None):
-    pair = config.getintlist(option, (default, default))
+def parse_config_pair(
+    config, option, default, minval=None, maxval=None, default_x=None, default_y=None
+):
+    default_x = default if default_x is None else default_x
+    default_y = default if default_y is None else default_y
+    pair = config.getintlist(option, (default_x, default_y))
     if len(pair) != 2:
         if len(pair) != 1:
             raise config.error(
@@ -552,6 +556,25 @@ class BedMeshCalibrate:
         pps = parse_config_pair(config, "mesh_pps", 2, minval=0)
         orig_cfg["mesh_x_pps"] = mesh_cfg["mesh_x_pps"] = pps[0]
         orig_cfg["mesh_y_pps"] = mesh_cfg["mesh_y_pps"] = pps[1]
+
+        self.contact_probe_count = parse_config_pair(
+            config,
+            "contact_probe_count",
+            default=None,
+            minval=3,
+            default_x=x_cnt,
+            default_y=y_cnt,
+        )
+
+        self.contact_mesh_pps = parse_config_pair(
+            config,
+            "contact_mesh_pps",
+            default=None,
+            minval=0,
+            default_x=pps[0],
+            default_y=pps[1],
+        )
+
         orig_cfg["algo"] = mesh_cfg["algo"] = (
             config.get("algorithm", "lagrange").strip().lower()
         )
@@ -781,6 +804,13 @@ class BedMeshCalibrate:
 
         params = gcmd.get_command_parameters()
         need_cfg_update = False
+        probe_method = gcmd.get("METHOD", "automatic")
+        if probe_method == "contact":
+            self.mesh_config["x_count"] = self.contact_probe_count[0]
+            self.mesh_config["y_count"] = self.contact_probe_count[1]
+            self.mesh_config["mesh_x_pps"] = self.contact_mesh_pps[0]
+            self.mesh_config["mesh_y_pps"] = self.contact_mesh_pps[1]
+            need_cfg_update = True
         if self.radius is not None:
             if "MESH_RADIUS" in params:
                 self.radius = gcmd.get_float("MESH_RADIUS")
@@ -819,7 +849,6 @@ class BedMeshCalibrate:
             need_cfg_update = True
 
         need_cfg_update |= self.set_adaptive_mesh(gcmd)
-        probe_method = gcmd.get("METHOD", "automatic")
 
         if need_cfg_update:
             self._verify_algorithm(gcmd.error)

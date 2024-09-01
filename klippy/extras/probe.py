@@ -572,7 +572,7 @@ class ProbePointsHelper:
             speed = self.move_z_speed
         toolhead.manual_move([None, None, self.horizontal_move_z], speed)
 
-    def _move_next(self):
+    def _move_next(self, speed=None):
         toolhead = self.printer.lookup_object("toolhead")
         # Check if done probing
         done = False
@@ -601,10 +601,12 @@ class ProbePointsHelper:
         if self.use_offsets:
             nextpos[0] -= self.probe_offsets[0]
             nextpos[1] -= self.probe_offsets[1]
-        toolhead.manual_move(nextpos, self.speed)
+        speed = self.speed if speed is None else speed
+        toolhead.manual_move(nextpos, speed)
         return False
 
-    def start_probe(self, gcmd):
+    def start_probe(self, gcmd, speed=None):
+        speed = self.speed if speed is None else speed
         manual_probe.verify_no_manual_probe(self.printer)
         # Lookup objects
         probe = self.printer.lookup_object("probe", None)
@@ -648,7 +650,7 @@ class ProbePointsHelper:
         )
         if probe is None or method != "automatic":
             # Manual probe
-            self.lift_speed = self.speed
+            self.lift_speed = speed
             self.probe_offsets = (0.0, 0.0, 0.0)
             self._manual_probe_start()
             return
@@ -659,7 +661,7 @@ class ProbePointsHelper:
             raise gcmd.error("horizontal_move_z can't be less than probe's z_offset")
         probe.multi_probe_begin()
         while True:
-            done = self._move_next()
+            done = self._move_next(speed=speed)
             if done:
                 break
             pos = probe.run_probe(gcmd)
