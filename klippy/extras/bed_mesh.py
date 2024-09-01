@@ -557,25 +557,25 @@ class BedMeshCalibrate:
         orig_cfg["mesh_x_pps"] = mesh_cfg["mesh_x_pps"] = pps[0]
         orig_cfg["mesh_y_pps"] = mesh_cfg["mesh_y_pps"] = pps[1]
 
-        self.contact_probe_count = parse_config_pair(
+        self.scan_probe_count = parse_config_pair(
             config,
-            "contact_probe_count",
+            "scan_probe_count",
             default=None,
             minval=3,
             default_x=x_cnt,
             default_y=y_cnt,
         )
 
-        self.contact_mesh_pps = parse_config_pair(
+        self.scan_mesh_pps = parse_config_pair(
             config,
-            "contact_mesh_pps",
+            "scan_mesh_pps",
             default=None,
             minval=0,
             default_x=pps[0],
             default_y=pps[1],
         )
 
-        self.contact_speed = config.getfloat("contact_speed", None, above=0.0)
+        self.scan_speed = config.getfloat("scan_speed", None, above=0.0)
 
         orig_cfg["algo"] = mesh_cfg["algo"] = (
             config.get("algorithm", "lagrange").strip().lower()
@@ -795,7 +795,7 @@ class BedMeshCalibrate:
         self._profile_name = None
         return True
 
-    def update_config(self, gcmd):
+    def update_config(self, gcmd, beacon_scan=None):
         # reset default configuration
         self.radius = self.orig_config["radius"]
         self.origin = self.orig_config["origin"]
@@ -806,12 +806,11 @@ class BedMeshCalibrate:
 
         params = gcmd.get_command_parameters()
         need_cfg_update = False
-        probe_method = gcmd.get("METHOD", "automatic")
-        if probe_method == "contact":
-            self.mesh_config["x_count"] = self.contact_probe_count[0]
-            self.mesh_config["y_count"] = self.contact_probe_count[1]
-            self.mesh_config["mesh_x_pps"] = self.contact_mesh_pps[0]
-            self.mesh_config["mesh_y_pps"] = self.contact_mesh_pps[1]
+        if beacon_scan:
+            self.mesh_config["x_count"] = self.scan_probe_count[0]
+            self.mesh_config["y_count"] = self.scan_probe_count[1]
+            self.mesh_config["mesh_x_pps"] = self.scan_mesh_pps[0]
+            self.mesh_config["mesh_y_pps"] = self.scan_mesh_pps[1]
             need_cfg_update = True
         if self.radius is not None:
             if "MESH_RADIUS" in params:
@@ -851,6 +850,7 @@ class BedMeshCalibrate:
             need_cfg_update = True
 
         need_cfg_update |= self.set_adaptive_mesh(gcmd)
+        probe_method = gcmd.get("METHOD", "automatic")
 
         if need_cfg_update:
             self._verify_algorithm(gcmd.error)
@@ -890,10 +890,16 @@ class BedMeshCalibrate:
         if not self._profile_name.strip():
             raise gcmd.error("Value for parameter 'PROFILE' must be specified")
         self.bedmesh.set_mesh(None)
-        self.update_config(gcmd)
-        speed = (
-            self.contact_speed if gcmd.get("METHOD", "automatic") == "contact" else None
-        )
+        beacon = self.printer.lookup_object("beacon", None)
+        beacon_scan = None
+        if beacon is not None:
+            beacon_scan = (
+                gcmd.get("PROBE_METHOD", beacon.default_mesh_method).lower()
+                != "contact"
+                or self.bedmesh.horizontal_move_z <= beacon.trigger_dive_threshold
+            )
+        self.update_config(gcmd, beacon_scan=beacon_scan)
+        speed = self.scan_speed if beacon_scan else None
         self.probe_helper.start_probe(gcmd, speed)
 
     def probe_finalize(self, offsets, positions):
