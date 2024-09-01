@@ -121,6 +121,9 @@ class BedMesh:
         self.z_mesh = None
         self.toolhead = None
         self.horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
+        self.contact_horizontal_move_z = config.getfloat(
+            "contact_horizontal_move_z", self.horizontal_move_z
+        )
         self.fade_start = config.getfloat("fade_start", 1.0)
         self.fade_end = config.getfloat("fade_end", 0.0)
         self.fade_dist = self.fade_end - self.fade_start
@@ -795,7 +798,7 @@ class BedMeshCalibrate:
         self._profile_name = None
         return True
 
-    def update_config(self, gcmd, beacon_scan=None):
+    def update_config(self, gcmd, beacon_scan=False):
         # reset default configuration
         self.radius = self.orig_config["radius"]
         self.origin = self.orig_config["origin"]
@@ -891,16 +894,23 @@ class BedMeshCalibrate:
             raise gcmd.error("Value for parameter 'PROFILE' must be specified")
         self.bedmesh.set_mesh(None)
         beacon = self.printer.lookup_object("beacon", None)
-        beacon_scan = None
+        beacon_scan = False
+        horizontal_move_z = gcmd.get_float(
+            "HORIZONTAL_MOVE_Z", self.bedmesh.horizontal_move_z
+        )
         if beacon is not None:
-            beacon_scan = (
+            if (
                 gcmd.get("PROBE_METHOD", beacon.default_mesh_method).lower()
-                != "contact"
-                or self.bedmesh.horizontal_move_z <= beacon.trigger_dive_threshold
-            )
+                == "contact"
+            ):
+                horizontal_move_z = gcmd.get_float(
+                    "HORIZONTAL_MOVE_Z", self.bedmesh.contact_horizontal_move_z
+                )
+            elif horizontal_move_z <= beacon.trigger_dive_threshold:
+                beacon_scan = True
         self.update_config(gcmd, beacon_scan=beacon_scan)
         speed = self.scan_speed if beacon_scan else None
-        self.probe_helper.start_probe(gcmd, speed)
+        self.probe_helper.start_probe(gcmd, speed, horizontal_move_z)
 
     def probe_finalize(self, offsets, positions):
         x_offset, y_offset, z_offset = offsets
