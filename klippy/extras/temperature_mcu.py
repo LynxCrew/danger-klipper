@@ -59,9 +59,7 @@ class PrinterTemperatureMCU:
                 range_check_count=self._danger_check_count,
             )
             return
-        self.printer.register_event_handler(
-            "klippy:mcu_identify", self._mcu_identify
-        )
+        self.printer.register_event_handler("klippy:mcu_identify", self._mcu_identify)
         self.mcu_adc.get_mcu().register_config_callback(self._build_config)
 
     def handle_beacon_ready(self):

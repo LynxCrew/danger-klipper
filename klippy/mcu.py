@@ -729,9 +729,7 @@ class MCU:
             self._name = self._name[4:]
         # Serial port
         wp = "mcu '%s': " % (self._name)
-        self._serial = serialhdl.SerialReader(
-            self._reactor, warn_prefix=wp, mcu=self
-        )
+        self._serial = serialhdl.SerialReader(self._reactor, warn_prefix=wp, mcu=self)
         self._baud = 0
         self._canbus_iface = None
         canbus_uuid = config.get("canbus_uuid", None)
@@ -961,9 +959,7 @@ class MCU:
     def non_critical_recon_event(self, eventtime):
         success = self.recon_mcu()
         if success:
-            self.gcode.respond_info(
-                f"mcu: '{self._name}' reconnected!", log=True
-            )
+            self.gcode.respond_info(f"mcu: '{self._name}' reconnected!", log=True)
             return self._reactor.NEVER
         else:
             return eventtime + self.reconnect_interval
@@ -983,9 +979,7 @@ class MCU:
 
         local_config_cmds = self._config_cmds.copy()
 
-        local_config_cmds.insert(
-            0, "allocate_oids count=%d" % (self._oid_count,)
-        )
+        local_config_cmds.insert(0, "allocate_oids count=%d" % (self._oid_count,))
 
         # Resolve pin names
         ppins = self._printer.lookup_object("pins")
@@ -1005,9 +999,7 @@ class MCU:
         self.register_response(self._handle_starting, "starting")
         try:
             if prev_crc is None:
-                logging.info(
-                    "Sending MCU '%s' printer configuration...", self._name
-                )
+                logging.info("Sending MCU '%s' printer configuration...", self._name)
                 for c in local_config_cmds:
                     self._serial.send(c)
             else:
@@ -1366,9 +1358,7 @@ class MCU:
         chelper.run_hub_ctrl(1)
 
     def _firmware_restart(self, force=False):
-        if (
-            self._is_mcu_bridge and not force
-        ) or self.non_critical_disconnected:
+        if (self._is_mcu_bridge and not force) or self.non_critical_disconnected:
             return
         if self._restart_method == "rpi_usb":
             self._restart_rpi_usb()

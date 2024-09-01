@@ -139,9 +139,7 @@ class PrinterServo:
             angle = gcmd.get_float("ANGLE")
             value = self._get_pwm_from_angle(angle)
         toolhead = self.printer.lookup_object("toolhead")
-        toolhead.register_lookahead_callback(
-            (lambda pt: self._set_pwm(pt, value))
-        )
+        toolhead.register_lookahead_callback((lambda pt: self._set_pwm(pt, value)))
 
     cmd_SET_SERVO_TEMPLATE_help = "Assign a display_template to a SERVO"
 

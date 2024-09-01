@@ -37,9 +37,7 @@ class SerialReader:
         # Sent message notification tracking
         self.last_notify_id = 0
         self.pending_notifications = {}
-        self.danger_options = self.mcu.get_printer().lookup_object(
-            "danger_options"
-        )
+        self.danger_options = self.mcu.get_printer().lookup_object("danger_options")
 
     def _bg_thread(self):
         response = self.ffi_main.new("struct pull_queue_message *")
@@ -122,9 +120,7 @@ class SerialReader:
             )
         return True
 
-    def check_canbus_connect(
-        self, canbus_uuid, canbus_nodeid, canbus_iface="can0"
-    ):
+    def check_canbus_connect(self, canbus_uuid, canbus_nodeid, canbus_iface="can0"):
         # this doesn't work
         # because we don't have a way to query for the _existence_ of a device
         # on the network, without "assigning" the device.
@@ -186,9 +182,7 @@ class SerialReader:
                 or msg.data[0] != RESP_NEED_NODEID
             ):
                 continue
-            found_uuid = sum(
-                [v << ((5 - i) * 8) for i, v in enumerate(msg.data[1:7])]
-            )
+            found_uuid = sum([v << ((5 - i) * 8) for i, v in enumerate(msg.data[1:7])])
             logging.info(f"found_uuid: {found_uuid}")
             if found_uuid == uuid:
                 self.disconnect()
@@ -273,9 +267,7 @@ class SerialReader:
         logging.info("%sStarting serial connect", self.warn_prefix)
         start_time = self.reactor.monotonic()
         while 1:
-            if (
-                self.serialqueue is not None
-            ):  # if we're already connected, don't recon
+            if self.serialqueue is not None:  # if we're already connected, don't recon
                 break
             if self.reactor.monotonic() > start_time + 90.0:
                 self._error("Unable to connect")

@@ -230,9 +230,7 @@ class PrinterLCD:
             self.lcd_chip.mcu.get_non_critical_reconnect_event_name(),
             self.handle_reconnect,
         )
-        self.screen_update_timer = self.reactor.register_timer(
-            self.screen_update_event
-        )
+        self.screen_update_timer = self.reactor.register_timer(self.screen_update_event)
         self.redraw_request_pending = False
         self.redraw_time = 0.0
         # Register g-code commands

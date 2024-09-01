@@ -241,9 +241,7 @@ class DualCarriages:
             dc_mode = (
                 INACTIVE
                 if min(abs(dl[0]), abs(dl[1])) < 0.000000001
-                else COPY
-                if dl[0] * dl[1] > 0
-                else MIRROR
+                else COPY if dl[0] * dl[1] > 0 else MIRROR
             )
             if dc_mode != INACTIVE:
                 self.dc[1 - primary_ind].activate(dc_mode, cur_pos[primary_ind])
