@@ -610,15 +610,17 @@ class ProbePointsHelper:
         toolhead.manual_move(nextpos, speed)
         return False
 
-    def start_probe(self, gcmd, speed=None):
+    def start_probe(self, gcmd, speed=None, horizontal_move_z=None):
         speed = self.speed if speed is None else speed
         manual_probe.verify_no_manual_probe(self.printer)
         # Lookup objects
         probe = self.printer.lookup_object("probe", None)
         method = gcmd.get("METHOD", "automatic").lower()
         self.results = []
-        self.horizontal_move_z = gcmd.get_float(
-            "HORIZONTAL_MOVE_Z", self.default_horizontal_move_z
+        self.horizontal_move_z = (
+            gcmd.get_float("HORIZONTAL_MOVE_Z", self.default_horizontal_move_z)
+            if horizontal_move_z is None
+            else horizontal_move_z
         )
         if self.enable_adaptive_move_z:
             self.adaptive_horizontal_move_z = gcmd.get_int(
