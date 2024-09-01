@@ -227,7 +227,9 @@ class ZTilt:
         self.z_count = len(self.z_positions)
 
         self.retry_helper = RetryHelper(config)
-        self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
+        self.probe_helper = probe.ProbePointsHelper(
+            config, self.probe_finalize, enable_adaptive_move_z=True
+        )
         self.probe_helper.minimum_points(2)
 
         self.config_z_offsets = config.getfloatlist(
@@ -243,11 +245,16 @@ class ZTilt:
         self.cal_helper = None
         if config.get("extra_points", None) is not None:
             self.cal_helper = probe.ProbePointsHelper(
-                config, self.cal_finalize, option_name="extra_points"
+                config,
+                self.cal_finalize,
+                option_name="extra_points",
+                enable_adaptive_move_z=True,
             )
             cal_probe_points.extend(self.cal_helper.get_probe_points())
             self.cal_helper.update_probe_points(cal_probe_points, 3)
-        self.ad_helper = probe.ProbePointsHelper(config, self.ad_finalize)
+        self.ad_helper = probe.ProbePointsHelper(
+            config, self.ad_finalize, enable_adaptive_move_z=True
+        )
         self.ad_helper.update_probe_points(cal_probe_points, 3)
         self.cal_conf_avg_len = config.getint("averaging_len", 3, minval=1)
         self.ad_conf_delta = config.getfloat("autodetect_delta", 1.0, minval=0.1)
