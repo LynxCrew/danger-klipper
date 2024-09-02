@@ -852,10 +852,10 @@ class BedMeshCalibrate:
             self.mesh_config["algo"] = gcmd.get("ALGORITHM").strip().lower()
             need_cfg_update = True
 
-        need_cfg_update |= self.set_adaptive_mesh(gcmd)
-        probe_method = gcmd.get("METHOD", "automatic")
-
         if recompute:
+            need_cfg_update |= self.set_adaptive_mesh(gcmd)
+            probe_method = gcmd.get("METHOD", "automatic")
+
             if need_cfg_update:
                 self._verify_algorithm(gcmd.error)
                 self._generate_points(gcmd.error, probe_method)
