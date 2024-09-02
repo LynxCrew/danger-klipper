@@ -798,7 +798,7 @@ class BedMeshCalibrate:
         self._profile_name = None
         return True
 
-    def update_config(self, gcmd, beacon_scan=False):
+    def update_config(self, gcmd, beacon_scan=False, recompute=True):
         # reset default configuration
         self.radius = self.orig_config["radius"]
         self.origin = self.orig_config["origin"]
@@ -855,19 +855,22 @@ class BedMeshCalibrate:
         need_cfg_update |= self.set_adaptive_mesh(gcmd)
         probe_method = gcmd.get("METHOD", "automatic")
 
-        if need_cfg_update:
-            self._verify_algorithm(gcmd.error)
-            self._generate_points(gcmd.error, probe_method)
-            gcmd.respond_info("Generating new points...")
-            self.print_generated_points(gcmd.respond_info)
-            pts = self._get_adjusted_points()
-            self.probe_helper.update_probe_points(pts, 3)
-            msg = "\n".join(["%s: %s" % (k, v) for k, v in self.mesh_config.items()])
-            logging.info("Updated Mesh Configuration:\n" + msg)
-        else:
-            self._generate_points(gcmd.error, probe_method)
-            pts = self._get_adjusted_points()
-            self.probe_helper.update_probe_points(pts, 3)
+        if recompute:
+            if need_cfg_update:
+                self._verify_algorithm(gcmd.error)
+                self._generate_points(gcmd.error, probe_method)
+                gcmd.respond_info("Generating new points...")
+                self.print_generated_points(gcmd.respond_info)
+                pts = self._get_adjusted_points()
+                self.probe_helper.update_probe_points(pts, 3)
+                msg = "\n".join(
+                    ["%s: %s" % (k, v) for k, v in self.mesh_config.items()]
+                )
+                logging.info("Updated Mesh Configuration:\n" + msg)
+            else:
+                self._generate_points(gcmd.error, probe_method)
+                pts = self._get_adjusted_points()
+                self.probe_helper.update_probe_points(pts, 3)
 
     def _get_adjusted_points(self):
         adj_pts = []
