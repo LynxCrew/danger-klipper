@@ -26,13 +26,18 @@ class PrinterTemperatureMCU:
         self.report_time = REPORT_TIME
         # Read config
         mcu_name = config.get("sensor_mcu", "mcu")
-        self.beacon = None
+        self.beacon_mcu_temp_wrapper = None
         if mcu_name == "beacon":
-            self.beacon = self.printer.load_object(config, "beacon").mcu_temp_wrapper
-            self.printer.register_event_handler(
-                "klippy:ready", self.handle_beacon_ready
-            )
-            return
+            beacon = self.printer.load_object(config, "beacon").mcu_temp_wrapper
+            if beacon is None:
+                raise self.printer.config_error(
+                    "Beacon module not installed, can not register beacon_mcu as temperature_sensor"
+                )
+            if not hasattr(beacon, "mcu_temp_wrapper"):
+                raise self.printer.config_error(
+                    "Beacon module has no wrapper for mcu temperature and thus can not be registered as temperature_sensor"
+                )
+            self.beacon_mcu_temp_wrapper = beacon.mcu_temp_wrapper
         self.reference_voltage = config.getfloat("reference_voltage", default=3.3)
         self.temp1 = config.getfloat("sensor_temperature1", None)
         if self.temp1 is not None:
@@ -63,10 +68,10 @@ class PrinterTemperatureMCU:
         self.mcu_adc.get_mcu().register_config_callback(self._build_config)
 
     def handle_beacon_ready(self):
-        self.beacon.activate_wrapper(self.config)
+        self.beacon_mcu_temp_wrapper.activate_wrapper(self.config)
 
     def _build_config(self):
-        if self.beacon is not None:
+        if self.beacon_mcu_temp_wrapper is not None:
             return
         self.debug_read_cmd = self.mcu_adc.get_mcu().lookup_query_command(
             "debug_read order=%c addr=%u", "debug_result val=%u"
@@ -123,14 +128,14 @@ class PrinterTemperatureMCU:
         )
 
     def setup_callback(self, temperature_callback):
-        if self.beacon is not None:
-            self.beacon.setup_callback(temperature_callback)
+        if self.beacon_mcu_temp_wrapper is not None:
+            self.beacon_mcu_temp_wrapper.setup_callback(temperature_callback)
             return
         self.temperature_callback = temperature_callback
 
     def get_report_time_delta(self):
-        if self.beacon is not None:
-            return self.beacon.report_time
+        if self.beacon_mcu_temp_wrapper is not None:
+            return self.beacon_mcu_temp_wrapper.report_time
         return self.report_time
 
     def adc_callback(self, read_time, read_value):
@@ -138,8 +143,8 @@ class PrinterTemperatureMCU:
         self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
 
     def setup_minmax(self, min_temp, max_temp):
-        if self.beacon is not None:
-            self.beacon.setup_minmax(min_temp, max_temp)
+        if self.beacon_mcu_temp_wrapper is not None:
+            self.beacon_mcu_temp_wrapper.setup_minmax(min_temp, max_temp)
             return
         self.min_temp = min_temp
         self.max_temp = max_temp
@@ -243,8 +248,8 @@ class PrinterTemperatureMCU:
         return params["val"]
 
     def set_report_time(self, report_time):
-        if self.beacon is not None:
-            self.beacon.set_report_time(report_time)
+        if self.beacon_mcu_temp_wrapper is not None:
+            self.beacon_mcu_temp_wrapper.set_report_time(report_time)
             return
         self.report_time = report_time
 
