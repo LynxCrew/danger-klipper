@@ -225,6 +225,7 @@ class ZTilt:
             "z_positions", seps=(",", "\n"), parser=float, count=2
         )
         self.use_offsets = config.getboolean("use_offsets", False)
+        self.use_offsets = config.getboolean("use_probe_offsets", self.use_offsets)
         self.z_count = len(self.z_positions)
 
         self.retry_helper = RetryHelper(config)

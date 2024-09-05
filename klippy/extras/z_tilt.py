@@ -196,6 +196,7 @@ class ZTilt:
             "z_positions", seps=(",", "\n"), parser=float, count=2
         )
         self.use_offsets = config.getboolean("use_offsets", False)
+        self.use_offsets = config.getboolean("use_probe_offsets", self.use_offsets)
         self.retry_helper = RetryHelper(config)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         self.probe_helper.minimum_points(2)
