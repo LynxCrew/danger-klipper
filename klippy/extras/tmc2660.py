@@ -6,6 +6,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
 from . import bus, tmc, tmc2130
+from ..configfile import PrinterConfig
 
 Registers = {
     "DRVCONF": 0xE,
@@ -115,11 +116,24 @@ MAX_CURRENT = 2.400
 
 
 class TMC2660CurrentHelper(tmc.BaseTMCCurrentHelper):
-    def __init__(self, config, mcu_tmc):
+    def __init__(self, config, mcu_tmc, type="tmc2660"):
         super().__init__(config, mcu_tmc, MAX_CURRENT)
+        pconfig: PrinterConfig = self.printer.lookup_object("configfile")
 
         self.current = self.req_run_current
-        self.sense_resistor = config.getfloat("sense_resistor")
+        self.sense_resistor = config.getfloat("sense_resistor", None, above=0.0)
+        if self.sense_resistor is None:
+            pconfig.warn(
+                "config",
+                f"""[{type} {self.name}] sense_resistor not specified; using default = 0.051.
+                If this value is wrong, it might burn your house down.
+                This parameter will be mandatory in future versions.
+                Specify the parameter to resolve this warning""",
+                f"{type} {self.name}",
+                "sense_resistor",
+            )
+            self.sense_resistor = 0.051
+
         vsense, cs = self._calc_current(self.req_run_current)
         self.fields.set_field("cs", cs)
         self.fields.set_field("vsense", vsense)
