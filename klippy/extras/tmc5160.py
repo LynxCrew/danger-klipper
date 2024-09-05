@@ -253,23 +253,23 @@ MAX_CURRENT = 10.000  # Maximum dependent on board, but 10 is safe sanity check
 
 
 class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
-    def __init__(self, config, mcu_tmc):
+    def __init__(self, config, mcu_tmc, type=""):
         super().__init__(config, mcu_tmc, MAX_CURRENT)
         pconfig: PrinterConfig = self.printer.lookup_object("configfile")
 
-        self.sense_resistor = config.get("sense_resistor", None)
+        self.sense_resistor = config.get("sense_resistor", None, above=0.0)
         if self.sense_resistor is None:
             pconfig.warn(
                 "config",
-                f"""[{self.name}] sense_resistor not specified; using default = 0.075.
+                f"""[{type} {self.name}] sense_resistor not specified; using default = 0.075.
                 If this value is wrong, it might burn your house down.
                 This parameter will be mandatory in future versions.
                 Specify the parameter to resolve this warning""",
                 self.name,
                 "sense_resistor",
             )
+            self.sense_resistor = 0.075
 
-        self.sense_resistor = config.getfloat("sense_resistor", 0.075, above=0.0)
         gscaler, irun, ihold = self._calc_current(
             self.req_run_current, self.req_hold_current
         )
