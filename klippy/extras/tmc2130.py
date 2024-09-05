@@ -199,7 +199,7 @@ MAX_CURRENT = 2.000
 
 
 class TMC2130CurrentHelper(tmc.BaseTMCCurrentHelper):
-    def __init__(self, config, mcu_tmc, type=""):
+    def __init__(self, config, mcu_tmc, type="tmc2130"):
         super().__init__(config, mcu_tmc, MAX_CURRENT)
         pconfig: PrinterConfig = self.printer.lookup_object("configfile")
 

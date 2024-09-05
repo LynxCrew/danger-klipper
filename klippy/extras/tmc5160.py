@@ -253,7 +253,7 @@ MAX_CURRENT = 10.000  # Maximum dependent on board, but 10 is safe sanity check
 
 
 class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
-    def __init__(self, config, mcu_tmc, type=""):
+    def __init__(self, config, mcu_tmc, type="tmc5160"):
         super().__init__(config, mcu_tmc, MAX_CURRENT)
         pconfig: PrinterConfig = self.printer.lookup_object("configfile")
 
