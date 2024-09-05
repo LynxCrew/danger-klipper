@@ -121,9 +121,6 @@ class BedMesh:
         self.z_mesh = None
         self.toolhead = None
         self.horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
-        self.contact_horizontal_move_z = config.getfloat(
-            "contact_horizontal_move_z", self.horizontal_move_z
-        )
         self.fade_start = config.getfloat("fade_start", 1.0)
         self.fade_end = config.getfloat("fade_end", 0.0)
         self.fade_dist = self.fade_end - self.fade_start
@@ -904,12 +901,9 @@ class BedMeshCalibrate:
         if beacon is not None:
             if (
                 gcmd.get("PROBE_METHOD", beacon.default_mesh_method).lower()
-                == "contact"
+                != "contact"
+                and horizontal_move_z <= beacon.trigger_dive_threshold
             ):
-                horizontal_move_z = gcmd.get_float(
-                    "HORIZONTAL_MOVE_Z", self.bedmesh.contact_horizontal_move_z
-                )
-            elif horizontal_move_z <= beacon.trigger_dive_threshold:
                 beacon_scan = True
         self.update_config(gcmd, beacon_scan=beacon_scan)
         speed = self.scan_speed if beacon_scan else None
