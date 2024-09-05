@@ -265,7 +265,7 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
                 If this value is wrong, it might burn your house down.
                 This parameter will be mandatory in future versions.
                 Specify the parameter to resolve this warning""",
-                self.name,
+                f"{type} {self.name}",
                 "sense_resistor",
             )
             self.sense_resistor = 0.075
