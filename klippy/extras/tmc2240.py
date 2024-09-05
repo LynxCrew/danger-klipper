@@ -6,7 +6,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
 from . import tmc, tmc2130, tmc_uart
-from ..configfile import PrinterConfig
+from configfile import PrinterConfig
 
 TMC_FREQUENCY = 12500000.0
 

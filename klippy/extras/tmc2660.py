@@ -6,7 +6,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
 from . import bus, tmc, tmc2130
-from ..configfile import PrinterConfig
+from configfile import PrinterConfig
 
 Registers = {
     "DRVCONF": 0xE,
