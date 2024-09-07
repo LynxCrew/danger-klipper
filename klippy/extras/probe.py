@@ -504,7 +504,7 @@ class ProbePointsHelper:
             self.probe_points = config.getlists(
                 option_name, seps=(",", "\n"), parser=float, count=2
             )
-        self.move_z_speed = config.getfloat("horizontal_move_z_speed", None, above=0.0)
+        self.z_move_speed = config.getfloat("z_move_speed", None, above=0.0)
         self.default_horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
         if self.enable_adaptive_move_z:
             self.def_adaptive_horizontal_move_z = config.getboolean(
@@ -573,8 +573,8 @@ class ProbePointsHelper:
         if not self.results:
             # Use full speed to first probe position
             speed = self.speed
-        elif self.move_z_speed is not None:
-            speed = self.move_z_speed
+        elif self.z_move_speed is not None:
+            speed = self.z_move_speed
         toolhead.manual_move([None, None, self.horizontal_move_z], speed)
 
     def _move_next(self, speed=None):
