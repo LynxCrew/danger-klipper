@@ -181,7 +181,7 @@ class RetryHelper:
                 % (self.value_label, self.error_msg_extra)
             )
         if error <= self.retry_tolerance:
-            return 0.0
+            return "done"
         self.current_retry += 1
         if self.current_retry > self.max_retries:
             raise self.gcode.error("Too many retries")
