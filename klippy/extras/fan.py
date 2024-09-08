@@ -57,6 +57,7 @@ class Fan:
                 "min_power=%f can't be larger than max_power=%f"
                 % (self.min_power, self.max_power)
             )
+        self.full_speed_max_power = config.getboolean("full_speed_max_power", False)
 
         cycle_time = config.getfloat("cycle_time", 0.010, above=0.0)
         hardware_pwm = config.getboolean("hardware_pwm", False)
@@ -188,9 +189,12 @@ class Fan:
 
     def set_speed(self, print_time, value, force=False):
         if value > 0:
-            # Scale value between min_power and max_power
-            pwm_value = value * (self.max_power - self.min_power) + self.min_power
-            pwm_value = max(self.min_power, min(self.max_power, pwm_value))
+            if self.full_speed_max_power and value == 1.0:
+                pwm_value = 1.0
+            else:
+                # Scale value between min_power and max_power
+                pwm_value = value * (self.max_power - self.min_power) + self.min_power
+                pwm_value = max(self.min_power, min(self.max_power, pwm_value))
         else:
             pwm_value = 0
         if self.locking:
@@ -221,8 +225,8 @@ class Fan:
                 elif value == 0 and self.last_pwm_value > 0:
                     self.enable_pin.set_digital(print_time, 0)
             if (
-                value
-                and value < self.max_power
+                pwm_value
+                and pwm_value < self.max_power
                 and self.kick_start_time
                 and (
                     not self.last_fan_value
@@ -373,7 +377,7 @@ class PrinterFan:
 
     def cmd_M106(self, gcmd):
         # Set fan speed
-        value = gcmd.get_float("S", 255.0, minval=0.0) / 255.0
+        value = gcmd.get_float("S", 255.0, minval=0.0, maxval=255.0) / 255.0
         force = gcmd.get_int("F", 0, minval=0, maxval=1)
         self.fan.set_speed_from_command(value, force)
 
