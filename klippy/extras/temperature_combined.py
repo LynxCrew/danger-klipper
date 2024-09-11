@@ -91,7 +91,8 @@ class PrinterSensorCombined:
             if sensor.initialized:
                 sensor_status = sensor.get_status(eventtime)
                 sensor_temperature = sensor_status["temperature"]
-                values.append(sensor_temperature)
+                if sensor_temperature is not None:
+                    values.append(sensor_temperature)
 
         if values:
             # check if values are out of max_deviation range
@@ -107,8 +108,8 @@ class PrinterSensorCombined:
                 )
 
             temp = self.apply_mode(values)
-            self.last_temp = temp
-            if temp:
+            if temp is not None:
+                self.last_temp = temp
                 self.measured_min = min(self.measured_min, temp)
                 self.measured_max = max(self.measured_max, temp)
 
@@ -159,7 +160,7 @@ class PrinterSensorCombined:
 
 def mean(values):
     if not values:
-        return
+        return None
     return sum(values) / len(values)
 
 
