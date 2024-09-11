@@ -203,7 +203,7 @@ class TMC2130CurrentHelper(tmc.BaseTMCCurrentHelper):
         super().__init__(config, mcu_tmc, MAX_CURRENT)
         pconfig: PrinterConfig = self.printer.lookup_object("configfile")
 
-        self.sense_resistor = config.get("sense_resistor", None, above=0.0)
+        self.sense_resistor = config.getfloat("sense_resistor", None, above=0.0)
         if self.sense_resistor is None:
             pconfig.warn(
                 "config",
