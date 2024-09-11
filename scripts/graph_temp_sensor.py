@@ -32,10 +32,10 @@ class DummyConfig:
         return "dummy"
 
     # Emulate printer class
-    def load_object(self, config, name):
+    def load_object(self, config, name, default=None):
         return self
 
-    def lookup_object(self, name):
+    def lookup_object(self, name, default=None):
         return self
 
     # Emulate heaters class
