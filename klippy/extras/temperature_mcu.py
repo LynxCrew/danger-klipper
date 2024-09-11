@@ -26,9 +26,18 @@ class PrinterTemperatureMCU:
         self.report_time = REPORT_TIME
         # Read config
         mcu_name = config.get("sensor_mcu", "mcu")
-        self.beacon = None
+        self.beacon_mcu_temp_wrapper = None
         if mcu_name == "beacon":
-            self.beacon = self.printer.load_object(config, "beacon").mcu_temp_wrapper
+            beacon = self.printer.load_object(config, "beacon", None)
+            if beacon is None:
+                raise self.printer.config_error(
+                    "Beacon module not installed, can not register beacon_mcu as temperature_sensor"
+                )
+            if not hasattr(beacon, "mcu_temp_wrapper"):
+                raise self.printer.config_error(
+                    "Beacon module has no wrapper for mcu temperature and thus can not be registered as temperature_sensor"
+                )
+            self.beacon_mcu_temp_wrapper = beacon.mcu_temp_wrapper
             self.printer.register_event_handler(
                 "klippy:ready", self.handle_beacon_ready
             )
@@ -63,7 +72,8 @@ class PrinterTemperatureMCU:
         self.mcu_adc.get_mcu().register_config_callback(self._build_config)
 
     def handle_beacon_ready(self):
-        self.beacon.activate_wrapper(self.config)
+        if self.beacon_mcu_temp_wrapper is not None:
+            self.beacon_mcu_temp_wrapper.activate_wrapper(self.config)
 
     def _build_config(self):
         if self.beacon is not None:
