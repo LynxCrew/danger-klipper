@@ -21,8 +21,12 @@ class PrinterSensorCombined:
         # get sensor names
         self.sensor_names = config.getlist("sensor_list")
         # get maximum_deviation parameter from config
-        self.max_deviation = config.getfloat("maximum_deviation", above=0.0)
-        self.ignore = self.name in get_danger_options().temp_ignore_limits
+        self.max_deviation = config.getfloat(
+            "maximum_deviation", default=None, above=0.0
+        )
+        self.ignore = (
+            self.name in get_danger_options().temp_ignore_limits
+        ) or self.max_deviation is None
         # ensure compatibility with itself
         self.sensor = self
         # get empty list for sensors, could be any sensor class or a heater
@@ -87,11 +91,12 @@ class PrinterSensorCombined:
             if sensor.initialized:
                 sensor_status = sensor.get_status(eventtime)
                 sensor_temperature = sensor_status["temperature"]
-                values.append(sensor_temperature)
+                if sensor_temperature is not None:
+                    values.append(sensor_temperature)
 
         if values:
             # check if values are out of max_deviation range
-            if (max(values) - min(values)) > self.max_deviation and not self.ignore:
+            if not self.ignore and (max(values) - min(values)) > self.max_deviation:
                 self.printer.invoke_shutdown(
                     "COMBINED SENSOR maximum deviation exceeded limit of %0.1f, "
                     "max sensor value %0.1f, min sensor value %0.1f."
@@ -103,8 +108,8 @@ class PrinterSensorCombined:
                 )
 
             temp = self.apply_mode(values)
-            self.last_temp = temp
-            if temp:
+            if temp is not None:
+                self.last_temp = temp
                 self.measured_min = min(self.measured_min, temp)
                 self.measured_max = max(self.measured_max, temp)
 
@@ -155,7 +160,7 @@ class PrinterSensorCombined:
 
 def mean(values):
     if not values:
-        return
+        return None
     return sum(values) / len(values)
 
 
