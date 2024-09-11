@@ -28,7 +28,7 @@ class PrinterTemperatureMCU:
         mcu_name = config.get("sensor_mcu", "mcu")
         self.beacon_mcu_temp_wrapper = None
         if mcu_name == "beacon":
-            beacon = self.printer.load_object(config, "beacon").mcu_temp_wrapper
+            beacon = self.printer.load_object(config, "beacon", None)
             if beacon is None:
                 raise self.printer.config_error(
                     "Beacon module not installed, can not register beacon_mcu as temperature_sensor"
