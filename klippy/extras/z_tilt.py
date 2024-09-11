@@ -194,7 +194,8 @@ class ZTilt:
         self.z_positions = config.getlists(
             "z_positions", seps=(",", "\n"), parser=float, count=2
         )
-        self.use_probe_offsets = config.getboolean("use_probe_offsets", False)
+        self.use_offsets = config.getboolean("use_offsets", False)
+        self.use_offsets = config.getboolean("use_probe_offsets", self.use_offsets)
         self.retry_helper = RetryHelper(config)
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, enable_adaptive_move_z=True

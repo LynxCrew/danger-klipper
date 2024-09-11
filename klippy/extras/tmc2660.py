@@ -133,7 +133,6 @@ class TMC2660CurrentHelper(tmc.BaseTMCCurrentHelper):
                 "sense_resistor",
             )
             self.sense_resistor = 0.051
-
         vsense, cs = self._calc_current(self.req_run_current)
         self.fields.set_field("cs", cs)
         self.fields.set_field("vsense", vsense)
