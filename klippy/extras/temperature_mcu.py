@@ -72,7 +72,8 @@ class PrinterTemperatureMCU:
         self.mcu_adc.get_mcu().register_config_callback(self._build_config)
 
     def handle_beacon_ready(self):
-        self.beacon_mcu_temp_wrapper.activate_wrapper(self.config)
+        if self.beacon_mcu_temp_wrapper is not None:
+            self.beacon_mcu_temp_wrapper.activate_wrapper(self.config)
 
     def get_report_time_delta(self):
         if self.beacon_mcu_temp_wrapper is not None:
