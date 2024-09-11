@@ -38,6 +38,10 @@ class PrinterTemperatureMCU:
                     "Beacon module has no wrapper for mcu temperature and thus can not be registered as temperature_sensor"
                 )
             self.beacon_mcu_temp_wrapper = beacon.mcu_temp_wrapper
+            self.printer.register_event_handler(
+                "klippy:ready", self.handle_beacon_ready
+            )
+            return
         self.reference_voltage = config.getfloat("reference_voltage", default=3.3)
         self.temp1 = config.getfloat("sensor_temperature1", None)
         if self.temp1 is not None:
