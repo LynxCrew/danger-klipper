@@ -656,7 +656,7 @@ class ControlVelocityPID:
         self.temps.pop(0)
         self.temps.append(temp)
         self.smoothed_temps.pop(0)
-        self.smoothed_temps.append(self.median(self.temps[-self.smoothing_elements :]))
+        self.smoothed_temps.append(self.median(self.temps[-self.smoothing_elements:]))
 
         self.times.pop(0)
         self.times.append(read_time)
