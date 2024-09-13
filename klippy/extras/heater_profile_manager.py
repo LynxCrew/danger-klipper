@@ -53,7 +53,7 @@ class ProfileManager:
             value = config_section.getfloat(
                 key, default=default, minval=minval, above=above
             )
-        elif isinstance(type, str) and type == "floatlist":
+        elif type == "floatlist":
             value = config_section.getfloatlist(key, default=default)
         elif (
             isinstance(type, tuple)

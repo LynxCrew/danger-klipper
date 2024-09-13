@@ -1,6 +1,6 @@
 import math
 import logging
-from extras.heaters import get_power_at_temp
+from extras.heaters import ControlMPC
 
 PIN_MIN_TIME = 0.100
 
@@ -104,7 +104,9 @@ class MpcCalibrate:
             samples = self.heatup_test(gcmd, target_temp, control)
             first_res = self.process_first_pass(
                 samples,
-                get_power_at_temp(target_temp, self.temp_control.pwm_max_power),
+                ControlMPC.get_power_at_temp(
+                    target_temp, self.temp_control.pwm_max_power
+                ),
                 ambient_temp,
                 threshold_temp,
                 use_analytic,
@@ -136,7 +138,9 @@ class MpcCalibrate:
                 first_res,
                 transfer_res,
                 ambient_temp,
-                get_power_at_temp(second_target_temp, self.temp_control.pwm_max_power),
+                ControlMPC.get_power_at_temp(
+                    second_target_temp, self.temp_control.pwm_max_power
+                ),
             )
             logging.info("Second pass: %s", second_res)
 
@@ -151,9 +155,7 @@ class MpcCalibrate:
                 else first_res["sensor_responsiveness"]
             )
             ambient_transfer = second_res["ambient_transfer"]
-            fan_ambient_transfer = ", ".join(
-                [f"{p:.6g}" for p in second_res["fan_ambient_transfer"]]
-            )
+            fan_ambient_transfer = second_res["fan_ambient_transfer"]
 
             profile["block_heat_capacity"] = block_heat_capacity
             profile["ambient_transfer"] = ambient_transfer
@@ -165,16 +167,20 @@ class MpcCalibrate:
             self.heater.set_control(self.heater.lookup_control(profile, True), False)
             self.heater.pmgr.save_profile(profile_name=profile_name, verbose=False)
 
-            gcmd.respond_info(
+            msg = (
                 f"Finished MPC calibration of heater '{self.heater.short_name}'\n"
                 "Measured:\n "
                 f"  block_heat_capacity={block_heat_capacity:#.6g} [J/K]\n"
                 f"  sensor_responsiveness={sensor_responsiveness:#.6g} [K/s/K]\n"
                 f"  ambient_transfer={ambient_transfer:#.6g} [W/K]\n"
-                f"  fan_ambient_transfer={fan_ambient_transfer} [W/K]\n"
+            )
+            if fan_ambient_transfer:
+                msg += f"  fan_ambient_transfer={', '.join([f'{p:.6g}' for p in fan_ambient_transfer])} [W/K]\n"
+            msg += (
                 "The SAVE_CONFIG command will update the printer config file\n"
                 "with these parameters and restart the printer."
             )
+            gcmd.respond_info(msg)
 
         except self.printer.command_error as e:
             self.heater.set_control(self.orig_control, False)
@@ -468,13 +474,10 @@ class MpcCalibrate:
             / (first_res["t1"] - asymp_T)
         )
 
-        if transfer_res["fan_powers"]:
-            fan_ambient_transfer = [
-                power / target_ambient_temp
-                for (_speed, power) in transfer_res["fan_powers"]
-            ]
-        else:
-            fan_ambient_transfer = None
+        fan_ambient_transfer = [
+            power / target_ambient_temp
+            for (_speed, power) in transfer_res["fan_powers"]
+        ]
 
         return {
             "ambient_transfer": ambient_transfer,

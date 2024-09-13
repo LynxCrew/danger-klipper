@@ -402,7 +402,7 @@ class ZTilt:
         z_offsets = [z - offsets[2] for z in z_offsets]
         self.z_offsets = z_offsets
         s_zoff = ""
-        for off in z_offsets[0 : self.num_probe_points]:
+        for off in z_offsets[: self.num_probe_points]:
             s_zoff += "%.6f, " % off
         s_zoff = s_zoff[:-2]
         self.cal_gcmd.respond_info("final z_offsets are: %s" % (s_zoff))
@@ -550,7 +550,7 @@ class ZTilt:
         configfile = self.printer.lookup_object("configfile")
         section = self.section
         s_zoff = ""
-        for off in z_offsets:
+        for off in z_offsets[: len(self.z_positions)]:
             s_zoff += "%.6f, " % off
         s_zoff = s_zoff[:-2]
         configfile.set(section, "z_offsets", s_zoff)
