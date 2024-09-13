@@ -20,15 +20,44 @@ MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.0
 PID_PARAM_BASE = 255.0
 HEATER_PROFILE_VERSION = 1
+
+# (type, placeholder, default, can_be_none)
+WATERMARK_PROFILE_OPTIONS = {
+    "control": (str, "%s", "watermark", False),
+    "max_delta": (float, "%.4f", 2.0, True),
+}
+# (type, placeholder, default, can_be_none)
 PID_PROFILE_OPTIONS = {
-    "pid_target": (float, "%.2f"),
-    "pid_tolerance": (float, "%.4f"),
-    "control": (str, "%s"),
-    "smooth_time": (float, "%.3f"),
-    "smoothing_elements": (int, "%d"),
-    "pid_kp": (float, "%.3f"),
-    "pid_ki": (float, "%.3f"),
-    "pid_kd": (float, "%.3f"),
+    "pid_target": (float, "%.2f", None, True),
+    "pid_tolerance": (float, "%.4f", None, True),
+    "control": (str, "%s", "pid", False),
+    "smooth_time": (float, "%.3f", None, True),
+    "smoothing_elements": (int, "%d", None, True),
+    "pid_kp": (float, "%.3f", None, False),
+    "pid_ki": (float, "%.3f", None, False),
+    "pid_kd": (float, "%.3f", None, False),
+}
+# (type, placeholder, default, above, minval, can_be_none)
+MPC_PROFILE_OPTIONS = {
+    "mpc_target": (float, "%.2f", None, True),
+    "control": (str, "%s", "mpc", False),
+    "block_heat_capacity": (float, "%f", None, True),
+    "ambient_transfer": (float, "%f", None, True),
+    "fan_ambient_transfer": ("floatlist", "%s", None, True),
+    "target_reach_time": (float, "%f", 2.0, False),
+    "smoothing": (float, "%f", 0.25, False),
+    "heater_power": (float, "%f", None, True),
+    "heater_powers": (("lists", (",", "\n"), float, 2), "%s", None, True),
+    "sensor_responsiveness": (float, "%f", None, True),
+    "min_ambient_change": (float, "%f", 1.0, False),
+    "steady_state_rate": (float, "%f", 0.5, False),
+    "filament_diameter": (float, "%.2f", 1.75, False),
+    "filament_density": (float, "%f", 1.2, False),
+    "filament_heat_capacity": (float, "%f", 1.8, False),
+    "maximum_retract": (float, "%f", 2.0, False),
+    "filament_temperature_source": (str, "%s", "ambient", True),
+    "ambient_temp_sensor": (str, "%s", None, True),
+    "cooling_fan": (str, "%s", None, True),
 }
 FILAMENT_TEMP_SRC_AMBIENT = "ambient"
 FILAMENT_TEMP_SRC_FIXED = "fixed"
@@ -87,31 +116,23 @@ class Heater:
         self.next_pwm_time = 0.0
         self.last_pwm_value = 0.0
         # Those are necessary so the klipper config check does not complain
-        sensor_config.get("control", None)
-        sensor_config.getint("profile_version", None)
-        sensor_config.getfloat("pid_kp", None)
-        sensor_config.getfloat("pid_ki", None)
-        sensor_config.getfloat("pid_kd", None)
-        sensor_config.getfloat("max_delta", None)
-        sensor_config.getfloat("block_heat_capacity", None)
-        sensor_config.getfloat("ambient_transfer", None)
-        sensor_config.getfloat("target_reach_time", None)
-        sensor_config.getfloat("smoothing", None)
-        sensor_config.getfloat("heater_power", None)
-        sensor_config.getlist("heater_powers", None)
-        sensor_config.getfloat("sensor_responsiveness", None)
-        sensor_config.getfloat("min_ambient_change", None)
-        sensor_config.getfloat("steady_state_rate", None)
-        sensor_config.getfloat("filament_diameter", None)
-        sensor_config.getfloat("filament_density", None)
-        sensor_config.getfloat("filament_heat_capacity", None)
-        sensor_config.get("ambient_temp_sensor", None)
+        for key, (type, placeholder, default, can_be_none) in WATERMARK_PROFILE_OPTIONS.items():
+            sensor_config.get(key, None)
+        for key, (type, placeholder, default, can_be_none) in PID_PROFILE_OPTIONS.items():
+            sensor_config.get(key, None)
+        for key, (
+            type,
+            placeholder,
+            default,
+            above,
+            minval,
+            can_be_none,
+        ) in MPC_PROFILE_OPTIONS.items():
+            sensor_config.get(key, None)
         sensor_config.getfloat("calibrate_max_error", None)
         sensor_config.getfloat("calibrate_check_gain_time", None)
         sensor_config.getfloat("calibrate_hysteresis", None)
         sensor_config.getfloat("calibrate_heating_gain", None)
-        sensor_config.get("cooling_fan", None)
-        sensor_config.getfloatlist("fan_ambient_transfer", None)
         # Setup output heater pin
         heater_pin = sensor_config.get("heater_pin")
         ppins = self.printer.lookup_object("pins")
@@ -150,6 +171,13 @@ class Heater:
             short_name,
             self.cmd_SET_SMOOTH_TIME,
             desc=self.cmd_SET_SMOOTH_TIME_help,
+        )
+        self.gcode.register_mux_command(
+            "SET_SMOOTHING_ELEMENTS",
+            "HEATER",
+            short_name,
+            self.cmd_SET_SMOOTHING_ELEMENTS,
+            desc=self.cmd_SET_SMOOTHING_ELEMENTS_help,
         )
         self.gcode.register_mux_command(
             "HEATER_PROFILE",
@@ -344,6 +372,18 @@ class Heater:
             self.get_control().get_profile()["smooth_time"] = self.smooth_time
             self.pmgr.save_profile()
 
+    cmd_SET_SMOOTHING_ELEMENTS_help = "Set the smooth time for the given heater"
+
+    def cmd_SET_SMOOTHING_ELEMENTS(self, gcmd):
+        save_to_profile = gcmd.get_int("SAVE_TO_PROFILE", 0, minval=0, maxval=1)
+        self.smoothing_elements = gcmd.get_int(
+            "SMOOTHING_ELEMENTS", self.config_smoothing_elements, minval=1
+        )
+        self.get_control().update_smoothing_elements()
+        if save_to_profile:
+            self.get_control().get_profile()["smoothing_elements"] = self.smooth_time
+            self.pmgr.save_profile()
+
     cmd_SET_HEATER_PID_help = "Sets a heater PID parameter"
 
     def cmd_SET_HEATER_PID(self, gcmd):
@@ -351,15 +391,24 @@ class Heater:
             self.control, (ControlPID, ControlVelocityPID, ControlPositionalPID)
         ):
             raise gcmd.error("Not a PID/PID_V controlled heater")
+        save_to_profile = gcmd.get_int("SAVE_TO_PROFILE", 0, minval=0, maxval=1)
         kp = gcmd.get_float("KP", None)
         if kp is not None:
             self.control.set_pid_kp(kp)
+            if save_to_profile:
+                self.get_control().get_profile()["pid_kp"] = kp
         ki = gcmd.get_float("KI", None)
         if ki is not None:
             self.control.set_pid_ki(ki)
+            if save_to_profile:
+                self.get_control().get_profile()["pid_ki"] = ki
         kd = gcmd.get_float("KD", None)
         if kd is not None:
             self.control.set_pid_kd(kd)
+            if save_to_profile:
+                self.get_control().get_profile()["pid_kd"] = kd
+        if save_to_profile:
+            self.pmgr.save_profile()
 
     cmd_MPC_SET_help = "Set MPC parameter"
 
@@ -386,28 +435,59 @@ class Heater:
 class ControlBangBang:
     @staticmethod
     def init_profile(config_section, name, pmgr=None):
-        temp_profile = {
-            "max_delta": config_section.getfloat("max_delta", 2.0, above=0.0)
-        }
+        temp_profile = {}
+        for key, (type, placeholder, default, can_be_none) in WATERMARK_PROFILE_OPTIONS.items():
+            temp_profile[key] = pmgr._check_value_config(
+                key, config_section, type, can_be_none, default=default
+            )
         if name != "default":
             profile_version = config_section.getint("profile_version", None)
             if HEATER_PROFILE_VERSION != profile_version:
                 logging.info(
                     "heater_profile: Profile [%s] not compatible with this version\n"
-                    "of heater_profile.  Profile Version: %d Current Version: %d "
+                    "of heater_profile. Profile Version: %d Current Version: %d "
                     % (name, profile_version, HEATER_PROFILE_VERSION)
                 )
                 return None
         return temp_profile
 
     @staticmethod
+    def set_values(pmgr, gcmd, control, profile_name):
+        current_profile = pmgr.heater.get_control().get_profile()
+        max_delta = pmgr._check_value_gcmd(
+            "MAX_DELTA",
+            current_profile["max_delta"],
+            gcmd,
+            float,
+            False,
+        )
+        keep_target = pmgr._check_value_gcmd(
+            "KEEP_TARGET", 0, gcmd, int, True, minval=0, maxval=1
+        )
+        load_clean = pmgr._check_value_gcmd(
+            "LOAD_CLEAN", 0, gcmd, int, True, minval=0, maxval=1
+        )
+        temp_profile = {
+            "name": profile_name,
+            "control": control,
+            "max_delta": max_delta,
+        }
+        temp_control = pmgr.heater.lookup_control(temp_profile, load_clean)
+        pmgr.heater.set_control(temp_control, keep_target)
+        msg = (
+            "Watermark Parameters:\n"
+            "Control: %s\n"
+            "Max Delta: %.4f\n"
+            "have been set as current profile." % (control, max_delta)
+        )
+        pmgr.heater.gcode.respond_info(msg)
+
+    @staticmethod
     def save_profile(pmgr, temp_profile, profile_name=None, gcmd=None, verbose=True):
         if profile_name is None:
             profile_name = temp_profile["name"]
         section_name = pmgr._compute_section_name(profile_name)
-        pmgr.outer_instance.configfile.set(
-            section_name, "max_delta", temp_profile["max_delta"]
-        )
+        pmgr.heater.configfile.set(section_name, "max_delta", temp_profile["max_delta"])
 
     def __init__(self, profile, heater, load_clean=False):
         self.profile = profile
@@ -447,46 +527,100 @@ PID_SETTLE_DELTA = 1.0
 PID_SETTLE_SLOPE = 0.1
 
 
+def median(temps):
+    sorted_temps = sorted(temps)
+    length = len(sorted_temps)
+    return float(
+        (
+            sorted_temps[length // 2 - 1] / 2.0 + sorted_temps[length // 2] / 2.0,
+            sorted_temps[length // 2],
+        )[length % 2]
+    )
+
+
 class ControlPID:
     @staticmethod
     def init_profile(config_section, name, pmgr):
         temp_profile = {}
-        for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
-            can_be_none = key != "pid_kp" and key != "pid_ki" and key != "pid_kd"
+        for key, (type, placeholder, default, can_be_none) in PID_PROFILE_OPTIONS.items():
             temp_profile[key] = pmgr._check_value_config(
-                key, config_section, type, can_be_none
+                key, config_section, type, can_be_none, default=default
             )
-        if name == "default":
-            temp_profile["smooth_time"] = None
-            temp_profile["smoothing_elements"] = None
-        else:
+        if name != "default":
             profile_version = config_section.getint("profile_version", 0)
             if HEATER_PROFILE_VERSION != profile_version:
                 logging.info(
                     "heater_profile: Profile [%s] not compatible with this version\n"
-                    "of heater_profile.  Profile Version: %d Current Version: %d "
+                    "of heater_profile. Profile Version: %d Current Version: %d "
                     % (name, profile_version, HEATER_PROFILE_VERSION)
                 )
                 return None
         return temp_profile
 
     @staticmethod
-    def save_profile(
-        pmgr, temp_profile=None, profile_name=None, gcmd=None, verbose=True
-    ):
-        temp_profile = pmgr.outer_instance.get_control().get_profile()
+    def set_values(pmgr, gcmd, control, profile_name):
+        target = pmgr._check_value_gcmd("TARGET", None, gcmd, float, True)
+        tolerance = pmgr._check_value_gcmd(
+            "TOLERANCE",
+            None,
+            gcmd,
+            float,
+            True,
+        )
+        kp = pmgr._check_value_gcmd("KP", None, gcmd, float, False)
+        ki = pmgr._check_value_gcmd("KI", None, gcmd, float, False)
+        kd = pmgr._check_value_gcmd("KD", None, gcmd, float, False)
+        smooth_time = pmgr._check_value_gcmd("SMOOTH_TIME", None, gcmd, float, True)
+        smoothing_elements = pmgr._check_value_gcmd(
+            "SMOOTHING_ELEMENTS", None, gcmd, int, True
+        )
+        keep_target = pmgr._check_value_gcmd(
+            "KEEP_TARGET", 0, gcmd, int, True, minval=0, maxval=1
+        )
+        load_clean = pmgr._check_value_gcmd(
+            "LOAD_CLEAN", 0, gcmd, int, True, minval=0, maxval=1
+        )
+        temp_profile = {
+            "name": profile_name,
+            "pid_target": target,
+            "pid_tolerance": tolerance,
+            "control": control,
+            "smooth_time": smooth_time,
+            "smoothing_elements": smoothing_elements,
+            "pid_kp": kp,
+            "pid_ki": ki,
+            "pid_kd": kd,
+        }
+        temp_control = pmgr.heater.lookup_control(temp_profile, load_clean)
+        pmgr.heater.set_control(temp_control, keep_target)
+        msg = "PID Parameters:\n"
+        if target is not None:
+            msg += "Target: %.2f,\n" % target
+        if tolerance is not None:
+            msg += "Tolerance: %.4f\n" % tolerance
+        msg += "Control: %s\n" % control
+        if smooth_time is not None:
+            msg += "Smooth Time: %.3f\n" % smooth_time
+        if smoothing_elements is not None:
+            msg += "Smoothing Elements: %d\n" % smoothing_elements
+        msg += (
+            "pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
+            "have been set as current profile." % (kp, ki, kd)
+        )
+        pmgr.heater.gcode.respond_info(msg)
+
+    @staticmethod
+    def save_profile(pmgr, temp_profile, profile_name=None, gcmd=None, verbose=True):
         if profile_name is None:
             profile_name = temp_profile["name"]
         section_name = pmgr._compute_section_name(profile_name)
-        pmgr.outer_instance.configfile.set(
+        pmgr.heater.configfile.set(
             section_name, "profile_version", HEATER_PROFILE_VERSION
         )
-        for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
+        for key, (type, placeholder, default, can_be_none) in PID_PROFILE_OPTIONS.items():
             value = temp_profile[key]
             if value is not None:
-                pmgr.outer_instance.configfile.set(
-                    section_name, key, placeholder % value
-                )
+                pmgr.heater.configfile.set(section_name, key, placeholder % value)
         temp_profile["name"] = profile_name
         pmgr.profiles[profile_name] = temp_profile
         if verbose and gcmd is not None:
@@ -495,7 +629,7 @@ class ControlPID:
                 "has been saved to profile [%s] "
                 "for the current session.  The SAVE_CONFIG command will\n"
                 "update the printer config file and restart the printer."
-                % (pmgr.outer_instance.sensor_name, profile_name)
+                % (pmgr.heater.sensor_name, profile_name)
             )
 
     def __init__(self, profile, heater, load_clean=False):
@@ -571,6 +705,9 @@ class ControlPID:
     def set_pid_kd(self, kd):
         self.Kd = kd / PID_PARAM_BASE
 
+    def set_name(self, name):
+        self.profile["name"] = name
+
     def get_profile(self):
         return self.profile
 
@@ -589,32 +726,12 @@ class ControlVelocityPID:
         return ControlPID.init_profile(config_section, name, pmgr)
 
     @staticmethod
-    def save_profile(
-        pmgr, temp_profile=None, profile_name=None, gcmd=None, verbose=True
-    ):
-        temp_profile = pmgr.outer_instance.get_control().get_profile()
-        if profile_name is None:
-            profile_name = temp_profile["name"]
-        section_name = pmgr._compute_section_name(profile_name)
-        pmgr.outer_instance.configfile.set(
-            section_name, "profile_version", HEATER_PROFILE_VERSION
-        )
-        for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
-            value = temp_profile[key]
-            if value is not None:
-                pmgr.outer_instance.configfile.set(
-                    section_name, key, placeholder % value
-                )
-        temp_profile["name"] = profile_name
-        pmgr.profiles[profile_name] = temp_profile
-        if verbose and gcmd is not None:
-            gcmd.respond_info(
-                "Current Heater profile for heater [%s] "
-                "has been saved to profile [%s] "
-                "for the current session.  The SAVE_CONFIG command will\n"
-                "update the printer config file and restart the printer."
-                % (pmgr.outer_instance.sensor_name, profile_name)
-            )
+    def set_values(pmgr, gcmd, control, profile_name):
+        ControlPID.set_values(pmgr, gcmd, control, profile_name)
+
+    @staticmethod
+    def save_profile(pmgr, temp_profile, profile_name=None, gcmd=None, verbose=True):
+        ControlPID.save_profile(pmgr, temp_profile, profile_name, gcmd, verbose)
 
     def __init__(self, profile, heater, load_clean=False):
         self.profile = profile
@@ -661,7 +778,7 @@ class ControlVelocityPID:
         self.temps.pop(0)
         self.temps.append(temp)
         self.smoothed_temps.pop(0)
-        self.smoothed_temps.append(self.median(self.temps[-self.smoothing_elements:]))
+        self.smoothed_temps.append(median(self.temps[-self.smoothing_elements :]))
 
         self.times.pop(0)
         self.times.append(read_time)
@@ -703,22 +820,15 @@ class ControlVelocityPID:
         # update the heater
         self.heater.set_pwm(read_time, self.pwm)
 
-    def median(self, temps):
-        sorted_temps = sorted(temps)
-        length = len(sorted_temps)
-        return float(
-            (
-                sorted_temps[length // 2 - 1] / 2.0 + sorted_temps[length // 2] / 2.0,
-                sorted_temps[length // 2],
-            )[length % 2]
-        )
-
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
         return abs(temp_diff) > PID_SETTLE_DELTA or abs(self.d1) > PID_SETTLE_SLOPE
 
     def update_smooth_time(self):
         self.smooth_time = self.heater.get_smooth_time()  # smoothing window
+
+    def update_smoothing_elements(self):
+        self.smoothing_elements = self.heater.get_smoothing_elements()
 
     def set_pid_kp(self, kp):
         self.Kp = kp / PID_PARAM_BASE
@@ -728,6 +838,9 @@ class ControlVelocityPID:
 
     def set_pid_kd(self, kd):
         self.Kd = kd / PID_PARAM_BASE
+
+    def set_name(self, name):
+        self.profile["name"] = name
 
     def get_profile(self):
         return self.profile
@@ -742,32 +855,12 @@ class ControlPositionalPID:
         return ControlPID.init_profile(config_section, name, pmgr)
 
     @staticmethod
-    def save_profile(
-        pmgr, temp_profile=None, profile_name=None, gcmd=None, verbose=True
-    ):
-        temp_profile = pmgr.outer_instance.get_control().get_profile()
-        if profile_name is None:
-            profile_name = temp_profile["name"]
-        section_name = pmgr._compute_section_name(profile_name)
-        pmgr.outer_instance.configfile.set(
-            section_name, "profile_version", HEATER_PROFILE_VERSION
-        )
-        for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
-            value = temp_profile[key]
-            if value is not None:
-                pmgr.outer_instance.configfile.set(
-                    section_name, key, placeholder % value
-                )
-        temp_profile["name"] = profile_name
-        pmgr.profiles[profile_name] = temp_profile
-        if verbose and gcmd is not None:
-            gcmd.respond_info(
-                "Current Heater profile for heater [%s] "
-                "has been saved to profile [%s] "
-                "for the current session.  The SAVE_CONFIG command will\n"
-                "update the printer config file and restart the printer."
-                % (pmgr.outer_instance.sensor_name, profile_name)
-            )
+    def set_values(pmgr, gcmd, control, profile_name):
+        ControlPID.set_values(pmgr, gcmd, control, profile_name)
+
+    @staticmethod
+    def save_profile(pmgr, temp_profile, profile_name=None, gcmd=None, verbose=True):
+        ControlPID.save_profile(pmgr, temp_profile, profile_name, gcmd, verbose)
 
     def __init__(self, profile, heater, load_clean=False):
         self.profile = profile
@@ -852,6 +945,9 @@ class ControlPositionalPID:
     def set_pid_kd(self, kd):
         self.Kd = kd / PID_PARAM_BASE
 
+    def set_name(self, name):
+        self.profile["name"] = name
+
     def get_profile(self):
         return self.profile
 
@@ -859,56 +955,62 @@ class ControlPositionalPID:
         return "pid_p"
 
 
+def get_power_at_temp(temp, powers):
+    def _interpolate(below, above, temp):
+        return ((below[1] * (above[0] - temp)) + (above[1] * (temp - below[0]))) / (
+            above[0] - below[0]
+        )
+
+    if temp < powers[0][0]:
+        return powers[0][1]
+    if temp > powers[-1][0]:
+        return powers[-1][1]
+
+    below = [
+        powers[0][0],
+        powers[0][1],
+    ]
+    above = [
+        powers[-1][0],
+        powers[-1][1],
+    ]
+    for config_temp in powers:
+        if config_temp[0] < temp:
+            below = config_temp
+        else:
+            above = config_temp
+            break
+    return _interpolate(below, above, temp)
+
+
 class ControlMPC:
     @staticmethod
     def init_profile(config_section, name, pmgr=None):
-        temp_profile = {
-            "block_heat_capacity": config_section.getfloat(
-                "block_heat_capacity", above=0.0, default=None
-            ),
-            "ambient_transfer": config_section.getfloat(
-                "ambient_transfer", minval=0.0, default=None
-            ),
-            "fan_ambient_transfer": config_section.getfloatlist(
-                "fan_ambient_transfer", default=None
-            ),
-            "target_reach_time": config_section.getfloat(
-                "target_reach_time", above=0.0, default=2.0
-            ),
-            "smoothing": config_section.getfloat("smoothing", above=0.0, default=0.25),
-            "sensor_responsiveness": config_section.getfloat(
-                "sensor_responsiveness", above=0.0, default=None
-            ),
-            "min_ambient_change": config_section.getfloat(
-                "min_ambient_change", above=0.0, default=1.0
-            ),
-            "steady_state_rate": config_section.getfloat(
-                "steady_state_rate", above=0.0, default=0.5
-            ),
-            "filament_diameter": config_section.getfloat(
-                "filament_diameter", above=0.0, default=1.75
-            ),
-            "filament_density": config_section.getfloat(
-                "filament_density", above=0.0, default=1.2
-            ),
-            "filament_heat_capacity": (
-                config_section.getfloat(
-                    "filament_heat_capacity", above=0.0, default=1.8
-                )
-            ),
-            "maximum_retract": (
-                config_section.getfloat("maximum_retract", above=0.0, default=2.0)
-            ),
-        }
+        temp_profile = {}
+        for key, (
+            type,
+            placeholder,
+            default,
+            can_be_none,
+        ) in MPC_PROFILE_OPTIONS.items():
+            if key == "ambient_transfer":
+                minval= 0.0
+                above = None
+            else:
+                minval = None
+                above = 0.0
+            temp_profile[key] = pmgr._check_value_config(
+                key,
+                config_section,
+                type,
+                can_be_none,
+                default=default,
+                above=above,
+                minval=minval,
+            )
 
-        heater_power = config_section.getfloat("heater_power", above=0.0, default=None)
-        heater_powers = config_section.getlists(
-            "heater_powers",
-            seps=(",", "\n"),
-            parser=float,
-            count=2,
-            default=None,
-        )
+        heater_power = temp_profile["heater_power"]
+        heater_powers = temp_profile["heater_powers"]
         if heater_power is None and heater_powers is None:
             raise config_section.error(
                 "Option 'heater_power' or 'heater_powers' "
@@ -922,36 +1024,25 @@ class ControlMPC:
                 + " "
                 + name
             )
-        temp_profile["heater_power"] = config_section.getfloat(
-            "heater_power", above=0.0, default=None
-        )
-        temp_profile["heater_powers"] = config_section.getlists(
-            "heater_powers",
-            seps=(",", "\n"),
-            parser=float,
-            count=2,
-            default=None,
-        )
 
-        filament_temp_src_raw = config_section.get(
-            "filament_temperature_source", "ambient"
+        filament_temp_src_raw = (
+            temp_profile["filament_temperature_source"].lower().strip()
         )
-        temp = filament_temp_src_raw.lower().strip()
-        if temp == "sensor":
+        if filament_temp_src_raw == "sensor":
             filament_temp_src = (FILAMENT_TEMP_SRC_SENSOR,)
-        elif temp == "ambient":
+        elif filament_temp_src_raw == "ambient":
             filament_temp_src = (FILAMENT_TEMP_SRC_AMBIENT,)
         else:
             try:
-                value = float(temp)
+                value = float(filament_temp_src_raw)
             except ValueError:
                 raise config_section.error(
                     f"Unable to parse option 'filament_temperature_source' in section '{config_section.get_name()}'"
                 )
             filament_temp_src = (FILAMENT_TEMP_SRC_FIXED, value)
-        temp_profile["filament_temp_src"] = filament_temp_src
+        temp_profile["filament_temperature_source"] = filament_temp_src
 
-        ambient_sensor_name = config_section.get("ambient_temp_sensor", None)
+        ambient_sensor_name = temp_profile["ambient_temp_sensor"]
         ambient_sensor = None
         if ambient_sensor_name is not None:
             try:
@@ -964,7 +1055,7 @@ class ControlMPC:
                 )
         temp_profile["ambient_temp_sensor"] = ambient_sensor
 
-        fan_name = config_section.get("cooling_fan", None)
+        fan_name = temp_profile["cooling_fan"]
         fan = None
         if fan_name is not None:
             try:
@@ -980,90 +1071,50 @@ class ControlMPC:
             fan = fan_obj.fan
         temp_profile["cooling_fan"] = fan
 
-        temp_profile["fan_ambient_transfer"] = config_section.getfloatlist(
-            "fan_ambient_transfer", []
-        )
         if name != "default":
             profile_version = config_section.getint("profile_version", None)
             if HEATER_PROFILE_VERSION != profile_version:
                 logging.info(
                     "heater_profile: Profile [%s] not compatible with this version\n"
-                    "of heater_profile.  Profile Version: %d Current Version: %d "
+                    "of heater_profile. Profile Version: %d Current Version: %d "
                     % (name, profile_version, HEATER_PROFILE_VERSION)
                 )
                 return None
         return temp_profile
 
     @staticmethod
+    def set_values(pmgr, gcmd, control, profile_name):
+        pass
+        # TODO
+
+    @staticmethod
     def save_profile(
         pmgr, temp_profile=None, profile_name=None, gcmd=None, verbose=True
     ):
-        temp_profile = pmgr.outer_instance.get_control().get_profile()
         if profile_name is None:
             profile_name = temp_profile["name"]
         section_name = pmgr._compute_section_name(profile_name)
-        for key, (type, placeholder) in PID_PROFILE_OPTIONS.items():
+        pmgr.heater.configfile.set(
+            section_name, "profile_version", HEATER_PROFILE_VERSION
+        )
+        for key, (
+            type,
+            placeholder,
+            default,
+            above,
+            minval,
+            can_be_none,
+        ) in MPC_PROFILE_OPTIONS.items():
             value = temp_profile[key]
             if value is not None:
-                pmgr.outer_instance.configfile.set(
-                    section_name, key, placeholder % value
-                )
-        pmgr.outer_instance.configfile.set(
-            section_name,
-            "block_heat_capacity",
-            "%.6f" % temp_profile["block_heat_capacity"],
-        )
-        pmgr.outer_instance.configfile.set(
-            section_name,
-            "ambient_transfer",
-            "%.6f" % temp_profile["ambient_transfer"],
-        )
-        pmgr.outer_instance.configfile.set(
-            section_name,
-            "fan_ambient_transfer",
-            "%.6f" % temp_profile["fan_ambient_transfer"],
-        )
-        pmgr.outer_instance.configfile.set(
-            section_name, "target_reach_time", temp_profile["target_reach_time"]
-        )
-        pmgr.outer_instance.configfile.set(
-            section_name, "smoothing", temp_profile["smoothing"]
-        )
-        pmgr.outer_instance.configfile.set(
-            section_name, "heater_power", temp_profile["heater_power"]
-        )
-        pmgr.outer_instance.configfile.set(
-            section_name, "heater_powers", temp_profile["heater_powers"]
-        )
-        pmgr.outer_instance.configfile.set(
-            section_name,
-            "sensor_responsiveness",
-            "%.6f" % temp_profile["sensor_responsiveness"],
-        )
-        pmgr.outer_instance.configfile.set(
-            section_name,
-            "min_ambient_change",
-            temp_profile["min_ambient_change"],
-        )
-        pmgr.outer_instance.configfile.set(
-            section_name, "steady_state_rate", temp_profile["steady_state_rate"]
-        )
-        pmgr.outer_instance.configfile.set(
-            section_name, "filament_diameter", temp_profile["filament_diameter"]
-        )
-        pmgr.outer_instance.configfile.set(
-            section_name, "filament_density", temp_profile["filament_density"]
-        )
-        pmgr.outer_instance.configfile.set(
-            section_name,
-            "filament_heat_capacity",
-            temp_profile["filament_heat_capacity"],
-        )
-        pmgr.outer_instance.configfile.set(
-            section_name,
-            "ambient_temp_sensor",
-            temp_profile["ambient_temp_sensor"],
-        )
+                if key == "heater_powers":
+                    pmgr.heater.configfile.set(section_name, key, value)
+                elif key == "ambient_temp_sensor" or key == "cooling_fan":
+                    pmgr.heater.configfile.set(section_name, key, value.name)
+                elif key == "filament_temperature_source":
+                    pmgr.heater.configfile.set(section_name, key, value[-1])
+                else:
+                    pmgr.heater.configfile.set(section_name, key, placeholder % value)
         temp_profile["name"] = profile_name
         pmgr.profiles[profile_name] = temp_profile
         if verbose and gcmd is not None:
@@ -1072,19 +1123,44 @@ class ControlMPC:
                 "has been saved to profile [%s] "
                 "for the current session.  The SAVE_CONFIG command will\n"
                 "update the printer config file and restart the printer."
-                % (pmgr.outer_instance.sensor_name, profile_name)
+                % (pmgr.heater.sensor_name, profile_name)
             )
 
     def __init__(self, profile, heater, load_clean=False):
         self.profile = profile
-        self._load_profile()
         self.heater = heater
-        if self.const_heater_power is None:
-            heater_power = self.const_heater_powers[0][1]
+        self.printer = heater.printer
+        self.const_block_heat_capacity = self.profile["block_heat_capacity"]
+        self.const_ambient_transfer = self.profile["ambient_transfer"]
+        self.const_target_reach_time = self.profile["target_reach_time"]
+        const_heater_power = self.profile["heater_power"]
+        if const_heater_power is not None:
+            self.const_heater_power = [
+                (self.heater.min_temp, const_heater_power),
+                (self.heater.max_temp, const_heater_power),
+            ]
         else:
-            heater_power = self.const_heater_powers
-        self.heater_max_power = heater.get_max_power() * heater_power
-        self.max_power = heater.get_max_power()
+            self.const_heater_power = self.profile["heater_powers"]
+        self.const_smoothing = self.profile["smoothing"]
+        self.const_sensor_responsiveness = self.profile["sensor_responsiveness"]
+        self.const_min_ambient_change = self.profile["min_ambient_change"]
+        self.const_steady_state_rate = self.profile["steady_state_rate"]
+        self.const_filament_diameter = self.profile["filament_diameter"]
+        self.const_filament_density = self.profile["filament_density"]
+        self.const_filament_heat_capacity = self.profile["filament_heat_capacity"]
+        self.const_maximum_retract = self.profile["maximum_retract"]
+        self.filament_temp_src = self.profile["filament_temp_src"]
+        self._update_filament_const()
+        self.ambient_sensor = self.profile["ambient_temperature_sensor"]
+        self.cooling_fan = self.profile["cooling_fan"]
+        self.const_fan_ambient_transfer = self.profile["fan_ambient_transfer"]
+        if self.const_fan_ambient_transfer is None:
+            self.const_fan_ambient_transfer = []
+        self.pwm_max_power = [
+            (temp, heater.get_max_power() * power)
+            for temp, power in self.const_heater_power
+        ]
+        self.heater_max_power = heater.get_max_power()
 
         self.want_ambient_refresh = self.ambient_sensor is not None
         self.state_block_temp = AMBIENT_TEMP if load_clean else self._heater_temp()
@@ -1097,7 +1173,6 @@ class ControlMPC:
         self.last_time = 0.0
         self.last_temp_time = 0.0
 
-        self.printer = heater.printer
         self.toolhead = None
 
     # Helpers
@@ -1109,8 +1184,15 @@ class ControlMPC:
         self.const_block_heat_capacity = self.profile["block_heat_capacity"]
         self.const_ambient_transfer = self.profile["ambient_transfer"]
         self.const_target_reach_time = self.profile["target_reach_time"]
-        self.const_heater_power = self.profile["heater_power"]
-        self.const_heater_powers = self.profile["heater_powers"]
+        const_heater_power = self.profile["heater_power"]
+        const_heater_powers = self.profile["heater_powers"]
+        if const_heater_power is not None:
+            self.const_heater_power = [
+                (self.heater.min_temp, const_heater_power),
+                (self.heater.max_temp, const_heater_power),
+            ]
+        else:
+            self.const_heater_power = const_heater_powers
         self.const_smoothing = self.profile["smoothing"]
         self.const_sensor_responsiveness = self.profile["sensor_responsiveness"]
         self.const_min_ambient_change = self.profile["min_ambient_change"]
@@ -1121,9 +1203,11 @@ class ControlMPC:
         self.const_maximum_retract = self.profile["maximum_retract"]
         self.filament_temp_src = self.profile["filament_temp_src"]
         self._update_filament_const()
-        self.ambient_sensor = self.profile["ambient_temp_sensor"]
+        self.ambient_sensor = self.profile["ambient_temperature_sensor"]
         self.cooling_fan = self.profile["cooling_fan"]
         self.const_fan_ambient_transfer = self.profile["fan_ambient_transfer"]
+        if self.const_fan_ambient_transfer is None:
+            self.const_fan_ambient_transfer = []
 
     def is_valid(self):
         return (
@@ -1243,7 +1327,7 @@ class ControlMPC:
             if temp != 0.0:
                 self.state_ambient_temp = temp
                 self.want_ambient_refresh = False
-        if (self.last_power > 0 and self.last_power < 1.0) or abs(
+        if (0 < self.last_power < 1.0) or abs(
             expected_block_dT + adjustment_dT
         ) < self.const_steady_state_rate * dt:
             if adjustment_dT > 0.0:
@@ -1278,38 +1362,16 @@ class ControlMPC:
             power = max(
                 0.0,
                 min(
-                    self.heater_max_power,
+                    get_power_at_temp(target_temp, self.pwm_max_power),
                     heating_power + loss_ambient + loss_filament,
                 ),
             )
         else:
             power = 0
 
-        if self.const_heater_power is None:
-            if temp < self.const_heater_powers[0][0]:
-                heater_power = self.const_heater_powers[0][1]
-            elif temp > self.const_heater_powers[-1][0]:
-                heater_power = self.const_heater_powers[-1][1]
-            else:
-                below = [
-                    self.const_heater_powers[0][0],
-                    self.const_heater_powers[0][1],
-                ]
-                above = [
-                    self.const_heater_powers[-1][0],
-                    self.const_heater_powers[-1][1],
-                ]
-                for config_temp in self.const_heater_powers:
-                    if config_temp[0] < temp:
-                        below = config_temp
-                    else:
-                        above = config_temp
-                        break
-                heater_power = self._interpolate(below, above, temp)
-        else:
-            heater_power = self.const_heater_power
+        heater_power = get_power_at_temp(temp, self.const_heater_power)
 
-        duty = max(0.0, min(self.max_power, power / heater_power))
+        duty = max(0.0, min(self.heater_max_power, power / heater_power))
 
         # logging.info(
         #     "mpc: [%.3f/%.3f] %.2f => %.2f / %.2f / %.2f = %.2f[%.2f+%.2f+%.2f] / %.2f, dT %.2f, E %.2f=>%.2f",
@@ -1335,11 +1397,6 @@ class ControlMPC:
         self.last_temp_time = read_time
         self.heater.set_pwm(read_time, duty)
 
-    def _interpolate(self, below, above, temp):
-        return ((below[1] * (above[0] - temp)) + (above[1] * (temp - below[0]))) / (
-            above[0] - below[0]
-        )
-
     def filament_temp(self, read_time, ambient_temp):
         src = self.filament_temp_src
         if src[0] == FILAMENT_TEMP_SRC_FIXED:
@@ -1354,6 +1411,9 @@ class ControlMPC:
 
     def update_smooth_time(self):
         self.const_smoothing = self.heater.get_smooth_time()  # smoothing window
+
+    def set_name(self, name):
+        self.profile["name"] = name
 
     def get_profile(self):
         return self.profile
