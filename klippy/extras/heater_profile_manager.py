@@ -58,7 +58,6 @@ class ProfileManager:
         elif (
             isinstance(type, tuple)
             and len(type) == 4
-            and isinstance(type[0], str)
             and type[0] == "lists"
         ):
             value = config_section.getlists(
