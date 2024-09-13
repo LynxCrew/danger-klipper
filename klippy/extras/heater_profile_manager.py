@@ -56,7 +56,7 @@ class ProfileManager:
         elif isinstance(type, str) and type == "floatlist":
             value = config_section.getfloatlist(key, default=default)
         elif (
-            isinstance(type, list)
+            isinstance(type, tuple)
             and len(type) == 4
             and isinstance(type[0], str)
             and type[0] == "lists"
