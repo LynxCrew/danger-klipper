@@ -55,11 +55,7 @@ class ProfileManager:
             )
         elif type == "floatlist":
             value = config_section.getfloatlist(key, default=default)
-        elif (
-            isinstance(type, tuple)
-            and len(type) == 4
-            and type[0] == "lists"
-        ):
+        elif isinstance(type, tuple) and len(type) == 4 and type[0] == "lists":
             value = config_section.getlists(
                 key,
                 seps=type[1],
@@ -105,9 +101,7 @@ class ProfileManager:
         else:
             value = gcmd.get(name, default)
         if not can_be_none and value is None:
-            raise self.heater.gcode.error(
-                "heater_profile: '%s' has to be specified." % name
-            )
+            raise gcmd.error("heater_profile: '%s' has to be specified." % name)
         return value.lower() if type == "lower" else value
 
     def init_default_profile(self):
@@ -125,9 +119,9 @@ class ProfileManager:
             pmgr=self, gcmd=gcmd, control=control, profile_name=profile_name
         )
         if save_profile:
-            self.save_profile(profile_name=profile_name, gcmd=gcmd, verbose=verbose)
+            self.save_profile(profile_name=profile_name, verbose=verbose)
 
-    def get_values(self, profile_name, gcmd):
+    def get_values(self, profile_name=None, gcmd=None):
         temp_profile = self.heater.get_control().get_profile()
         target = temp_profile["pid_target"]
         tolerance = temp_profile["pid_tolerance"]
@@ -174,7 +168,6 @@ class ProfileManager:
             pmgr=self,
             temp_profile=temp_profile,
             profile_name=profile_name,
-            gcmd=gcmd,
             verbose=verbose,
         )
         if profile_name is not None:
@@ -262,7 +255,7 @@ class ProfileManager:
             )
             self.heater.gcode.respond_info(msg)
 
-    def remove_profile(self, profile_name, gcmd):
+    def remove_profile(self, profile_name, gcmd=None):
         if profile_name in self.profiles:
             section_name = self._compute_section_name(profile_name)
             self.heater.configfile.remove_section(section_name)
