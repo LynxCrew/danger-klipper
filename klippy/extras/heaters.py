@@ -389,7 +389,9 @@ class Heater:
         )
         self.get_control().update_smoothing_elements()
         if save_to_profile:
-            self.get_control().get_profile()["smoothing_elements"] = self.smooth_time
+            self.get_control().get_profile()[
+                "smoothing_elements"
+            ] = self.smoothing_elements
             self.pmgr.save_profile()
 
     cmd_SET_HEATER_PID_help = "Sets a heater PID parameter"
@@ -453,8 +455,12 @@ class ControlBangBang:
             default,
             can_be_none,
         ) in WATERMARK_PROFILE_OPTIONS.items():
+            if key == "max_delta":
+                above = 0.0
+            else:
+                above = None
             temp_profile[key] = pmgr._check_value_config(
-                key, config_section, type, can_be_none, default=default
+                key, config_section, type, can_be_none, default=default, above=above
             )
         if name != "default":
             profile_version = config_section.getint("profile_version", None)
@@ -574,8 +580,16 @@ class ControlPID:
             default,
             can_be_none,
         ) in PID_PROFILE_OPTIONS.items():
+            if (
+                key == "smooth_time"
+                or key == "smoothing_elements"
+                or key == "pid_tolerance"
+            ):
+                above = 0.0
+            else:
+                above = None
             temp_profile[key] = pmgr._check_value_config(
-                key, config_section, type, can_be_none, default=default
+                key, config_section, type, can_be_none, default=default, above=above
             )
         if name == "default":
             temp_profile["smooth_time"] = None
@@ -740,6 +754,8 @@ class ControlPID:
         self.Ki = ki / PID_PARAM_BASE
         if self.Ki:
             self.temp_integ_max = self.heater_max_power / self.Ki
+        else:
+            self.temp_integ_max = 0.0
 
     def set_pid_kd(self, kd):
         self.Kd = kd / PID_PARAM_BASE
