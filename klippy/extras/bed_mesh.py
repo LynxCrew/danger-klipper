@@ -571,8 +571,8 @@ class BedMeshCalibrate:
                 "scan_probe_count",
                 default=None,
                 minval=3,
-                default_x=x_cnt,
-                default_y=y_cnt,
+                default_x=orig_cfg["x_count"],
+                default_y=orig_cfg["y_count"],
             )
 
             self.scan_mesh_pps = parse_config_pair(
@@ -580,13 +580,13 @@ class BedMeshCalibrate:
                 "scan_mesh_pps",
                 default=None,
                 minval=0,
-                default_x=pps[0],
-                default_y=pps[1],
+                default_x=orig_cfg["mesh_x_pps"],
+                default_y=orig_cfg["mesh_y_pps"],
             )
 
             self.scan_algo = config.get("scan_algorithm", orig_cfg["algo"]).strip().lower()
 
-            self.scan_tension = config.getfloat("bicubic_tension", orig_cfg["tension"], minval=0.0, maxval=2.0)
+            self.scan_tension = config.getfloat("scan_bicubic_tension", orig_cfg["tension"], minval=0.0, maxval=2.0)
 
             self.scan_speed = config.getfloat("scan_speed", None, above=0.0)
 
@@ -818,6 +818,8 @@ class BedMeshCalibrate:
             self.mesh_config["y_count"] = self.scan_probe_count[1]
             self.mesh_config["mesh_x_pps"] = self.scan_mesh_pps[0]
             self.mesh_config["mesh_y_pps"] = self.scan_mesh_pps[1]
+            self.mesh_config["algo"] = self.scan_algo
+            self.mesh_config["tension"] = self.scan_tension
             need_cfg_update = True
         if self.radius is not None:
             if "MESH_RADIUS" in params:
