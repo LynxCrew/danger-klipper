@@ -45,7 +45,7 @@ MPC_PROFILE_OPTIONS = {
     "heater_powers": (("lists", (",", "\n"), float, 2), "%.2f, %.2f\n", None, True),
     "cooling_fan": (str, "%s", None, True),
     "ambient_temp_sensor": (str, "%s", None, True),
-    "filament_temperature_source": (str, "%s", "ambient", False),
+    "filament_temp_source": (str, "%s", "ambient", False),
     "smoothing": (float, "%f", 0.25, False),
     "target_reach_time": (float, "%f", 2.0, False),
     "maximum_retract": (float, "%f", 2.0, False),
@@ -1069,7 +1069,7 @@ class ControlMPC:
             )
 
         filament_temp_src_raw = (
-            temp_profile["filament_temperature_source"].lower().strip()
+            temp_profile["filament_temp_source"].lower().strip()
         )
         if filament_temp_src_raw == "sensor":
             filament_temp_src = (FILAMENT_TEMP_SRC_SENSOR,)
@@ -1083,7 +1083,7 @@ class ControlMPC:
                     f"Unable to parse option 'filament_temperature_source' in section '{config_section.get_name()}'"
                 )
             filament_temp_src = (FILAMENT_TEMP_SRC_FIXED, value)
-        temp_profile["filament_temperature_source"] = filament_temp_src
+        temp_profile["filament_temp_source"] = filament_temp_src
 
         ambient_sensor_name = temp_profile["ambient_temp_sensor"]
         ambient_sensor = None
@@ -1165,7 +1165,7 @@ class ControlMPC:
                         )
                 elif key == "ambient_temp_sensor" or key == "cooling_fan":
                     pmgr.heater.configfile.set(section_name, key, value.name)
-                elif key == "filament_temperature_source":
+                elif key == "filament_temp_source":
                     if value[-1] != default:
                         pmgr.heater.configfile.set(
                             section_name, key, placeholder % value[-1]
@@ -1254,7 +1254,7 @@ class ControlMPC:
         self.const_filament_density = self.profile["filament_density"]
         self.const_filament_heat_capacity = self.profile["filament_heat_capacity"]
         self.const_maximum_retract = self.profile["maximum_retract"]
-        self.filament_temp_src = self.profile["filament_temperature_source"]
+        self.filament_temp_src = self.profile["filament_temp_source"]
         self.ambient_sensor = self.profile["ambient_temperature_sensor"]
         self.cooling_fan = self.profile["cooling_fan"]
         self.const_fan_ambient_transfer = self.profile["fan_ambient_transfer"]
