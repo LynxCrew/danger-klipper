@@ -45,6 +45,7 @@ MPC_PROFILE_OPTIONS = {
     "heater_powers": (("lists", (",", "\n"), float, 2), "%.2f, %.2f\n", None, True),
     "cooling_fan": (str, "%s", None, True),
     "ambient_temp_sensor": (str, "%s", None, True),
+    "filament_temp_sensor": (str, "%s", None, True),
     "filament_temp_source": (str, "%s", "ambient", False),
     "smoothing": (float, "%f", 0.25, False),
     "target_reach_time": (float, "%f", 2.0, False),
@@ -59,9 +60,10 @@ MPC_PROFILE_OPTIONS = {
     "fan_ambient_transfer": ("floatlist", "%.6f", [], True),
     "sensor_responsiveness": (float, "%f", None, True),
 }
-FILAMENT_TEMP_SRC_AMBIENT = "ambient"
 FILAMENT_TEMP_SRC_FIXED = "fixed"
+FILAMENT_TEMP_SRC_AMBIENT = "ambient"
 FILAMENT_TEMP_SRC_SENSOR = "sensor"
+FILAMENT_TEMP_SRC_SENSOR_AMBIENT = "sensor_ambient"
 
 
 class Heater:
@@ -1068,10 +1070,10 @@ class ControlMPC:
                 + name
             )
 
-        filament_temp_src_raw = (
-            temp_profile["filament_temp_source"].lower().strip()
-        )
-        if filament_temp_src_raw == "sensor":
+        filament_temp_src_raw = temp_profile["filament_temp_source"].lower().strip()
+        if filament_temp_src_raw == "sensor_ambient":
+            filament_temp_src = (FILAMENT_TEMP_SRC_SENSOR_AMBIENT,)
+        elif filament_temp_src_raw == "sensor":
             filament_temp_src = (FILAMENT_TEMP_SRC_SENSOR,)
         elif filament_temp_src_raw == "ambient":
             filament_temp_src = (FILAMENT_TEMP_SRC_AMBIENT,)
@@ -1256,6 +1258,7 @@ class ControlMPC:
         self.const_maximum_retract = self.profile["maximum_retract"]
         self.filament_temp_src = self.profile["filament_temp_source"]
         self.ambient_sensor = self.profile["ambient_temp_sensor"]
+        self.filament_temp_sensor = self.profile["filament_temp_sensor"]
         self.cooling_fan = self.profile["cooling_fan"]
         self.const_fan_ambient_transfer = self.profile["fan_ambient_transfer"]
         self.pwm_max_power = [
@@ -1459,8 +1462,15 @@ class ControlMPC:
         src = self.filament_temp_src
         if src[0] == FILAMENT_TEMP_SRC_FIXED:
             return src[1]
-        elif src[0] == FILAMENT_TEMP_SRC_SENSOR and self.ambient_sensor is not None:
+        elif (
+            src[0] == FILAMENT_TEMP_SRC_SENSOR_AMBIENT
+            and self.ambient_sensor is not None
+        ):
             return self.ambient_sensor.get_temp(read_time)[0]
+        elif (
+            src[0] == FILAMENT_TEMP_SRC_SENSOR and self.filament_temp_sensor is not None
+        ):
+            return self.filament_temp_sensor.get_temp(read_time)[0]
         else:
             return ambient_temp
 
