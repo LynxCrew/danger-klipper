@@ -595,6 +595,9 @@ class BedMeshCalibrate:
 
             self.scan_tension = config.getfloat("scan_bicubic_tension", orig_cfg["tension"], minval=0.0, maxval=2.0)
 
+            config.get("contact_mesh_min", None)
+            config.get("contact_mesh_max", None)
+
         for i in list(range(1, 100, 1)):
             start = config.getfloatlist("faulty_region_%d_min" % (i,), None, count=2)
             if start is None:
