@@ -1255,7 +1255,7 @@ class ControlMPC:
         self.const_filament_heat_capacity = self.profile["filament_heat_capacity"]
         self.const_maximum_retract = self.profile["maximum_retract"]
         self.filament_temp_src = self.profile["filament_temp_source"]
-        self.ambient_sensor = self.profile["ambient_temperature_sensor"]
+        self.ambient_sensor = self.profile["ambient_temp_sensor"]
         self.cooling_fan = self.profile["cooling_fan"]
         self.const_fan_ambient_transfer = self.profile["fan_ambient_transfer"]
         self.pwm_max_power = [
