@@ -565,7 +565,7 @@ class BedMeshCalibrate:
             "bicubic_tension", 0.2, minval=0.0, maxval=2.0
         )
 
-        if True:
+        if self.radius is None:
             self.scan_probe_count = parse_config_pair(
                 config,
                 "scan_probe_count",
