@@ -802,7 +802,7 @@ class MCU:
                 self.non_critical_recon_timer = self._reactor.register_timer(
                     self.non_critical_recon_event
                 )
-        self.non_critical_disconnected = False
+        self.non_critical_disconnected = True
         self._non_critical_reconnect_event_name = (
             f"danger:non_critical_mcu_{self.get_name()}:reconnected"
         )
