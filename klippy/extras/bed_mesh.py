@@ -557,32 +557,39 @@ class BedMeshCalibrate:
         orig_cfg["mesh_x_pps"] = mesh_cfg["mesh_x_pps"] = pps[0]
         orig_cfg["mesh_y_pps"] = mesh_cfg["mesh_y_pps"] = pps[1]
 
-        self.scan_probe_count = parse_config_pair(
-            config,
-            "scan_probe_count",
-            default=None,
-            minval=3,
-            default_x=x_cnt,
-            default_y=y_cnt,
-        )
-
-        self.scan_mesh_pps = parse_config_pair(
-            config,
-            "scan_mesh_pps",
-            default=None,
-            minval=0,
-            default_x=pps[0],
-            default_y=pps[1],
-        )
-
-        self.scan_speed = config.getfloat("scan_speed", None, above=0.0)
-
         orig_cfg["algo"] = mesh_cfg["algo"] = (
             config.get("algorithm", "lagrange").strip().lower()
         )
+
         orig_cfg["tension"] = mesh_cfg["tension"] = config.getfloat(
             "bicubic_tension", 0.2, minval=0.0, maxval=2.0
         )
+
+        if self.radius is None:
+            self.scan_probe_count = parse_config_pair(
+                config,
+                "scan_probe_count",
+                default=None,
+                minval=3,
+                default_x=x_cnt,
+                default_y=y_cnt,
+            )
+
+            self.scan_mesh_pps = parse_config_pair(
+                config,
+                "scan_mesh_pps",
+                default=None,
+                minval=0,
+                default_x=pps[0],
+                default_y=pps[1],
+            )
+
+            self.scan_algo = config.get("scan_algorithm", orig_cfg["algo"]).strip().lower()
+
+            self.scan_tension = config.getfloat("bicubic_tension", orig_cfg["tension"], minval=0.0, maxval=2.0)
+
+            self.scan_speed = config.getfloat("scan_speed", None, above=0.0)
+
         for i in list(range(1, 100, 1)):
             start = config.getfloatlist("faulty_region_%d_min" % (i,), None, count=2)
             if start is None:
@@ -901,7 +908,7 @@ class BedMeshCalibrate:
         if beacon is not None:
             if (
                 gcmd.get("PROBE_METHOD", beacon.default_mesh_method).lower()
-                != "contact"
+                == "scan"
                 and horizontal_move_z <= beacon.trigger_dive_threshold
             ):
                 beacon_scan = True
