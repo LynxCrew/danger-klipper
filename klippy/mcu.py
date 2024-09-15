@@ -802,7 +802,7 @@ class MCU:
                 self.non_critical_recon_timer = self._reactor.register_timer(
                     self.non_critical_recon_event
                 )
-        self.non_critical_disconnected = True
+        self.non_critical_disconnected = None
         self._non_critical_reconnect_event_name = (
             f"danger:non_critical_mcu_{self.get_name()}:reconnected"
         )
@@ -1358,7 +1358,11 @@ class MCU:
         chelper.run_hub_ctrl(1)
 
     def _firmware_restart(self, force=False):
-        if (self._is_mcu_bridge and not force) or self.non_critical_disconnected:
+        if (
+            (self._is_mcu_bridge and not force)
+            or self.non_critical_disconnected
+            or self.non_critical_disconnected is None
+        ):
             return
         if self._restart_method == "rpi_usb":
             self._restart_rpi_usb()
