@@ -379,8 +379,8 @@ class Printer:
     def request_exit(self, result):
         if self.run_result is None:
             self.run_result = result
-        self.klipper_threads.end()
         self.reactor.end()
+        self.klipper_threads.end()
 
     wait_interrupted = WaitInterruption
 
