@@ -378,6 +378,9 @@ class BedMeshCalibrate:
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, self._get_adjusted_points()
         )
+        self.scan_speed = None
+        if self.radius is None:
+            self.scan_speed = config.getfloat("scan_speed", self.probe_helper.speed, above=0.0)
         self.probe_helper.minimum_points(3)
         self.probe_helper.use_xy_offsets(True)
         self.gcode = self.printer.lookup_object("gcode")
@@ -565,6 +568,10 @@ class BedMeshCalibrate:
             "bicubic_tension", 0.2, minval=0.0, maxval=2.0
         )
 
+        self.scan_probe_count = None
+        self.scan_mesh_pps = None
+        self.scan_algo = None
+        self.scan_tension = None
         if self.radius is None:
             self.scan_probe_count = parse_config_pair(
                 config,
@@ -587,8 +594,6 @@ class BedMeshCalibrate:
             self.scan_algo = config.get("scan_algorithm", orig_cfg["algo"]).strip().lower()
 
             self.scan_tension = config.getfloat("scan_bicubic_tension", orig_cfg["tension"], minval=0.0, maxval=2.0)
-
-            self.scan_speed = config.getfloat("scan_speed", None, above=0.0)
 
         for i in list(range(1, 100, 1)):
             start = config.getfloatlist("faulty_region_%d_min" % (i,), None, count=2)
