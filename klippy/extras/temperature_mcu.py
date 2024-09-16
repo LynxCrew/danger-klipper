@@ -76,7 +76,7 @@ class PrinterTemperatureMCU:
             self.beacon_mcu_temp_wrapper.activate_wrapper(self.config)
 
     def _build_config(self):
-        if self.beacon is not None:
+        if self.beacon_mcu_temp_wrapper is not None:
             return
         self.debug_read_cmd = self.mcu_adc.get_mcu().lookup_query_command(
             "debug_read order=%c addr=%u", "debug_result val=%u"
