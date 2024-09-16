@@ -133,14 +133,14 @@ class PrinterTemperatureMCU:
         )
 
     def setup_callback(self, temperature_callback):
-        if self.beacon is not None:
-            self.beacon.setup_callback(temperature_callback)
+        if self.beacon_mcu_temp_wrapper is not None:
+            self.beacon_mcu_temp_wrapper.setup_callback(temperature_callback)
             return
         self.temperature_callback = temperature_callback
 
     def get_report_time_delta(self):
-        if self.beacon is not None:
-            return self.beacon.report_time
+        if self.beacon_mcu_temp_wrapper is not None:
+            return self.beacon_mcu_temp_wrapper.report_time
         return self.report_time
 
     def adc_callback(self, read_time, read_value):
@@ -148,8 +148,8 @@ class PrinterTemperatureMCU:
         self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
 
     def setup_minmax(self, min_temp, max_temp):
-        if self.beacon is not None:
-            self.beacon.setup_minmax(min_temp, max_temp)
+        if self.beacon_mcu_temp_wrapper is not None:
+            self.beacon_mcu_temp_wrapper.setup_minmax(min_temp, max_temp)
             return
         self.min_temp = min_temp
         self.max_temp = max_temp
@@ -253,8 +253,8 @@ class PrinterTemperatureMCU:
         return params["val"]
 
     def set_report_time(self, report_time):
-        if self.beacon is not None:
-            self.beacon.set_report_time(report_time)
+        if self.beacon_mcu_temp_wrapper is not None:
+            self.beacon_mcu_temp_wrapper.set_report_time(report_time)
             return
         self.report_time = report_time
 
