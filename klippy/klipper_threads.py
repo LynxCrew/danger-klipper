@@ -10,7 +10,7 @@ EXCEPTION = []
 
 
 def handle_sigint(signalnum, handler):
-    raise Exception()
+    raise Exception(EXCEPTION[0])
 
 
 class KlipperThreads:
@@ -90,7 +90,7 @@ class KlipperThread:
                     wait_time = job(*args, **kwargs)
             sys.exit()
         except Exception as e:
-            # EXCEPTION[0] = e
+            EXCEPTION.append(e)
             _thread.interrupt_main()
         finally:
             self.k_threads.registered_threads.remove(self)
