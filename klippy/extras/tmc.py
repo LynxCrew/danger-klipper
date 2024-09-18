@@ -153,7 +153,7 @@ class TMCErrorCheck:
                                                 self._handle_ready)
 
     def _handle_ready(self):
-        self.printer.get_reactor().register_callback(self.start_checks)
+        self.start_checks()
 
     def _query_register(self, reg_info, try_clear=False):
         last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
@@ -221,7 +221,7 @@ class TMCErrorCheck:
         self.check_timer.unregister()
         self.check_timer = None
 
-    def start_checks(self, eventtime=None):
+    def start_checks(self):
         if self.check_timer is not None:
             self.stop_checks()
         cleared_flags = 0
