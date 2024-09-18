@@ -103,7 +103,7 @@ class KlipperThread:
 
     def _raise_async_exception(self, exception):
         self.k_threads.reactor.register_async_callback(
-            (lambda e: exec(f'raise Exception({exception})'))
+            (lambda e: exec(f'raise({exception})'))
         )
 
     def finalize(self):
