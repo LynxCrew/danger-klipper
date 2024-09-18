@@ -79,7 +79,7 @@ class KlipperThread:
                         return
                     wait_time = job(*args, **kwargs)
         except Exception as e:
-            raise e
+            raise KeyboardInterrupt(e)
         finally:
             self.k_threads.registered_threads.remove(self)
             self.thread = None
