@@ -306,7 +306,9 @@ class BedMesh:
         return self.z_mesh
 
     def cmd_TEST_ERROR(self, gcmd):
-        self.callback()
+        self.printer.klipper_threads.register_job(
+            target=self.callback
+        ).start()
 
     def callback(self):
         raise self.gcode.error("Meow")
