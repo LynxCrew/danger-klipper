@@ -81,6 +81,15 @@ class PrinterSensorCombined:
         return REPORT_TIME
 
     def update_temp(self, eventtime):
+        self.printer.invoke_shutdown(
+            "COMBINED SENSOR maximum deviation exceeded limit of %0.1f, "
+            "max sensor value %0.1f, min sensor value %0.1f."
+            % (
+                self.max_deviation,
+                0,
+                1,
+            )
+        )
         if not self.initialized:
             initialized = True
             for sensor in self.sensors:
