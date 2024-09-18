@@ -9,7 +9,7 @@ from signal import signal, SIGINT
 EXCEPTION = []
 
 def handle_sigint(signalnum, handler):
-    raise EXCEPTION[0]
+    raise Exception(EXCEPTION[0])
 
 
 class KlipperThreads:
