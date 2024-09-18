@@ -203,7 +203,7 @@ class TMCErrorCheck:
             self.adc_temp = None
             return
 
-    def _do_periodic_check(self):
+    def _do_periodic_check(self, eventtime):
         try:
             self._query_register(self.drv_status_reg_info)
             if self.gstat_reg_info is not None:
@@ -212,13 +212,13 @@ class TMCErrorCheck:
                 self._query_temperature()
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
-            return 0.0
-        return 1.0
+            return self.printer.get_reactor().NEVER
+        return eventtime + 1.0
 
     def stop_checks(self):
         if self.check_timer is None or self.query_while_disabled:
             return
-        self.check_timer.unregister()
+        self.printer.get_reactor().unregister_timer(self.check_timer)
         self.check_timer = None
 
     def start_checks(self, eventtime=None):
@@ -230,12 +230,11 @@ class TMCErrorCheck:
             cleared_flags = self._query_register(
                 self.gstat_reg_info, try_clear=self.clear_gstat
             )
-        if self.check_timer is None:
-            klipper_threads = self.printer.get_klipper_threads()
-            self.check_timer = klipper_threads.register_job(
-                target=self._do_periodic_check
-            )
-            self.check_timer.start(1.0)
+        reactor = self.printer.get_reactor()
+        curtime = reactor.monotonic()
+        self.check_timer = reactor.register_timer(
+            self._do_periodic_check, curtime + 1.0
+        )
         if cleared_flags:
             reset_mask = self.fields.all_fields["GSTAT"]["reset"]
             if cleared_flags & reset_mask:
