@@ -60,17 +60,12 @@ class KlipperThread:
         )
         self.k_threads.registered_threads.append(self)
         self.running = True
-        self.initial_wait_time = None
 
-    def start(self, wait_time=None):
-        self.initial_wait_time = wait_time
+    def start(self):
         self.thread.start()
 
     def _run_job(self, job, args=(), **kwargs):
         try:
-            if self.k_threads.running and self.running and self.initial_wait_time is not None:
-                time.sleep(self.initial_wait_time)
-                self.initial_wait_time = None
             if self.k_threads.running and self.running:
                 wait_time = job(*args, **kwargs)
                 while wait_time > 0 and self.k_threads.running and self.running:
