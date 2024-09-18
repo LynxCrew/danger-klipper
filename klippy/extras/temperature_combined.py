@@ -4,9 +4,6 @@
 # Copyright (C) 2023  Michael Jäger <michael@mjaeger.eu>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import threading
-import time
-
 from extras.danger_options import get_danger_options
 
 REPORT_TIME = 0.300
@@ -83,14 +80,13 @@ class PrinterSensorCombined:
         if not self.initialized:
             initialized = True
             for sensor in self.sensors:
-                if not sensor.initialized:
+                if hasattr(sensor, "initialized") and not sensor.initialized:
                     initialized = False
             self.initialized = initialized
         values = []
         for sensor in self.sensors:
-            if sensor.initialized:
-                sensor_status = sensor.get_status(eventtime)
-                sensor_temperature = sensor_status["temperature"]
+            if not hasattr(sensor, "initialized") or sensor.initialized:
+                sensor_temperature = sensor.get_status(eventtime)["temperature"]
                 if sensor_temperature is not None:
                     values.append(sensor_temperature)
 
@@ -98,9 +94,11 @@ class PrinterSensorCombined:
             # check if values are out of max_deviation range
             if not self.ignore and (max(values) - min(values)) > self.max_deviation:
                 self.printer.invoke_shutdown(
-                    "COMBINED SENSOR maximum deviation exceeded limit of %0.1f, "
+                    "[temperature_combined %s]\n"
+                    "Maximum deviation exceeded limit of %0.1f, "
                     "max sensor value %0.1f, min sensor value %0.1f."
                     % (
+                        self.name,
                         self.max_deviation,
                         max(values),
                         min(values),
