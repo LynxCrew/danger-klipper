@@ -34,9 +34,6 @@ class KlipperThreads:
             daemon=daemon,
         )
 
-    def set_exception(self, exception):
-        EXCEPTION[0] = exception
-
     def unregister_job(self, job):
         if job in self.registered_threads:
             job.running = False
@@ -92,7 +89,7 @@ class KlipperThread:
                     wait_time = job(*args, **kwargs)
             sys.exit()
         except Exception as e:
-            self.k_threads.exception[0] = e
+            EXCEPTION[0] = e
             _thread.interrupt_main()
         finally:
             self.k_threads.registered_threads.remove(self)
