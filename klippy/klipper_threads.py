@@ -1,13 +1,27 @@
-import logging
+import _thread
 import sys
 import threading
 import time
+from signal import signal, SIGINT
+
+
+EXCEPTION = []
+
+
+def handle_sigint(signalnum, handler):
+    try:
+        if EXCEPTION:
+            raise Exception(EXCEPTION[0])
+        raise Exception
+    finally:
+        EXCEPTION.clear()
 
 
 class KlipperThreads:
     def __init__(self):
         self.running = False
         self.registered_threads = []
+        signal(SIGINT, handle_sigint)
 
     def run(self):
         self.running = True
@@ -55,20 +69,36 @@ class KlipperThread:
             daemon=daemon,
         )
         self.k_threads.registered_threads.append(self)
+        self.running = True
+        self.initial_wait_time = None
 
-    def start(self):
+    def start(self, wait_time=None):
+        self.initial_wait_time = wait_time
         self.thread.start()
 
     def _run_job(self, job, args=(), **kwargs):
         try:
-            wait_time = job(*args, **kwargs)
-            while wait_time > 0 and self.k_threads.running:
-                time.sleep(wait_time)
+            if (
+                self.k_threads.running
+                and self.running
+                and self.initial_wait_time is not None
+            ):
+                time.sleep(self.initial_wait_time)
+                self.initial_wait_time = None
+            if self.k_threads.running and self.running:
                 wait_time = job(*args, **kwargs)
+                while wait_time > 0 and self.k_threads.running and self.running:
+                    time.sleep(wait_time)
+                    if not self.running:
+                        return
+                    wait_time = job(*args, **kwargs)
+            sys.exit()
+        except Exception as e:
+            EXCEPTION.append(e)
+            _thread.interrupt_main()
         finally:
             self.k_threads.registered_threads.remove(self)
             self.thread = None
-            sys.exit()
 
     def finalize(self):
         if self.thread is not None and self.thread.is_alive():

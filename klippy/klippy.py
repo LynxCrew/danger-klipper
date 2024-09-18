@@ -5,6 +5,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, gc, optparse, logging, time, collections, importlib, importlib.util
+import threading
+
 import util, reactor, queuelogger, msgproto, klipper_threads
 import gcode, configfile, pins, mcu, toolhead, webhooks, non_critical_mcus
 from extras.danger_options import get_danger_options
@@ -355,6 +357,9 @@ class Printer:
             self.bglogger.set_rollover_info(name, info)
 
     def invoke_shutdown(self, msg):
+        if threading.current_thread() is not threading.main_thread():
+            self.invoke_async_shutdown(msg)
+            return
         if self.in_shutdown_state:
             return
         logging.error("Transition to shutdown state: %s", msg)
