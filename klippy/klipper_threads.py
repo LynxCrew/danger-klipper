@@ -78,6 +78,8 @@ class KlipperThread:
                     if not self.running:
                         return
                     wait_time = job(*args, **kwargs)
+        except Exception as e:
+            raise e
         finally:
             self.k_threads.registered_threads.remove(self)
             self.thread = None

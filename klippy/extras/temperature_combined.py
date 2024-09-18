@@ -89,7 +89,7 @@ class PrinterSensorCombined:
             self.initialized = initialized
         values = []
         logging.info("INGO")
-        logging.ingo(self.sensors)
+        logging.info(self.sensors)
         for sensor in self.sensors:
             logging.info("CAT: %s" % sensor.name)
             if hasattr(sensor, "initialized") and sensor.initialized:
