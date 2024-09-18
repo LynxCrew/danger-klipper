@@ -14,7 +14,7 @@ class KlipperThreads:
     def __init__(self):
         self.running = False
         self.registered_threads = []
-        self.exception = None
+        self.exception = "1"
         signal(SIGINT, partial(handle_sigint, self.exception))
 
     def run(self):
