@@ -82,8 +82,7 @@ class KlipperThread:
                     if not self.running:
                         return
                     wait_time = job(*args, **kwargs)
-        except Exception as e:
-            exception = e
+        except Exception as exception:
             self.k_threads.reactor.register_async_callback(
                 (lambda e: self._raise_exception(exception))
             )
