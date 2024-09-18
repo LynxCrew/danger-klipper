@@ -80,7 +80,7 @@ class PrinterSensorCombined:
     def get_report_time_delta(self):
         return REPORT_TIME
 
-    def update_temp(self, eventtime):
+    def update_temp(self):
         raise Exception("Meow")
         if not self.initialized:
             initialized = True
@@ -130,7 +130,7 @@ class PrinterSensorCombined:
     def _temperature_update_event(self):
         eventtime = self.reactor.monotonic()
         # update sensor value
-        self.update_temp(eventtime)
+        self.update_temp()
 
         if not self.ignore:
             # check min / max temp values
