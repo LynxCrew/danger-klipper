@@ -1,27 +1,13 @@
-import _thread
 import sys
 import threading
 import time
-from signal import signal, SIGINT
-
-
-EXCEPTION = []
-
-
-def handle_sigint(signalnum, handler):
-    try:
-        if EXCEPTION:
-            raise Exception(EXCEPTION[0])
-        raise Exception
-    finally:
-        EXCEPTION.clear()
 
 
 class KlipperThreads:
-    def __init__(self):
+    def __init__(self, reactor):
+        self.reactor = reactor
         self.running = False
         self.registered_threads = []
-        signal(SIGINT, handle_sigint)
 
     def run(self):
         self.running = True
@@ -97,9 +83,10 @@ class KlipperThread:
                         return
                     wait_time = job(*args, **kwargs)
             sys.exit()
-        except Exception as e:
-            EXCEPTION.append(e)
-            _thread.interrupt_main()
+        except Exception as exc:
+            self.k_threads.reactor.register_async_callback(
+                (lambda e: self._raise_exception(exc))
+            )
         finally:
             self.k_threads.registered_threads.remove(self)
             self.thread = None
@@ -112,6 +99,9 @@ class KlipperThread:
 
     def unregister(self):
         self.running = False
+
+    def _raise_exception(self, e):
+        raise e
 
     def finalize(self):
         if self.thread is not None and self.thread.is_alive():
