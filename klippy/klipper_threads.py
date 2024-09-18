@@ -10,7 +10,11 @@ EXCEPTION = []
 
 
 def handle_sigint(signalnum, handler):
-    raise Exception(EXCEPTION[0])
+    msg = " - ".join([e.args for e in EXCEPTION])
+    try:
+        raise Exception(msg)
+    finally:
+        EXCEPTION.clear()
 
 
 class KlipperThreads:
