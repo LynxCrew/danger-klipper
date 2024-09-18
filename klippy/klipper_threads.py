@@ -90,7 +90,7 @@ class KlipperThread:
                     wait_time = job(*args, **kwargs)
             sys.exit()
         except Exception as e:
-            EXCEPTION[0] = e
+            # EXCEPTION[0] = e
             _thread.interrupt_main()
         finally:
             self.k_threads.registered_threads.remove(self)
