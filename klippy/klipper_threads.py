@@ -98,14 +98,14 @@ class KlipperThread:
     def unregister(self):
         self.running = False
 
+    def finalize(self):
+        if self.thread is not None and self.thread.is_alive():
+            self.thread.join()
+
     def _raise_exception(self, exception):
         raise exception
 
     def _raise_async_exception(self, exception):
         self.k_threads.reactor.register_async_callback(
-            (lambda e: exec(f'raise({exception})'))
+            (lambda e: self._raise_exception(exception))
         )
-
-    def finalize(self):
-        if self.thread is not None and self.thread.is_alive():
-            self.thread.join()
