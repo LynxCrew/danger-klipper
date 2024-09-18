@@ -6,7 +6,7 @@ from functools import partial
 from signal import signal, SIGINT
 
 
-def handle_sigint(signalnum, handler, exception=None):
+def handle_sigint(exception=None, signalnum=None, handler=None):
     raise Exception(exception)
 
 
