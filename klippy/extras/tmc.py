@@ -149,8 +149,7 @@ class TMCErrorCheck:
             pheaters.register_monitor(config)
         self.query_while_disabled = config.getboolean("query_while_disabled", False)
         if self.query_while_disabled:
-            self.printer.register_event_handler("klippy:ready",
-                                                self._handle_ready)
+            self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def _handle_ready(self):
         self.printer.get_reactor().register_callback(self.start_checks)

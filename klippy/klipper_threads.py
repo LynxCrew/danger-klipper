@@ -80,7 +80,11 @@ class KlipperThread:
 
     def _run_job(self, job, args=(), **kwargs):
         try:
-            if self.k_threads.running and self.running and self.initial_wait_time is not None:
+            if (
+                self.k_threads.running
+                and self.running
+                and self.initial_wait_time is not None
+            ):
                 time.sleep(self.initial_wait_time)
                 self.initial_wait_time = None
             if self.k_threads.running and self.running:

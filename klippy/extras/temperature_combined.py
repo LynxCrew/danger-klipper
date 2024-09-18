@@ -98,7 +98,8 @@ class PrinterSensorCombined:
             # check if values are out of max_deviation range
             if not self.ignore and (max(values) - min(values)) > self.max_deviation:
                 self.printer.invoke_shutdown(
-                    "COMBINED SENSOR maximum deviation exceeded limit of %0.1f, "
+                    "TEMPERATURE_COMBINED\n"
+                    "Maximum deviation exceeded limit of %0.1f, "
                     "max sensor value %0.1f, min sensor value %0.1f."
                     % (
                         self.max_deviation,
