@@ -133,11 +133,19 @@ class CustomInputShaperParams:
     def __init__(self, axis, config):
         self.axis = axis
         self.n, self.A, self.T = 0, [], []
+        self.motor_filter_n, self.motor_filter_A, self.motor_filter_T = 0, [], []
         if config is not None:
             shaper_a_str = config.get("shaper_a_" + axis)
             shaper_t_str = config.get("shaper_t_" + axis)
             self.n, self.A, self.T = self._parse_custom_shaper(
                 shaper_a_str, shaper_t_str, config.error
+            )
+            motor_filter_a_str = config.get("motor_filter_a_" + axis)
+            motor_filter_t_str = config.get("motor_filter_t_" + axis)
+            self.motor_filter_n, self.motor_filter_A, self.motor_filter_T = (
+                self._parse_custom_shaper(
+                    motor_filter_a_str, motor_filter_t_str, config.error
+                )
             )
 
     def get_type(self):
@@ -152,14 +160,27 @@ class CustomInputShaperParams:
         axis = self.axis.upper()
         shaper_a_str = gcmd.get("SHAPER_A_" + axis, None)
         shaper_t_str = gcmd.get("SHAPER_T_" + axis, None)
+        motor_filter_a_str = gcmd.get("MOTOR_FILTER_A_" + axis, None)
+        motor_filter_t_str = gcmd.get("MOTOR_FILTER_T_" + axis, None)
         if (shaper_a_str is None) != (shaper_t_str is None):
             raise gcmd.error(
                 "Both SHAPER_A_%s and SHAPER_T_%s parameters"
                 " must be provided" % (axis, axis)
             )
+        if (motor_filter_a_str is None) != (motor_filter_t_str is None):
+            raise gcmd.error(
+                "Both MOTOR_FILTER_A_%s and MOTOR_FILTER_T_%s parameters"
+                " must be provided" % (axis, axis)
+            )
         if shaper_a_str is not None:
             self.n, self.A, self.T = self._parse_custom_shaper(
                 shaper_a_str, shaper_t_str, gcmd.error
+            )
+        if motor_filter_a_str is not None:
+            self.motor_filter_n, self.motor_filter_A, self.motor_filter_T = (
+                self._parse_custom_shaper(
+                    motor_filter_a_str, motor_filter_t_str, gcmd.error
+                )
             )
 
     def _parse_custom_shaper(self, custom_a_str, custom_t_str, parse_error):
@@ -194,6 +215,9 @@ class CustomInputShaperParams:
     def get_shaper(self):
         return self.n, self.A, self.T
 
+    def get_motor_filter(self):
+        return self.motor_filter_n, self.motor_filter_A, self.motor_filter_T
+
     def get_status(self):
         return collections.OrderedDict(
             [
@@ -223,9 +247,10 @@ class AxisInputShaper:
             return self.axis_n, self.axis_A, self.axis_T
         if self.axis_n == 0:
             return self.motor_n, self.motor_A, self.motor_T
-        A, T = shaper_defs.convolve((self.axis_A, self.axis_T), (self.motor_A, self.motor_T))
+        A, T = shaper_defs.convolve(
+            (self.axis_A, self.axis_T), (self.motor_A, self.motor_T)
+        )
         return len(A), A, T
-
 
     def get_name(self):
         return "shaper_" + self.get_axis()
@@ -726,6 +751,16 @@ class InputShaper:
     def enable_shaping(self):
         for shaper in self.shapers:
             shaper.enable_shaping()
+        self._update_input_shaping()
+
+    def cache_shaping(self):
+        for shaper in self.shapers:
+            shaper.cache_shaping()
+        self._update_input_shaping()
+
+    def restore_shaping(self):
+        for shaper in self.shapers:
+            shaper.restore_shaping()
         self._update_input_shaping()
 
     cmd_SET_INPUT_SHAPER_help = "Set cartesian parameters for input shaper"
