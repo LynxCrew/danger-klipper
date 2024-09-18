@@ -308,12 +308,15 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         self.actual_current = self.req_run_current
         current_range = self._calc_current_range(self.actual_current)
         self.fields.set_field("current_range", current_range)
-        gscaler, irun, ihold = self._calc_current(
-            self.req_run_current, self.req_hold_current
-        )
+
+        self.cs = config.getint("driver_cs", 31, maxval=31, minval=0)
+
+        gscaler = self._calc_globalscaler(self.req_run_current)
+        ihold = self._calc_current_bits(min(self.req_run_current, self.req_hold_current), gscaler)
+
         self.fields.set_field("globalscaler", gscaler)
         self.fields.set_field("ihold", ihold)
-        self.fields.set_field("irun", irun)
+        self.fields.set_field("irun", self.cs)
 
     def _get_ifs_rms(self, current_range=None):
         if current_range is None:
@@ -342,12 +345,6 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         cs = int((current * 256.0 * 32.0) / (globalscaler * ifs_rms) - 1.0 + 0.5)
         return max(0, min(31, cs))
 
-    def _calc_current(self, run_current, hold_current):
-        gscaler = self._calc_globalscaler(run_current)
-        irun = self._calc_current_bits(run_current, gscaler)
-        ihold = self._calc_current_bits(min(hold_current, run_current), gscaler)
-        return gscaler, irun, ihold
-
     def _calc_current_from_field(self, field_name):
         ifs_rms = self._get_ifs_rms()
         globalscaler = self.fields.get_field("globalscaler")
@@ -369,13 +366,15 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         )
 
     def apply_current(self, print_time):
-        gscaler, irun, ihold = self._calc_current(
-            self.actual_current, self.req_hold_current
-        )
+        gscaler = self._calc_globalscaler(self.actual_current)
         val = self.fields.set_field("globalscaler", gscaler)
         self.mcu_tmc.set_register("GLOBALSCALER", val, print_time)
+
+        ihold = self._calc_current_bits(
+            min(self.actual_current, self.req_hold_current), gscaler
+        )
         self.fields.set_field("ihold", ihold)
-        val = self.fields.set_field("irun", irun)
+        val = self.fields.set_field("irun", self.cs)
         self.mcu_tmc.set_register("IHOLD_IRUN", val, print_time)
 
 
