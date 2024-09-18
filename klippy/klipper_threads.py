@@ -4,10 +4,6 @@ import threading
 import time
 
 
-def exception_hook(args):
-    raise Exception(args.exc_value)
-
-
 class KlipperThreads:
     def __init__(self):
         self.running = False
@@ -54,7 +50,6 @@ class KlipperThread:
         daemon=None
     ):
         self.k_threads = k_threads
-        threading.excepthook = exception_hook
         self.thread = threading.Thread(
             group=group,
             target=self._run_job,
@@ -83,12 +78,12 @@ class KlipperThread:
                     if not self.running:
                         return
                     wait_time = job(*args, **kwargs)
+            sys.exit()
         except Exception as e:
-            raise KeyboardInterrupt(e)
+            sys.exit(1)
         finally:
             self.k_threads.registered_threads.remove(self)
             self.thread = None
-            sys.exit()
 
     def end(self):
         self.running = False
