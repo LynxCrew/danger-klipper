@@ -90,7 +90,7 @@ class PrinterSensorCombined:
         values = []
         for sensor in self.sensors:
             logging.info("CAT: %s" % sensor.name)
-            if sensor.initialized:
+            if hasattr(sensor, "initialized") and sensor.initialized:
                 sensor_temperature = sensor.get_status(eventtime)["temperature"]
                 if sensor_temperature is not None:
                     values.append(sensor_temperature)
