@@ -140,6 +140,7 @@ class TMCErrorCheck:
                     err_mask |= self.fields.all_fields[reg_name][f]
         self.drv_status_reg_info = [0, reg_name, mask, err_mask, cs_actual_mask]
         # Setup for temperature query
+        self.initialized = False
         self.adc_temp = None
         self.measured_min = None
         self.measured_max = None
