@@ -6,16 +6,16 @@ from functools import partial
 from signal import signal, SIGINT
 
 
-def handle_sigint(exception_callback=None, signalnum=None, handler=None):
-    exception_callback
+def handle_sigint(exception=None, signalnum=None, handler=None):
+    raise Exception(exception)
 
 
 class KlipperThreads:
     def __init__(self):
         self.running = False
         self.registered_threads = []
-        self.exception_callback = None
-        signal(SIGINT, partial(handle_sigint, self.exception_callback))
+        self.exception = None
+        signal(SIGINT, partial(handle_sigint, self.exception))
 
     def run(self):
         self.running = True
