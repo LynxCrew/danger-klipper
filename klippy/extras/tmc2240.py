@@ -440,7 +440,6 @@ class TMC2240:
         cmdhelper.setup_register_dump(ReadRegisters)
         self.get_phase_offset = cmdhelper.get_phase_offset
         self.get_temperature = cmdhelper.get_temperature
-        self.initialized = False
         self.get_mcu = cmdhelper.get_mcu
         self.get_status = cmdhelper.get_status
         # Setup basic register values
