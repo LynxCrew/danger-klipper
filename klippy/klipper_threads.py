@@ -1,11 +1,17 @@
-import logging
+import _thread
 import sys
 import threading
 import time
+from signal import signal, SIGINT
+
+
+def handle_sigint(signalnum, handler):
+    raise Exception()
 
 
 class KlipperThreads:
     def __init__(self):
+        signal(SIGINT, handle_sigint)
         self.running = False
         self.registered_threads = []
 
@@ -80,7 +86,7 @@ class KlipperThread:
                     wait_time = job(*args, **kwargs)
             sys.exit()
         except Exception as e:
-            sys.exit(1)
+            _thread.interrupt_main()
         finally:
             self.k_threads.registered_threads.remove(self)
             self.thread = None
