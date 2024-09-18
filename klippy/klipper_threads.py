@@ -10,7 +10,7 @@ EXCEPTION = []
 
 def handle_sigint(signalnum, handler):
     try:
-        raise EXCEPTION[0]
+        raise Exception(EXCEPTION[0])
     finally:
         EXCEPTION.clear()
 
