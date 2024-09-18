@@ -7,14 +7,14 @@ from signal import signal, SIGINT
 
 
 def handle_sigint(exception, signalnum, handler):
-    raise Exception(exception)
+    raise Exception(exception[0])
 
 
 class KlipperThreads:
     def __init__(self):
         self.running = False
         self.registered_threads = []
-        self.exception = "1"
+        self.exception = []
         signal(SIGINT, partial(handle_sigint, self.exception))
 
     def run(self):
@@ -32,9 +32,6 @@ class KlipperThreads:
             kwargs=kwargs,
             daemon=daemon,
         )
-
-    def set_exception(self, exception):
-        self.exception = exception
 
     def unregister_job(self, job):
         if job in self.registered_threads:
@@ -91,7 +88,7 @@ class KlipperThread:
                     wait_time = job(*args, **kwargs)
             sys.exit()
         except Exception as e:
-            self.k_threads.set_exception(e)
+            self.k_threads.exception[0] = e
             _thread.interrupt_main()
         finally:
             self.k_threads.registered_threads.remove(self)
