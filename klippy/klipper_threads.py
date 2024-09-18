@@ -6,10 +6,8 @@ from functools import partial
 from signal import signal, SIGINT
 
 
-EXCEPTION = None
-
 def handle_sigint(signalnum, handler, Exception=None):
-    raise EXCEPTION
+    raise Exception
 
 
 class KlipperThreads:
