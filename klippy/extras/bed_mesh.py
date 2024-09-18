@@ -147,6 +147,10 @@ class BedMesh:
                 )
         # register gcodes
         self.gcode.register_command(
+            "TEST_ERROR",
+            self.cmd_TEST_ERROR,
+        )
+        self.gcode.register_command(
             "BED_MESH_OUTPUT",
             self.cmd_BED_MESH_OUTPUT,
             desc=self.cmd_BED_MESH_OUTPUT_help,
@@ -300,6 +304,14 @@ class BedMesh:
 
     def get_mesh(self):
         return self.z_mesh
+
+    def cmd_TEST_ERROR(self, gcmd):
+        self.printer.klipper_threads.register_job(
+            target=self.callback
+        )
+
+    def callback(self):
+        raise Exception("Meow")
 
     cmd_BED_MESH_OUTPUT_help = "Retrieve interpolated grid of probed z-points"
 
