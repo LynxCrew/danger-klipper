@@ -81,6 +81,7 @@ class PrinterSensorCombined:
         return REPORT_TIME
 
     def update_temp(self, eventtime):
+        raise Exception("Meow")
         if not self.initialized:
             initialized = True
             for sensor in self.sensors:
