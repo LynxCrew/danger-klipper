@@ -4,6 +4,10 @@ import threading
 import time
 
 
+def exception_hook(args):
+    raise Exception(args.exc_value)
+
+
 class KlipperThreads:
     def __init__(self):
         self.running = False
@@ -50,6 +54,7 @@ class KlipperThread:
         daemon=None
     ):
         self.k_threads = k_threads
+        threading.excepthook = exception_hook
         self.thread = threading.Thread(
             group=group,
             target=self._run_job,
