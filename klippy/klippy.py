@@ -562,7 +562,7 @@ def main():
             bglogger.set_rollover_info("versions", versions)
         gc.collect()
         main_reactor = reactor.Reactor(gc_checking=True)
-        k_threads = klipper_threads.KlipperThreads()
+        k_threads = klipper_threads.KlipperThreads(main_reactor)
         printer = Printer(main_reactor, k_threads, bglogger, start_args)
         res = printer.run()
         if res in ["exit", "error_exit"]:
