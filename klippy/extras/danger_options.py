@@ -1,6 +1,3 @@
-import logging
-
-
 class DangerOptions:
     def __init__(self, config):
         self.minimal_logging = config.getboolean("minimal_logging", False)

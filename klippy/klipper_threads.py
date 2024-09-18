@@ -62,6 +62,9 @@ class KlipperThread:
         self.running = True
         self.initial_wait_time = None
 
+    def _raise_exception(self, exception):
+        raise exception
+
     def start(self, wait_time=None):
         self.initial_wait_time = wait_time
         self.thread.start()
@@ -104,6 +107,3 @@ class KlipperThread:
     def finalize(self):
         if self.thread is not None and self.thread.is_alive():
             self.thread.join()
-
-    def _raise_exception(self, exception):
-        raise exception
