@@ -2,18 +2,22 @@ import _thread
 import sys
 import threading
 import time
+from functools import partial
 from signal import signal, SIGINT
 
 
-def handle_sigint(signalnum, handler):
-    raise Exception()
+EXCEPTION = None
+
+def handle_sigint(signalnum, handler, Exception=None):
+    raise EXCEPTION
 
 
 class KlipperThreads:
     def __init__(self):
-        signal(SIGINT, handle_sigint)
         self.running = False
         self.registered_threads = []
+        self.exception = None
+        signal(SIGINT, partial(handle_sigint, self.exception))
 
     def run(self):
         self.running = True
@@ -86,6 +90,7 @@ class KlipperThread:
                     wait_time = job(*args, **kwargs)
             sys.exit()
         except Exception as e:
+            self.k_threads.exception = e
             _thread.interrupt_main()
         finally:
             self.k_threads.registered_threads.remove(self)
