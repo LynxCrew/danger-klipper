@@ -80,7 +80,7 @@ class PrinterSensorCombined:
     def get_report_time_delta(self):
         return REPORT_TIME
 
-    def update_temp(self):
+    def update_temp(self, eventtime):
         if not self.initialized:
             initialized = True
             for sensor in self.sensors:
@@ -129,7 +129,7 @@ class PrinterSensorCombined:
     def _temperature_update_event(self):
         eventtime = self.reactor.monotonic()
         # update sensor value
-        self.update_temp()
+        self.update_temp(eventtime)
 
         if not self.ignore:
             # check min / max temp values

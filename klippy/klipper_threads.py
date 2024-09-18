@@ -2,7 +2,6 @@ import _thread
 import sys
 import threading
 import time
-from functools import partial
 from signal import signal, SIGINT
 
 
