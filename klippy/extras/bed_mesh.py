@@ -311,7 +311,7 @@ class BedMesh:
         ).start()
 
     def callback(self):
-        raise Exception("Meow")
+        raise self.gcode.error("Meow")
 
     cmd_BED_MESH_OUTPUT_help = "Retrieve interpolated grid of probed z-points"
 
