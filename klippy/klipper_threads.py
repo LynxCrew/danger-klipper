@@ -6,16 +6,17 @@ from functools import partial
 from signal import signal, SIGINT
 
 
-def handle_sigint(exception, signalnum, handler):
-    raise Exception(exception[0])
+EXCEPTION = []
+
+def handle_sigint(signalnum, handler):
+    raise EXCEPTION[0]
 
 
 class KlipperThreads:
     def __init__(self):
         self.running = False
         self.registered_threads = []
-        self.exception = []
-        signal(SIGINT, partial(handle_sigint, self.exception))
+        signal(SIGINT, handle_sigint)
 
     def run(self):
         self.running = True
@@ -32,6 +33,9 @@ class KlipperThreads:
             kwargs=kwargs,
             daemon=daemon,
         )
+
+    def set_exception(self, exception):
+        EXCEPTION[0] = exception
 
     def unregister_job(self, job):
         if job in self.registered_threads:
