@@ -4,6 +4,7 @@
 # Copyright (C) 2023  Michael Jäger <michael@mjaeger.eu>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
 import threading
 import time
 
@@ -91,6 +92,7 @@ class PrinterSensorCombined:
             if sensor.initialized:
                 sensor_temperature = sensor.get_status(eventtime)["temperature"]
                 if sensor_temperature is not None:
+                    logging.info("CAT: %f" % sensor_temperature)
                     values.append(sensor_temperature)
 
         if values:
