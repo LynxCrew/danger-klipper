@@ -2,6 +2,8 @@ import sys
 import threading
 import time
 
+from . import CommandError
+
 
 class KlipperThreads:
     def __init__(self, reactor):
@@ -82,6 +84,8 @@ class KlipperThread:
                     if not self.running:
                         return
                     wait_time = job(*args, **kwargs)
+        except CommandError as e:
+            raise e
         except Exception as e:
             self._raise_async_exception(e)
         finally:
