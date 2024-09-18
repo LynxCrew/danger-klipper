@@ -87,8 +87,6 @@ class KlipperThread:
                         return
                     wait_time = job(*args, **kwargs)
             sys.exit()
-        except KlipperShutdownException:
-            self.k_threads.exception_callback =
         except Exception as e:
             self.k_threads.exception = e
             _thread.interrupt_main()
