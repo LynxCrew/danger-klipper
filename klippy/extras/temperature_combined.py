@@ -84,12 +84,12 @@ class PrinterSensorCombined:
         if not self.initialized:
             initialized = True
             for sensor in self.sensors:
-                if hasattr(sensor, "initialized") and sensor.initialized:
+                if hasattr(sensor, "initialized") and not sensor.initialized:
                     initialized = False
             self.initialized = initialized
         values = []
         for sensor in self.sensors:
-            if hasattr(sensor, "initialized") and sensor.initialized:
+            if not hasattr(sensor, "initialized") or sensor.initialized:
                 sensor_temperature = sensor.get_status(eventtime)["temperature"]
                 if sensor_temperature is not None:
                     values.append(sensor_temperature)
