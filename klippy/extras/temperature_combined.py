@@ -127,7 +127,6 @@ class PrinterSensorCombined:
         }
 
     def _temperature_update_event(self):
-        raise Exception("Meow")
         eventtime = self.reactor.monotonic()
         # update sensor value
         self.update_temp(eventtime)
