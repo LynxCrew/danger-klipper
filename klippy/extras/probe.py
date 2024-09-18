@@ -491,8 +491,10 @@ class ProbePointsHelper:
         finalize_callback,
         default_points=None,
         option_name="points",
+        enable_adaptive_move_z=False,
     ):
         self.printer = config.get_printer()
+        self.enable_adaptive_move_z = enable_adaptive_move_z
         self.finalize_callback = finalize_callback
         self.probe_points = default_points
         self.name = config.get_name()
@@ -502,39 +504,42 @@ class ProbePointsHelper:
             self.probe_points = config.getlists(
                 option_name, seps=(",", "\n"), parser=float, count=2
             )
-        self.move_z_speed = config.getfloat("horizontal_move_z_speed", None, above=0.0)
+        self.z_move_speed = config.getfloat("z_move_speed", None, above=0.0)
         self.default_horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
-        self.def_adaptive_horizontal_move_z = config.getboolean(
-            "adaptive_horizontal_move_z", False
-        )
-        self.def_min_horizontal_move_z = config.getfloat("min_horizontal_move_z", None)
-        if (
-            self.def_min_horizontal_move_z is not None
-            and not self.def_adaptive_horizontal_move_z
-        ):
-            raise config.error(
-                "'adaptive_horizontal_move_z' must be enabled before enabling 'min_horizontal_move_z'"
+        if self.enable_adaptive_move_z:
+            self.def_adaptive_horizontal_move_z = config.getboolean(
+                "adaptive_horizontal_move_z", False
             )
-        self.def_min_horizontal_move_z = (
-            0.0
-            if self.def_min_horizontal_move_z is None
-            else self.def_min_horizontal_move_z
-        )
-        self.def_additional_horizontal_move_z = config.getfloat(
-            "additional_horizontal_move_z", None
-        )
-        if (
-            self.def_additional_horizontal_move_z is not None
-            and not self.def_adaptive_horizontal_move_z
-        ):
-            raise config.error(
-                "'adaptive_horizontal_move_z' must be enabled before enabling 'additional_horizontal_move_z'"
+            self.def_min_horizontal_move_z = config.getfloat(
+                "min_horizontal_move_z", None
             )
-        self.def_additional_horizontal_move_z = (
-            0.0
-            if self.def_additional_horizontal_move_z is None
-            else self.def_additional_horizontal_move_z
-        )
+            if (
+                self.def_min_horizontal_move_z is not None
+                and not self.def_adaptive_horizontal_move_z
+            ):
+                raise config.error(
+                    "'adaptive_horizontal_move_z' must be enabled before enabling 'min_horizontal_move_z'"
+                )
+            self.def_min_horizontal_move_z = (
+                0.0
+                if self.def_min_horizontal_move_z is None
+                else self.def_min_horizontal_move_z
+            )
+            self.def_additional_horizontal_move_z = config.getfloat(
+                "additional_horizontal_move_z", None
+            )
+            if (
+                self.def_additional_horizontal_move_z is not None
+                and not self.def_adaptive_horizontal_move_z
+            ):
+                raise config.error(
+                    "'adaptive_horizontal_move_z' must be enabled before enabling 'additional_horizontal_move_z'"
+                )
+            self.def_additional_horizontal_move_z = (
+                0.0
+                if self.def_additional_horizontal_move_z is None
+                else self.def_additional_horizontal_move_z
+            )
         self.speed = config.getfloat("speed", 50.0, above=0.0)
         self.use_offsets = False
         # Internal probing state
@@ -568,11 +573,11 @@ class ProbePointsHelper:
         if not self.results:
             # Use full speed to first probe position
             speed = self.speed
-        elif self.move_z_speed is not None:
-            speed = self.move_z_speed
+        elif self.z_move_speed is not None:
+            speed = self.z_move_speed
         toolhead.manual_move([None, None, self.horizontal_move_z], speed)
 
-    def _move_next(self):
+    def _move_next(self, speed=None):
         toolhead = self.printer.lookup_object("toolhead")
         # Check if done probing
         done = False
@@ -582,7 +587,7 @@ class ProbePointsHelper:
             if isinstance(res, (int, float)):
                 if res == 0:
                     done = True
-                if self.adaptive_horizontal_move_z:
+                if self.enable_adaptive_move_z and self.adaptive_horizontal_move_z:
                     # then res is error
                     error = math.ceil(res) or 1.0
                     self.horizontal_move_z = (
@@ -601,54 +606,59 @@ class ProbePointsHelper:
         if self.use_offsets:
             nextpos[0] -= self.probe_offsets[0]
             nextpos[1] -= self.probe_offsets[1]
-        toolhead.manual_move(nextpos, self.speed)
+        speed = self.speed if speed is None else speed
+        toolhead.manual_move(nextpos, speed)
         return False
 
-    def start_probe(self, gcmd):
+    def start_probe(self, gcmd, speed=None, horizontal_move_z=None):
+        speed = self.speed if speed is None else speed
         manual_probe.verify_no_manual_probe(self.printer)
         # Lookup objects
         probe = self.printer.lookup_object("probe", None)
         method = gcmd.get("METHOD", "automatic").lower()
         self.results = []
-        self.horizontal_move_z = gcmd.get_float(
-            "HORIZONTAL_MOVE_Z", self.default_horizontal_move_z
+        self.horizontal_move_z = (
+            gcmd.get_float("HORIZONTAL_MOVE_Z", self.default_horizontal_move_z)
+            if horizontal_move_z is None
+            else horizontal_move_z
         )
-        self.adaptive_horizontal_move_z = gcmd.get_int(
-            "ADAPTIVE_HORIZONTAL_MOVE_Z", self.def_adaptive_horizontal_move_z
-        )
-        self.min_horizontal_move_z = gcmd.get_float("MIN_HORIZONTAL_MOVE_Z", None)
-        if (
-            self.min_horizontal_move_z is not None
-            and not self.adaptive_horizontal_move_z
-        ):
-            raise gcmd.error(
-                "min_horizontal_move_z can not be set when "
-                "adaptive_horizontal_move_z is disabled"
+        if self.enable_adaptive_move_z:
+            self.adaptive_horizontal_move_z = gcmd.get_int(
+                "ADAPTIVE_HORIZONTAL_MOVE_Z", self.def_adaptive_horizontal_move_z
             )
-        self.min_horizontal_move_z = (
-            self.def_min_horizontal_move_z
-            if self.min_horizontal_move_z is None
-            else self.min_horizontal_move_z
-        )
-        self.additional_horizontal_move_z = gcmd.get_float(
-            "ADDITIONAL_HORIZONTAL_MOVE_Z", None
-        )
-        if (
-            self.additional_horizontal_move_z is not None
-            and not self.adaptive_horizontal_move_z
-        ):
-            raise gcmd.error(
-                "additional_horizontal_move_z can not be set when "
-                "adaptive_horizontal_move_z is disabled"
+            self.min_horizontal_move_z = gcmd.get_float("MIN_HORIZONTAL_MOVE_Z", None)
+            if (
+                self.min_horizontal_move_z is not None
+                and not self.adaptive_horizontal_move_z
+            ):
+                raise gcmd.error(
+                    "min_horizontal_move_z can not be set when "
+                    "adaptive_horizontal_move_z is disabled"
+                )
+            self.min_horizontal_move_z = (
+                self.def_min_horizontal_move_z
+                if self.min_horizontal_move_z is None
+                else self.min_horizontal_move_z
             )
-        self.additional_horizontal_move_z = (
-            self.def_additional_horizontal_move_z
-            if self.additional_horizontal_move_z is None
-            else self.additional_horizontal_move_z
-        )
+            self.additional_horizontal_move_z = gcmd.get_float(
+                "ADDITIONAL_HORIZONTAL_MOVE_Z", None
+            )
+            if (
+                self.additional_horizontal_move_z is not None
+                and not self.adaptive_horizontal_move_z
+            ):
+                raise gcmd.error(
+                    "additional_horizontal_move_z can not be set when "
+                    "adaptive_horizontal_move_z is disabled"
+                )
+            self.additional_horizontal_move_z = (
+                self.def_additional_horizontal_move_z
+                if self.additional_horizontal_move_z is None
+                else self.additional_horizontal_move_z
+            )
         if probe is None or method != "automatic":
             # Manual probe
-            self.lift_speed = self.speed
+            self.lift_speed = speed
             self.probe_offsets = (0.0, 0.0, 0.0)
             self._manual_probe_start()
             return
@@ -659,7 +669,7 @@ class ProbePointsHelper:
             raise gcmd.error("horizontal_move_z can't be less than probe's z_offset")
         probe.multi_probe_begin()
         while True:
-            done = self._move_next()
+            done = self._move_next(speed=speed)
             if done:
                 break
             pos = probe.run_probe(gcmd)

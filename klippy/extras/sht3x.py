@@ -32,6 +32,13 @@ SHT3X_CMD = {
             "LOW_REP": [0x24, 0x16],
         },
     },
+    "PERIODIC": {
+        "2HZ": {
+            "HIGH_REP": [0x22, 0x36],
+            "MED_REP": [0x22, 0x20],
+            "LOW_REP": [0x22, 0x2B],
+        },
+    },
     "OTHER": {
         "STATUS": {
             "READ": [0xF3, 0x2D],
@@ -83,10 +90,12 @@ class SHT3X:
 
     def _init_sht3x(self):
         # Device Soft Reset
-        self.i2c.i2c_write(SHT3X_CMD["OTHER"]["SOFTRESET"])
-
-        # Wait 2ms after reset
-        self.reactor.pause(self.reactor.monotonic() + 0.02)
+        self.i2c.i2c_write_wait_ack(SHT3X_CMD["OTHER"]["BREAK"])
+        # Break takes ~ 1ms
+        self.reactor.pause(self.reactor.monotonic() + 0.0015)
+        self.i2c.i2c_write_wait_ack(SHT3X_CMD["OTHER"]["SOFTRESET"])
+        # Wait <=1.5ms after reset
+        self.reactor.pause(self.reactor.monotonic() + 0.0015)
 
         status = self.i2c.i2c_read(SHT3X_CMD["OTHER"]["STATUS"]["READ"], 3)
         response = bytearray(status["response"])
@@ -97,16 +106,15 @@ class SHT3X:
         if self._crc8(status) != checksum:
             logging.warning("sht3x: Reading status - checksum error!")
 
-    def _sample_sht3x(self):
-        try:
-            # Read Temeprature
-            params = self.i2c.i2c_write(
-                SHT3X_CMD["MEASURE"]["STRETCH_ENABLED"]["HIGH_REP"]
-            )
-            # Wait
-            time.sleep(0.2)
+        # Enable periodic mode
+        self.i2c.i2c_write_wait_ack(SHT3X_CMD["PERIODIC"]["2HZ"]["HIGH_REP"])
+        # Wait <=15.5ms for first measurment
+        self.reactor.pause(self.reactor.monotonic() + 0.0155)
 
-            params = self.i2c.i2c_read([], 6)
+    def _sample_sht3x(self, eventtime):
+        try:
+            # Read measurment
+            params = self.i2c.i2c_read(SHT3X_CMD["OTHER"]["FETCH"], 6)
 
             response = bytearray(params["response"])
             rtemp = response[0] << 8

@@ -31,9 +31,6 @@ class RunoutHelper:
             self.insert_gcode = gcode_macro.load_template(config, "insert_gcode")
         self.pause_delay = config.getfloat("pause_delay", 0.5, minval=0.0)
         self.event_delay = config.getfloat("event_delay", 3.0, minval=0.0)
-        # self.check_runout_timeout = self.config.getfloat(
-        #     "check_runout_timeout", None, above=0
-        # )
         self.check_runout_timeout = CHECK_RUNOUT_TIMEOUT
         if get_danger_options().modify_check_runout_timeout:
             self.check_runout_timeout = self.config.getfloat(
@@ -43,7 +40,7 @@ class RunoutHelper:
         # Internal state
         self.min_event_systime = self.reactor.NEVER
         self.filament_present = False
-        self.sensor_enabled = True
+        self.sensor_enabled = config.getboolean("enabled_on_start", True)
         self.smart = config.getboolean("smart", False)
         self.always_fire_events = config.getboolean("always_fire_events", False)
         self.runout_position = 0.0

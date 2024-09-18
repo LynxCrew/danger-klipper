@@ -7,6 +7,7 @@ import collections, math
 
 SHAPER_VIBRATION_REDUCTION = 20.0
 DEFAULT_DAMPING_RATIO = 0.1
+DEFAULT_MOTOR_DAMPING_RATIO = 0.05
 
 InputShaperCfg = collections.namedtuple(
     "InputShaperCfg", ("name", "init_func", "min_freq")

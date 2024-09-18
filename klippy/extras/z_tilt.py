@@ -85,9 +85,8 @@ class ZAdjustStatus:
         printer.register_event_handler("unhome:mark_as_unhomed_z", self._motor_off)
 
     def check_retry_result(self, retry_result):
-        if retry_result and (
-            (isinstance(retry_result, str) and retry_result == "done")
-            or (isinstance(retry_result, float) and int(retry_result) == 0)
+        if (isinstance(retry_result, str) and retry_result == "done") or (
+            isinstance(retry_result, (int, float)) and not retry_result
         ):
             self.applied = True
         return retry_result
@@ -182,7 +181,7 @@ class RetryHelper:
                 % (self.value_label, self.error_msg_extra)
             )
         if error <= self.retry_tolerance:
-            return 0.0
+            return "done"
         self.current_retry += 1
         if self.current_retry > self.max_retries:
             raise self.gcode.error("Too many retries")
@@ -195,15 +194,17 @@ class ZTilt:
         self.z_positions = config.getlists(
             "z_positions", seps=(",", "\n"), parser=float, count=2
         )
-        self.use_offsets = config.getboolean("use_probe_offsets", None)
-        if self.use_offsets is None:
-            self.use_offsets = config.getboolean("use_offsets", None)
-            if self.use_offsets is not None:
+        self.use_probe_offsets = config.getboolean("use_probe_offsets", None)
+        if self.use_probe_offsets is None:
+            self.use_probe_offsets = config.getboolean("use_offsets", None)
+            if self.use_probe_offsets is not None:
                 config.deprecate("use_offsets")
             else:
-                self.use_offsets = False
+                self.use_probe_offsets = False
         self.retry_helper = RetryHelper(config)
-        self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
+        self.probe_helper = probe.ProbePointsHelper(
+            config, self.probe_finalize, enable_adaptive_move_z=True
+        )
         self.probe_helper.minimum_points(2)
         self.z_status = ZAdjustStatus(self.printer)
         self.z_helper = ZAdjustHelper(config, len(self.z_positions))
@@ -220,11 +221,11 @@ class ZTilt:
     def cmd_Z_TILT_ADJUST(self, gcmd):
         self.z_status.reset()
         self.retry_helper.start(gcmd)
-        use_offsets = self.probe_helper.use_offsets
-        if self.use_offsets:
+        use_probe_offsets = self.probe_helper.use_offsets
+        if self.use_probe_offsets:
             self.probe_helper.use_xy_offsets(True)
         self.probe_helper.start_probe(gcmd)
-        self.probe_helper.use_xy_offsets(use_offsets)
+        self.probe_helper.use_xy_offsets(use_probe_offsets)
 
     def probe_finalize(self, offsets, positions):
         # Setup for coordinate descent analysis

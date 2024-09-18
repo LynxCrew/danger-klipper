@@ -39,6 +39,10 @@ class KlipperThreads:
             daemon=daemon,
         )
 
+    def unregister_job(self, job):
+        if job in self.registered_threads:
+            job.running = False
+
     def end(self):
         self.running = False
 
@@ -99,6 +103,15 @@ class KlipperThread:
         finally:
             self.k_threads.registered_threads.remove(self)
             self.thread = None
+
+    def end(self):
+        self.running = False
+
+    def kill(self):
+        self.running = False
+
+    def unregister(self):
+        self.running = False
 
     def finalize(self):
         if self.thread is not None and self.thread.is_alive():

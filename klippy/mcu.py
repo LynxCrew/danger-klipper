@@ -802,7 +802,7 @@ class MCU:
                 self.non_critical_recon_timer = self._reactor.register_timer(
                     self.non_critical_recon_event
                 )
-        self.non_critical_disconnected = False
+        self.non_critical_disconnected = None
         self._non_critical_reconnect_event_name = (
             f"danger:non_critical_mcu_{self.get_name()}:reconnected"
         )
@@ -1116,15 +1116,16 @@ class MCU:
         self._printer.set_rollover_info(self._name, log_info, log=False)
 
     def _check_serial_exists(self):
-        if self._canbus_iface is not None:
-            cbid = self._printer.lookup_object("canbus_ids")
-            nodeid = cbid.get_nodeid(self._serialport)
-            return self._serial.check_canbus_connect(
-                self._serialport, nodeid, self._canbus_iface
-            )
-        else:
-            rts = self._restart_method != "cheetah"
-            return self._serial.check_connect(self._serialport, self._baud, rts)
+        # if self._canbus_iface is not None:
+        #     cbid = self._printer.lookup_object("canbus_ids")
+        #     nodeid = cbid.get_nodeid(self._serialport)
+        #     # self._serial.check_canbus_connect is not functional yet
+        #     return self._serial.check_canbus_connect(
+        #         self._serialport, nodeid, self._canbus_iface
+        #     )
+        # else:
+        rts = self._restart_method != "cheetah"
+        return self._serial.check_connect(self._serialport, self._baud, rts)
 
     def _mcu_identify(self):
         if self.is_non_critical and not self._check_serial_exists():
@@ -1357,7 +1358,11 @@ class MCU:
         chelper.run_hub_ctrl(1)
 
     def _firmware_restart(self, force=False):
-        if (self._is_mcu_bridge and not force) or self.non_critical_disconnected:
+        if (
+            (self._is_mcu_bridge and not force)
+            or self.non_critical_disconnected
+            or self.non_critical_disconnected is None
+        ):
             return
         if self._restart_method == "rpi_usb":
             self._restart_rpi_usb()
@@ -1402,6 +1407,9 @@ class MCU:
         offset, freq = self._clocksync.calibrate_clock(print_time, eventtime)
         self._ffi_lib.steppersync_set_time(self._steppersync, offset, freq)
         if self._clocksync.is_active() or self.is_fileoutput() or self._is_timeout:
+            return
+        if self.is_non_critical:
+            self.handle_non_critical_disconnect()
             return
         if self.is_non_critical:
             self.handle_non_critical_disconnect()

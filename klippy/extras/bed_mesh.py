@@ -50,8 +50,12 @@ def lerp(t, v0, v1):
 
 
 # retreive commma separated pair from config
-def parse_config_pair(config, option, default, minval=None, maxval=None):
-    pair = config.getintlist(option, (default, default))
+def parse_config_pair(
+    config, option, default, minval=None, maxval=None, default_x=None, default_y=None
+):
+    default_x = default if default_x is None else default_x
+    default_y = default if default_y is None else default_y
+    pair = config.getintlist(option, (default_x, default_y))
     if len(pair) != 2:
         if len(pair) != 1:
             raise config.error(
@@ -352,7 +356,7 @@ class ZrefMode:
 
 
 class BedMeshCalibrate:
-    ALGOS = ["lagrange", "bicubic"]
+    ALGOS = ["lagrange", "bicubic", "direct"]
 
     def __init__(self, config, bedmesh):
         self.printer = config.get_printer()
@@ -374,6 +378,11 @@ class BedMeshCalibrate:
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, self._get_adjusted_points()
         )
+        self.scan_speed = None
+        if self.radius is None:
+            self.scan_speed = config.getfloat(
+                "scan_speed", self.probe_helper.speed, above=0.0
+            )
         self.probe_helper.minimum_points(3)
         self.probe_helper.use_xy_offsets(True)
         self.gcode = self.printer.lookup_object("gcode")
@@ -552,12 +561,49 @@ class BedMeshCalibrate:
         pps = parse_config_pair(config, "mesh_pps", 2, minval=0)
         orig_cfg["mesh_x_pps"] = mesh_cfg["mesh_x_pps"] = pps[0]
         orig_cfg["mesh_y_pps"] = mesh_cfg["mesh_y_pps"] = pps[1]
+
         orig_cfg["algo"] = mesh_cfg["algo"] = (
             config.get("algorithm", "lagrange").strip().lower()
         )
+
         orig_cfg["tension"] = mesh_cfg["tension"] = config.getfloat(
             "bicubic_tension", 0.2, minval=0.0, maxval=2.0
         )
+
+        self.scan_probe_count = None
+        self.scan_mesh_pps = None
+        self.scan_algo = None
+        self.scan_tension = None
+        if self.radius is None:
+            self.scan_probe_count = parse_config_pair(
+                config,
+                "scan_probe_count",
+                default=None,
+                minval=3,
+                default_x=orig_cfg["x_count"],
+                default_y=orig_cfg["y_count"],
+            )
+
+            self.scan_mesh_pps = parse_config_pair(
+                config,
+                "scan_mesh_pps",
+                default=None,
+                minval=0,
+                default_x=orig_cfg["mesh_x_pps"],
+                default_y=orig_cfg["mesh_y_pps"],
+            )
+
+            self.scan_algo = (
+                config.get("scan_algorithm", orig_cfg["algo"]).strip().lower()
+            )
+
+            self.scan_tension = config.getfloat(
+                "scan_bicubic_tension", orig_cfg["tension"], minval=0.0, maxval=2.0
+            )
+
+            config.get("contact_mesh_min", None)
+            config.get("contact_mesh_max", None)
+
         for i in list(range(1, 100, 1)):
             start = config.getfloatlist("faulty_region_%d_min" % (i,), None, count=2)
             if start is None:
@@ -614,7 +660,7 @@ class BedMeshCalibrate:
         # Check the algorithm against the current configuration
         max_probe_cnt = max(params["x_count"], params["y_count"])
         min_probe_cnt = min(params["x_count"], params["y_count"])
-        if max(x_pps, y_pps) == 0:
+        if max(x_pps, y_pps) == 0 or self.mesh_config["algo"] == "direct":
             # Interpolation disabled
             self.mesh_config["algo"] = "direct"
         elif params["algo"] == "lagrange" and max_probe_cnt > 6:
@@ -770,7 +816,7 @@ class BedMeshCalibrate:
         self._profile_name = None
         return True
 
-    def update_config(self, gcmd):
+    def update_config(self, gcmd, beacon_scan=False, recompute=True):
         # reset default configuration
         self.radius = self.orig_config["radius"]
         self.origin = self.orig_config["origin"]
@@ -781,6 +827,14 @@ class BedMeshCalibrate:
 
         params = gcmd.get_command_parameters()
         need_cfg_update = False
+        if beacon_scan:
+            self.mesh_config["x_count"] = self.scan_probe_count[0]
+            self.mesh_config["y_count"] = self.scan_probe_count[1]
+            self.mesh_config["mesh_x_pps"] = self.scan_mesh_pps[0]
+            self.mesh_config["mesh_y_pps"] = self.scan_mesh_pps[1]
+            self.mesh_config["algo"] = self.scan_algo
+            self.mesh_config["tension"] = self.scan_tension
+            need_cfg_update = True
         if self.radius is not None:
             if "MESH_RADIUS" in params:
                 self.radius = gcmd.get_float("MESH_RADIUS")
@@ -818,22 +872,25 @@ class BedMeshCalibrate:
             self.mesh_config["algo"] = gcmd.get("ALGORITHM").strip().lower()
             need_cfg_update = True
 
-        need_cfg_update |= self.set_adaptive_mesh(gcmd)
-        probe_method = gcmd.get("METHOD", "automatic")
+        if recompute:
+            need_cfg_update |= self.set_adaptive_mesh(gcmd)
+            probe_method = gcmd.get("METHOD", "automatic")
 
-        if need_cfg_update:
-            self._verify_algorithm(gcmd.error)
-            self._generate_points(gcmd.error, probe_method)
-            gcmd.respond_info("Generating new points...")
-            self.print_generated_points(gcmd.respond_info)
-            pts = self._get_adjusted_points()
-            self.probe_helper.update_probe_points(pts, 3)
-            msg = "\n".join(["%s: %s" % (k, v) for k, v in self.mesh_config.items()])
-            logging.info("Updated Mesh Configuration:\n" + msg)
-        else:
-            self._generate_points(gcmd.error, probe_method)
-            pts = self._get_adjusted_points()
-            self.probe_helper.update_probe_points(pts, 3)
+            if need_cfg_update:
+                self._verify_algorithm(gcmd.error)
+                self._generate_points(gcmd.error, probe_method)
+                gcmd.respond_info("Generating new points...")
+                self.print_generated_points(gcmd.respond_info)
+                pts = self._get_adjusted_points()
+                self.probe_helper.update_probe_points(pts, 3)
+                msg = "\n".join(
+                    ["%s: %s" % (k, v) for k, v in self.mesh_config.items()]
+                )
+                logging.info("Updated Mesh Configuration:\n" + msg)
+            else:
+                self._generate_points(gcmd.error, probe_method)
+                pts = self._get_adjusted_points()
+                self.probe_helper.update_probe_points(pts, 3)
 
     def _get_adjusted_points(self):
         adj_pts = []
@@ -859,8 +916,20 @@ class BedMeshCalibrate:
         if not self._profile_name.strip():
             raise gcmd.error("Value for parameter 'PROFILE' must be specified")
         self.bedmesh.set_mesh(None)
-        self.update_config(gcmd)
-        self.probe_helper.start_probe(gcmd)
+        beacon = self.printer.lookup_object("beacon", None)
+        beacon_scan = False
+        horizontal_move_z = gcmd.get_float(
+            "HORIZONTAL_MOVE_Z", self.bedmesh.horizontal_move_z
+        )
+        if beacon is not None:
+            if (
+                gcmd.get("PROBE_METHOD", beacon.default_mesh_method).lower() == "scan"
+                and horizontal_move_z <= beacon.trigger_dive_threshold
+            ):
+                beacon_scan = True
+        self.update_config(gcmd, beacon_scan=beacon_scan)
+        speed = self.scan_speed if beacon_scan else None
+        self.probe_helper.start_probe(gcmd, speed, horizontal_move_z)
 
     def probe_finalize(self, offsets, positions):
         x_offset, y_offset, z_offset = offsets

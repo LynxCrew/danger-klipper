@@ -131,7 +131,6 @@ class AccelCommandHelper:
         self.name = name_parts[-1]
         self.register_commands(self.name)
         self.disabled_heaters = []
-        self.init_timer = None
         if hasattr(config, "getlist"):
             self.disabled_heaters = config.getlist(
                 "disable_heaters", self.disabled_heaters
@@ -151,9 +150,7 @@ class AccelCommandHelper:
             raise Exception("No accelerometer measurements found")
 
     def _handle_ready(self):
-        self.init_timer = self.reactor.register_timer(
-            self._init_accel, self.reactor.NOW
-        )
+        self.reactor.register_callback(self._init_accel, self.reactor.NOW)
 
     def _init_accel(self, eventtime):
         try:
@@ -173,9 +170,6 @@ class AccelCommandHelper:
                     "'%s' is not a valid heater." % (heater_name,)
                 )
             heater.set_enabled(not connected)
-        self.reactor.unregister_timer(self.init_timer)
-        self.init_timer = None
-        return self.reactor.NEVER
 
     def register_commands(self, name):
         # Register commands
@@ -356,7 +350,7 @@ class ADXL345:
     def check_connected(self):
         if self.mcu.non_critical_disconnected:
             raise self.printer.command_error(
-                "non_critical_mcu: ADXL [%s] is disconnected!" % self.name
+                f"ADXL: {self.name} could not connect because mcu: {self.mcu.get_name()} is non_critical_disconnected!"
             )
 
     def read_reg(self, reg):

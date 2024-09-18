@@ -58,6 +58,10 @@ serial:
 #   sending a Klipper command to the micro-controller so that it can
 #   reset itself. The default is 'arduino' if the micro-controller
 #   communicates over a serial port, 'command' otherwise.
+#is_non_critical: False
+#   Setting this to True will allow the mcu to be disconnected and 
+#   reconnected at will without errors. Helpful for USB-accelerometer boards
+#   and USB-probes
 ```
 
 ### [mcu my_extra_mcu]
@@ -1453,6 +1457,13 @@ extended [G-Code command](G-Codes.md#z_tilt) becomes available.
 #   values yield better results, but can also lead to situations where the
 #   bed is tilted in a way that the nozzle touched the bed before the probe.
 #   The default is conservative.
+#use_probe_offsets: false
+#   If set to true the probe x&y offsets will be taken into acccount when
+#   positioning the toolhead (that way if you define a point, your probe will
+#   at the given coordinates instead of the nozzle)
+#   (usefull for probes like beacon where the offsets switch when using
+#   scan/dive mode vs contact, that way the actually probed points will always
+#   stay the same since the probe offset dynamically changes)
 ```
 
 ### [quad_gantry_level]
@@ -5236,6 +5247,9 @@ extruder_stepper_name:
 #   example, if the config section for the secondary extruder is
 #   [extruder_stepper my_extruder_stepper], this parameter's value
 #   would be 'my_extruder_stepper'.
+sensor_pin:
+#   Input pin connected to the sensor. This parameter must be
+#   provided.
 #multiplier_high: 1.05
 #   High multiplier to set for the secondary extruder when extruding
 #   forward and Belay is compressed or when extruding backward and

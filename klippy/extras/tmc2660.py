@@ -116,7 +116,7 @@ MAX_CURRENT = 2.400
 
 
 class TMC2660CurrentHelper(tmc.BaseTMCCurrentHelper):
-    def __init__(self, config, mcu_tmc):
+    def __init__(self, config, mcu_tmc, type="tmc2660"):
         super().__init__(config, mcu_tmc, MAX_CURRENT)
         pconfig: PrinterConfig = self.printer.lookup_object("configfile")
 

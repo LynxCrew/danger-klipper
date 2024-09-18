@@ -57,7 +57,8 @@ class StepperEnablePin:
         self.mcu_enable.set_digital(print_time, value)
         if self.resend_interval and self.resend_timer is None:
             self.resend_timer = self.reactor.register_timer(
-                self._resend_current_val, self.reactor.NOW
+                self._resend_current_val,
+                self.reactor.monotonic() + self.resend_interval,
             )
 
     def _resend_current_val(self, eventtime):

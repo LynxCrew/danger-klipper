@@ -120,6 +120,13 @@ class SerialReader:
         return True
 
     def check_canbus_connect(self, canbus_uuid, canbus_nodeid, canbus_iface="can0"):
+        # this doesn't work
+        # because we don't have a way to query for the _existence_ of a device
+        # on the network, without "assigning" the device.
+        # if we query for unassigned, we get a response from the device
+        # but then klipper can't connect to it.
+        # same reason we klipper can't connect to a can device after we
+        # do a ~/scripts/canbus_query.py command
         import can  # XXX
 
         logging.getLogger("can").setLevel(logging.WARN)
@@ -161,7 +168,7 @@ class SerialReader:
             return False
 
         start_time = curtime = self.reactor.monotonic()
-        while 1:
+        while True:
             tdiff = start_time + 1.0 - curtime
             if tdiff <= 0.0:
                 break
@@ -350,11 +357,6 @@ class SerialReader:
     def raw_send(self, cmd, minclock, reqclock, cmd_queue):
         self._check_noncritical_disconnected()
         if self.serialqueue is None:
-            logging.info(
-                "%sSerial connection closed, cmd: %s",
-                self.warn_prefix,
-                repr(cmd),
-            )
             return
         self.ffi_lib.serialqueue_send(
             self.serialqueue, cmd_queue, cmd, len(cmd), minclock, reqclock, 0
@@ -363,11 +365,6 @@ class SerialReader:
     def raw_send_wait_ack(self, cmd, minclock, reqclock, cmd_queue):
         self._check_noncritical_disconnected()
         if self.serialqueue is None:
-            logging.info(
-                "%sSerial connection closed, in wait ack, cmd: %s",
-                self.warn_prefix,
-                repr(cmd),
-            )
             return
         self.last_notify_id += 1
         nid = self.last_notify_id

@@ -31,25 +31,45 @@ class TypedInputShaperParams:
         self.shaper_type = shaper_type
         self.damping_ratio = shaper_defs.DEFAULT_DAMPING_RATIO
         self.shaper_freq = 0.0
+        self.motor_damping = shaper_defs.DEFAULT_MOTOR_DAMPING_RATIO
+        self.motor_freq = 0.0
         if config is not None:
             if shaper_type not in self.shapers:
                 raise config.error("Unsupported shaper type: %s" % (shaper_type,))
-            self.damping_ratio = config.getfloat(
-                "damping_ratio_" + axis,
+            global_damping_ratio = config.getfloat(
+                "damping_ratio",
                 self.damping_ratio,
                 minval=0.0,
                 maxval=1.0,
             )
-            self.shaper_freq = config.getfloat(
-                "shaper_freq_" + axis, self.shaper_freq, minval=0.0
+            self.damping_ratio = config.getfloat(
+                "damping_ratio_" + axis,
+                global_damping_ratio,
+                minval=0.0,
+                maxval=1.0,
             )
-        self.motor_damping = config.getfloat(
-            "motor_damping_" + axis,
-            shaper_defs.DEFAULT_DAMPING_RATIO,
-            minval=0.0,
-            maxval=1.0,
-        )
-        self.motor_freq = config.getfloat("motor_freq_" + axis, 0.0, minval=0.0)
+            global_shaper_freq = config.getfloat(
+                "shaper_freq", self.shaper_freq, minval=0.0
+            )
+            self.shaper_freq = config.getfloat(
+                "shaper_freq_" + axis, global_shaper_freq, minval=0.0
+            )
+
+            global_motor_damping = config.getfloat(
+                "motor_damping_ratio", self.motor_damping, minval=0.0, maxval=1.0
+            )
+            self.motor_damping = config.getfloat(
+                "motor_damping_ratio_" + axis,
+                global_motor_damping,
+                minval=0.0,
+                maxval=1.0,
+            )
+            global_motor_freq = config.getfloat(
+                "motor_freq", self.motor_freq, minval=0.0
+            )
+            self.motor_freq = config.getfloat(
+                "motor_freq_" + axis, global_motor_freq, minval=0.0
+            )
 
     def get_type(self):
         return self.shaper_type

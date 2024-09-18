@@ -106,9 +106,8 @@ class ZAdjustStatus:
         printer.register_event_handler("unhome:mark_as_unhomed_z", self._motor_off)
 
     def check_retry_result(self, retry_result):
-        if retry_result and (
-            (isinstance(retry_result, str) and retry_result == "done")
-            or (isinstance(retry_result, float) and int(retry_result) == 0)
+        if (isinstance(retry_result, str) and retry_result == "done") or (
+            isinstance(retry_result, (int, float)) and not retry_result
         ):
             self.applied = True
         return retry_result
@@ -203,7 +202,7 @@ class RetryHelper:
                 % (self.value_label, self.error_msg_extra)
             )
         if error <= self.retry_tolerance:
-            return 0.0
+            return "done"
         self.current_retry += 1
         if self.current_retry > self.max_retries:
             raise self.gcode.error("Too many retries")
@@ -224,17 +223,19 @@ class ZTilt:
         self.z_positions = config.getlists(
             "z_positions", seps=(",", "\n"), parser=float, count=2
         )
-        self.use_offsets = config.getboolean("use_probe_offsets", None)
-        if self.use_offsets is None:
-            self.use_offsets = config.getboolean("use_offsets", None)
-            if self.use_offsets is not None:
+        self.use_probe_offsets = config.getboolean("use_probe_offsets", None)
+        if self.use_probe_offsets is None:
+            self.use_probe_offsets = config.getboolean("use_offsets", None)
+            if self.use_probe_offsets is not None:
                 config.deprecate("use_offsets")
             else:
-                self.use_offsets = False
+                self.use_probe_offsets = False
         self.z_count = len(self.z_positions)
 
         self.retry_helper = RetryHelper(config)
-        self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
+        self.probe_helper = probe.ProbePointsHelper(
+            config, self.probe_finalize, enable_adaptive_move_z=True
+        )
         self.probe_helper.minimum_points(2)
 
         self.config_z_offsets = config.getfloatlist(
@@ -250,11 +251,16 @@ class ZTilt:
         self.cal_helper = None
         if config.get("extra_points", None) is not None:
             self.cal_helper = probe.ProbePointsHelper(
-                config, self.cal_finalize, option_name="extra_points"
+                config,
+                self.cal_finalize,
+                option_name="extra_points",
+                enable_adaptive_move_z=True,
             )
             cal_probe_points.extend(self.cal_helper.get_probe_points())
             self.cal_helper.update_probe_points(cal_probe_points, 3)
-        self.ad_helper = probe.ProbePointsHelper(config, self.ad_finalize)
+        self.ad_helper = probe.ProbePointsHelper(
+            config, self.ad_finalize, enable_adaptive_move_z=True
+        )
         self.ad_helper.update_probe_points(cal_probe_points, 3)
         self.cal_conf_avg_len = config.getint("averaging_len", 3, minval=1)
         self.ad_conf_delta = config.getfloat("autodetect_delta", 1.0, minval=0.1)
@@ -302,11 +308,11 @@ class ZTilt:
             return
         self.z_status.reset()
         self.retry_helper.start(gcmd)
-        use_offsets = self.probe_helper.use_offsets
-        if self.use_offsets:
+        use_probe_offsets = self.probe_helper.use_offsets
+        if self.use_probe_offsets:
             self.probe_helper.use_xy_offsets(True)
         self.probe_helper.start_probe(gcmd)
-        self.probe_helper.use_xy_offsets(use_offsets)
+        self.probe_helper.use_xy_offsets(use_probe_offsets)
 
     def perform_coordinate_descent(self, offsets, positions):
         # Setup for coordinate descent analysis
@@ -369,11 +375,11 @@ class ZTilt:
         self.cal_avg_len = gcmd.get_int("AVGLEN", self.cal_conf_avg_len)
         self.cal_gcmd = gcmd
         self.cal_runs = []
-        use_offsets = self.cal_helper.use_offsets
-        if self.use_offsets:
+        use_probe_offsets = self.cal_helper.use_offsets
+        if self.use_probe_offsets:
             self.cal_helper.use_xy_offsets(True)
         self.cal_helper.start_probe(gcmd)
-        self.cal_helper.use_xy_offsets(use_offsets)
+        self.cal_helper.use_xy_offsets(use_probe_offsets)
 
     def cal_finalize(self, offsets, positions):
         np = self.numpy
@@ -396,7 +402,7 @@ class ZTilt:
         z_offsets = [z - offsets[2] for z in z_offsets]
         self.z_offsets = z_offsets
         s_zoff = ""
-        for off in z_offsets[0 : self.num_probe_points]:
+        for off in z_offsets[: self.num_probe_points]:
             s_zoff += "%.6f, " % off
         s_zoff = s_zoff[:-2]
         self.cal_gcmd.respond_info("final z_offsets are: %s" % (s_zoff))
@@ -422,11 +428,11 @@ class ZTilt:
         self.ad_runs = []
         self.ad_points = []
         self.ad_error = None
-        use_offsets = self.ad_helper.use_offsets
-        if self.use_offsets:
+        use_probe_offsets = self.ad_helper.use_offsets
+        if self.use_probe_offsets:
             self.ad_helper.use_xy_offsets(True)
         self.ad_helper.start_probe(gcmd)
-        self.ad_helper.use_xy_offsets(use_offsets)
+        self.ad_helper.use_xy_offsets(use_probe_offsets)
 
     ad_adjustments = [
         [0.5, -0.5, -0.5],  # p1 up
@@ -544,7 +550,7 @@ class ZTilt:
         configfile = self.printer.lookup_object("configfile")
         section = self.section
         s_zoff = ""
-        for off in z_offsets:
+        for off in z_offsets[: len(self.z_positions)]:
             s_zoff += "%.6f, " % off
         s_zoff = s_zoff[:-2]
         configfile.set(section, "z_offsets", s_zoff)

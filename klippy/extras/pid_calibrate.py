@@ -59,26 +59,15 @@ class PIDCalibrate:
         try:
             pheaters.set_temperature(heater, target, True, gcmd=gcmd)
         except self.printer.command_error as e:
-            heater.set_control(old_control, False)
             raise
-        heater.set_control(old_control, False)
+        finally:
+            heater.set_control(old_control, False)
         if write_file:
             calibrate.write_file("/tmp/heattest.csv")
         if calibrate.check_busy(0.0, 0.0, 0.0):
             raise gcmd.error("pid_calibrate interrupted")
         # Log and report results
         Kp, Ki, Kd = calibrate.calc_pid(calculation_method)
-        logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
-        gcmd.respond_info(
-            "PID parameters for %.2f\xb0C: "
-            "pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
-            "Heater: %s\n"
-            "Tolerance: %.4f\n"
-            "Profile: %s\n"
-            "The SAVE_CONFIG command will update the printer config file\n"
-            "with these parameters and restart the printer."
-            % (target, Kp, Ki, Kd, heater_name, tolerance, profile_name)
-        )
         control = algorithm
 
         profile = {
@@ -95,6 +84,18 @@ class PIDCalibrate:
 
         heater.set_control(heater.lookup_control(profile, True), False)
         heater.pmgr.save_profile(profile_name=profile_name, verbose=False)
+
+        logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
+        gcmd.respond_info(
+            "PID parameters for %.2f\xb0C: "
+            "pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
+            "Heater: %s\n"
+            "Tolerance: %.4f\n"
+            "Profile: %s\n"
+            "The SAVE_CONFIG command will update the printer config file\n"
+            "with these parameters and restart the printer."
+            % (target, Kp, Ki, Kd, heater_name, tolerance, profile_name)
+        )
 
 
 def calculate_ziegler_nichols(tu, ku):

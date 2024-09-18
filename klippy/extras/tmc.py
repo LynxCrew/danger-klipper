@@ -147,6 +147,12 @@ class TMCErrorCheck:
         if self.adc_temp_reg is not None:
             pheaters = self.printer.load_object(config, "heaters")
             pheaters.register_monitor(config)
+        self.query_while_disabled = config.getboolean("query_while_disabled", False)
+        if self.query_while_disabled:
+            self.printer.register_event_handler("klippy:ready", self._handle_ready)
+
+    def _handle_ready(self):
+        self.printer.get_reactor().register_callback(self.start_checks)
 
     def _query_register(self, reg_info, try_clear=False):
         last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
@@ -209,12 +215,12 @@ class TMCErrorCheck:
         return eventtime + 1.0
 
     def stop_checks(self):
-        if self.check_timer is None:
+        if self.check_timer is None or self.query_while_disabled:
             return
         self.printer.get_reactor().unregister_timer(self.check_timer)
         self.check_timer = None
 
-    def start_checks(self):
+    def start_checks(self, eventtime=None):
         if self.check_timer is not None:
             self.stop_checks()
         cleared_flags = 0
@@ -241,11 +247,17 @@ class TMCErrorCheck:
 
     def get_status(self, eventtime=None):
         if self.check_timer is None:
+            measured_min = (
+                0.0 if self.measured_min is None else round(self.measured_min, 2)
+            )
+            measured_max = (
+                0.0 if self.measured_max is None else round(self.measured_max, 2)
+            )
             return {
                 "drv_status": None,
                 "temperature": None,
-                "measured_min_temp": self.measured_min,
-                "measured_max_temp": self.measured_max,
+                "measured_min_temp": measured_min,
+                "measured_max_temp": measured_max,
             }
         temp = self.get_temperature()
         last_value, reg_name = self.drv_status_reg_info[:2]
@@ -255,16 +267,18 @@ class TMCErrorCheck:
             self.last_drv_fields = {n: v for n, v in fields.items() if v}
         if temp:
             self.measured_min = min(
-                self.measured_min if self.measured_min else 99999999.0, temp
+                99999999.0 if self.measured_min is None else self.measured_min, temp
             )
             self.measured_max = max(
-                self.measured_max if self.measured_max else 0.0, temp
+                0.0 if self.measured_max is None else self.measured_max, temp
             )
+        measured_min = 0.0 if self.measured_min is None else round(self.measured_min, 2)
+        measured_max = 0.0 if self.measured_max is None else round(self.measured_max, 2)
         return {
             "drv_status": self.last_drv_fields,
             "temperature": temp,
-            "measured_min_temp": self.measured_min,
-            "measured_max_temp": self.measured_max,
+            "measured_min_temp": measured_min,
+            "measured_max_temp": measured_max,
         }
 
 
