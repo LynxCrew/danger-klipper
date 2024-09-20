@@ -230,7 +230,8 @@ class TMCErrorCheck:
         self.check_timer = None
 
     def start_checks(self, eventtime=None):
-        self.stop_checks()
+        if not self.query_while_disabled:
+            self.stop_check_timer()
         cleared_flags = 0
         self._query_register(self.drv_status_reg_info)
         if self.gstat_reg_info is not None:
