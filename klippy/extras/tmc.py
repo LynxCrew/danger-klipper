@@ -152,7 +152,7 @@ class TMCErrorCheck:
             self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def _handle_ready(self):
-        self.printer.get_reactor().register_callback(self.start_check_timer)
+        self.printer.get_reactor().register_callback(self.start_checks)
 
     def _query_register(self, reg_info, try_clear=False):
         last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
@@ -214,35 +214,39 @@ class TMCErrorCheck:
             return self.printer.get_reactor().NEVER
         return eventtime + 1.0
 
-    def stop_checks(self):
-        if self.check_timer is None or self.query_while_disabled:
+    def start_check_timer(self):
+        if self.check_timer is not None:
             return
-        self.printer.get_reactor().unregister_timer(self.check_timer)
-        self.check_timer = None
-
-    def start_check_timer(self, eventtime=None):
         reactor = self.printer.get_reactor()
         curtime = reactor.monotonic()
         self.check_timer = reactor.register_timer(
             self._do_periodic_check, curtime + 1.0
         )
 
+    def stop_check_timer(self):
+        if self.check_timer is None:
+            return
+        self.printer.get_reactor().unregister_timer(self.check_timer)
+        self.check_timer = None
+
     def start_checks(self, eventtime=None):
-        if self.check_timer is not None:
-            self.stop_checks()
+        self.stop_checks()
         cleared_flags = 0
         self._query_register(self.drv_status_reg_info)
         if self.gstat_reg_info is not None:
             cleared_flags = self._query_register(
                 self.gstat_reg_info, try_clear=self.clear_gstat
             )
-        if not self.query_while_disabled:
-            self.start_check_timer()
+        self.start_check_timer()
         if cleared_flags:
             reset_mask = self.fields.all_fields["GSTAT"]["reset"]
             if cleared_flags & reset_mask:
                 return True
         return False
+
+    def stop_checks(self):
+        if not self.query_while_disabled:
+            self.stop_check_timer()
 
     def get_temperature(self):
         if self.check_timer is None or self.adc_temp is None:
