@@ -76,17 +76,17 @@ class KlipperThread:
             ):
                 time.sleep(self.initial_wait_time)
                 self.initial_wait_time = None
-            if self.k_threads.running and self.running:
-                wait_time = job(*args, **kwargs)
-                while wait_time > 0 and self.k_threads.running and self.running:
-                    time.sleep(wait_time)
-                    if not self.running:
-                        return
+                if self.k_threads.running and self.running:
                     wait_time = job(*args, **kwargs)
+                    while wait_time > 0 and self.k_threads.running and self.running:
+                        time.sleep(wait_time)
+                        if not self.running:
+                            return
+                        wait_time = job(*args, **kwargs)
         except Exception as e:
             exception = e
             self.k_threads.reactor.register_async_callback(
-                (lambda pt: self._raise_exception(exception))
+                (lambda pt: exec('raise(Exception(exception))')
             )
         finally:
             self.k_threads.registered_threads.remove(self)
