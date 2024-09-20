@@ -152,7 +152,7 @@ class TMCErrorCheck:
             self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def _handle_ready(self):
-        self.printer.get_reactor().register_callback(self.start_checks)
+        self.printer.get_reactor().register_callback(self.start_check_timer)
 
     def _query_register(self, reg_info, try_clear=False):
         last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
@@ -220,6 +220,13 @@ class TMCErrorCheck:
         self.printer.get_reactor().unregister_timer(self.check_timer)
         self.check_timer = None
 
+    def start_check_timer(self, eventtime=None):
+        reactor = self.printer.get_reactor()
+        curtime = reactor.monotonic()
+        self.check_timer = reactor.register_timer(
+            self._do_periodic_check, curtime + 1.0
+        )
+
     def start_checks(self, eventtime=None):
         if self.check_timer is not None:
             self.stop_checks()
@@ -229,11 +236,8 @@ class TMCErrorCheck:
             cleared_flags = self._query_register(
                 self.gstat_reg_info, try_clear=self.clear_gstat
             )
-        reactor = self.printer.get_reactor()
-        curtime = reactor.monotonic()
-        self.check_timer = reactor.register_timer(
-            self._do_periodic_check, curtime + 1.0
-        )
+        if not self.query_while_disabled:
+            self.start_check_timer()
         if cleared_flags:
             reset_mask = self.fields.all_fields["GSTAT"]["reset"]
             if cleared_flags & reset_mask:
