@@ -223,23 +223,21 @@ class TMCErrorCheck:
             self._do_periodic_check, curtime + 1.0
         )
 
-    def stop_check_timer(self):
-        if self.check_timer is None:
+    def stop_check_timer(self, force=False):
+        if self.check_timer is None or (self.query_while_disabled and not force):
             return
         self.printer.get_reactor().unregister_timer(self.check_timer)
         self.check_timer = None
 
     def start_checks(self, eventtime=None):
-        if not self.query_while_disabled:
-            self.stop_check_timer()
+        self.stop_check_timer(force=True)
         cleared_flags = 0
         self._query_register(self.drv_status_reg_info)
         if self.gstat_reg_info is not None:
             cleared_flags = self._query_register(
                 self.gstat_reg_info, try_clear=self.clear_gstat
             )
-        if not self.query_while_disabled:
-            self.start_check_timer()
+        self.start_check_timer()
         if cleared_flags:
             reset_mask = self.fields.all_fields["GSTAT"]["reset"]
             if cleared_flags & reset_mask:
