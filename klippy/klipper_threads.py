@@ -86,7 +86,7 @@ class KlipperThread:
         except Exception as e:
             exception = e
             self.k_threads.reactor.register_async_callback(
-                (lambda pt: exec('raise %s' % exception))
+                (lambda pt: self._raise_exception(exception))
             )
         finally:
             self.k_threads.registered_threads.remove(self)
