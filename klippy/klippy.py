@@ -326,7 +326,7 @@ class Printer:
         )
         # Enter main reactor loop
         try:
-            self.klipper_threads.run()
+            self.klipper_threads.run(self.reactor)
             self.reactor.run()
         except:
             msg = "Unhandled exception during run"
@@ -334,7 +334,7 @@ class Printer:
             # Exception from a reactor callback - try to shutdown
             try:
                 self.reactor.register_callback((lambda e: self.invoke_shutdown(msg)))
-                self.klipper_threads.run()
+                self.klipper_threads.run(self.reactor)
                 self.reactor.run()
             except:
                 logging.exception("Repeat unhandled exception during run")
@@ -562,7 +562,7 @@ def main():
             bglogger.set_rollover_info("versions", versions)
         gc.collect()
         main_reactor = reactor.Reactor(gc_checking=True)
-        k_threads = klipper_threads.KlipperThreads(main_reactor)
+        k_threads = klipper_threads.KlipperThreads()
         printer = Printer(main_reactor, k_threads, bglogger, start_args)
         res = printer.run()
         if res in ["exit", "error_exit"]:
