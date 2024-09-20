@@ -238,7 +238,8 @@ class TMCErrorCheck:
             cleared_flags = self._query_register(
                 self.gstat_reg_info, try_clear=self.clear_gstat
             )
-        self.start_check_timer()
+        if not self.query_while_disabled:
+            self.start_check_timer()
         if cleared_flags:
             reset_mask = self.fields.all_fields["GSTAT"]["reset"]
             if cleared_flags & reset_mask:
