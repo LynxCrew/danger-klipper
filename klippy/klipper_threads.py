@@ -86,7 +86,8 @@ class KlipperThread:
         except Exception as e:
             exception = e
             self.k_threads.reactor.register_async_callback(
-                (lambda pt: exec('raise(Exception(exception))')))
+                (lambda pt: self._raise(exception))
+            )
         finally:
             self.k_threads.registered_threads.remove(self)
             self.thread = None
@@ -105,5 +106,5 @@ class KlipperThread:
         if self.thread is not None and self.thread.is_alive():
             self.thread.join()
 
-    def _raise_exception(self, exception):
+    def _raise(self, exception):
         raise exception
