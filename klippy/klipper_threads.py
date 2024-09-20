@@ -4,12 +4,13 @@ import time
 
 
 class KlipperThreads:
-    def __init__(self, reactor):
-        self.reactor = reactor
+    def __init__(self):
+        self.reactor = None
         self.running = False
         self.registered_threads = []
 
-    def run(self):
+    def run(self, reactor):
+        self.reactor = reactor
         self.running = True
 
     def register_job(
