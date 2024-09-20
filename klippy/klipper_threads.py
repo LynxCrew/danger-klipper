@@ -4,13 +4,12 @@ import time
 
 
 class KlipperThreads:
-    def __init__(self):
-        self.reactor = None
+    def __init__(self, reactor):
+        self.reactor = reactor
         self.running = False
         self.registered_threads = []
 
-    def run(self, reactor):
-        self.reactor = reactor
+    def run(self):
         self.running = True
 
     def register_job(
@@ -63,6 +62,9 @@ class KlipperThread:
         self.running = True
         self.initial_wait_time = None
 
+    def _raise(self, exception):
+        raise exception
+
     def start(self, wait_time=None):
         self.initial_wait_time = wait_time
         self.thread.start()
@@ -76,13 +78,13 @@ class KlipperThread:
             ):
                 time.sleep(self.initial_wait_time)
                 self.initial_wait_time = None
-                if self.k_threads.running and self.running:
+            if self.k_threads.running and self.running:
+                wait_time = job(*args, **kwargs)
+                while wait_time > 0 and self.k_threads.running and self.running:
+                    time.sleep(wait_time)
+                    if not self.running:
+                        return
                     wait_time = job(*args, **kwargs)
-                    while wait_time > 0 and self.k_threads.running and self.running:
-                        time.sleep(wait_time)
-                        if not self.running:
-                            return
-                        wait_time = job(*args, **kwargs)
         except Exception as e:
             exception = e
             self.k_threads.reactor.register_async_callback(
@@ -105,6 +107,3 @@ class KlipperThread:
     def finalize(self):
         if self.thread is not None and self.thread.is_alive():
             self.thread.join()
-
-    def _raise(self, exception):
-        raise exception
