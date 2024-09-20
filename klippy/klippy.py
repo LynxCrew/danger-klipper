@@ -328,8 +328,9 @@ class Printer:
         try:
             self.klipper_threads.run(self.reactor)
             self.reactor.run()
-        except:
-            msg = "Unhandled exception during run"
+        except Exception as e:
+            msg = str(e)
+            # msg = "Unhandled exception during run"
             logging.exception(msg)
             # Exception from a reactor callback - try to shutdown
             try:
