@@ -202,21 +202,23 @@ class Fan:
             self.queued_value = value
             self.queued_pwm_value = pwm_value
             self.queued_force = force
-        else:
-            self._set_speed(
-                print_time=print_time, value=value, pwm_value=pwm_value, force=force
-            )
+            return
+        self._set_speed(
+            print_time=print_time, value=value, pwm_value=pwm_value, force=force
+        )
 
     def _set_speed(
         self, print_time, value, pwm_value, force=False, resend=False, eventtime=None
     ):
         if eventtime is None:
             eventtime = self.reactor.monotonic()
+
         if (
             value == self.last_fan_value
             and pwm_value == self.last_pwm_value
             and not force
         ):
+            self.last_fan_time = print_time
             return eventtime + FAN_MIN_TIME
         if force or not self.self_checking:
             self.locking = True
