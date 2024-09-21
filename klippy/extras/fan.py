@@ -279,7 +279,7 @@ class Fan:
                 or not self.queued_force
             ):
                 return self._set_speed(
-                    print_time=self.last_fan_time + FAN_MIN_TIME,
+                    print_time=self.estimated_print_time(eventtime),
                     value=value,
                     pwm_value=pwm_value,
                     force=force,
@@ -312,7 +312,7 @@ class Fan:
 
     def fan_check(self):
         measured_time = self.reactor.monotonic()
-        eventtime = self.printer.lookup_object("mcu").estimated_print_time(
+        eventtime = self.estimated_print_time(
             measured_time
         )
         rpm = self.tachometer.get_status(eventtime)["rpm"]
@@ -348,7 +348,7 @@ class Fan:
         )
         self.min_rpm = gcmd.get_float("MIN_RPM", self.min_rpm, minval=0.0)
         curtime = self.reactor.monotonic()
-        print_time = self.get_mcu().estimated_print_time(curtime)
+        print_time = self.estimated_print_time(curtime)
         self.set_speed(print_time, self.last_fan_value, force=True)
 
 
