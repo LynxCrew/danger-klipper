@@ -237,13 +237,18 @@ class Fan:
             ):
                 # Run fan at full speed for specified kick_start_time
                 self.mcu_fan.set_pwm(print_time, self.max_power)
-                print_time += self.kick_start_time
                 eventtime += self.kick_start_time
-            self.mcu_fan.set_pwm(print_time, pwm_value)
+                self.queued_pwm_value = pwm_value
+                self.queued_value = value
+                self.queued_force = force
+                self.last_fan_value = self.max_power
+                self.last_pwm_value = self.max_power
+            else:
+                self.mcu_fan.set_pwm(print_time, pwm_value)
+                self.last_fan_value = value
+                self.last_pwm_value = pwm_value
             if not resend:
                 self.reactor.update_timer(self.unlock_timer, eventtime + FAN_MIN_TIME)
-        self.last_fan_value = value
-        self.last_pwm_value = pwm_value
         self.last_fan_time = print_time
 
         if self.min_rpm > 0 and (force or not self.self_checking):
@@ -291,6 +296,8 @@ class Fan:
 
     def _handle_request_restart(self, print_time):
         self.reactor.update_timer(self.unlock_timer, self.reactor.NEVER)
+        self.reactor.unregister_timer(self.unlock_timer)
+        self.unlock_timer = None
         self.queued_value = None
         self.mcu_fan.set_pwm(print_time, self.shutdown_power)
 
