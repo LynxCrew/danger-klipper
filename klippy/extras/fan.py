@@ -242,14 +242,12 @@ class Fan:
                 self.queued_pwm_value = pwm_value
                 self.queued_value = value
                 self.queued_force = force
-                self.last_fan_value = self.max_power
-                self.last_pwm_value = self.max_power
             else:
                 self.mcu_fan.set_pwm(print_time, pwm_value)
-                self.last_fan_value = value
-                self.last_pwm_value = pwm_value
             if not resend:
                 self.reactor.update_timer(self.unlock_timer, eventtime + FAN_MIN_TIME)
+        self.last_fan_value = value
+        self.last_pwm_value = pwm_value
         self.last_fan_time = print_time
 
         if self.min_rpm > 0 and (force or not self.self_checking):
