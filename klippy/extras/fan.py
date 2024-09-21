@@ -238,9 +238,13 @@ class Fan:
             ):
                 # Run fan at full speed for specified kick_start_time
                 self.mcu_fan.set_pwm(print_time, self.max_power)
-                print_time += self.kick_start_time
                 eventtime += self.kick_start_time
-            self.mcu_fan.set_pwm(print_time, pwm_value)
+                print_time += self.kick_start_time
+                self.queued_pwm_value = pwm_value
+                self.queued_value = value
+                self.queued_force = force
+            else:
+                self.mcu_fan.set_pwm(print_time, pwm_value)
             if not resend:
                 self.reactor.update_timer(self.unlock_timer, eventtime + FAN_MIN_TIME)
         self.last_fan_value = value
@@ -292,6 +296,8 @@ class Fan:
 
     def _handle_request_restart(self, print_time):
         self.reactor.update_timer(self.unlock_timer, self.reactor.NEVER)
+        self.reactor.unregister_timer(self.unlock_timer)
+        self.unlock_timer = None
         self.queued_value = None
         self.mcu_fan.set_pwm(print_time, self.shutdown_power)
 
@@ -305,7 +311,7 @@ class Fan:
 
     def fan_check(self):
         measured_time = self.reactor.monotonic()
-        eventtime = self.printer.lookup_object("mcu").estimated_print_time(
+        eventtime = self.estimated_print_time(
             measured_time
         )
         rpm = self.tachometer.get_status(eventtime)["rpm"]
@@ -341,7 +347,7 @@ class Fan:
         )
         self.min_rpm = gcmd.get_float("MIN_RPM", self.min_rpm, minval=0.0)
         curtime = self.reactor.monotonic()
-        print_time = self.get_mcu().estimated_print_time(curtime)
+        print_time = self.estimated_print_time(curtime)
         self.set_speed(print_time, self.last_fan_value, force=True)
 
 
