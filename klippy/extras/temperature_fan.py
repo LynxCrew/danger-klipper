@@ -316,13 +316,17 @@ class ControlCurve:
     def temperature_callback(self, read_time, temp):
         temp = self.smooth_temps(temp)
         if temp < self.points[0][0]:
-            self.controlled_fan.set_speed(read_time,
-                                          self.points[0][1])
+            self.controlled_fan.set_speed(read_time, self.points[0][1])
             return
         if temp > self.points[-1][0]:
-            self.controlled_fan.set_speed(read_time,
-                                          self.points[-1][1])
+            self.controlled_fan.set_speed(read_time, self.points[-1][1])
             return
+
+        def interpolate(below, above, temp):
+            return ((below[1] * (above[0] - temp)) + (
+                        above[1] * (temp - below[0]))) / (
+                    above[0] - below[0]
+            )
 
         below = [
             self.points[0][0],
@@ -338,12 +342,7 @@ class ControlCurve:
             else:
                 above = config_temp
                 break
-        self.controlled_fan.set_speed(read_time, self.interpolate(below, above, temp))
-
-    def interpolate(self, below, above, temp):
-        return ((below[1] * (above[0] - temp)) + (above[1] * (temp - below[0]))) / (
-            above[0] - below[0]
-        )
+        self.controlled_fan.set_speed(read_time, interpolate(below, above, temp))
 
     def smooth_temps(self, current_temp):
         if (
