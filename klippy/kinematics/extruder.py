@@ -675,7 +675,7 @@ class PrinterExtruder:
         toolhead.set_extruder(self, sum(self.last_position))
         self.printer.send_event("extruder:activate_extruder")
 
-    cmd_CHANGE_MAX_EXTRUDE_ONLY_VALUE_help = "Change the maximum extrude only values"
+    cmd_CHANGE_MAX_EXTRUDE_ONLY_VALUES_help = "Change the maximum extrude only values"
 
     def cmd_CHANGE_MAX_EXTRUDE_ONLY_VALUES(self, gcmd):
         self.max_cross_section = gcmd.get_float(
