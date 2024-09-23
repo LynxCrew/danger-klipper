@@ -323,9 +323,8 @@ class ControlCurve:
             return
 
         def interpolate(below, above, temp):
-            return ((below[1] * (above[0] - temp)) + (
-                        above[1] * (temp - below[0]))) / (
-                    above[0] - below[0]
+            return ((below[1] * (above[0] - temp)) + (above[1] * (temp - below[0]))) / (
+                above[0] - below[0]
             )
 
         below = [
