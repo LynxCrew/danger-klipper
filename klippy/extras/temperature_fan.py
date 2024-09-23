@@ -327,9 +327,16 @@ class ControlCurve:
     def temperature_callback(self, read_time, temp):
         current_temp, target_temp = self.temperature_fan.get_temp(read_time)
         temp = self.smooth_temps(temp)
-        if temp >= target_temp:
-            self.controlled_fan.set_speed(
-                read_time, self.temperature_fan.get_max_speed()
+        if temp < self.points[0][0]:
+            self.controlled_fan.set_speed(read_time, self.points[0][1])
+            return
+        if temp > self.points[-1][0]:
+            self.controlled_fan.set_speed(read_time, self.points[-1][1])
+            return
+
+        def interpolate(below, above, temp):
+            return ((below[1] * (above[0] - temp)) + (above[1] * (temp - below[0]))) / (
+                above[0] - below[0]
             )
             return
         below = [
