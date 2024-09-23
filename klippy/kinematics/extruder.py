@@ -543,6 +543,11 @@ class PrinterExtruder:
     def get_status(self, eventtime):
         sts = self.heater.get_status(eventtime)
         sts["can_extrude"] = self.heater.can_extrude
+        sts["max_extrude_cross_section"] = self.max_cross_section
+        sts["max_extrude_ratio"] = self.max_extrude_ratio
+        sts["max_extrude_only_velocity"] = self.max_e_velocity
+        sts["max_extrude_only_accel"] = self.max_e_accel
+        sts["max_extrude_only_distance"] = self.max_e_dist
         if self.extruder_steppers:
             sts.update(self.extruder_steppers[0].get_status(eventtime))
         return sts
@@ -694,10 +699,10 @@ class PrinterExtruder:
         self.max_e_dist = gcmd.get_float("DISTANCE", self.max_e_dist, minval=0.0)
         gcmd.respond_info(
             "New maximum extrude values for extruder %s:\n"
-            "Cross section: %f\n"
-            "Velocity: %f\n"
-            "Acceleration: %f\n"
-            "Distance: %f"
+            "Cross section: %.2f\n"
+            "Velocity: %.2f\n"
+            "Acceleration: %.2f\n"
+            "Distance: %.2f"
             % (
                 self.name,
                 self.max_cross_section,
