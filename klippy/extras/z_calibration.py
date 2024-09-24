@@ -176,7 +176,7 @@ class ZCalibrationHelper:
                 else:
                     # trying to read the deprecated rri
                     rri = mesh.bmc.relative_reference_index
-                    self.bed_site = mesh.bmc.points[rri]
+                    self.bed_site = mesh.bmc.curve_table[rri]
                 logging.debug(
                     "Z-CALIBRATION probe bed_x=%.3f bed_y=%.3f"
                     % (self.bed_site[0], self.bed_site[1])
