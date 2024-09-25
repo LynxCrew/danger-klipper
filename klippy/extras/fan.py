@@ -218,7 +218,7 @@ class Fan:
             and pwm_value == self.last_pwm_value
             and not force
         ):
-            return eventtime + FAN_MIN_TIME
+            return self.reactor.NEVER
         if force or not self.self_checking:
             self.locking = True
             if self.enable_pin:
