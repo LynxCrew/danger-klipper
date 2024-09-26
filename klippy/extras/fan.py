@@ -311,9 +311,7 @@ class Fan:
 
     def fan_check(self):
         measured_time = self.reactor.monotonic()
-        eventtime = self.estimated_print_time(
-            measured_time
-        )
+        eventtime = self.estimated_print_time(measured_time)
         rpm = self.tachometer.get_status(eventtime)["rpm"]
         if self.last_fan_value and rpm is not None and rpm < self.min_rpm:
             self.num_err += 1

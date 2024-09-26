@@ -339,6 +339,7 @@ class ControlCurve:
                 above[0] - below[0]
             )
             return
+
         below = [
             self.temperature_fan.min_temp,
             self.temperature_fan.get_min_speed(),
