@@ -33,6 +33,8 @@ class TemperatureFan:
         self.max_speed = self.max_speed_conf
         self.min_speed_conf = config.getfloat("min_speed", 0.3, minval=0.0, maxval=1.0)
         self.min_speed = self.min_speed_conf
+        self.mode = "automatic"
+        self.manual_speed = None
         self.last_temp = 0.0
         self.measured_min = 99999999.0
         self.measured_max = -99999999.0
@@ -89,7 +91,10 @@ class TemperatureFan:
 
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp
-        self.control.temperature_callback(read_time, temp)
+        if self.mode == "manual":
+            self.set_speed(read_time, self.manual_speed)
+        else:
+            self.control.temperature_callback(read_time, temp)
         if temp:
             self.measured_min = min(self.measured_min, temp)
             self.measured_max = max(self.measured_max, temp)
@@ -125,6 +130,8 @@ class TemperatureFan:
         target = gcmd.get_float("TARGET", None)
         min_speed = gcmd.get_float("MIN_SPEED", self.min_speed)
         max_speed = gcmd.get_float("MAX_SPEED", self.max_speed)
+        speed = gcmd.get_float("SPEED", None)
+        mode = gcmd.get("MODE", self.mode if speed is None else "manual")
         if target is not None and self.control.get_type() == "curve":
             raise gcmd.error("Setting Target not supported for control curve")
         if min_speed > max_speed:
@@ -134,6 +141,8 @@ class TemperatureFan:
             )
         self.set_min_speed(min_speed)
         self.set_max_speed(max_speed)
+        self.set_manual_speed(speed)
+        self.set_mode(mode)
         self.set_temp(self.target_temp_conf if target is None else target)
         self.enabled = gcmd.get_int("ENABLE", self.enabled, minval=0, maxval=1)
         if not self.enabled:
@@ -162,6 +171,20 @@ class TemperatureFan:
                 "Requested max speed (%.1f) out of range (0.0 : 1.0)" % (speed)
             )
         self.max_speed = speed
+
+    def set_manual_speed(self, speed):
+        if speed and (speed < self.min_speed or speed > self.max_speed):
+            raise self.printer.command_error(
+                "Requested max speed (%.1f) out of range (%.1f : %.1f)" % (speed, self.min_speed, self.max_speed)
+            )
+        self.manual_speed = speed
+
+    def set_mode(self, mode):
+        if mode not in ("automatic", "manual"):
+            raise self.printer.command_error(
+                "Requested mode not valid, use 'manual' or 'automatic'"
+            )
+        self.mode = mode
 
 
 ######################################################################
