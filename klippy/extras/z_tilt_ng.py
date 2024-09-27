@@ -71,9 +71,7 @@ class ZAdjustHelper:
         for s in self.z_steppers:
             s.set_trapq(None)
         # Move each z stepper (sorted from lowest to highest) until they match
-        positions = [
-            (float(-a), s) for a, s in zip(adjustments, self.z_steppers)
-        ]
+        positions = [(float(-a), s) for a, s in zip(adjustments, self.z_steppers)]
         positions.sort(key=(lambda k: k[0]))
         first_stepper_offset, first_stepper = positions[0]
         z_low = curpos[2] - first_stepper_offset
@@ -259,9 +257,7 @@ class ZTilt:
         )
         self.ad_helper.update_probe_points(cal_probe_points, 3)
         self.cal_conf_avg_len = config.getint("averaging_len", 3, minval=1)
-        self.ad_conf_delta = config.getfloat(
-            "autodetect_delta", 1.0, minval=0.1
-        )
+        self.ad_conf_delta = config.getfloat("autodetect_delta", 1.0, minval=0.1)
 
         # Register Z_TILT_ADJUST command
         gcode = self.printer.lookup_object("gcode")
@@ -322,9 +318,7 @@ class ZTilt:
                 total_error += adjusted_height(pos, params) ** 2
             return total_error
 
-        new_params = mathutil.coordinate_descent(
-            params.keys(), params, errorfunc
-        )
+        new_params = mathutil.coordinate_descent(params.keys(), params, errorfunc)
 
         # Apply results
         logging.info("Calculated bed tilt parameters: %s", new_params)

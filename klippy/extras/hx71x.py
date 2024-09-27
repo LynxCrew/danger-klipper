@@ -126,9 +126,7 @@ class HX71xBase:
         # Start bulk reading
         rest_ticks = self.mcu.seconds_to_clock(1.0 / (10.0 * self.sps))
         self.query_hx71x_cmd.send([self.oid, rest_ticks])
-        logging.info(
-            "%s starting '%s' measurements", self.sensor_type, self.name
-        )
+        logging.info("%s starting '%s' measurements", self.sensor_type, self.name)
         # Initialize clock tracking
         self.ffreader.note_start()
 
@@ -139,9 +137,7 @@ class HX71xBase:
         # Halt bulk reading
         self.query_hx71x_cmd.send_wait_ack([self.oid, 0])
         self.ffreader.note_end()
-        logging.info(
-            "%s finished '%s' measurements", self.sensor_type, self.name
-        )
+        logging.info("%s finished '%s' measurements", self.sensor_type, self.name)
 
     def _process_batch(self, eventtime):
         prev_overflows = self.ffreader.get_last_overflows()
@@ -157,9 +153,7 @@ class HX71xBase:
         elif overflows > 0:
             self.consecutive_fails += 1
             if self.consecutive_fails > 4:
-                logging.error(
-                    "%s: Forced sensor restart due to overflows", self.name
-                )
+                logging.error("%s: Forced sensor restart due to overflows", self.name)
                 self._finish_measurements()
                 self._start_measurements()
         else:

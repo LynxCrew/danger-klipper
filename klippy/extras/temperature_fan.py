@@ -175,7 +175,8 @@ class TemperatureFan:
     def set_manual_speed(self, speed):
         if speed and (speed < self.min_speed or speed > self.max_speed):
             raise self.printer.command_error(
-                "Requested max speed (%.1f) out of range (%.1f : %.1f)" % (speed, self.min_speed, self.max_speed)
+                "Requested max speed (%.1f) out of range (%.1f : %.1f)"
+                % (speed, self.min_speed, self.max_speed)
             )
         self.manual_speed = speed
 
