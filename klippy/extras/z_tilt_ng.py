@@ -286,6 +286,7 @@ class ZTilt:
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
     cmd_Z_TILT_CALIBRATE_help = "Calibrate Z tilt with additional probing " "points"
     cmd_Z_TILT_AUTODETECT_help = "Autodetect pivot point of Z motors"
+    cmd_Z_TILT_SET_OFFSETS_help = "Set the offsets for the z_positions"
 
     def cmd_Z_TILT_ADJUST(self, gcmd):
         if self.z_positions is None:
