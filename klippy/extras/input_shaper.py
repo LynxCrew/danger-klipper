@@ -242,7 +242,8 @@ class AxisInputShaper:
 
     def determine_shaper(self):
         if self.axis_n == 0 and self.motor_n == 0:
-            return shaper_defs.get_none_shaper()
+            A, T = shaper_defs.get_none_shaper()
+            return 0, A, T
         if self.motor_n == 0:
             return self.axis_n, self.axis_A, self.axis_T
         if self.axis_n == 0:
