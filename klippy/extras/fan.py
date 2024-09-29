@@ -19,7 +19,6 @@ class Fan:
         self.reactor = self.printer.get_reactor()
         self.estimated_print_time = None
         self.klipper_threads = self.printer.get_klipper_threads()
-        self.last_fan_value = 0.0
         self.last_pwm_value = self.last_req_pwm_value = 0.0
         self.last_fan_value = self.last_req_value = 0.0
         # Read config
@@ -255,15 +254,13 @@ class Fan:
     def get_status(self, eventtime):
         tachometer_status = self.tachometer.get_status(eventtime)
         return {
-            "speed": self.last_pwm_value,
-            "normalized_speed": self.last_fan_value,
+            "speed": self.last_req_value,
+            "real_speed": self.last_req_pwm_value,
             "rpm": tachometer_status["rpm"],
         }
 
     def fan_check(self):
-        measured_time = self.reactor.monotonic()
-        eventtime = self.estimated_print_time(measured_time)
-        rpm = self.tachometer.get_status(eventtime)["rpm"]
+        rpm = self.tachometer.get_status(self.reactor.monotonic())["rpm"]
         if self.last_fan_value and rpm is not None and rpm < self.min_rpm:
             self.num_err += 1
             if self.num_err > self.max_err:
