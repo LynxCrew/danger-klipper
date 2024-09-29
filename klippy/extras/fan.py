@@ -246,7 +246,16 @@ class Fan:
                     self.fan_check_thread = None
 
     def set_speed_from_command(self, value, force=False):
-        self.gcrq.queue_gcode_request(value, force)
+        if value > 0:
+            if self.full_speed_max_power and value == 1.0:
+                pwm_value = 1.0
+            else:
+                # Scale value between min_power and max_power
+                pwm_value = value * (self.max_power - self.min_power) + self.min_power
+                pwm_value = max(self.min_power, min(self.max_power, pwm_value))
+        else:
+            pwm_value = 0
+        self.gcrq.queue_gcode_request(value, pwm_value, force)
 
     def _handle_request_restart(self, print_time):
         self.mcu_fan.set_pwm(print_time, self.shutdown_power)
