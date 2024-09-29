@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 
-from . import pulse_counter
+from . import pulse_counter, output_pin
 
 FAN_MIN_TIME = 0.100
 SAFETY_CHECK_INIT_TIME = 3.0
@@ -20,13 +20,8 @@ class Fan:
         self.estimated_print_time = None
         self.klipper_threads = self.printer.get_klipper_threads()
         self.last_fan_value = 0.0
-        self.last_pwm_value = 0.0
-        self.last_fan_time = 0.0
-        self.queued_value = None
-        self.queued_pwm_value = None
-        self.queued_force = False
-        self.locking = False
-        self.unlock_timer = self.reactor.register_timer(self._unlock_lock)
+        self.last_pwm_value = self.last_req_pwm_value = 0.0
+        self.last_fan_value = self.last_req_value = 0.0
         # Read config
         self.kick_start_time = config.getfloat("kick_start_time", 0.1, minval=0.0)
         self.kick_start_threshold = config.getfloat(
@@ -84,6 +79,11 @@ class Fan:
         if enable_pin is not None:
             self.enable_pin = ppins.setup_pin("digital_out", enable_pin)
             self.enable_pin.setup_max_duration(0.0)
+
+        # Create gcode request queue
+        self.gcrq = output_pin.GCodeRequestQueue(
+            config, self.mcu_fan.get_mcu(), self._apply_speed
+        )
 
         self.tachometer = FanTachometer(config)
 
@@ -198,30 +198,17 @@ class Fan:
                 pwm_value = max(self.min_power, min(self.max_power, pwm_value))
         else:
             pwm_value = 0
-        if self.locking:
-            self.queued_value = value
-            self.queued_pwm_value = pwm_value
-            self.queued_force = force
-            return
-        self._set_speed(
-            print_time=print_time, value=value, pwm_value=pwm_value, force=force
-        )
+        self.gcrq.send_async_request(print_time, value, pwm_value, force)
 
-    def _set_speed(
-        self, print_time, value, pwm_value, force=False, resend=False, eventtime=None
-    ):
-        if eventtime is None:
-            eventtime = self.reactor.monotonic()
-
+    def _apply_speed(self, print_time, value, pwm_value, force=False):
         if (
             value == self.last_fan_value
             and pwm_value == self.last_pwm_value
             and not force
         ):
             self.last_fan_time = print_time
-            return eventtime + FAN_MIN_TIME
+            return "discard", 0.0
         if force or not self.self_checking:
-            self.locking = True
             if self.enable_pin:
                 if value > 0 and self.last_pwm_value == 0:
                     self.enable_pin.set_digital(print_time, 1)
@@ -237,19 +224,15 @@ class Fan:
                 )
             ):
                 # Run fan at full speed for specified kick_start_time
+                self.last_req_value = value
+                self.last_req_pwm_value = pwm_value
+                self.last_fan_value = self.max_power
+                self.last_fan_pwm_value = self.max_power
                 self.mcu_fan.set_pwm(print_time, self.max_power)
-                eventtime += self.kick_start_time
-                print_time += self.kick_start_time
-                self.queued_pwm_value = pwm_value
-                self.queued_value = value
-                self.queued_force = force
-            else:
-                self.mcu_fan.set_pwm(print_time, pwm_value)
-            if not resend:
-                self.reactor.update_timer(self.unlock_timer, eventtime + FAN_MIN_TIME)
-        self.last_fan_value = value
-        self.last_pwm_value = pwm_value
-        self.last_fan_time = print_time
+                return "delay", self.kick_start_time
+            self.mcu_fan.set_pwm(print_time, value)
+        self.last_fan_value = self.last_req_value = value
+        self.last_pwm_value = self.last_req_pwm_value = pwm_value
 
         if self.min_rpm > 0 and (force or not self.self_checking):
             if pwm_value > 0:
@@ -262,50 +245,18 @@ class Fan:
                 if self.fan_check_thread is not None:
                     self.fan_check_thread.unregister()
                     self.fan_check_thread = None
-        return eventtime + FAN_MIN_TIME
-
-    def _unlock_lock(self, eventtime):
-        if self.queued_value is not None or self.queued_pwm_value is not None:
-            value = self.queued_value
-            pwm_value = self.queued_pwm_value
-            force = self.queued_force
-            self.queued_value = None
-            self.queued_pwm_value = None
-            self.queued_force = False
-            if (
-                self.queued_value != self.last_fan_value
-                or self.queued_pwm_value != self.last_pwm_value
-                or not self.queued_force
-            ):
-                return self._set_speed(
-                    print_time=self.last_fan_time + FAN_MIN_TIME,
-                    value=value,
-                    pwm_value=pwm_value,
-                    force=force,
-                    resend=True,
-                    eventtime=eventtime,
-                )
-        self.locking = False
-        return self.reactor.NEVER
 
     def set_speed_from_command(self, value, force=False):
-        toolhead = self.printer.lookup_object("toolhead")
-        toolhead.register_lookahead_callback(
-            (lambda pt: self.set_speed(pt, value, force))
-        )
+        self.gcrq.queue_gcode_request(value, force)
 
     def _handle_request_restart(self, print_time):
-        self.reactor.update_timer(self.unlock_timer, self.reactor.NEVER)
-        self.reactor.unregister_timer(self.unlock_timer)
-        self.unlock_timer = None
-        self.queued_value = None
         self.mcu_fan.set_pwm(print_time, self.shutdown_power)
 
     def get_status(self, eventtime):
         tachometer_status = self.tachometer.get_status(eventtime)
         return {
             "speed": self.last_pwm_value,
-            "normalized_speed": self.last_fan_value,
+            "normalized_speed": self.last_req_value,
             "rpm": tachometer_status["rpm"],
         }
 

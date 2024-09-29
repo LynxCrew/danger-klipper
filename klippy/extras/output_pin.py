@@ -9,6 +9,73 @@ RESEND_HOST_TIME = 0.300 + PIN_MIN_TIME
 MAX_SCHEDULE_TIME = 5.0
 
 
+# Helper code to queue g-code requests
+class GCodeRequestQueue:
+    def __init__(self, config, mcu, callback):
+        self.printer = printer = config.get_printer()
+        self.mcu = mcu
+        self.callback = callback
+        self.rqueue = []
+        self.next_min_flush_time = 0.0
+        self.toolhead = None
+        mcu.register_flush_callback(self._flush_notification)
+        printer.register_event_handler("klippy:connect", self._handle_connect)
+
+    def _handle_connect(self):
+        self.toolhead = self.printer.lookup_object("toolhead")
+
+    def _flush_notification(self, print_time, clock):
+        rqueue = self.rqueue
+        while rqueue:
+            next_time = max(rqueue[0][0], self.next_min_flush_time)
+            if next_time > print_time:
+                return
+            # Skip requests that have been overridden with a following request
+            pos = 0
+            while pos + 1 < len(rqueue) and rqueue[pos + 1][0] <= next_time:
+                pos += 1
+            req_pt, req_val, req_pwm_val, req_force = rqueue[pos]
+            # Invoke callback for the request
+            min_wait = 0.0
+            ret = self.callback(next_time, req_val, req_pt, req_force)
+            if ret is not None:
+                # Handle special cases
+                action, min_wait = ret
+                if action == "discard":
+                    del rqueue[: pos + 1]
+                    continue
+                if action == "delay":
+                    pos -= 1
+            del rqueue[: pos + 1]
+            self.next_min_flush_time = next_time + max(min_wait, PIN_MIN_TIME)
+            # Ensure following queue items are flushed
+            self.toolhead.note_mcu_movequeue_activity(self.next_min_flush_time)
+
+    def _queue_request(self, print_time, value, pwm_value, force=False):
+        self.rqueue.append((print_time, value, pwm_value, force))
+        self.toolhead.note_mcu_movequeue_activity(print_time)
+
+    def queue_gcode_request(self, value, pwm_value, force=False):
+        self.toolhead.register_lookahead_callback(
+            (lambda pt: self._queue_request(pt, value, pwm_value, force))
+        )
+
+    def send_async_request(self, print_time, value, pwm_value, force=False):
+        while 1:
+            next_time = max(print_time, self.next_min_flush_time)
+            # Invoke callback for the request
+            action, min_wait = "normal", 0.0
+            ret = self.callback(next_time, value, force)
+            if ret is not None:
+                # Handle special cases
+                action, min_wait = ret
+                if action == "discard":
+                    break
+            self.next_min_flush_time = next_time + max(min_wait, PIN_MIN_TIME)
+            if action != "delay":
+                break
+
+
 class PrinterOutputPin:
     def __init__(self, config):
         self.printer = config.get_printer()
