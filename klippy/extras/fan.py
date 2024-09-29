@@ -26,7 +26,7 @@ class Fan:
         self.queued_pwm_value = None
         self.queued_force = False
         self.locking = False
-        self.unlock_timer = self.reactor.register_timer(self._unlock_lock)
+        self.unlock_timer = self.reactor.register_timer(self._resend)
         # Read config
         self.kick_start_time = config.getfloat("kick_start_time", 0.1, minval=0.0)
         self.kick_start_threshold = config.getfloat(
@@ -264,7 +264,7 @@ class Fan:
                     self.fan_check_thread = None
         return eventtime + FAN_MIN_TIME
 
-    def _unlock_lock(self, eventtime):
+    def _resend(self, eventtime):
         if self.queued_value is not None or self.queued_pwm_value is not None:
             value = self.queued_value
             pwm_value = self.queued_pwm_value
@@ -273,9 +273,9 @@ class Fan:
             self.queued_pwm_value = None
             self.queued_force = False
             if (
-                self.queued_value != self.last_fan_value
-                or self.queued_pwm_value != self.last_pwm_value
-                or not self.queued_force
+                value != self.last_fan_value
+                or pwm_value != self.last_pwm_value
+                or not force
             ):
                 return self._set_speed(
                     print_time=self.last_fan_time + FAN_MIN_TIME,
