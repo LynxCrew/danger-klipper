@@ -265,6 +265,8 @@ class Fan:
         return eventtime + FAN_MIN_TIME
 
     def _resend(self, eventtime):
+        if not self.locking:
+            return self.reactor.NEVER
         if self.queued_value is not None or self.queued_pwm_value is not None:
             value = self.queued_value
             pwm_value = self.queued_pwm_value
@@ -285,6 +287,10 @@ class Fan:
                     resend=True,
                     eventtime=eventtime,
                 )
+        self.reactor.register_callback(self._unlock_lock, eventtime + FAN_MIN_TIME)
+        return eventtime + FAN_MIN_TIME
+
+    def _unlock_lock(self, eventtime):
         self.locking = False
         return self.reactor.NEVER
 
