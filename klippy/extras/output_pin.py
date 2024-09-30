@@ -37,7 +37,7 @@ class GCodeRequestQueue:
             req_pt, req_val, req_pwm_val, req_force = rqueue[pos]
             # Invoke callback for the request
             min_wait = 0.0
-            ret = self.callback(next_time, req_val, req_pwm_val, req_force)
+            ret = self.callback(next_time, req_val, req_force)
             if ret is not None:
                 # Handle special cases
                 action, min_wait = ret
@@ -51,21 +51,21 @@ class GCodeRequestQueue:
             # Ensure following queue items are flushed
             self.toolhead.note_mcu_movequeue_activity(self.next_min_flush_time)
 
-    def _queue_request(self, print_time, value, pwm_value, force=False):
-        self.rqueue.append((print_time, value, pwm_value, force))
+    def _queue_request(self, print_time, value, force=False):
+        self.rqueue.append((print_time, value, force))
         self.toolhead.note_mcu_movequeue_activity(print_time)
 
-    def queue_gcode_request(self, value, pwm_value, force=False):
+    def queue_gcode_request(self, value, force=False):
         self.toolhead.register_lookahead_callback(
-            (lambda pt: self._queue_request(pt, value, pwm_value, force))
+            (lambda pt: self._queue_request(pt, value, force))
         )
 
-    def send_async_request(self, print_time, value, pwm_value, force=False):
+    def send_async_request(self, print_time, value, force=False):
         while 1:
             next_time = max(print_time, self.next_min_flush_time)
             # Invoke callback for the request
             action, min_wait = "normal", 0.0
-            ret = self.callback(next_time, value, pwm_value, force)
+            ret = self.callback(next_time, value, force)
             if ret is not None:
                 # Handle special cases
                 action, min_wait = ret

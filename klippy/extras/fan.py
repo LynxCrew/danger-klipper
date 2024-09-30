@@ -23,16 +23,23 @@ class Fan:
         self.last_fan_value = self.last_req_value = 0.0
         # Read config
         self.kick_start_time = config.getfloat("kick_start_time", 0.1, minval=0.0)
-        self.kick_start_threshold = config.getfloat(
-            "kick_start_threshold", 0.5, minval=0.0, maxval=1.0
+        self.kick_start_threshold = (
+            config.getfloat("kick_start_threshold", 0.5, minval=0.0, maxval=1.0)
+            if self.kick_start_time
+            else 0.5
         )
+        self.kick_start_power = (
+            config.getfloat("kick_start_power", 1.0, minval=0.0, maxval=1.0)
+            if self.kick_start_time
+            else 1.0
+        )
+
         self.min_power = config.getfloat(
             "min_power", default=None, minval=0.0, maxval=1.0
         )
         self.off_below = config.getfloat(
             "off_below", default=None, minval=0.0, maxval=1.0
         )
-
         # handles switchover of variable
         # if new var is not set, and old var is, set new var to old var
         # if new var is not set and neither is old var, set new var to default of 0.0
@@ -53,6 +60,9 @@ class Fan:
                 % (self.min_power, self.max_power)
             )
         self.full_speed_max_power = config.getboolean("full_speed_max_power", False)
+        self.shutdown_speed_on_restart = config.getboolean(
+            "shutdown_speed_on_restart", False
+        )
 
         cycle_time = config.getfloat("cycle_time", 0.010, above=0.0)
         hardware_pwm = config.getboolean("hardware_pwm", False)
@@ -188,8 +198,11 @@ class Fan:
         return self.mcu_fan.get_mcu()
 
     def set_speed(self, print_time, value, force=False):
+        self.gcrq.send_async_request(print_time, value, force)
+
+    def _apply_speed(self, print_time, value, force=False):
         if value > 0:
-            if self.full_speed_max_power and value == 1.0:
+            if value == 1.0 and self.full_speed_max_power:
                 pwm_value = 1.0
             else:
                 # Scale value between min_power and max_power
@@ -197,9 +210,7 @@ class Fan:
                 pwm_value = max(self.min_power, min(self.max_power, pwm_value))
         else:
             pwm_value = 0
-        self.gcrq.send_async_request(print_time, value, pwm_value, force)
 
-    def _apply_speed(self, print_time, value, pwm_value, force=False):
         if (
             value == self.last_fan_value
             and pwm_value == self.last_pwm_value
@@ -207,6 +218,7 @@ class Fan:
         ):
             self.last_fan_time = print_time
             return "discard", 0.0
+
         if force or not self.self_checking:
             if self.enable_pin:
                 if value > 0 and self.last_pwm_value == 0:
@@ -225,8 +237,10 @@ class Fan:
                 # Run fan at full speed for specified kick_start_time
                 self.last_req_value = value
                 self.last_req_pwm_value = pwm_value
+
                 self.last_fan_value = self.max_power
                 self.last_fan_pwm_value = self.max_power
+
                 self.mcu_fan.set_pwm(print_time, self.max_power)
                 return "delay", self.kick_start_time
             self.mcu_fan.set_pwm(print_time, value)
@@ -246,19 +260,12 @@ class Fan:
                     self.fan_check_thread = None
 
     def set_speed_from_command(self, value, force=False):
-        if value > 0:
-            if self.full_speed_max_power and value == 1.0:
-                pwm_value = 1.0
-            else:
-                # Scale value between min_power and max_power
-                pwm_value = value * (self.max_power - self.min_power) + self.min_power
-                pwm_value = max(self.min_power, min(self.max_power, pwm_value))
-        else:
-            pwm_value = 0
-        self.gcrq.queue_gcode_request(value, pwm_value, force)
+        self.gcrq.queue_gcode_request(value, force)
 
     def _handle_request_restart(self, print_time):
-        self.mcu_fan.set_pwm(print_time, self.shutdown_power)
+        self.mcu_fan.set_pwm(
+            print_time, self.shutdown_power if self.shutdown_speed_on_restart else 0.0
+        )
 
     def get_status(self, eventtime):
         tachometer_status = self.tachometer.get_status(eventtime)
