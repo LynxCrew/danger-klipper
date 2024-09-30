@@ -34,7 +34,7 @@ class GCodeRequestQueue:
             pos = 0
             while pos + 1 < len(rqueue) and rqueue[pos + 1][0] <= next_time:
                 pos += 1
-            req_pt, req_val, req_pwm_val, req_force = rqueue[pos]
+            req_pt, req_val, req_force = rqueue[pos]
             # Invoke callback for the request
             min_wait = 0.0
             ret = self.callback(next_time, req_val, req_force)
