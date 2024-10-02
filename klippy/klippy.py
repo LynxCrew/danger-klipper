@@ -5,6 +5,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, gc, optparse, logging, time, collections, importlib, importlib.util
+import threading
+
 import util, reactor, queuelogger, msgproto, klipper_threads
 import gcode, configfile, pins, mcu, toolhead, webhooks, non_critical_mcus
 from extras.danger_options import get_danger_options
@@ -326,12 +328,13 @@ class Printer:
         try:
             self.klipper_threads.run()
             self.reactor.run()
-        except:
-            msg = "Unhandled exception during run"
+        except Exception as e:
+            msg = "Unhandled exception during run:\n"
+            msg += str(e)
             logging.exception(msg)
             # Exception from a reactor callback - try to shutdown
             try:
-                self.reactor.register_callback((lambda e: self.invoke_shutdown(msg)))
+                self.reactor.register_callback((lambda pt: self.invoke_shutdown(msg)))
                 self.klipper_threads.run()
                 self.reactor.run()
             except:
@@ -355,6 +358,9 @@ class Printer:
             self.bglogger.set_rollover_info(name, info)
 
     def invoke_shutdown(self, msg):
+        if threading.current_thread() is not threading.main_thread():
+            self.invoke_async_shutdown(msg)
+            return
         if self.in_shutdown_state:
             return
         logging.error("Transition to shutdown state: %s", msg)
@@ -557,7 +563,7 @@ def main():
             bglogger.set_rollover_info("versions", versions)
         gc.collect()
         main_reactor = reactor.Reactor(gc_checking=True)
-        k_threads = klipper_threads.KlipperThreads()
+        k_threads = klipper_threads.KlipperThreads(main_reactor)
         printer = Printer(main_reactor, k_threads, bglogger, start_args)
         res = printer.run()
         if res in ["exit", "error_exit"]:

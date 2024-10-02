@@ -33,6 +33,8 @@ class TemperatureFan:
         self.max_speed = self.max_speed_conf
         self.min_speed_conf = config.getfloat("min_speed", 0.3, minval=0.0, maxval=1.0)
         self.min_speed = self.min_speed_conf
+        self.mode = "automatic"
+        self.manual_speed = None
         self.last_temp = 0.0
         self.measured_min = 99999999.0
         self.measured_max = -99999999.0
@@ -89,7 +91,10 @@ class TemperatureFan:
 
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp
-        self.control.temperature_callback(read_time, temp)
+        if self.mode == "manual":
+            self.set_speed(read_time, self.manual_speed)
+        else:
+            self.control.temperature_callback(read_time, temp)
         if temp:
             self.measured_min = min(self.measured_min, temp)
             self.measured_max = max(self.measured_max, temp)
@@ -125,6 +130,8 @@ class TemperatureFan:
         target = gcmd.get_float("TARGET", None)
         min_speed = gcmd.get_float("MIN_SPEED", self.min_speed)
         max_speed = gcmd.get_float("MAX_SPEED", self.max_speed)
+        speed = gcmd.get_float("SPEED", None)
+        mode = gcmd.get("MODE", self.mode if speed is None else "manual")
         if target is not None and self.control.get_type() == "curve":
             raise gcmd.error("Setting Target not supported for control curve")
         if min_speed > max_speed:
@@ -134,6 +141,8 @@ class TemperatureFan:
             )
         self.set_min_speed(min_speed)
         self.set_max_speed(max_speed)
+        self.set_manual_speed(speed)
+        self.set_mode(mode)
         self.set_temp(self.target_temp_conf if target is None else target)
         self.enabled = gcmd.get_int("ENABLE", self.enabled, minval=0, maxval=1)
         if not self.enabled:
@@ -162,6 +171,21 @@ class TemperatureFan:
                 "Requested max speed (%.1f) out of range (0.0 : 1.0)" % (speed)
             )
         self.max_speed = speed
+
+    def set_manual_speed(self, speed):
+        if speed and (speed < self.min_speed or speed > self.max_speed):
+            raise self.printer.command_error(
+                "Requested max speed (%.1f) out of range (%.1f : %.1f)"
+                % (speed, self.min_speed, self.max_speed)
+            )
+        self.manual_speed = speed
+
+    def set_mode(self, mode):
+        if mode not in ("automatic", "manual"):
+            raise self.printer.command_error(
+                "Requested mode not valid, use 'manual' or 'automatic'"
+            )
+        self.mode = mode
 
 
 ######################################################################
@@ -271,7 +295,7 @@ class ControlCurve:
         self.controlled_fan = (
             temperature_fan if controlled_fan is None else controlled_fan
         )
-        self.points = []
+        self.curve_table = []
         points = config.getlists("points", seps=(",", "\n"), parser=float, count=2)
         for temp, pwm in points:
             current_point = [temp, pwm]
@@ -282,40 +306,26 @@ class ControlCurve:
                     "Point needs to have exactly one temperature and one speed "
                     "value."
                 )
-            if current_point[0] > temperature_fan.target_temp:
+            if temp > temperature_fan.max_temp:
                 raise temperature_fan.printer.config_error(
-                    "Temperature in point can not exceed target temperature."
+                    "Temperature in point can not exceed max_temp."
                 )
-            if current_point[0] < temperature_fan.min_temp:
+            if temp < temperature_fan.min_temp:
                 raise temperature_fan.printer.config_error(
                     "Temperature in point can not fall below min_temp."
                 )
-            if current_point[1] > temperature_fan.get_max_speed():
-                raise temperature_fan.printer.config_error(
-                    "Speed in point can not exceed max_speed."
-                )
-            if current_point[1] < temperature_fan.get_min_speed():
-                raise temperature_fan.printer.config_error(
-                    "Speed in point can not fall below min_speed."
-                )
-            self.points.append(current_point)
-        self.points.append(
-            [temperature_fan.target_temp, temperature_fan.get_max_speed()]
-        )
-        if len(self.points) < 2:
+            for _temp, _pwm in self.curve_table:
+                if _temp == temp:
+                    raise temperature_fan.printer.config_error(
+                        "Temperature can not exist twice in curve table."
+                    )
+            self.curve_table.append(current_point)
+        if len(self.curve_table) < 2:
             raise temperature_fan.printer.config_error(
                 "At least two points need to be defined for curve in "
                 "temperature_fan."
             )
-        self.points.sort(key=lambda p: p[0])
-        last_point = [temperature_fan.min_temp, temperature_fan.get_min_speed()]
-        for point in self.points:
-            if point[1] < last_point[1]:
-                raise temperature_fan.printer.config_error(
-                    "Points with higher temperatures have to have higher or "
-                    "equal speed than points with lower temperatures."
-                )
-            last_point = point
+        self.curve_table.sort(key=lambda p: p[0])
         self.cooling_hysteresis = config.getfloat("cooling_hysteresis", 0.0)
         self.heating_hysteresis = config.getfloat("heating_hysteresis", 0.0)
         self.smooth_readings = config.getint("smooth_readings", 10, minval=1)
@@ -325,33 +335,34 @@ class ControlCurve:
         self.last_temp = 0.0
 
     def temperature_callback(self, read_time, temp):
-        current_temp, target_temp = self.temperature_fan.get_temp(read_time)
-        temp = self.smooth_temps(temp)
-        if temp >= target_temp:
-            self.controlled_fan.set_speed(
-                read_time, self.temperature_fan.get_max_speed()
+        def _interpolate(below, above, temp):
+            return ((below[1] * (above[0] - temp)) + (above[1] * (temp - below[0]))) / (
+                above[0] - below[0]
             )
+
+        temp = self.smooth_temps(temp)
+        if temp <= self.curve_table[0][0]:
+            self.controlled_fan.set_speed(read_time, self.curve_table[0][1])
             return
+        if temp >= self.curve_table[-1][0]:
+            self.controlled_fan.set_speed(read_time, self.curve_table[-1][1])
+            return
+
         below = [
-            self.temperature_fan.min_temp,
-            self.temperature_fan.get_min_speed(),
+            self.curve_table[0][0],
+            self.curve_table[0][1],
         ]
         above = [
-            self.temperature_fan.max_temp,
-            self.temperature_fan.get_max_speed(),
+            self.curve_table[-1][0],
+            self.curve_table[-1][1],
         ]
-        for config_temp in self.points:
+        for config_temp in self.curve_table:
             if config_temp[0] < temp:
                 below = config_temp
             else:
                 above = config_temp
                 break
-        self.controlled_fan.set_speed(read_time, self.interpolate(below, above, temp))
-
-    def interpolate(self, below, above, temp):
-        return ((below[1] * (above[0] - temp)) + (above[1] * (temp - below[0]))) / (
-            above[0] - below[0]
-        )
+        self.controlled_fan.set_speed(read_time, _interpolate(below, above, temp))
 
     def smooth_temps(self, current_temp):
         if (

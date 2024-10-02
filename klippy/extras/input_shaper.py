@@ -100,11 +100,13 @@ class TypedInputShaperParams:
             A, T = shaper_defs.get_none_shaper()
         else:
             A, T = self.shapers[self.shaper_type](self.shaper_freq, self.damping_ratio)
-        if self.motor_freq:
-            A, T = shaper_defs.convolve(
-                (A, T),
-                shaper_defs.get_mzv_shaper(self.motor_freq, self.motor_damping),
-            )
+        return len(A), A, T
+
+    def get_motor_filter(self):
+        if not self.motor_freq:
+            A, T = shaper_defs.get_none_shaper()
+        else:
+            A, T = shaper_defs.get_mzv_shaper(self.motor_freq, self.motor_damping)
         return len(A), A, T
 
     def get_status(self):
@@ -131,11 +133,19 @@ class CustomInputShaperParams:
     def __init__(self, axis, config):
         self.axis = axis
         self.n, self.A, self.T = 0, [], []
+        self.motor_filter_n, self.motor_filter_A, self.motor_filter_T = 0, [], []
         if config is not None:
             shaper_a_str = config.get("shaper_a_" + axis)
             shaper_t_str = config.get("shaper_t_" + axis)
             self.n, self.A, self.T = self._parse_custom_shaper(
                 shaper_a_str, shaper_t_str, config.error
+            )
+            motor_filter_a_str = config.get("motor_filter_a_" + axis)
+            motor_filter_t_str = config.get("motor_filter_t_" + axis)
+            self.motor_filter_n, self.motor_filter_A, self.motor_filter_T = (
+                self._parse_custom_shaper(
+                    motor_filter_a_str, motor_filter_t_str, config.error
+                )
             )
 
     def get_type(self):
@@ -150,14 +160,27 @@ class CustomInputShaperParams:
         axis = self.axis.upper()
         shaper_a_str = gcmd.get("SHAPER_A_" + axis, None)
         shaper_t_str = gcmd.get("SHAPER_T_" + axis, None)
+        motor_filter_a_str = gcmd.get("MOTOR_FILTER_A_" + axis, None)
+        motor_filter_t_str = gcmd.get("MOTOR_FILTER_T_" + axis, None)
         if (shaper_a_str is None) != (shaper_t_str is None):
             raise gcmd.error(
                 "Both SHAPER_A_%s and SHAPER_T_%s parameters"
                 " must be provided" % (axis, axis)
             )
+        if (motor_filter_a_str is None) != (motor_filter_t_str is None):
+            raise gcmd.error(
+                "Both MOTOR_FILTER_A_%s and MOTOR_FILTER_T_%s parameters"
+                " must be provided" % (axis, axis)
+            )
         if shaper_a_str is not None:
             self.n, self.A, self.T = self._parse_custom_shaper(
                 shaper_a_str, shaper_t_str, gcmd.error
+            )
+        if motor_filter_a_str is not None:
+            self.motor_filter_n, self.motor_filter_A, self.motor_filter_T = (
+                self._parse_custom_shaper(
+                    motor_filter_a_str, motor_filter_t_str, gcmd.error
+                )
             )
 
     def _parse_custom_shaper(self, custom_a_str, custom_t_str, parse_error):
@@ -192,6 +215,9 @@ class CustomInputShaperParams:
     def get_shaper(self):
         return self.n, self.A, self.T
 
+    def get_motor_filter(self):
+        return self.motor_filter_n, self.motor_filter_A, self.motor_filter_T
+
     def get_status(self):
         return collections.OrderedDict(
             [
@@ -205,9 +231,27 @@ class CustomInputShaperParams:
 class AxisInputShaper:
     def __init__(self, params):
         self.params = params
-        self.n, self.A, self.T = params.get_shaper()
+        self.axis_n, self.axis_A, self.axis_T = params.get_shaper()
+        self.motor_n, self.motor_A, self.motor_T = params.get_motor_filter()
+        self.n, self.A, self.T = self.determine_shaper()
         self.t_offs = shaper_defs.get_shaper_offset(self.A, self.T)
-        self.saved = None
+        self.saved_axis_shaper = None
+        self.saved_motor_filter = None
+        self.cached_axis_shaper = None
+        self.cached_motor_filter = None
+
+    def determine_shaper(self):
+        if self.axis_n == 0 and self.motor_n == 0:
+            A, T = shaper_defs.get_none_shaper()
+            return 0, A, T
+        if self.motor_n == 0:
+            return self.axis_n, self.axis_A, self.axis_T
+        if self.axis_n == 0:
+            return self.motor_n, self.motor_A, self.motor_T
+        A, T = shaper_defs.convolve(
+            (self.axis_A, self.axis_T), (self.motor_A, self.motor_T)
+        )
+        return len(A), A, T
 
     def get_name(self):
         return "shaper_" + self.get_axis()
@@ -226,7 +270,9 @@ class AxisInputShaper:
 
     def update(self, shaper_type, gcmd):
         self.params.update(shaper_type, gcmd)
-        self.n, self.A, self.T = self.params.get_shaper()
+        self.axis_n, self.axis_A, self.axis_T = self.params.get_shaper()
+        self.motor_n, self.motor_A, self.motor_T = self.params.get_motor_filter()
+        self.n, self.A, self.T = self.determine_shaper()
         self.t_offs = shaper_defs.get_shaper_offset(self.A, self.T)
 
     def update_stepper_kinematics(self, sk):
@@ -282,22 +328,61 @@ class AxisInputShaper:
             ffi_lib.extruder_set_shaper_params(sk, axis, self.n, self.A, self.T)
         return success
 
-    def disable_shaping(self):
+    def disable_shaping(self, axis_shaper=True, motor_filter=True):
         was_enabled = False
-        if self.saved is None and self.n:
-            self.saved = (self.n, self.A, self.T)
-            was_enabled = True
         A, T = shaper_defs.get_none_shaper()
+        if axis_shaper and self.saved_axis_shaper is None and self.axis_n:
+            self.saved_axis_shaper = (self.axis_n, self.axis_A, self.axis_T)
+            self.axis_n, self.axis_A, self.axis_T = len(A), A, T
+            was_enabled = True
+        if motor_filter and self.saved_motor_filter is None and self.motor_n:
+            self.saved_motor_filter = (self.motor_n, self.motor_A, self.motor_T)
+            self.motor_n, self.motor_A, self.motor_T = len(A), A, T
+            was_enabled = True
+        self.n, self.A, self.T = self.determine_shaper()
+        return was_enabled
+
+    def cache_shaping(self):
+        was_enabled = False
+        A, T = shaper_defs.get_none_shaper()
+        if self.cached_axis_shaper is None and self.axis_n:
+            self.cached_axis_shaper = (self.axis_n, self.axis_A, self.axis_T)
+            self.axis_n, self.axis_A, self.axis_T = len(A), A, T
+            was_enabled = True
+        if self.cached_motor_filter is None and self.motor_n:
+            self.cached_motor_filter = (self.motor_n, self.motor_A, self.motor_T)
+            self.motor_n, self.motor_A, self.motor_T = len(A), A, T
+            was_enabled = True
         self.n, self.A, self.T = len(A), A, T
         return was_enabled
 
-    def enable_shaping(self):
-        if self.saved is None:
-            # Input shaper was not disabled
-            return False
-        self.n, self.A, self.T = self.saved
-        self.saved = None
-        return True
+    def enable_shaping(self, axis_shaper=True, motor_filter=True):
+        was_disabled = False
+        if axis_shaper and self.saved_axis_shaper is not None:
+            self.axis_n, self.axis_A, self.axis_T = self.saved_axis_shaper
+            self.saved_axis_shaper = None
+            was_disabled = True
+        if motor_filter and self.saved_motor_filter is not None:
+            self.motor_n, self.motor_A, self.motor_T = self.saved_motor_filter
+            self.saved_motor_filter = None
+            was_disabled = True
+
+        self.n, self.A, self.T = self.determine_shaper()
+        return was_disabled
+
+    def restore_shaping(self):
+        was_disabled = False
+        if self.cached_axis_shaper is not None:
+            self.axis_n, self.axis_A, self.axis_T = self.cached_axis_shaper
+            self.cached_axis_shaper = None
+            was_disabled = True
+        if self.cached_motor_filter is not None:
+            self.motor_n, self.motor_A, self.motor_T = self.cached_motor_filter
+            self.cached_motor_filter = None
+            was_disabled = True
+
+        self.n, self.A, self.T = self.determine_shaper()
+        return was_disabled
 
     def report(self, gcmd):
         info = " ".join(
@@ -487,7 +572,7 @@ class AxisInputSmoother:
             )
         return success
 
-    def disable_shaping(self):
+    def disable_shaping(self, axis_shaper=None, motor_filter=None):
         was_enabled = False
         if self.smooth_time:
             self.saved_smooth_time = self.smooth_time
@@ -495,7 +580,7 @@ class AxisInputSmoother:
         self.smooth_time = 0.0
         return was_enabled
 
-    def enable_shaping(self):
+    def enable_shaping(self, axis_shaper=None, motor_filter=None):
         if not self.saved_smooth_time:
             # Input smoother was not disabled
             return False
@@ -522,10 +607,10 @@ class ShaperFactory:
             return AxisInputSmoother(CustomInputSmootherParams(axis, config))
         if type_name == CustomInputShaperParams.SHAPER_TYPE:
             return AxisInputShaper(CustomInputShaperParams(axis, config))
-        if type_name in TypedInputShaperParams.shapers:
-            return AxisInputShaper(TypedInputShaperParams(axis, type_name, config))
         if type_name in TypedInputSmootherParams.smoothers:
             return AxisInputSmoother(TypedInputSmootherParams(axis, type_name, config))
+        if type_name in TypedInputShaperParams.shapers:
+            return AxisInputShaper(TypedInputShaperParams(axis, type_name, config))
         return None
 
     def create_shaper(self, axis, config):
@@ -669,6 +754,16 @@ class InputShaper:
             shaper.enable_shaping()
         self._update_input_shaping()
 
+    def cache_shaping(self):
+        for shaper in self.shapers:
+            shaper.cache_shaping()
+        self._update_input_shaping()
+
+    def restore_shaping(self):
+        for shaper in self.shapers:
+            shaper.restore_shaping()
+        self._update_input_shaping()
+
     cmd_SET_INPUT_SHAPER_help = "Set cartesian parameters for input shaper"
 
     def cmd_SET_INPUT_SHAPER(self, gcmd):
@@ -692,6 +787,8 @@ class InputShaper:
     def cmd_ENABLE_INPUT_SHAPER(self, gcmd):
         self.toolhead.flush_step_generation()
         axes = gcmd.get("AXIS", "")
+        axis_shaper = gcmd.get_int("AXIS_SHAPER", 1, minval=0, maxval=1)
+        motor_filter = gcmd.get_int("MOTOR_FILTER", 1, minval=0, maxval=1)
         msg = ""
         for axis_str in axes.split(","):
             axis = axis_str.strip().lower()
@@ -701,7 +798,7 @@ class InputShaper:
             if not shapers:
                 raise gcmd.error("Invalid AXIS='%s'" % (axis_str,))
             for s in shapers:
-                if s.enable_shaping():
+                if s.enable_shaping(axis_shaper, motor_filter):
                     msg += "Enabled input shaper for AXIS='%s'\n" % (axis_str,)
                 else:
                     msg += (
@@ -730,6 +827,8 @@ class InputShaper:
     def cmd_DISABLE_INPUT_SHAPER(self, gcmd):
         self.toolhead.flush_step_generation()
         axes = gcmd.get("AXIS", "")
+        axis_shaper = gcmd.get_int("AXIS_SHAPER", 1, minval=0, maxval=1)
+        motor_filter = gcmd.get_int("MOTOR_FILTER", 1, minval=0, maxval=1)
         msg = ""
         for axis_str in axes.split(","):
             axis = axis_str.strip().lower()
@@ -739,7 +838,7 @@ class InputShaper:
             if not shapers:
                 raise gcmd.error("Invalid AXIS='%s'" % (axis_str,))
             for s in shapers:
-                if s.disable_shaping():
+                if s.disable_shaping(axis_shaper, motor_filter):
                     msg += "Disabled input shaper for AXIS='%s'\n" % (axis_str,)
                 else:
                     msg += (
@@ -753,11 +852,11 @@ class InputShaper:
                 continue
             extruder = self.printer.lookup_object(extruder_name)
             if extruder in self.extruders:
-                to_re_enable = [s for s in self.shapers if s.disable_shaping()]
+                to_re_enable = [s for s in self.shapers if s.cache_shaping()]
                 for es in extruder.get_extruder_steppers():
                     es.update_input_shaping(self.shapers, self.exact_mode)
                 for shaper in to_re_enable:
-                    shaper.enable_shaping()
+                    shaper.restore_shaping()
                 self.extruders.remove(extruder)
                 msg += "Disabled input shaper for '%s'\n" % (en,)
             else:

@@ -1,11 +1,11 @@
-import logging
 import sys
 import threading
 import time
 
 
 class KlipperThreads:
-    def __init__(self):
+    def __init__(self, reactor):
+        self.reactor = reactor
         self.running = False
         self.registered_threads = []
 
@@ -60,12 +60,24 @@ class KlipperThread:
         )
         self.k_threads.registered_threads.append(self)
         self.running = True
+        self.initial_wait_time = None
 
-    def start(self):
+    def _raise_exception(self, exception):
+        raise exception
+
+    def start(self, wait_time=None):
+        self.initial_wait_time = wait_time
         self.thread.start()
 
     def _run_job(self, job, args=(), **kwargs):
         try:
+            if (
+                self.k_threads.running
+                and self.running
+                and self.initial_wait_time is not None
+            ):
+                time.sleep(self.initial_wait_time)
+                self.initial_wait_time = None
             if self.k_threads.running and self.running:
                 wait_time = job(*args, **kwargs)
                 while wait_time > 0 and self.k_threads.running and self.running:
@@ -73,6 +85,12 @@ class KlipperThread:
                     if not self.running:
                         return
                     wait_time = job(*args, **kwargs)
+        except Exception as e:
+            exception = e
+            if self.k_threads.reactor is not None:
+                self.k_threads.reactor.register_async_callback(
+                    (lambda pt: self._raise_exception(exception))
+                )
         finally:
             self.k_threads.registered_threads.remove(self)
             self.thread = None

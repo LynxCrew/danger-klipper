@@ -469,10 +469,10 @@ class PrinterExtruder:
         self.filament_area = math.pi * (filament_diameter * 0.5) ** 2
         def_max_cross_section = 4.0 * self.nozzle_diameter**2
         def_max_extrude_ratio = def_max_cross_section / self.filament_area
-        max_cross_section = config.getfloat(
+        self.max_cross_section = config.getfloat(
             "max_extrude_cross_section", def_max_cross_section, above=0.0
         )
-        self.max_extrude_ratio = max_cross_section / self.filament_area
+        self.max_extrude_ratio = self.max_cross_section / self.filament_area
         logging.info("Extruder max_extrude_ratio=%.6f", self.max_extrude_ratio)
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_e_velocity = config.getfloat(
@@ -515,6 +515,13 @@ class PrinterExtruder:
             self.cmd_ACTIVATE_EXTRUDER,
             desc=self.cmd_ACTIVATE_EXTRUDER_help,
         )
+        gcode.register_mux_command(
+            "CHANGE_MAX_EXTRUDE_ONLY_VALUES",
+            "EXTRUDER",
+            self.name,
+            self.cmd_CHANGE_MAX_EXTRUDE_ONLY_VALUES,
+            desc=self.cmd_CHANGE_MAX_EXTRUDE_ONLY_VALUES_help,
+        )
 
     def link_extruder_stepper(self, extruder_stepper):
         if extruder_stepper not in self.extruder_steppers:
@@ -536,6 +543,11 @@ class PrinterExtruder:
     def get_status(self, eventtime):
         sts = self.heater.get_status(eventtime)
         sts["can_extrude"] = self.heater.can_extrude
+        sts["max_extrude_cross_section"] = self.max_cross_section
+        sts["max_extrude_ratio"] = self.max_extrude_ratio
+        sts["max_extrude_only_velocity"] = self.max_e_velocity
+        sts["max_extrude_only_accel"] = self.max_e_accel
+        sts["max_extrude_only_distance"] = self.max_e_dist
         if self.extruder_steppers:
             sts.update(self.extruder_steppers[0].get_status(eventtime))
         return sts
@@ -667,6 +679,38 @@ class PrinterExtruder:
         toolhead.flush_step_generation()
         toolhead.set_extruder(self, sum(self.last_position))
         self.printer.send_event("extruder:activate_extruder")
+
+    cmd_CHANGE_MAX_EXTRUDE_ONLY_VALUES_help = "Change the maximum extrude only values"
+
+    def cmd_CHANGE_MAX_EXTRUDE_ONLY_VALUES(self, gcmd):
+        self.max_cross_section = gcmd.get_float(
+            "CROSS_SECTION", self.max_cross_section, above=0.0
+        )
+        self.max_extrude_ratio = self.max_cross_section / self.filament_area
+        self.max_e_velocity = gcmd.get_float(
+            "VELOCITY",
+            self.max_e_velocity,
+            above=0.0,
+        )
+        self.max_e_accel = gcmd.get_float(
+            "ACCEL",
+            self.max_e_accel,
+        )
+        self.max_e_dist = gcmd.get_float("DISTANCE", self.max_e_dist, minval=0.0)
+        gcmd.respond_info(
+            "New maximum extrude values for extruder %s:\n"
+            "Cross section: %.2f\n"
+            "Velocity: %.2f\n"
+            "Acceleration: %.2f\n"
+            "Distance: %.2f"
+            % (
+                self.name,
+                self.max_cross_section,
+                self.max_e_velocity,
+                self.max_e_accel,
+                self.max_e_dist,
+            )
+        )
 
 
 # Dummy extruder class used when a printer has no extruder at all

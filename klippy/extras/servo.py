@@ -28,7 +28,7 @@ class PrinterServo:
         self.max_angle = config.getfloat("maximum_servo_angle", 180.0)
         self.angle_to_width = (self.max_width - self.min_width) / self.max_angle
         self.width_to_value = 1.0 / SERVO_SIGNAL_PERIOD
-        self.last_value = self.last_value_time = 0.0
+        self.last_value = 0.0
         initial_pwm = 0.0
         iangle = config.getfloat("initial_angle", None, minval=0.0, maxval=360.0)
         if iangle is not None:
@@ -72,11 +72,9 @@ class PrinterServo:
 
     def _set_pwm(self, print_time, value):
         if value == self.last_value:
-            return
-        print_time = max(print_time, self.last_value_time + PIN_MIN_TIME)
-        self.mcu_servo.set_pwm(print_time, value)
+            return "discard", 0.0
         self.last_value = value
-        self.last_value_time = print_time
+        self.mcu_servo.set_pwm(print_time, value)
 
     def _get_pwm_from_angle(self, angle):
         angle = max(0.0, min(self.max_angle, angle))

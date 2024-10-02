@@ -1195,9 +1195,9 @@ class ControlMPC:
                 above[0] - below[0]
             )
 
-        if temperature < power_table[0][0]:
+        if temperature <= power_table[0][0]:
             return power_table[0][1]
-        if temperature > power_table[-1][0]:
+        if temperature >= power_table[-1][0]:
             return power_table[-1][1]
 
         below = [
