@@ -73,9 +73,7 @@ class PrinterLEDGroup:
 
     def update_leds(self, led_state, print_time):
         for i, (led_helper, index) in enumerate(self.leds):
-            led_helper._set_color(index + 1, led_state[i])
-        for led_helper in self.led_helpers:
-            led_helper._check_transmit(print_time)
+            led_helper.update_leds(index + 1, led_state[i])
 
     def get_status(self, eventtime=None):
         return self.led_helper.get_status(eventtime)
