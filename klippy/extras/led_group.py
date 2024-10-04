@@ -8,7 +8,6 @@ class PrinterLEDGroup:
         self.config = config
         self.printer = config.get_printer()
         self.config_leds = config.get("leds")
-        self.printer_led = self.printer.lookup_object("led", None)
         self.config_chains = self.config_leds.split("\n")
         self.leds = []
         self.led_helpers = []
@@ -21,7 +20,7 @@ class PrinterLEDGroup:
                 parameter.strip() for parameter in chain.split() if parameter.strip()
             ]
             if parms:
-                led_helper = self.printer_led.lookup_led_helper(parms[0], self.config)
+                led_helper = self.printer.lookup_object(parms[0]).led_helper
                 led_count = led_helper.get_led_count()
                 led_indices = "".join(parms[1:]).strip("()").split(",")
                 for led in led_indices:
