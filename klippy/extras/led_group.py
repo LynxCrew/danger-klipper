@@ -20,7 +20,7 @@ class PrinterLEDGroup:
                 parameter.strip() for parameter in chain.split() if parameter.strip()
             ]
             if parms:
-                led_helper = self.printer.lookup_object(parms[0]).led_helper
+                led_helper = self.printer.lookup_object(parms[0].replace(":", " ")).led_helper
                 led_count = led_helper.get_led_count()
                 led_indices = "".join(parms[1:]).strip("()").split(",")
                 for led in led_indices:
