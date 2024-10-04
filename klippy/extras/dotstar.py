@@ -26,8 +26,7 @@ class PrinterDotstar:
         self.spi = bus.MCU_SPI(mcu, None, None, 0, 500000, sw_spi_pins)
         # Initialize color data
         self.chain_count = config.getint("chain_count", 1, minval=1)
-        self.led_helper = led.LEDHelper(config, self.update_leds,
-                                        self.chain_count)
+        self.led_helper = led.LEDHelper(config, self.update_leds, self.chain_count)
         self.prev_data = None
         # Register commands
         printer.register_event_handler("klippy:connect", self.handle_connect)

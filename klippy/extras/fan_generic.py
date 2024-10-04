@@ -39,8 +39,8 @@ class PrinterFanGeneric:
         self.fan.set_speed(value)
 
     def cmd_SET_FAN_SPEED(self, gcmd):
-        speed = gcmd.get_float('SPEED', None, 0.)
-        template = gcmd.get('TEMPLATE', None)
+        speed = gcmd.get_float("SPEED", None, 0.0)
+        template = gcmd.get("TEMPLATE", None)
         if (speed is None) == (template is None):
             raise gcmd.error("SET_FAN_SPEED must specify SPEED or TEMPLATE")
         # Check for template setting

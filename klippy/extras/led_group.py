@@ -6,6 +6,7 @@
 
 from . import led
 
+
 class PrinterLEDGroup:
     def __init__(self, config):
         self.config = config
@@ -23,7 +24,9 @@ class PrinterLEDGroup:
                 parameter.strip() for parameter in chain.split() if parameter.strip()
             ]
             if parms:
-                led_helper = self.printer.lookup_object(parms[0].replace(":", " ")).led_helper
+                led_helper = self.printer.lookup_object(
+                    parms[0].replace(":", " ")
+                ).led_helper
                 led_count = led_helper.led_count
                 led_indices = "".join(parms[1:]).strip("()").split(",")
                 for led_index in led_indices:
@@ -68,8 +71,7 @@ class PrinterLEDGroup:
                 if led_helper not in self.led_helpers:
                     self.led_helpers.append(led_helper)
         self.ledCount = len(self.leds)
-        self.led_helper = led.LEDHelper(self.config, self.update_leds,
-                                        self.ledCount)
+        self.led_helper = led.LEDHelper(self.config, self.update_leds, self.ledCount)
 
     def update_leds(self, led_state, print_time):
         def lookahead_bgfunc(print_time):
@@ -78,7 +80,7 @@ class PrinterLEDGroup:
             for led_helper in self.led_helpers:
                 led_helper._check_transmit(print_time)
 
-        toolhead = self.printer.lookup_object('toolhead')
+        toolhead = self.printer.lookup_object("toolhead")
         toolhead.register_lookahead_callback(lookahead_bgfunc)
 
     def get_status(self, eventtime=None):

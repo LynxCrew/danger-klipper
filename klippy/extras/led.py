@@ -30,18 +30,23 @@ class LEDHelper:
         self.active_template = None
         # Support setting an led template
         self.template_eval = output_pin.lookup_template_eval(config)
-        self.tcallbacks = [(lambda text, s=self, index=i:
-                            s._template_update(index, text))
-                           for i in range(led_count)]
+        self.tcallbacks = [
+            (lambda text, s=self, index=i: s._template_update(index, text))
+            for i in range(1, led_count + 1)
+        ]
         # Register commands
         name = config.get_name().split()[-1]
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "SET_LED", "LED", name, self.cmd_SET_LED, desc=self.cmd_SET_LED_help
         )
-        gcode.register_mux_command("SET_LED_TEMPLATE", "LED", name,
-                                   self.cmd_SET_LED_TEMPLATE,
-                                   desc=self.cmd_SET_LED_TEMPLATE_help)
+        gcode.register_mux_command(
+            "SET_LED_TEMPLATE",
+            "LED",
+            name,
+            self.cmd_SET_LED_TEMPLATE,
+            desc=self.cmd_SET_LED_TEMPLATE_help,
+        )
 
     def check_index(self, index, gcmd, led_count):
         try:
@@ -130,14 +135,13 @@ class LEDHelper:
 
     def _template_update(self, index, text):
         try:
-            parts = [max(0., min(1., float(f)))
-                     for f in text.split(',', 4)]
+            parts = [max(0.0, min(1.0, float(f))) for f in text.split(",", 4)]
         except ValueError as e:
             logging.exception("led template render error")
             parts = []
         if len(parts) < 4:
-            parts += [0.] * (4 - len(parts))
-        self._set_color(index - 1, tuple(parts))
+            parts += [0.0] * (4 - len(parts))
+        self._set_color(index, tuple(parts))
 
     def _check_transmit(self, print_time=None):
         if not self.need_transmit:
@@ -169,11 +173,11 @@ class LEDHelper:
                 self._check_transmit(print_time)
 
         if sync:
-            #Sync LED Update with print time and send
-            toolhead = self.printer.lookup_object('toolhead')
+            # Sync LED Update with print time and send
+            toolhead = self.printer.lookup_object("toolhead")
             toolhead.register_lookahead_callback(lookahead_bgfunc)
         else:
-            #Send update now (so as not to wake toolhead and reset idle_timeout)
+            # Send update now (so as not to wake toolhead and reset idle_timeout)
             lookahead_bgfunc(None)
 
     cmd_SET_LED_TEMPLATE_help = "Assign a display_template to an LED"
@@ -182,8 +186,11 @@ class LEDHelper:
         set_template = self.template_eval.set_template
         tpl_name = None
         for index in self.get_indices(gcmd, self.led_count):
-            tpl_name = set_template(gcmd, self.tcallbacks[index-1], self._check_transmit)
+            tpl_name = set_template(
+                gcmd, self.tcallbacks[index - 1], self._check_transmit
+            )
         self.active_template = tpl_name
+
 
 PIN_MIN_TIME = 0.100
 MAX_SCHEDULE_TIME = 5.0
