@@ -31,8 +31,8 @@ class LEDHelper:
         # Support setting an led template
         self.template_eval = output_pin.lookup_template_eval(config)
         self.tcallbacks = [
-            (((lambda text, s=self, index=i: s._template_update(index, text))
-            for i in range(1, led_count + 1)), self._check_transmit())
+            ((lambda text, s=self, index=i: s._template_update(index, text)), self._check_transmit())
+            for i in range(1, led_count + 1)
         ]
         # Register commands
         name = config.get_name().split()[-1]
