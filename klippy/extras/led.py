@@ -192,6 +192,7 @@ class LEDHelper:
         gcmd.respond_info(f"{indices}")
         for index in indices:
             gcmd.respond_info(f"{index}")
+            gcmd.respond_info(f"{self.tcallbacks[index - 1]}")
             tpl_name = set_template(
                 gcmd, self.tcallbacks[index - 1], self._check_transmit
             )
