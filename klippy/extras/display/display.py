@@ -138,8 +138,7 @@ class PrinterDisplayTemplate:
         except Exception:
             raise self.printer.config_error("Cannot load config '%s'" % (filename,))
         # Load display_template sections
-        dt_main = config.get_prefix_sections("display_template ")
-        dt_main.extend(config.get_prefix_sections("render_template"))
+        dt_main = config.get_prefix_sections("display_template ", "render_template ")
         dt_main_names = {c.get_name(): 1 for c in dt_main}
         dt_def = [
             c
