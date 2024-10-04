@@ -168,6 +168,7 @@ class PrinterTemplateEvaluator:
                     raise gcmd.error("Unable to parse '%s' as a literal" % (v,))
         self._activate_template(callback, template, lparams, flush_callback)
         self._activate_timer()
+        return tpl_name
 
 def lookup_template_eval(config):
     printer = config.get_printer()

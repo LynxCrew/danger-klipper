@@ -185,10 +185,13 @@ class LEDHelper:
     def cmd_SET_LED_TEMPLATE(self, gcmd):
         set_template = self.template_eval.set_template
         tpl_name = None
-        for index in self.get_indices(gcmd, self.led_count):
+        indices = self.get_indices(gcmd, self.led_count)
+        for index in indices:
             tpl_name = set_template(
                 gcmd, self.tcallbacks[index - 1], self._check_transmit
             )
+            if tpl_name is None:
+                self._set_color(index, (0, 0, 0, 0))
         self.active_template = tpl_name
 
 
