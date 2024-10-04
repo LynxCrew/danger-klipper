@@ -143,7 +143,7 @@ class PrinterDisplayTemplate:
         dt_def = [
             c
             for c in dconfig.get_prefix_sections(
-                "display_template ", "render_template "
+                ("display_template ", "render_template ")
             )
             if c.get_name() not in dt_main_names
         ]
