@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import ast
+import inspect
 import logging
 from .display import display
 
@@ -39,7 +40,10 @@ class GCodeRequestQueue:
             req_pt, req_val, req_force = rqueue[pos]
             # Invoke callback for the request
             min_wait = 0.0
-            ret = self.callback(next_time, req_val, req_force)
+            if 'force' in inspect.getfullargspec(self.callback).args:
+                ret = self.callback(next_time, req_val, req_force)
+            else:
+                ret = self.callback(next_time, req_val)
             if ret is not None:
                 # Handle special cases
                 action, min_wait = ret
