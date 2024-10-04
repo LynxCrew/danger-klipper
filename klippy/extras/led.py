@@ -184,8 +184,8 @@ class LEDHelper:
 
     def cmd_SET_LED_TEMPLATE(self, gcmd):
         toolhead = self.printer.lookup_object("toolhead")
-        def lookahead_bgfunc(print_time):
-            self._check_transmit(print_time)
+        def lookahead_bgfunc(print_time, flush_callback):
+            flush_callback(print_time)
 
         set_template = self.template_eval.set_template
         tpl_name = None
@@ -197,7 +197,7 @@ class LEDHelper:
             )
             if tpl_name == "":
                 self._set_color(index, (0, 0, 0, 0))
-                toolhead.register_lookahead_callback(lambda pt: lookahead_bgfunc(pt))
+                toolhead.register_lookahead_callback(lambda pt: lookahead_bgfunc(pt, flush_callback))
         self.active_template = tpl_name
 
 
