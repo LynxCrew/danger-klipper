@@ -190,7 +190,7 @@ class LEDHelper:
             tpl_name = set_template(
                 gcmd, self.tcallbacks[index - 1], self._check_transmit
             )
-            if tpl_name is None:
+            if tpl_name == "":
                 self._set_color(index, (0, 0, 0, 0))
         self.active_template = tpl_name
 
