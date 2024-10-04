@@ -183,19 +183,21 @@ class LEDHelper:
     cmd_SET_LED_TEMPLATE_help = "Assign a display_template to an LED"
 
     def cmd_SET_LED_TEMPLATE(self, gcmd):
+        toolhead = self.printer.lookup_object("toolhead")
         def lookahead_bgfunc(print_time):
             self._check_transmit(print_time)
 
         set_template = self.template_eval.set_template
         tpl_name = None
         for index in self.get_indices(gcmd, self.led_count):
+            callback = self.tcallbacks[index - 1][0]
+            flush_callback = self.tcallbacks[index - 1][1]
             tpl_name = set_template(
-                gcmd, self.tcallbacks[index - 1][0], self.tcallbacks[index - 1][1]
+                gcmd, callback, flush_callback
             )
             if tpl_name == "":
                 self._set_color(index, (0, 0, 0, 0))
-        toolhead = self.printer.lookup_object("toolhead")
-        toolhead.register_lookahead_callback(lookahead_bgfunc)
+                toolhead.register_lookahead_callback(lambda pt: lookahead_bgfunc(pt))
         self.active_template = tpl_name
 
 
