@@ -80,6 +80,7 @@ class PrinterLEDGroup:
         self.led_helper = led.LEDHelper(self.config, self.update_leds, self.ledCount)
         logging.info(f"new callbacks: {tcallbacks}")
         self.led_helper.tcallbacks = tcallbacks
+        self.led_helper.template_eval = self.led_helpers[0].template_eval
         logging.info(f"orig callbacks: {self.led_helper.tcallbacks}")
 
     def update_leds(self, led_state, print_time):
