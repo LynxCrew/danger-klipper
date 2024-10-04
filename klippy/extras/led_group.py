@@ -57,7 +57,7 @@ class PrinterLEDGroup:
                             for i in led_list:
                                 self.leds.append((led_helper, int(i)))
                                 tcallbacks.append(
-                                    led_helper.tcallbacks[int(i) - 1])
+                                    led_helper.tcallbacks[int(i)])
                         else:
                             i = int(led_index)
                             if i > led_count or i < 1:
@@ -69,11 +69,11 @@ class PrinterLEDGroup:
                                     )
                                 )
                             self.leds.append((led_helper, (int(i) - 1)))
-                            tcallbacks.append(led_helper.tcallbacks[int(i) - 2])
+                            tcallbacks.append(led_helper.tcallbacks[int(i) - 1])
                     else:
                         for i in range(led_count):
                             self.leds.append((led_helper, int(i)))
-                            tcallbacks.append(led_helper.tcallbacks[int(i) - 1])
+                            tcallbacks.append(led_helper.tcallbacks[int(i)])
                 if led_helper not in self.led_helpers:
                     self.led_helpers.append(led_helper)
         self.ledCount = len(self.leds)
