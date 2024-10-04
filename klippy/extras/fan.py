@@ -191,7 +191,7 @@ class Fan:
             logging.error(msg)
             self.printer.invoke_shutdown(msg)
         self.printer.lookup_object("toolhead").register_lookahead_callback(
-            (lambda pt: self.set_speed(pt, self.last_req_value, force=True))
+            (lambda pt: self.set_speed(self.last_req_value, pt, force=True))
         )
         self.self_checking = False
 
