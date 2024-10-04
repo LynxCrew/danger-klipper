@@ -81,13 +81,13 @@ class GCodeRequestQueue:
                 break
 
 
-
 ######################################################################
 # Template evaluation helper
 ######################################################################
 
 # Time between each template update
 RENDER_TIME = 0.500
+
 
 # Main template evaluation code
 class PrinterTemplateEvaluator:
@@ -100,19 +100,21 @@ class PrinterTemplateEvaluator:
         self.templates = dtemplates.get_display_templates()
         gcode_macro = self.printer.load_object(config, "gcode_macro")
         self.create_template_context = gcode_macro.create_template_context
+
     def _activate_timer(self):
         if self.render_timer is not None or not self.active_templates:
             return
         reactor = self.printer.get_reactor()
         self.render_timer = reactor.register_timer(self._render, reactor.NOW)
+
     def _activate_template(self, callback, template, lparams, flush_callback):
         if template is not None:
             uid = (template,) + tuple(sorted(lparams.items()))
-            self.active_templates[callback] = (
-                uid, template, lparams, flush_callback)
+            self.active_templates[callback] = (uid, template, lparams, flush_callback)
             return
         if callback in self.active_templates:
             del self.active_templates[callback]
+
     def _render(self, eventtime):
         if not self.active_templates:
             # Nothing to do - unregister timer
@@ -122,9 +124,11 @@ class PrinterTemplateEvaluator:
             return reactor.NEVER
         # Setup gcode_macro template context
         context = self.create_template_context(eventtime)
+
         def render(name, **kwargs):
             return self.templates[name].render(context, **kwargs)
-        context['render'] = render
+
+        context["render"] = render
         # Render all templates
         flush_callbacks = {}
         rendered = {}
@@ -141,11 +145,12 @@ class PrinterTemplateEvaluator:
             if flush_callback is not None:
                 flush_callbacks[flush_callback] = 1
             callback(text)
-        context.clear() # Remove circular references for better gc
+        context.clear()  # Remove circular references for better gc
         # Invoke optional flush callbacks
         for flush_callback in flush_callbacks.keys():
             flush_callback()
         return eventtime + RENDER_TIME
+
     def set_template(self, gcmd, callback, flush_callback=None):
         template = None
         lparams = {}
@@ -160,8 +165,7 @@ class PrinterTemplateEvaluator:
                     continue
                 p = p.lower()
                 if p not in tparams:
-                    raise gcmd.error("Invalid display_template parameter: %s"
-                                     % (p,))
+                    raise gcmd.error("Invalid display_template parameter: %s" % (p,))
                 try:
                     lparams[p] = ast.literal_eval(v)
                 except ValueError as e:
@@ -169,6 +173,7 @@ class PrinterTemplateEvaluator:
         self._activate_template(callback, template, lparams, flush_callback)
         self._activate_timer()
         return tpl_name
+
 
 def lookup_template_eval(config):
     printer = config.get_printer()
@@ -247,8 +252,8 @@ class PrinterOutputPin:
     cmd_SET_PIN_help = "Set the value of an output pin"
 
     def cmd_SET_PIN(self, gcmd):
-        value = gcmd.get_float('VALUE', None, minval=0., maxval=self.scale)
-        template = gcmd.get('TEMPLATE', None)
+        value = gcmd.get_float("VALUE", None, minval=0.0, maxval=self.scale)
+        template = gcmd.get("TEMPLATE", None)
         if (value is None) == (template is None):
             raise gcmd.error("SET_PIN command must specify VALUE or TEMPLATE")
         # Check for template setting

@@ -56,8 +56,7 @@ class PrinterLEDGroup:
                                 led_list = list(reversed(range(stop - 1, start)))
                             for i in led_list:
                                 self.leds.append((led_helper, int(i)))
-                                tcallbacks.append(
-                                    led_helper.tcallbacks[int(i)])
+                                tcallbacks.append(led_helper.tcallbacks[int(i)])
                         else:
                             i = int(led_index)
                             if i > led_count or i < 1:
@@ -78,9 +77,7 @@ class PrinterLEDGroup:
                     self.led_helpers.append(led_helper)
         self.ledCount = len(self.leds)
         self.led_helper = led.LEDHelper(self.config, self.update_leds, self.ledCount)
-        # logging.info(f"orig callbacks: {self.led_helper.tcallbacks}")
         self.led_helper.tcallbacks = tcallbacks
-        # logging.info(f"new callbacks: {self.led_helper.tcallbacks}")
 
     def update_leds(self, led_state, print_time):
         for i, (led_helper, index) in enumerate(self.leds):
