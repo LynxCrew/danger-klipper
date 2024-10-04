@@ -137,7 +137,7 @@ class LEDHelper:
             parts = []
         if len(parts) < 4:
             parts += [0.] * (4 - len(parts))
-        self._set_color(index + 1, tuple(parts))
+        self._set_color(index - 1, tuple(parts))
 
     def _check_transmit(self, print_time=None):
         if not self.need_transmit:
