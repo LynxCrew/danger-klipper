@@ -190,7 +190,7 @@ class Fan:
             )
             logging.error(msg)
             self.printer.invoke_shutdown(msg)
-        self.gcrq.queue_gcode_request(self.last_req_value)
+        self.gcrq.queue_gcode_request(self.last_fan_value)
         self.self_checking = False
 
     def get_mcu(self):
