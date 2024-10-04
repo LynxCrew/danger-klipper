@@ -167,6 +167,7 @@ class PrinterTemplateEvaluator:
                 except ValueError as e:
                     raise gcmd.error("Unable to parse '%s' as a literal" % (v,))
         gcmd.respond_info(f"{self.active_templates}")
+        gcmd.respond_info(f"{callback}")
         self._activate_template(callback, template, lparams, flush_callback)
         self._activate_timer()
         return tpl_name
