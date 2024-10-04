@@ -256,7 +256,7 @@ class Fan:
                     self.fan_check_thread = None
 
     def set_speed(self, value, print_time=None, force=False):
-        self.gcrq.send_async_request(print_time, value, force)
+        self.gcrq.send_async_request(value, print_time, force)
 
     def set_speed_from_command(self, value, force=False):
         self.gcrq.queue_gcode_request(value, force)
