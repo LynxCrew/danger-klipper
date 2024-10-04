@@ -190,7 +190,9 @@ class Fan:
             )
             logging.error(msg)
             self.printer.invoke_shutdown(msg)
-        self.gcrq.queue_gcode_request(self.last_fan_value)
+        self.printer.lookup_object("toolhead").register_lookahead_callback(
+            (lambda pt: self.set_speed(pt, self.last_req_value, force=True))
+        )
         self.self_checking = False
 
     def get_mcu(self):
