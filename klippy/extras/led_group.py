@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Julian Schill <j.schill@web.de>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
 
 from . import led
 
@@ -77,6 +78,8 @@ class PrinterLEDGroup:
                     self.led_helpers.append(led_helper)
         self.ledCount = len(self.leds)
         self.led_helper = led.LEDHelper(self.config, self.update_leds, self.ledCount)
+        logging.info(f"orig callbacks: {self.led_helper.tcallbacks}")
+        logging.info(f"new callbacks: {tcallbacks}")
         self.led_helper.tcallbacks = tcallbacks
 
     def update_leds(self, led_state, print_time):
