@@ -182,7 +182,7 @@ class LEDHelper:
         set_template = self.template_eval.set_template
         tpl_name = None
         for index in self.get_indices(gcmd, self.led_count):
-            tpl_name = set_template(gcmd, self.tcallbacks[index], self._check_transmit)
+            tpl_name = set_template(gcmd, self.tcallbacks[index-1], self._check_transmit)
         self.active_template = tpl_name
 
 PIN_MIN_TIME = 0.100
