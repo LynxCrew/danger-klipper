@@ -79,7 +79,7 @@ class PrinterLEDGroup:
         self.ledCount = len(self.leds)
         self.led_helper = led.LEDHelper(self.config, self.update_leds, self.ledCount)
         # logging.info(f"orig callbacks: {self.led_helper.tcallbacks}")
-        # self.led_helper.tcallbacks = tcallbacks
+        self.led_helper.tcallbacks = tcallbacks
         # logging.info(f"new callbacks: {self.led_helper.tcallbacks}")
 
     def update_leds(self, led_state, print_time):
