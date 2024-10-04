@@ -3,6 +3,9 @@
 # Copyright (C) 2022 Julian Schill <j.schill@web.de>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+
+from . import led
+
 class PrinterLEDGroup:
     def __init__(self, config):
         self.config = config
@@ -65,11 +68,8 @@ class PrinterLEDGroup:
                 if led_helper not in self.led_helpers:
                     self.led_helpers.append(led_helper)
         self.ledCount = len(self.leds)
-
-        pled = self.printer.load_object(self.config, "led")
-        self.led_helper = pled.setup_helper(
-            self.config, self.update_leds, self.ledCount
-        )
+        self.led_helper = led.LEDHelper(self.config, self.update_leds,
+                                        self.ledCount)
 
     def update_leds(self, led_state, print_time):
         for i, (led_helper, index) in enumerate(self.leds):
