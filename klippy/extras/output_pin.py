@@ -40,7 +40,7 @@ class GCodeRequestQueue:
             req_pt, req_val, req_force = rqueue[pos]
             # Invoke callback for the request
             min_wait = 0.0
-            if 'force' in inspect.getfullargspec(self.callback).args:
+            if "force" in inspect.getfullargspec(self.callback).args:
                 ret = self.callback(next_time, req_val, req_force)
             else:
                 ret = self.callback(next_time, req_val)
