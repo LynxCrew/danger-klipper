@@ -81,7 +81,7 @@ class LEDHelper:
         given_indices = gcmd.get("INDEX", None)
         if given_indices is None:
             if self.led_count == 1:
-                return [1]
+                return {1}
             return range(1, (led_count + 1))
         indices = set()
         for index in given_indices.split(","):
