@@ -197,9 +197,6 @@ class Fan:
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
 
-    def set_speed(self, print_time, value, force=False):
-        self.gcrq.send_async_request(print_time, value, force)
-
     def _apply_speed(self, print_time, value, force=False):
         if value > 0:
             if value == 1.0 and self.full_speed_max_power:
@@ -216,7 +213,6 @@ class Fan:
             and pwm_value == self.last_pwm_value
             and not force
         ):
-            self.last_fan_time = print_time
             return "discard", 0.0
 
         if force or not self.self_checking:
@@ -227,11 +223,10 @@ class Fan:
                     self.enable_pin.set_digital(print_time, 0)
             if (
                 pwm_value
-                and pwm_value < self.max_power
                 and self.kick_start_time
                 and (
-                    not self.last_fan_value
-                    or value - self.last_fan_value > self.kick_start_threshold
+                    not self.last_pwm_value
+                    or pwm_value - self.last_pwm_value > self.kick_start_threshold
                 )
             ):
                 # Run fan at full speed for specified kick_start_time
@@ -239,11 +234,11 @@ class Fan:
                 self.last_req_pwm_value = pwm_value
 
                 self.last_fan_value = self.max_power
-                self.last_fan_pwm_value = self.max_power
+                self.last_pwm_value = self.max_power
 
                 self.mcu_fan.set_pwm(print_time, self.max_power)
                 return "delay", self.kick_start_time
-            self.mcu_fan.set_pwm(print_time, value)
+            self.mcu_fan.set_pwm(print_time, pwm_value)
         self.last_fan_value = self.last_req_value = value
         self.last_pwm_value = self.last_req_pwm_value = pwm_value
 
@@ -258,6 +253,9 @@ class Fan:
                 if self.fan_check_thread is not None:
                     self.fan_check_thread.unregister()
                     self.fan_check_thread = None
+
+    def set_speed(self, print_time, value, force=False):
+        self.gcrq.send_async_request(print_time, value, force)
 
     def set_speed_from_command(self, value, force=False):
         self.gcrq.queue_gcode_request(value, force)
