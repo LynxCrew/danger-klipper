@@ -149,7 +149,7 @@ class PrinterTemplateEvaluator:
     def set_template(self, gcmd, callback, flush_callback=None):
         template = None
         lparams = {}
-        tpl_name = gcmd.get("TEMPLATE")
+        tpl_name = gcmd.get("TEMPLATE", "")
         if tpl_name:
             template = self.templates.get(tpl_name)
             if template is None:
