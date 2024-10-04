@@ -26,10 +26,10 @@ class PrinterLEDGroup:
                 led_helper = self.printer.lookup_object(parms[0].replace(":", " ")).led_helper
                 led_count = led_helper.led_count
                 led_indices = "".join(parms[1:]).strip("()").split(",")
-                for led in led_indices:
-                    if led:
-                        if "-" in led:
-                            start, stop = map(int, led.split("-"))
+                for led_index in led_indices:
+                    if led_index:
+                        if "-" in led_index:
+                            start, stop = map(int, led_index.split("-"))
                             if (
                                 start > led_count
                                 or stop > led_count
@@ -52,7 +52,7 @@ class PrinterLEDGroup:
                             for i in led_list:
                                 self.leds.append((led_helper, int(i)))
                         else:
-                            i = int(led)
+                            i = int(led_index)
                             if i > led_count or i < 1:
                                 raise self.printer.config_error(
                                     "LED index out of range for '%s' in '%s'"
