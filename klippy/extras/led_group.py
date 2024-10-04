@@ -8,7 +8,7 @@ class PrinterLEDGroup:
         self.config = config
         self.printer = config.get_printer()
         self.config_leds = config.get("leds")
-        self.printer_led = self.printer.lookup_object("led")
+        self.printer_led = self.printer.lookup_object("led", None)
         self.config_chains = self.config_leds.split("\n")
         self.leds = []
         self.led_helpers = []
