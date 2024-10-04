@@ -87,7 +87,7 @@ class TemperatureFan:
         speed_time = read_time + self.speed_delay
         self.next_speed_time = speed_time + 0.75 * MAX_FAN_TIME
         self.last_speed_value = value
-        self.fan.set_speed(speed_time, value)
+        self.fan.set_speed(value, speed_time)
 
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp

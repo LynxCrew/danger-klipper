@@ -196,6 +196,7 @@ def lookup_display_templates(config):
     if dt is None:
         dt = PrinterDisplayTemplate(config)
         printer.add_object("display_template", dt)
+        printer.add_object("render_template", dt)
     return dt
 
 

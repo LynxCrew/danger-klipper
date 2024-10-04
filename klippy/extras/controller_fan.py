@@ -98,11 +98,10 @@ class ControllerFan:
 
     def callback(self):
         curtime = self.printer.get_reactor().monotonic()
-        print_time = self.fan.get_mcu().estimated_print_time(curtime)
-        speed = self.get_speed(print_time)
+        speed = self.get_speed(curtime)
         if self.enabled and speed != self.last_speed:
             self.last_speed = speed
-            self.fan.set_speed(print_time + PIN_MIN_TIME, speed)
+            self.fan.set_speed(speed)
         return 1.0
 
     cmd_SET_CONTROLLER_FAN_help = "Enable or Disable a controller_fan"
