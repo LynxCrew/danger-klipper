@@ -19,6 +19,7 @@ class PrinterLEDGroup:
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
     def _handle_connect(self):
+        tcallbacks = []
         for chain in self.config_chains:
             chain = chain.strip()
             parms = [
@@ -55,6 +56,8 @@ class PrinterLEDGroup:
                                 led_list = list(reversed(range(stop - 1, start)))
                             for i in led_list:
                                 self.leds.append((led_helper, int(i)))
+                                tcallbacks.append(
+                                    led_helper.tcallbacks[int(i) - 1])
                         else:
                             i = int(led_index)
                             if i > led_count or i < 1:
@@ -66,13 +69,18 @@ class PrinterLEDGroup:
                                     )
                                 )
                             self.leds.append((led_helper, (int(i) - 1)))
+                            tcallbacks.append(led_helper.tcallbacks[int(i) - 2])
                     else:
                         for i in range(led_count):
                             self.leds.append((led_helper, int(i)))
+                            tcallbacks.append(led_helper.tcallbacks[int(i) - 1])
                 if led_helper not in self.led_helpers:
                     self.led_helpers.append(led_helper)
         self.ledCount = len(self.leds)
         self.led_helper = led.LEDHelper(self.config, self.update_leds, self.ledCount)
+        logging.info(f"new callbacks: {tcallbacks}")
+        self.led_helper.tcallbacks = tcallbacks
+        logging.info(f"orig callbacks: {self.led_helper.tcallbacks}")
 
     def update_leds(self, led_state, print_time):
         for i, (led_helper, index) in enumerate(self.leds):
