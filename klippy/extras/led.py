@@ -31,7 +31,7 @@ class LEDHelper:
         # Support setting an led template
         self.template_eval = output_pin.lookup_template_eval(config)
         self.tcallbacks = [
-            ((lambda text, s=self, index=i: s._template_update(index, text)), self._check_transmit)
+            ((lambda text, s=self, index=i: s._template_update(index, text)), self._check_transmit, self._set_color)
             for i in range(1, led_count + 1)
         ]
         # Register commands
@@ -190,13 +190,12 @@ class LEDHelper:
         set_template = self.template_eval.set_template
         tpl_name = None
         for index in self.get_indices(gcmd, self.led_count):
-            callback = self.tcallbacks[index - 1][0]
-            flush_callback = self.tcallbacks[index - 1][1]
+            callback, flush_callback, set_color = self.tcallbacks[index - 1]
             tpl_name = set_template(
                 gcmd, callback, flush_callback
             )
             if tpl_name == "":
-                self._set_color(index, (0, 0, 0, 0))
+                set_color(index, (0, 0, 0, 0))
                 toolhead.register_lookahead_callback(lambda pt: lookahead_bgfunc(pt, flush_callback))
         self.active_template = tpl_name
 
