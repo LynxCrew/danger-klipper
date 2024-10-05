@@ -74,7 +74,10 @@ class GCodeRequestQueue:
             next_time = max(print_time, self.next_min_flush_time)
             # Invoke callback for the request
             action, min_wait = "normal", 0.0
-            ret = self.callback(next_time, value, force)
+            if "force" in inspect.getfullargspec(self.callback).args:
+                ret = self.callback(next_time, value, force)
+            else:
+                ret = self.callback(next_time, value)
             if ret is not None:
                 # Handle special cases
                 action, min_wait = ret

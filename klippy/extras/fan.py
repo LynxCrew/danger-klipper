@@ -262,9 +262,7 @@ class Fan:
         self.gcrq.queue_gcode_request(value, force)
 
     def _handle_request_restart(self, print_time):
-        self.mcu_fan.set_pwm(
-            print_time, self.shutdown_power if self.shutdown_speed_on_restart else 0.0
-        )
+        self.set_speed(0., print_time)
 
     def get_status(self, eventtime):
         tachometer_status = self.tachometer.get_status(eventtime)
