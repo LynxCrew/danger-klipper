@@ -162,14 +162,14 @@ class PrinterTemplateEvaluator:
         if tpl_name:
             template = self.templates.get(tpl_name)
             if template is None:
-                raise gcmd.error("Unknown display_template '%s'" % (tpl_name,))
+                raise gcmd.error("Unknown template '%s'" % (tpl_name,))
             tparams = template.get_params()
             for p, v in gcmd.get_command_parameters().items():
                 if not p.startswith("PARAM_"):
                     continue
                 p = p.lower()
                 if p not in tparams:
-                    raise gcmd.error("Invalid display_template parameter: %s" % (p,))
+                    raise gcmd.error("Invalid template parameter: %s" % (p,))
                 try:
                     lparams[p] = ast.literal_eval(v)
                 except ValueError as e:

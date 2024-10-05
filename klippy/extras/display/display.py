@@ -138,12 +138,12 @@ class PrinterDisplayTemplate:
         except Exception:
             raise self.printer.config_error("Cannot load config '%s'" % (filename,))
         # Load display_template sections
-        dt_main = config.get_prefix_sections(("display_template ", "render_template "))
+        dt_main = config.get_prefix_sections(("display_template ", "render_template ", "fan_template ", "pin_template ", "lighting_template ", "servo_template ", "template "))
         dt_main_names = {c.get_name(): 1 for c in dt_main}
         dt_def = [
             c
             for c in dconfig.get_prefix_sections(
-                ("display_template ", "render_template ")
+                ("display_template ", "render_template ", "fan_template ", "pin_template ", "lighting_template ", "servo_template ", "template ")
             )
             if c.get_name() not in dt_main_names
         ]
@@ -198,7 +198,6 @@ def lookup_display_templates(config):
     if dt is None:
         dt = PrinterDisplayTemplate(config)
         printer.add_object("display_template", dt)
-        printer.add_object("render_template", dt)
     return dt
 
 
