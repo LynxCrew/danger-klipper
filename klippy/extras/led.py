@@ -191,7 +191,9 @@ class LEDHelper:
             for cb in callbacks:
                 cb(print_time)
 
-        toolhead = self.printer.lookup_object("toolhead")
+        transmit = gcmd.get_int("TRANSMIT", 1)
+        sync = gcmd.get_int("SYNC", 1)
+
         flush_callbacks = set()
 
         set_template = self.template_eval.set_template
@@ -203,9 +205,14 @@ class LEDHelper:
                 set_color((0, 0, 0, 0))
                 flush_callbacks.add(flush_callback)
         self.active_template = tpl_name
-        toolhead.register_lookahead_callback(
-            (lambda pt: lookahead_bgfunc(pt, flush_callbacks))
-        )
+        if transmit:
+            if sync:
+                toolhead = self.printer.lookup_object("toolhead")
+                toolhead.register_lookahead_callback(
+                    (lambda pt: lookahead_bgfunc(pt, flush_callbacks))
+                )
+            else:
+                lookahead_bgfunc(None, flush_callbacks)
 
 
 PIN_MIN_TIME = 0.100
