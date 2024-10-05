@@ -194,7 +194,6 @@ class LEDHelper:
         sync = gcmd.get_int("SYNC", 1)
 
         flush_callbacks = set()
-
         set_template = self.template_eval.set_template
         tpl_name = None
         for index in self.get_indices(gcmd, self.led_count):
