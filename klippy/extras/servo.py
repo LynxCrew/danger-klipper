@@ -3,6 +3,8 @@
 # Copyright (C) 2017-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
+
 from . import output_pin
 
 SERVO_SIGNAL_PERIOD = 0.020
@@ -43,6 +45,7 @@ class PrinterServo:
         self.gcrq = output_pin.GCodeRequestQueue(
             config, self.mcu_servo.get_mcu(), self._set_pwm
         )
+        self.template_eval = output_pin.lookup_template_eval(config)
         # Register commands
         servo_name = config.get_name().split()[1]
         gcode = self.printer.lookup_object("gcode")
@@ -54,8 +57,21 @@ class PrinterServo:
             desc=self.cmd_SET_SERVO_help,
         )
 
-    def get_status(self, eventtime):
+    def get_status(self, eventtime=None):
         return {"value": self.last_value}
+
+    def _template_update(self, text):
+        try:
+            type, value = [t.upper().strip() for t in text.split(":", 2)]
+            if type == "ANGLE":
+                # Transmit pending changes
+                angle = float(value.strip())
+                self.gcrq.send_async_request(self._get_pwm_from_angle(angle))
+            elif type == "WIDTH":
+                width = float(value.strip())
+                self.gcrq.send_async_request(self._get_pwm_from_pulse_width(width))
+        except ValueError as e:
+            logging.exception("servo template render error")
 
     def _set_pwm(self, print_time, value):
         if value == self.last_value:
@@ -77,10 +93,16 @@ class PrinterServo:
 
     def cmd_SET_SERVO(self, gcmd):
         width = gcmd.get_float("WIDTH", None)
+        angle = gcmd.get_float("ANGLE", None)
+        template = gcmd.get("TEMPLATE", None)
+        if (width is None) == (angle is None) == (template is None):
+            raise gcmd.error("SET_SERVO must specify WIDTH, ANGLE or TEMPLATE")
+        if template is not None:
+            self.template_eval.set_template(gcmd, self._template_update)
+            return
         if width is not None:
             value = self._get_pwm_from_pulse_width(width)
         else:
-            angle = gcmd.get_float("ANGLE")
             value = self._get_pwm_from_angle(angle)
         self.gcrq.queue_gcode_request(value)
 

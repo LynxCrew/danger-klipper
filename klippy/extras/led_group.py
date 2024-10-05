@@ -8,6 +8,35 @@ import logging
 from . import led
 
 
+def parse_chain(chain):
+    chain = chain.strip()
+    leds = []
+    parms = [parameter.strip() for parameter in chain.split()
+             if parameter.strip()]
+    if parms:
+        chainName = parms[0].replace(':', ' ')
+        ledIndices = ''.join(parms[1:]).strip('()').split(',')
+        for led in ledIndices:
+            if led:
+                if '-' in led:
+                    start, stop = map(int, led.split('-'))
+                    if stop == start:
+                        ledList = [start - 1]
+                    elif stop > start:
+                        ledList = list(range(start - 1, stop))
+                    else:
+                        ledList = list(reversed(range(stop - 1, start)))
+                    for i in ledList:
+                        leds.append(int(i))
+                else:
+                    for i in led.split(','):
+                        leds.append(int(i) - 1)
+
+        return chainName, leds
+    else:
+        return None, None
+
+
 class PrinterLEDGroup:
     def __init__(self, config):
         self.config = config
@@ -21,58 +50,14 @@ class PrinterLEDGroup:
     def _handle_connect(self):
         tcallbacks = []
         for chain in self.config_chains:
-            chain = chain.strip()
-            parms = [
-                parameter.strip() for parameter in chain.split() if parameter.strip()
-            ]
-            if parms:
+            chain_name, led_indices = parse_chain(chain)
+            if chain_name and led_indices:
                 led_helper = self.printer.lookup_object(
-                    parms[0].replace(":", " ")
+                    chain_name
                 ).led_helper
-                led_count = led_helper.led_count
-                led_indices = "".join(parms[1:]).strip("()").split(",")
                 for led_index in led_indices:
-                    if led_index:
-                        if "-" in led_index:
-                            start, stop = map(int, led_index.split("-"))
-                            if (
-                                start > led_count
-                                or stop > led_count
-                                or start < 1
-                                or stop < 1
-                            ):
-                                raise self.printer.config_error(
-                                    "LED index out of range for '%s' in '%s'"
-                                    % (
-                                        parms[0],
-                                        parms[1],
-                                    )
-                                )
-                            if stop == start:
-                                led_list = [start - 1]
-                            elif stop > start:
-                                led_list = list(range(start - 1, stop))
-                            else:
-                                led_list = list(reversed(range(stop - 1, start)))
-                            for i in led_list:
-                                self.leds.append((led_helper, int(i)))
-                                tcallbacks.append(led_helper.tcallbacks[int(i)])
-                        else:
-                            i = int(led_index)
-                            if i > led_count or i < 1:
-                                raise self.printer.config_error(
-                                    "LED index out of range for '%s' in '%s'"
-                                    % (
-                                        parms[0],
-                                        parms[1],
-                                    )
-                                )
-                            self.leds.append((led_helper, (int(i) - 1)))
-                            tcallbacks.append(led_helper.tcallbacks[int(i) - 1])
-                    else:
-                        for i in range(led_count):
-                            self.leds.append((led_helper, int(i)))
-                            tcallbacks.append(led_helper.tcallbacks[int(i)])
+                    self.leds.append((led_helper, led_index))
+                    tcallbacks.append(led_helper.tcallbacks[led_index])
                 if led_helper not in self.led_helpers:
                     self.led_helpers.append(led_helper)
         self.ledCount = len(self.leds)
