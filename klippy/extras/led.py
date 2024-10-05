@@ -197,7 +197,7 @@ class LEDHelper:
             tpl_name = set_template(gcmd, callback, flush_callback)
             if tpl_name == "":
                 # noinspection PyArgumentList
-                # set_color((0, 0, 0, 0))
+                set_color((0, 0, 0, 0))
                 flush_callbacks.add(flush_callback)
         for f_cb in flush_callbacks:
             f_cb()

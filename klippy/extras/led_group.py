@@ -42,8 +42,6 @@ class PrinterLEDGroup:
         self.printer = config.get_printer()
         self.config_leds = config.get("leds")
         self.config_chains = self.config_leds.split("\n")
-        self.leds = []
-        self.led_helpers = []
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
     def _handle_connect(self):
@@ -53,19 +51,16 @@ class PrinterLEDGroup:
             if chain_name and led_indices:
                 led_helper = self.printer.lookup_object(chain_name).led_helper
                 for led_index in led_indices:
-                    self.leds.append((led_helper, led_index))
                     tcallbacks.append(led_helper.tcallbacks[led_index])
-                if led_helper not in self.led_helpers:
-                    self.led_helpers.append(led_helper)
-        self.ledCount = len(self.leds)
+        self.ledCount = len(tcallbacks)
         self.led_helper = led.LEDHelper(self.config, self.update_leds, self.ledCount)
         self.led_helper.tcallbacks = tcallbacks
 
-    def update_leds(self, led_state, print_time):
+    def update_leds(self, led_state, print_time):#
         flush_callbacks = set()
-        for i, (led_helper, index) in enumerate(self.leds):
-            led_helper._set_color(index + 1, led_state[i])
-            flush_callbacks.add(led_helper._check_transmit)
+        for i, (callback, flush_callback, set_color) in enumerate(self.led_helper.tcallbacks):
+            set_color(led_state[i])
+            flush_callbacks.add(flush_callback)
         for flush_callback in flush_callbacks:
             flush_callback(print_time)
 
