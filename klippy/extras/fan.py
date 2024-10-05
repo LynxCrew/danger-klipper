@@ -60,9 +60,6 @@ class Fan:
                 % (self.min_power, self.max_power)
             )
         self.full_speed_max_power = config.getboolean("full_speed_max_power", False)
-        self.shutdown_speed_on_restart = config.getboolean(
-            "shutdown_speed_on_restart", False
-        )
 
         cycle_time = config.getfloat("cycle_time", 0.010, above=0.0)
         hardware_pwm = config.getboolean("hardware_pwm", False)
@@ -262,7 +259,7 @@ class Fan:
         self.gcrq.queue_gcode_request(value, force)
 
     def _handle_request_restart(self, print_time):
-        self.set_speed(0., print_time)
+        self.set_speed(0.0, print_time)
 
     def get_status(self, eventtime):
         tachometer_status = self.tachometer.get_status(eventtime)
