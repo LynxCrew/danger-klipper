@@ -145,6 +145,7 @@ class PrinterDisplayTemplate:
                 "fan_template ",
                 "pin_template ",
                 "lighting_template ",
+                "led_template ",
                 "servo_template ",
                 "template ",
             )
@@ -159,6 +160,7 @@ class PrinterDisplayTemplate:
                     "fan_template ",
                     "pin_template ",
                     "lighting_template ",
+                    "led_template ",
                     "servo_template ",
                     "template ",
                 )
