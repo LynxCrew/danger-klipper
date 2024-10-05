@@ -196,6 +196,9 @@ class LEDHelper:
         for index in self.get_indices(gcmd, self.led_count):
             callback, flush_callback = self.tcallbacks[index - 1]
             tpl_name = set_template(gcmd, callback, flush_callback)
+            toolhead.register_lookahead_callback(
+                lambda pt: lookahead_bgfunc(pt, flush_callback)
+            )
         self.active_template = tpl_name
 
 
