@@ -34,7 +34,7 @@ class LEDHelper:
             (
                 (lambda text, s=self, index=i: s._template_update(index, text)),
                 self._check_transmit,
-                self._set_color,
+                (lambda color, index=i: self._set_color(index, color)),
             )
             for i in range(1, led_count + 1)
         ]
@@ -188,9 +188,12 @@ class LEDHelper:
 
     def cmd_SET_LED_TEMPLATE(self, gcmd):
         toolhead = self.printer.lookup_object("toolhead")
+        flush_callbacks = set()
 
-        def lookahead_bgfunc(print_time, flush_callback):
-            flush_callback(print_time)
+        def lookahead_bgfunc(print_time):
+            for f_cb in flush_callbacks:
+                # noinspection PyArgumentList
+                f_cb(print_time)
 
         set_template = self.template_eval.set_template
         tpl_name = None
@@ -199,10 +202,11 @@ class LEDHelper:
             tpl_name = set_template(gcmd, callback, flush_callback)
             if tpl_name == "":
                 # noinspection PyArgumentList
-                set_color(index, (0, 0, 0, 0))
-                toolhead.register_lookahead_callback(
-                    lambda pt: lookahead_bgfunc(pt, flush_callback)
-                )
+                set_color((0, 0, 0, 0))
+                flush_callbacks.add(flush_callback)
+        toolhead.register_lookahead_callback(
+            lookahead_bgfunc
+        )
         self.active_template = tpl_name
 
 
