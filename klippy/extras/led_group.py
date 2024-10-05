@@ -11,15 +11,14 @@ from . import led
 def parse_chain(chain):
     chain = chain.strip()
     leds = []
-    parms = [parameter.strip() for parameter in chain.split()
-             if parameter.strip()]
+    parms = [parameter.strip() for parameter in chain.split() if parameter.strip()]
     if parms:
-        chainName = parms[0].replace(':', ' ')
-        ledIndices = ''.join(parms[1:]).strip('()').split(',')
+        chainName = parms[0].replace(":", " ")
+        ledIndices = "".join(parms[1:]).strip("()").split(",")
         for led in ledIndices:
             if led:
-                if '-' in led:
-                    start, stop = map(int, led.split('-'))
+                if "-" in led:
+                    start, stop = map(int, led.split("-"))
                     if stop == start:
                         ledList = [start - 1]
                     elif stop > start:
@@ -29,7 +28,7 @@ def parse_chain(chain):
                     for i in ledList:
                         leds.append(int(i))
                 else:
-                    for i in led.split(','):
+                    for i in led.split(","):
                         leds.append(int(i) - 1)
 
         return chainName, leds
@@ -52,9 +51,7 @@ class PrinterLEDGroup:
         for chain in self.config_chains:
             chain_name, led_indices = parse_chain(chain)
             if chain_name and led_indices:
-                led_helper = self.printer.lookup_object(
-                    chain_name
-                ).led_helper
+                led_helper = self.printer.lookup_object(chain_name).led_helper
                 for led_index in led_indices:
                     self.leds.append((led_helper, led_index))
                     tcallbacks.append(led_helper.tcallbacks[led_index])

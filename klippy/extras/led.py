@@ -33,7 +33,7 @@ class LEDHelper:
         self.tcallbacks = [
             (
                 (lambda text, s=self, index=i: s._template_update(index, text)),
-                self._check_transmit
+                self._check_transmit,
             )
             for i in range(1, led_count + 1)
         ]
