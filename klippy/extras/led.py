@@ -187,6 +187,10 @@ class LEDHelper:
     cmd_SET_LED_TEMPLATE_help = "Assign a display_template to an LED"
 
     def cmd_SET_LED_TEMPLATE(self, gcmd):
+        def lookahead_bgfunc(print_time, callbacks):
+            for cb in callbacks:
+                cb(print_time)
+
         toolhead = self.printer.lookup_object("toolhead")
         flush_callbacks = set()
 
@@ -196,12 +200,12 @@ class LEDHelper:
             callback, flush_callback, set_color = self.tcallbacks[index - 1]
             tpl_name = set_template(gcmd, callback, flush_callback)
             if tpl_name == "":
-                # noinspection PyArgumentList
                 set_color((0, 0, 0, 0))
                 flush_callbacks.add(flush_callback)
-        for f_cb in flush_callbacks:
-            f_cb()
         self.active_template = tpl_name
+        toolhead.register_lookahead_callback(
+            (lambda pt: lookahead_bgfunc(pt, flush_callbacks))
+        )
 
 
 PIN_MIN_TIME = 0.100

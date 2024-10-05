@@ -56,9 +56,9 @@ class PrinterLEDGroup:
         self.led_helper = led.LEDHelper(self.config, self.update_leds, self.ledCount)
         self.led_helper.tcallbacks = tcallbacks
 
-    def update_leds(self, led_state, print_time):#
+    def update_leds(self, led_state, print_time):
         flush_callbacks = set()
-        for i, (callback, flush_callback, set_color) in enumerate(self.led_helper.tcallbacks):
+        for i, (_, flush_callback, set_color) in enumerate(self.led_helper.tcallbacks):
             set_color(led_state[i])
             flush_callbacks.add(flush_callback)
         for flush_callback in flush_callbacks:
