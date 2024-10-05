@@ -37,13 +37,27 @@ class GCodeRequestQueue:
             pos = 0
             while pos + 1 < len(rqueue) and rqueue[pos + 1][0] <= next_time:
                 pos += 1
-            req_pt, req_val, req_force = rqueue[pos]
+            req_pt, req_val, req_force, req_ignore_scaling = rqueue[pos]
             # Invoke callback for the request
             min_wait = 0.0
-            if "force" in inspect.getfullargspec(self.callback).args:
-                ret = self.callback(next_time, req_val, req_force)
+            callback_args = inspect.getfullargspec(self.callback).args
+            if "force" in callback_args:
+                if "ignore_scaling" in callback_args:
+                    ret = self.callback(
+                        next_time,
+                        req_val,
+                        force=req_force,
+                        ignore_scaling=req_ignore_scaling,
+                    )
+                else:
+                    ret = self.callback(next_time, req_val, force=req_force)
             else:
-                ret = self.callback(next_time, req_val)
+                if "ignore_scaling" in callback_args:
+                    ret = self.callback(
+                        next_time, req_val, ignore_scaling=req_ignore_scaling
+                    )
+                else:
+                    ret = self.callback(next_time, req_val)
             if ret is not None:
                 # Handle special cases
                 action, min_wait = ret
@@ -57,16 +71,18 @@ class GCodeRequestQueue:
             # Ensure following queue items are flushed
             self.toolhead.note_mcu_movequeue_activity(self.next_min_flush_time)
 
-    def _queue_request(self, print_time, value, force=False):
-        self.rqueue.append((print_time, value, force))
+    def _queue_request(self, print_time, value, force=False, ignore_scaling=False):
+        self.rqueue.append((print_time, value, force, ignore_scaling))
         self.toolhead.note_mcu_movequeue_activity(print_time)
 
-    def queue_gcode_request(self, value, force=False):
+    def queue_gcode_request(self, value, force=False, ignore_scaling=False):
         self.toolhead.register_lookahead_callback(
-            (lambda pt: self._queue_request(pt, value, force))
+            (lambda pt: self._queue_request(pt, value, force, ignore_scaling))
         )
 
-    def send_async_request(self, value, print_time=None, force=False):
+    def send_async_request(
+        self, value, print_time=None, force=False, ignore_scaling=False
+    ):
         if print_time is None:
             systime = self.printer.get_reactor().monotonic()
             print_time = self.mcu.estimated_print_time(systime + PIN_MIN_TIME)
@@ -74,7 +90,19 @@ class GCodeRequestQueue:
             next_time = max(print_time, self.next_min_flush_time)
             # Invoke callback for the request
             action, min_wait = "normal", 0.0
-            ret = self.callback(next_time, value, force)
+            callback_args = inspect.getfullargspec(self.callback).args
+            if "force" in callback_args:
+                if "ignore_scaling" in callback_args:
+                    ret = self.callback(
+                        next_time, value, force=force, ignore_scaling=ignore_scaling
+                    )
+                else:
+                    ret = self.callback(next_time, value, force=force)
+            else:
+                if "ignore_scaling" in callback_args:
+                    ret = self.callback(next_time, value, ignore_scaling=ignore_scaling)
+                else:
+                    ret = self.callback(next_time, value)
             if ret is not None:
                 # Handle special cases
                 action, min_wait = ret
