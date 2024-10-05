@@ -198,21 +198,14 @@ class Fan:
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
 
-    def _apply_speed(self, print_time, value, force=False, ignore_scaling=False):
-        if ignore_scaling:
-            pwm_value = value
-        elif value > 0:
+    def _apply_speed(self, print_time, value, force=False):
+        if value > 0:
             if value == 1.0 and self.full_speed_max_power:
                 pwm_value = 1.0
             else:
                 # Scale value between min_power and max_power
-                pwm_value = max(
-                    self.min_power,
-                    min(
-                        self.max_power,
-                        value * (self.max_power - self.min_power) + self.min_power,
-                    ),
-                )
+                pwm_value = value * (self.max_power - self.min_power) + self.min_power
+                pwm_value = max(self.min_power, min(self.max_power, pwm_value))
         else:
             pwm_value = 0
 
@@ -262,18 +255,15 @@ class Fan:
                     self.fan_check_thread.unregister()
                     self.fan_check_thread = None
 
-    def set_speed(self, value, print_time=None, force=False, ignore_scaling=False):
-        self.gcrq.send_async_request(value, print_time, force, ignore_scaling)
+    def set_speed(self, value, print_time=None, force=False):
+        self.gcrq.send_async_request(value, print_time, force)
 
-    def set_speed_from_command(self, value, force=False, ignore_scaling=False):
-        self.gcrq.queue_gcode_request(value, force, ignore_scaling)
+    def set_speed_from_command(self, value, force=False):
+        self.gcrq.queue_gcode_request(value, force)
 
     def _handle_request_restart(self, print_time):
-        self.set_speed(
-            self.shutdown_power if self.shutdown_speed_on_restart else 0.0,
-            print_time,
-            force=True,
-            ignore_scaling=True,
+        self.mcu_fan.set_pwm(
+            print_time, self.shutdown_power if self.shutdown_speed_on_restart else 0.0
         )
 
     def get_status(self, eventtime):
