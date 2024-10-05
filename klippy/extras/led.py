@@ -199,7 +199,7 @@ class LEDHelper:
             tpl_name = set_template(gcmd, callback, flush_callback)
             if tpl_name == "":
                 # noinspection PyArgumentList
-                # set_color(index, (0, 0, 0, 0))
+                set_color(index, (0, 0, 0, 0))
                 toolhead.register_lookahead_callback(
                     lambda pt: lookahead_bgfunc(pt, flush_callback)
                 )
