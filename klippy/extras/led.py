@@ -190,11 +190,6 @@ class LEDHelper:
         toolhead = self.printer.lookup_object("toolhead")
         flush_callbacks = set()
 
-        def lookahead_bgfunc(print_time):
-            for f_cb in flush_callbacks:
-                # noinspection PyArgumentList
-                f_cb(print_time)
-
         set_template = self.template_eval.set_template
         tpl_name = None
         for index in self.get_indices(gcmd, self.led_count):
@@ -204,9 +199,8 @@ class LEDHelper:
                 # noinspection PyArgumentList
                 set_color((0, 0, 0, 0))
                 flush_callbacks.add(flush_callback)
-        toolhead.register_lookahead_callback(
-            lookahead_bgfunc
-        )
+        for f_cb in flush_callbacks:
+            f_cb()
         self.active_template = tpl_name
 
 
