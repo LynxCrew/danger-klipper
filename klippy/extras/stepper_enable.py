@@ -105,8 +105,8 @@ class StepperEnableOutputPin:
             % (
                 self._oid,
                 self._pin,
-                self._default_value >= 1.0,
-                self._default_value >= 0.5,
+                self._default_value,
+                self._default_value,
                 self._duration_ticks,
             )
         )
