@@ -32,7 +32,7 @@ class StepperEnablePin:
 
     def set_enable(self, print_time):
         if not self.enable_count and self.set_enable_pin is not None:
-            self._set_pin(print_time, 1)
+            self.set_enable_pin(print_time, 1)
         self.enable_count += 1
 
     def set_disable(self, print_time):
@@ -41,7 +41,7 @@ class StepperEnablePin:
             toolhead = self.printer.lookup_object("toolhead")
             toolhead.wait_moves()
             toolhead.dwell(DISABLE_STALL_TIME)
-            toolhead.register_lookahead_callback(lambda pt: self._set_pin(pt, 0))
+            toolhead.register_lookahead_callback(lambda pt: self.set_enable_pin(pt, 0))
 
     def _set_pin(self, print_time, value):
         if value == self.last_value:
