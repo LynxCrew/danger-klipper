@@ -51,8 +51,10 @@ class StepperEnablePin:
         self.last_value = value
         self.last_print_time = print_time
 
+
 class error(Exception):
     pass
+
 
 class StepperEnableOutputPin:
     def __init__(self, pin_params):
@@ -147,9 +149,7 @@ class StepperEnableOutputPin:
                 )
 
 
-def setup_enable_pin(
-    printer, pin, max_enable_time=0.0
-):
+def setup_enable_pin(printer, pin, max_enable_time=0.0):
     if pin is None:
         # No enable line (stepper always enabled)
         enable = StepperEnablePin(None, 9999, printer)
@@ -167,9 +167,7 @@ def setup_enable_pin(
     else:
         mcu_enable = pin_params["chip"].setup_pin("digital_out", pin_params)
     mcu_enable.setup_max_duration(max_enable_time)
-    enable = pin_params["class"] = StepperEnablePin(
-        mcu_enable, 0, printer
-    )
+    enable = pin_params["class"] = StepperEnablePin(mcu_enable, 0, printer)
     return enable
 
 
