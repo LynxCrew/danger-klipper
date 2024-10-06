@@ -161,6 +161,8 @@ def setup_enable_pin(printer, pin, max_enable_time=0.0):
 
         def disable_pin(print_time):
             toolhead = printer.lookup_object("toolhead")
+            toolhead.wait_moves()
+            toolhead.dwell(DISABLE_STALL_TIME)
             toolhead.register_lookahead_callback(lambda pt: mcu_enable.set_pin(pt, 0))
 
     else:
