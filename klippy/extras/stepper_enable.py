@@ -49,33 +49,13 @@ class StepperEnablePin:
             toolhead.dwell(DISABLE_STALL_TIME)
             toolhead.register_lookahead_callback(lambda pt: self._set_pin(pt, 0))
 
-    def _set_pin(self, print_time, value, is_resend=False):
-        if value == self.last_value and not is_resend:
+    def _set_pin(self, print_time, value):
+        if value == self.last_value:
             return
-        print_time = max(print_time, self.last_print_time + PIN_MIN_TIME)
+        print_time = max(print_time, self.last_print_time)
+        self.mcu_enable.set_digital(print_time, value)
         self.last_value = value
         self.last_print_time = print_time
-        self.mcu_enable.set_digital(print_time, value)
-        if self.resend_interval and self.resend_timer is None:
-            self.resend_timer = self.reactor.register_timer(
-                self._resend_current_val,
-                self.reactor.monotonic() + self.resend_interval,
-            )
-
-    def _resend_current_val(self, eventtime):
-        if self.last_value == 0:
-            self.reactor.unregister_timer(self.resend_timer)
-            self.resend_timer = None
-            return self.reactor.NEVER
-
-        systime = self.reactor.monotonic()
-        print_time = self.mcu_enable.get_mcu().estimated_print_time(systime)
-        time_diff = (self.last_print_time + self.resend_interval) - print_time
-        if time_diff > 0.0:
-            # Reschedule for resend time
-            return systime + time_diff
-        self._set_pin(print_time + PIN_MIN_TIME, self.last_value, True)
-        return systime + self.resend_interval
 
 class error(Exception):
     pass
