@@ -154,20 +154,26 @@ def setup_enable_pin(printer, pin, max_enable_time=0.0):
         enable.is_dedicated = False
         return enable
     if max_enable_time:
+        mcu_enable = StepperEnableOutputPin(pin_params)
 
-        def _disable_pin(print_time):
+        def enable_pin(print_time):
+            mcu_enable.set_pin(print_time, 1)
+
+        def disable_pin(print_time):
             toolhead = printer.lookup_object("toolhead")
             toolhead.wait_moves()
             toolhead.dwell(DISABLE_STALL_TIME)
             toolhead.register_lookahead_callback(lambda pt: mcu_enable.set_pin(pt, 1))
 
-        mcu_enable = StepperEnableOutputPin(pin_params)
-        enable_pin = lambda pt: mcu_enable.set_pin(pt, 1)
-        disable_pin = _disable_pin
     else:
         mcu_enable = pin_params["chip"].setup_pin("digital_out", pin_params)
-        enable_pin = lambda pt: mcu_enable.set_set_digital(pt, 1)
-        disable_pin = lambda pt: mcu_enable.set_digital(pt, 0)
+
+        def enable_pin(print_time):
+            mcu_enable.set_digital(print_time, 1)
+
+        def disable_pin(print_time):
+            mcu_enable.set_digital(print_time, 0)
+
     mcu_enable.setup_max_duration(max_enable_time)
     enable = pin_params["class"] = StepperEnablePin(enable_pin, disable_pin, 0, printer)
     return enable
