@@ -69,13 +69,9 @@ class PrinterHeaterFan:
         self.enabled = gcmd.get_int("ENABLE", self.enabled, minval=0, maxval=1)
         self.fan_speed = gcmd.get_float("FAN_SPEED", self.fan_speed, minval=0, maxval=1)
         if self.enabled:
-            curtime = self.printer.get_reactor().monotonic()
-            print_time = self.fan.get_mcu().estimated_print_time(curtime)
-            self.fan.set_speed(print_time + PIN_MIN_TIME, self.fan_speed)
+            self.fan.set_speed(self.fan_speed)
         if not self.enabled:
-            curtime = self.printer.get_reactor().monotonic()
-            print_time = self.fan.get_mcu().estimated_print_time(curtime)
-            self.fan.set_speed(print_time + PIN_MIN_TIME, 0.0)
+            self.fan.set_speed(0.0)
 
 
 def load_config_prefix(config):
