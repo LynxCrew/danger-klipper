@@ -57,7 +57,7 @@ class error(Exception):
 class StepperEnableOutputPin:
     def __init__(self, pin_params):
         self._mcu = pin_params["chip"]
-        self._max_duration = 5.0
+        self._max_duration = 2.0
         self._oid = self._mcu.create_oid()
         ffi_main, ffi_lib = chelper.get_ffi()
         self._stepqueue = ffi_main.gc(
@@ -162,7 +162,10 @@ def setup_enable_pin(
         # Shared enable line
         enable.is_dedicated = False
         return enable
-    mcu_enable = StepperEnableOutputPin(pin_params)
+    if max_enable_time:
+        mcu_enable = StepperEnableOutputPin(pin_params)
+    else:
+        mcu_enable = pin_params["chip"].setup_pin("digital_out", pin_params)
     mcu_enable.setup_max_duration(max_enable_time)
     enable = pin_params["class"] = StepperEnablePin(
         mcu_enable, 0, printer
