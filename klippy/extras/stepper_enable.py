@@ -139,6 +139,13 @@ class CustomStepperEnablePin:
         wake_print_time = self._mcu.clock_to_print_time(wakeclock)
         self._toolhead.note_mcu_movequeue_activity(wake_print_time)
 
+    def set_pwm(self, print_time, value):
+        clock = self._mcu.print_time_to_clock(print_time)
+        if self._invert:
+            value = 1.0 - value
+        v = int(max(0.0, min(1.0, value)))
+        self._send_update(clock, v)
+
     def _flush_notification(self, print_time, clock):
         if self._last_value != self._default_value:
             while clock >= self._last_clock + self._duration_ticks:
