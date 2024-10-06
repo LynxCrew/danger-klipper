@@ -57,7 +57,7 @@ class error(Exception):
 class StepperEnableOutputPin:
     def __init__(self, pin_params):
         self._mcu = pin_params["chip"]
-        self._max_duration = 0.0
+        self._max_duration = 5.0
         self._oid = self._mcu.create_oid()
         ffi_main, ffi_lib = chelper.get_ffi()
         self._stepqueue = ffi_main.gc(
