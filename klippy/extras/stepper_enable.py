@@ -17,13 +17,13 @@ DISABLE_STALL_TIME = 0.100
 class StepperEnablePin:
     def __init__(
         self,
-        mcu_enable,
+        set_enable_pin,
         enable_count,
         printer,
     ):
         self.printer = printer
         self.reactor = self.printer.get_reactor()
-        self.mcu_enable = mcu_enable
+        self.set_enable_pin = set_enable_pin
         self.enable_count = enable_count
         self.is_dedicated = True
         self.last_value = 0
@@ -31,13 +31,13 @@ class StepperEnablePin:
         self.last_print_time = 0.0
 
     def set_enable(self, print_time):
-        if not self.enable_count and self.mcu_enable is not None:
+        if not self.enable_count and self.set_enable_pin is not None:
             self._set_pin(print_time, 1)
         self.enable_count += 1
 
     def set_disable(self, print_time):
         self.enable_count -= 1
-        if not self.enable_count and self.mcu_enable is not None:
+        if not self.enable_count and self.set_enable_pin is not None:
             toolhead = self.printer.lookup_object("toolhead")
             toolhead.wait_moves()
             toolhead.dwell(DISABLE_STALL_TIME)
@@ -47,7 +47,7 @@ class StepperEnablePin:
         if value == self.last_value:
             return
         print_time = max(print_time, self.last_print_time)
-        self.mcu_enable.set_pin(print_time, value)
+        self.set_enable_pin(print_time, value)
         self.last_value = value
         self.last_print_time = print_time
 
@@ -164,10 +164,12 @@ def setup_enable_pin(printer, pin, max_enable_time=0.0):
         return enable
     if max_enable_time:
         mcu_enable = StepperEnableOutputPin(pin_params)
+        set_enable_pin = mcu_enable.set_pin
     else:
         mcu_enable = pin_params["chip"].setup_pin("digital_out", pin_params)
+        set_enable_pin = mcu_enable.set_digital
     mcu_enable.setup_max_duration(max_enable_time)
-    enable = pin_params["class"] = StepperEnablePin(mcu_enable, 0, printer)
+    enable = pin_params["class"] = StepperEnablePin(set_enable_pin, 0, printer)
     return enable
 
 
