@@ -6,9 +6,6 @@
 import logging
 import chelper
 
-PIN_MIN_TIME = 0.100
-RESEND_HOST_TIME = 0.900 + PIN_MIN_TIME
-MIN_RESEND_INTERVAL = 1.0
 MIN_ENABLE_TIME = 2.0
 MAX_ENABLE_TIME = 60.0
 DISABLE_STALL_TIME = 0.100
@@ -23,8 +20,6 @@ class StepperEnablePin:
         mcu_enable,
         enable_count,
         printer,
-        max_enable_time=0.0,
-        resend_interval=MIN_RESEND_INTERVAL,
     ):
         self.printer = printer
         self.reactor = self.printer.get_reactor()
@@ -33,7 +28,6 @@ class StepperEnablePin:
         self.is_dedicated = True
         self.last_value = 0
         self.resend_timer = None
-        self.resend_interval = resend_interval if max_enable_time else 0.0
         self.last_print_time = 0.0
 
     def set_enable(self, print_time):
@@ -60,7 +54,7 @@ class StepperEnablePin:
 class error(Exception):
     pass
 
-class CustomStepperEnablePin:
+class StepperEnableOutputPin:
     def __init__(self, pin_params):
         self._mcu = pin_params["chip"]
         self._max_duration = 0.0
@@ -103,7 +97,6 @@ class CustomStepperEnablePin:
             raise config_error("PWM pin max duration too large")
         if self._duration_ticks:
             self._mcu.register_flush_callback(self._flush_notification)
-        # Software PWM
         self._mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d"
             " default_value=%d max_duration=%d"
@@ -155,7 +148,7 @@ class CustomStepperEnablePin:
 
 
 def setup_enable_pin(
-    printer, pin, max_enable_time=0.0, resend_interval=MIN_RESEND_INTERVAL
+    printer, pin, max_enable_time=0.0
 ):
     if pin is None:
         # No enable line (stepper always enabled)
@@ -169,11 +162,10 @@ def setup_enable_pin(
         # Shared enable line
         enable.is_dedicated = False
         return enable
-    mcu_enable = CustomStepperEnablePin(pin_params)
+    mcu_enable = StepperEnableOutputPin(pin_params)
     mcu_enable.setup_max_duration(max_enable_time)
-    # mcu_enable.setup_start_value(0, 0)
     enable = pin_params["class"] = StepperEnablePin(
-        mcu_enable, 0, printer, max_enable_time, resend_interval
+        mcu_enable, 0, printer
     )
     return enable
 
@@ -242,17 +234,10 @@ class PrinterStepperEnable:
             config.deprecate("disable_on_error")
             if not max_enable_time:
                 max_enable_time = 5.0
-        resend_interval = config.getfloat(
-            "resend_interval",
-            MIN_RESEND_INTERVAL,
-            minval=MIN_RESEND_INTERVAL,
-            maxval=max_enable_time - 0.5,
-        )
         enable = setup_enable_pin(
             self.printer,
             config.get("enable_pin", None),
             max_enable_time,
-            resend_interval,
         )
         self.enable_lines[name] = EnableTracking(mcu_stepper, enable)
 
