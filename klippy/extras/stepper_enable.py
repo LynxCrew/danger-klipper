@@ -53,7 +53,7 @@ class StepperEnablePin:
         if value == self.last_value:
             return
         print_time = max(print_time, self.last_print_time)
-        self.mcu_enable.set_digital(print_time, value)
+        self.mcu_enable.set_pin(print_time, value)
         self.last_value = value
         self.last_print_time = print_time
 
@@ -139,7 +139,7 @@ class CustomStepperEnablePin:
         wake_print_time = self._mcu.clock_to_print_time(wakeclock)
         self._toolhead.note_mcu_movequeue_activity(wake_print_time)
 
-    def set_pwm(self, print_time, value):
+    def set_pin(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
             value = 1.0 - value
