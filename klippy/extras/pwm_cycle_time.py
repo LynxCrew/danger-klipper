@@ -3,6 +3,9 @@
 # Copyright (C) 2017-2023  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
+
+from . import output_pin
 
 PIN_MIN_TIME = 0.100
 MAX_SCHEDULE_TIME = 5.0
@@ -23,6 +26,9 @@ class MCU_pwm_cycle:
         self._shutdown_value = max(0.0, min(1.0, shutdown_value))
         self._last_clock = self._cycle_ticks = 0
         self._set_cmd = self._set_cycle_ticks = None
+
+    def get_mcu(self):
+        return self._mcu
 
     def _build_config(self):
         cmd_queue = self._mcu.alloc_command_queue()
@@ -111,6 +117,10 @@ class PrinterOutputPWMCycle:
         self.mcu_pin = MCU_pwm_cycle(
             pin_params, cycle_time, self.last_value, self.shutdown_value
         )
+        self.gcrq = output_pin.GCodeRequestQueue(
+            config, self.mcu_pin.get_mcu(), self._set_pin
+        )
+        self.template_eval = output_pin.lookup_template_eval(config)
         # Register commands
         pin_name = config.get_name().split()[1]
         gcode = self.printer.lookup_object("gcode")
@@ -134,18 +144,33 @@ class PrinterOutputPWMCycle:
         self.last_cycle_time = cycle_time
         self.last_print_time = print_time
 
+    def _template_update(self, text):
+        try:
+            value = float(text)
+            self.gcrq.send_async_request(value)
+        except ValueError as e:
+            logging.exception("output_pin template render error")
+
     cmd_SET_PIN_help = "Set the value of an output pin"
 
     def cmd_SET_PIN(self, gcmd):
         # Read requested value
         value = gcmd.get_float("VALUE", minval=0.0, maxval=self.scale)
-        value /= self.scale
         cycle_time = gcmd.get_float(
             "CYCLE_TIME",
             self.default_cycle_time,
             above=0.0,
             maxval=MAX_SCHEDULE_TIME,
         )
+        template = gcmd.get("TEMPLATE", None)
+        if (value is None or cycle_time is None) == (template is None):
+            raise gcmd.error(
+                "SET_PIN command must specify VALUE/CYCLE_TIME or TEMPLATE"
+            )
+        if template is not None:
+            self.template_eval.set_template(gcmd, self._template_update)
+            return
+        value /= self.scale
         # Obtain print_time and apply requested settings
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.register_lookahead_callback(

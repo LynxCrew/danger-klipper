@@ -26,6 +26,13 @@ class PrinterFanGeneric:
             self.cmd_SET_FAN_SPEED,
             desc=self.cmd_SET_FAN_SPEED_help,
         )
+        gcode.register_mux_command(
+            "SET_FAN",
+            "FAN",
+            self.fan_name,
+            self.cmd_SET_FAN_SPEED,
+            desc=self.cmd_SET_FAN_SPEED_help,
+        )
 
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
