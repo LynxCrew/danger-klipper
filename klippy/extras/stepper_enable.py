@@ -22,63 +22,24 @@ class StepperEnablePin:
         mcu_enable,
         enable_count,
         printer,
-        max_enable_time=0.0,
-        resend_interval=MIN_RESEND_INTERVAL,
     ):
-        self.printer = printer
-        self.reactor = self.printer.get_reactor()
         self.mcu_enable = mcu_enable
         self.enable_count = enable_count
         self.is_dedicated = True
-        self.last_value = 0
-        self.resend_timer = None
-        self.resend_interval = resend_interval if max_enable_time else 0.0
-        self.last_print_time = 0.0
 
     def set_enable(self, print_time):
-        if not self.enable_count and self.mcu_enable is not None:
-            self._set_pin(print_time, 1)
+        if not self.enable_count:
+            self.mcu_enable.set_digital(print_time, 1)
         self.enable_count += 1
 
     def set_disable(self, print_time):
         self.enable_count -= 1
-        if not self.enable_count and self.mcu_enable is not None:
-            toolhead = self.printer.lookup_object("toolhead")
-            toolhead.wait_moves()
-            toolhead.dwell(DISABLE_STALL_TIME)
-            toolhead.register_lookahead_callback(lambda pt: self._set_pin(pt, 0))
-
-    def _set_pin(self, print_time, value, is_resend=False):
-        if value == self.last_value and not is_resend:
-            return
-        print_time = max(print_time, self.last_print_time + PIN_MIN_TIME)
-        self.last_value = value
-        self.last_print_time = print_time
-        self.mcu_enable.set_digital(print_time, value)
-        if self.resend_interval and self.resend_timer is None:
-            self.resend_timer = self.reactor.register_timer(
-                self._resend_current_val,
-                self.reactor.monotonic() + self.resend_interval,
-            )
-
-    def _resend_current_val(self, eventtime):
-        if self.last_value == 0:
-            self.reactor.unregister_timer(self.resend_timer)
-            self.resend_timer = None
-            return self.reactor.NEVER
-
-        systime = self.reactor.monotonic()
-        print_time = self.mcu_enable.get_mcu().estimated_print_time(systime)
-        time_diff = (self.last_print_time + self.resend_interval) - print_time
-        if time_diff > 0.0:
-            # Reschedule for resend time
-            return systime + time_diff
-        self._set_pin(print_time + PIN_MIN_TIME, self.last_value, True)
-        return systime + self.resend_interval
+        if not self.enable_count:
+            self.mcu_enable.set_digital(print_time, 0)
 
 
 def setup_enable_pin(
-    printer, pin, max_enable_time=0.0, resend_interval=MIN_RESEND_INTERVAL
+    printer, pin, max_enable_time=0.0
 ):
     if pin is None:
         # No enable line (stepper always enabled)
@@ -96,7 +57,7 @@ def setup_enable_pin(
     mcu_enable.setup_max_duration(max_enable_time)
     # mcu_enable.setup_start_value(0, 0)
     enable = pin_params["class"] = StepperEnablePin(
-        mcu_enable, 0, printer, max_enable_time, resend_interval
+        mcu_enable, 0, printer
     )
     return enable
 
@@ -175,7 +136,6 @@ class PrinterStepperEnable:
             self.printer,
             config.get("enable_pin", None),
             max_enable_time,
-            resend_interval,
         )
         self.enable_lines[name] = EnableTracking(mcu_stepper, enable)
 
