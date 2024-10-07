@@ -17,7 +17,8 @@ class PrinterTemperatureMCU:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.config = config
-        self.name = config.get_name().split()[-1]
+        self.full_name = config.get_name()
+        self.name = self.full_name.split()[-1]
         self.base_temperature = self.slope = None
         self.temp1 = self.adc1 = self.temp2 = self.adc2 = None
         self.temp = self.min_temp = self.max_temp = 0.0

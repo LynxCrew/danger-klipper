@@ -1164,7 +1164,7 @@ class ControlMPC:
                             ", ".join([placeholder % p for p in value]),
                         )
                 elif key == "ambient_temp_sensor" or key == "cooling_fan":
-                    pmgr.heater.configfile.set(section_name, key, value.name)
+                    pmgr.heater.configfile.set(section_name, key, value.full_name)
                 elif key == "filament_temp_source":
                     if value[-1] != default:
                         pmgr.heater.configfile.set(

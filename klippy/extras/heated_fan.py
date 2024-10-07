@@ -10,6 +10,8 @@ PIN_MIN_TIME = 0.100
 
 class HeatedFan:
     def __init__(self, config):
+        self.full_name = config.get_name()
+        self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
         self.gcode = config.get_printer().lookup_object("gcode")

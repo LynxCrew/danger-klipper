@@ -14,7 +14,8 @@ PIN_MIN_TIME = 0.100
 
 class ControllerFan:
     def __init__(self, config, defined_fan=None):
-        self.name = config.get_name().split()[1]
+        self.full_name = config.get_name()
+        self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
         self.klipper_threads = self.printer.get_klipper_threads()
         self.printer.register_event_handler("klippy:connect", self.handle_connect)

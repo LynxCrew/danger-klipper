@@ -10,7 +10,8 @@ PIN_MIN_TIME = 0.100
 
 class PrinterHeaterFan:
     def __init__(self, config):
-        self.name = config.get_name().split()[-1]
+        self.full_name = config.get_name()
+        self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
         self.printer.load_object(config, "heaters")
         self.printer.register_event_handler("klippy:ready", self.handle_ready)

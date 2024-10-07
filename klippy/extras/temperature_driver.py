@@ -14,7 +14,8 @@ DRIVER_REPORT_TIME = 1.0
 class PrinterTemperatureDriver:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.name = config.get_name().split()[-1]
+        self.full_name = config.get_name()
+        self.name = self.full_name.split()[-1]
         self.driver_name = config.get("sensor_driver")
 
         self.driver = None

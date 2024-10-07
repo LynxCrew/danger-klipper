@@ -13,7 +13,8 @@ class PrinterFanGeneric:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.fan = fan.Fan(config, default_shutdown_speed=0.0)
-        self.fan_name = config.get_name().split()[-1]
+        self.full_name = config.get_name()
+        self.fan_name = self.full_name.split()[-1]
 
         # Template handling
         self.template_eval = output_pin.lookup_template_eval(config)

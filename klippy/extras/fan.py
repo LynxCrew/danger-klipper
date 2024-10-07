@@ -13,7 +13,8 @@ SAFETY_CHECK_INIT_TIME = 3.0
 class Fan:
     def __init__(self, config, default_shutdown_speed=0.0):
         self.printer = config.get_printer()
-        self.name = config.get_name().split()[-1]
+        self.full_name = config.get_name()
+        self.name = self.full_name.split()[-1]
         self.gcode = self.printer.lookup_object("gcode")
         self.reactor = self.printer.get_reactor()
         self.estimated_print_time = None
