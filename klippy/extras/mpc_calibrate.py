@@ -37,6 +37,7 @@ class MpcCalibrate:
         self.pmgr = heater.pmgr
         self.orig_control = None
         self.temp_control = None
+        self.fan = None
         self.max_error = self.config.getfloat("calibrate_max_error", None)
         self.check_gain_time = self.config.getfloat("calibrate_check_gain_time", None)
         self.hysteresis = self.config.getfloat("calibrate_hysteresis", None)
@@ -64,6 +65,7 @@ class MpcCalibrate:
         self.temp_control = self.orig_control
         if self.temp_control.get_type() != "mpc":
             self.temp_control = self.pmgr._init_profile(self.config, "autotune", "mpc")
+        self.fan = self.temp_control.cooling_fan
         ambient_sensor_name = gcmd.get("AMBIENT_TEMP_SENSOR", None)
         if ambient_sensor_name is not None:
             try:
@@ -100,6 +102,8 @@ class MpcCalibrate:
             verify_heater.heating_gain = heating_gain
 
         try:
+            if self.fan is not None:
+                self.fan.set_speed(0.0)
             ambient_temp = self.await_ambient(
                 gcmd, control, threshold_temp, ambient_sensor
             )
@@ -316,10 +320,8 @@ class MpcCalibrate:
 
         self.wait_stable(5)
 
-        fan = self.temp_control.cooling_fan
-
         fan_powers = []
-        if fan is None:
+        if self.fan is None:
             power_base = self.measure_power(
                 ambient_max_measure_time, ambient_measure_sample_time
             )
@@ -327,7 +329,7 @@ class MpcCalibrate:
         else:
             for idx in range(0, fan_breakpoints):
                 speed = idx / (fan_breakpoints - 1)
-                fan.set_speed(speed)
+                self.fan.set_speed(speed)
                 gcmd.respond_info("Waiting for temperature to stabilize")
                 self.wait_stable(3)
                 gcmd.respond_info(
@@ -338,7 +340,7 @@ class MpcCalibrate:
                 )
                 gcmd.respond_info(f"{speed*100.:.0f}% fan average power: {power:.2f} W")
                 fan_powers.append((speed, power))
-            fan.set_speed(0.0)
+            self.fan.set_speed(0.0)
             power_base = fan_powers[0][1]
 
         return {
