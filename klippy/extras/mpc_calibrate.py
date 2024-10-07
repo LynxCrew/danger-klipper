@@ -44,7 +44,9 @@ class MpcCalibrate:
 
     def run(self, gcmd):
         profile_name = gcmd.get("PROFILE", "default")
-        use_analytic = gcmd.get("USE_DELTA", None) is not None
+        use_analytic = gcmd.get_int(
+            "USE_DELTA", default=0, minval=0, maxval=1
+        ) or gcmd.get_int("USE_ANALYTIC", default=0, minval=0, maxval=1)
         ambient_max_measure_time = gcmd.get_float(
             "AMBIENT_MAX_MEASURE_TIME", 20.0, above=0.0
         )
