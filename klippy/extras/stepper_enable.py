@@ -160,7 +160,6 @@ def setup_enable_pin(printer, pin, max_enable_time=0.0):
     else:
         mcu_enable = pin_params["chip"].setup_pin("digital_out", pin_params)
         set_enable_pin = mcu_enable.set_digital
-
     mcu_enable.setup_max_duration(max_enable_time)
     enable = pin_params["class"] = StepperEnablePin(set_enable_pin, 0, printer)
     return enable
