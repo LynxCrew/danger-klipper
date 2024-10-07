@@ -1147,8 +1147,6 @@ class ControlMPC:
             type,
             placeholder,
             default,
-            above,
-            minval,
             can_be_none,
         ) in MPC_PROFILE_OPTIONS.items():
             value = temp_profile[key]
