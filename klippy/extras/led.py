@@ -39,15 +39,15 @@ class LEDHelper:
             for i in range(1, led_count + 1)
         ]
         # Register commands
-        name = config.get_name().split()[-1]
+        self.name = config.get_name().split()[-1]
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
-            "SET_LED", "LED", name, self.cmd_SET_LED, desc=self.cmd_SET_LED_help
+            "SET_LED", "LED", self.name, self.cmd_SET_LED, desc=self.cmd_SET_LED_help
         )
         gcode.register_mux_command(
             "SET_LED_TEMPLATE",
             "LED",
-            name,
+            self.name,
             self.cmd_SET_LED_TEMPLATE,
             desc=self.cmd_SET_LED_TEMPLATE_help,
         )
