@@ -73,7 +73,7 @@ class MpcCalibrate:
                     f"Unknown ambient_temp_sensor '{ambient_sensor_name}' specified"
                 )
         else:
-            ambient_sensor = self.temp_control["ambient_temp_sensor"]
+            ambient_sensor = self.temp_control.ambient_sensor
         max_error = gcmd.get_float("MAX_ERROR", self.max_error)
         check_gain_time = gcmd.get_float("CHECK_GAIN_TIME", self.check_gain_time)
         hysteresis = gcmd.get_float("HYSTERESIS", self.hysteresis)
