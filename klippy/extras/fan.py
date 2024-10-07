@@ -7,7 +7,6 @@ import logging
 
 from . import pulse_counter, output_pin
 
-FAN_MIN_TIME = 0.100
 SAFETY_CHECK_INIT_TIME = 3.0
 
 
