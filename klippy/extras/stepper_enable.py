@@ -26,9 +26,6 @@ class StepperEnablePin:
         self.set_enable_pin = set_enable_pin
         self.enable_count = enable_count
         self.is_dedicated = True
-        self.last_value = 0
-        self.resend_timer = None
-        self.last_print_time = 0.0
 
     def set_enable(self, print_time):
         if not self.enable_count and self.set_enable_pin is not None:
