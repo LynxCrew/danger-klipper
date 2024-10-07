@@ -306,8 +306,9 @@ class MpcCalibrate:
         ambient_max_measure_time,
         ambient_measure_sample_time,
         fan_breakpoints,
-        target_temp,
+        first_pass_results,
     ):
+        target_temp = round(first_pass_results["post_block_temp"])
         self.heater.set_temp(target_temp)
         gcmd.respond_info(
             "Performing ambient transfer tests, target is %.1f degrees" % (target_temp,)
