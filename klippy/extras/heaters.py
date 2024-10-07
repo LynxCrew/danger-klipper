@@ -1170,6 +1170,10 @@ class ControlMPC:
                         pmgr.heater.configfile.set(
                             section_name, key, placeholder % value[-1]
                         )
+                elif key == "control":
+                    pmgr.heater.configfile.set(
+                        section_name, key, placeholder % value
+                    )
                 else:
                     if value != default:
                         pmgr.heater.configfile.set(
