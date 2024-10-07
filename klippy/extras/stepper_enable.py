@@ -255,7 +255,7 @@ class PrinterStepperEnable:
             active_extruders = [
                 stepper
                 for stepper in self.enable_lines
-                if stepper.starts_with("extruder")
+                if stepper.startswith("extruder")
             ]
             for extruder in active_extruders:
                 self.stepper_off(extruder, print_time, "extruder")
