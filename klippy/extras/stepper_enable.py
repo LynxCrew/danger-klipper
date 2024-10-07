@@ -252,14 +252,13 @@ class PrinterStepperEnable:
         print_time = toolhead.get_last_move_time()
         kin = toolhead.get_kinematics()
         if 3 in axes:
-            if "extruder" in self.enable_lines:
-                self.stepper_off("extruder", print_time, "extruder")
-                i = 1
-                extruder_name = f"extruder{i}"
-                while extruder_name in self.enable_lines:
-                    self.stepper_off(extruder_name, print_time, "extruder")
-                    i += 1
-                    extruder_name = f"extruder{i}"
+            active_extruders = [
+                stepper
+                for stepper in self.enable_lines
+                if stepper.starts_with("extruder")
+            ]
+            for extruder in active_extruders:
+                self.stepper_off(extruder, print_time, "extruder")
         if hasattr(kin, "get_connected_rails"):
             for axis in axes:
                 try:
