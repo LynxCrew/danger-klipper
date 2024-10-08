@@ -280,8 +280,12 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
                 and CS ({self.cs}). Please adjust your configuration"""
             )
 
-        ihold = self._calc_current_bits(
-            min(self.req_run_current, self.req_hold_current), gscaler
+        ihold = (
+            self.cs
+            if self.req_hold_current is None
+            else self._calc_current_bits(
+                min(self.req_run_current, self.req_hold_current), gscaler
+            )
         )
         self.fields.set_field("globalscaler", gscaler)
         self.fields.set_field("ihold", ihold)
@@ -326,15 +330,23 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
         return (
             run_current,
             hold_current,
-            self.req_hold_current,
+            (
+                self.req_run_current
+                if self.req_hold_current is None
+                else self.req_hold_current
+            ),
             MAX_CURRENT,
             self.req_home_current,
         )
 
     def apply_current(self, print_time):
         gscaler = self._calc_globalscaler(self.actual_current)
-        ihold = self._calc_current_bits(
-            min(self.actual_current, self.req_hold_current), gscaler
+        ihold = (
+            self.cs
+            if self.req_hold_current is None
+            else self._calc_current_bits(
+                min(self.actual_current, self.req_hold_current), gscaler
+            )
         )
         val = self.fields.set_field("globalscaler", gscaler)
         self.mcu_tmc.set_register("GLOBALSCALER", val, print_time)

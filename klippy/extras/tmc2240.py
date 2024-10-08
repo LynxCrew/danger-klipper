@@ -290,7 +290,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
             "run_current", above=0.0, maxval=self.max_current
         )
         self.config_hold_current = config.getfloat(
-            "hold_current", self.max_current, above=0.0, maxval=self.max_current
+            "hold_current", None, above=0.0, maxval=self.max_current
         )
         self.config_home_current = config.getfloat(
             "home_current",
@@ -319,8 +319,12 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
                 and CS ({self.cs}). Please adjust your configuration"""
             )
 
-        ihold = self._calc_current_bits(
-            min(self.req_run_current, self.req_hold_current), gscaler
+        ihold = (
+            self.cs
+            if self.req_hold_current is None
+            else self._calc_current_bits(
+                min(self.req_run_current, self.req_hold_current), gscaler
+            )
         )
 
         self.fields.set_field("globalscaler", gscaler)
@@ -369,15 +373,23 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         return (
             run_current,
             hold_current,
-            self.req_hold_current,
+            (
+                self.req_run_current
+                if self.req_hold_current is None
+                else self.req_hold_current
+            ),
             ifs_rms,
             self.req_home_current,
         )
 
     def apply_current(self, print_time):
         gscaler = self._calc_globalscaler(self.actual_current)
-        ihold = self._calc_current_bits(
-            min(self.actual_current, self.req_hold_current), gscaler
+        ihold = (
+            self.cs
+            if self.req_hold_current is None
+            else self._calc_current_bits(
+                min(self.actual_current, self.req_hold_current), gscaler
+            )
         )
         val = self.fields.set_field("globalscaler", gscaler)
         self.mcu_tmc.set_register("GLOBALSCALER", val, print_time)
