@@ -342,11 +342,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
 
     def _calc_globalscaler(self, current):
         ifs_rms = self._get_ifs_rms()
-        globalscaler = int(
-            ((current * 256.0)
-             / (ifs_rms * ((self.cs + 1) / 32)))
-            + 0.5
-        )
+        globalscaler = int(((current * 256.0) / (ifs_rms * ((self.cs + 1) / 32))) + 0.5)
         if globalscaler >= 256:
             globalscaler = 0
         return globalscaler
@@ -355,11 +351,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         ifs_rms = self._get_ifs_rms()
         if not globalscaler:
             globalscaler = 256
-        bits = int(
-            (current * 256.0 * 32.0) / (globalscaler * ifs_rms)
-            - 1.0
-            + 0.5
-        )
+        bits = int((current * 256.0 * 32.0) / (globalscaler * ifs_rms) - 1.0 + 0.5)
         return max(0, min(31, bits))
 
     def _calc_current_from_field(self, field_name):
