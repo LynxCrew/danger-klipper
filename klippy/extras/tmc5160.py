@@ -290,8 +290,7 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
     def _calc_globalscaler(self, current):
         globalscaler = int(
             (current * 256.0 * self.sense_resistor * math.sqrt(2.0))
-            * ((self.cs + 1) / 32)
-            / VREF
+            / (VREF * ((self.cs + 1) / 32))
             + 0.5
         )
         if globalscaler >= 256:
