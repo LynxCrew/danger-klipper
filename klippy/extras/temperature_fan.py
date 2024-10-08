@@ -15,7 +15,8 @@ PID_PARAM_BASE = 255.0
 
 class TemperatureFan:
     def __init__(self, config, defined_fan=None, super_fan=None):
-        self.name = config.get_name().split()[1]
+        self.full_name = config.get_name()
+        self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
         if defined_fan is None:
             self.fan = fan.Fan(config, default_shutdown_speed=1.0)
@@ -72,7 +73,18 @@ class TemperatureFan:
             desc=self.cmd_SET_TEMPERATURE_FAN_help,
         )
 
-    def set_speed(self, read_time, value):
+    def get_mcu(self):
+        return self.fan.get_mcu()
+
+    def set_speed(self, value, read_time=None):
+        if read_time is None:
+            systime = self.printer.get_reactor().monotonic()
+            read_time = self.get_mcu().estimated_print_time(
+                systime + fan.output_pin.PIN_MIN_TIME
+            )
+        return self.set_tf_speed(read_time, value)
+
+    def set_tf_speed(self, read_time, value):
         if value <= 0.0:
             value = 0.0
         elif value < self.min_speed:
@@ -87,12 +99,12 @@ class TemperatureFan:
         speed_time = read_time + self.speed_delay
         self.next_speed_time = speed_time + 0.75 * MAX_FAN_TIME
         self.last_speed_value = value
-        self.fan.set_speed(speed_time, value)
+        self.fan.set_speed(value, speed_time)
 
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp
         if self.mode == "manual":
-            self.set_speed(read_time, self.manual_speed)
+            self.set_speed(self.manual_speed, read_time)
         else:
             self.control.temperature_callback(read_time, temp)
         if temp:
@@ -148,7 +160,7 @@ class TemperatureFan:
         if not self.enabled:
             curtime = self.printer.get_reactor().monotonic()
             print_time = self.fan.get_mcu().estimated_print_time(curtime)
-            self.fan.set_speed(print_time, 0.0)
+            self.fan.set_speed(0.0, print_time)
 
     def set_temp(self, degrees):
         if degrees and (degrees < self.min_temp or degrees > self.max_temp):
@@ -210,10 +222,10 @@ class ControlBangBang:
         elif self.heating == self.reverse and temp <= target_temp - self.max_delta:
             self.heating = not self.reverse
         if self.heating:
-            self.controlled_fan.set_speed(read_time, 0.0)
+            self.controlled_fan.set_speed(0.0, read_time)
         else:
             self.controlled_fan.set_speed(
-                read_time, self.temperature_fan.get_max_speed()
+                self.temperature_fan.get_max_speed(), read_time
             )
 
     def get_type(self):
@@ -268,15 +280,15 @@ class ControlPID:
         bounded_co = max(0.0, min(self.temperature_fan.get_max_speed(), co))
         if not self.reverse:
             self.controlled_fan.set_speed(
-                read_time,
                 max(
                     self.controlled_fan.get_min_speed(),
                     self.controlled_fan.get_max_speed() - bounded_co,
                 ),
+                read_time,
             )
         else:
             self.controlled_fan.set_speed(
-                read_time, max(self.temperature_fan.get_min_speed(), bounded_co)
+                max(self.temperature_fan.get_min_speed(), bounded_co), read_time
             )
         # Store state for next measurement
         self.prev_temp = temp
@@ -342,10 +354,10 @@ class ControlCurve:
 
         temp = self.smooth_temps(temp)
         if temp <= self.curve_table[0][0]:
-            self.controlled_fan.set_speed(read_time, self.curve_table[0][1])
+            self.controlled_fan.set_speed(self.curve_table[0][1], read_time)
             return
         if temp >= self.curve_table[-1][0]:
-            self.controlled_fan.set_speed(read_time, self.curve_table[-1][1])
+            self.controlled_fan.set_speed(self.curve_table[-1][1], read_time)
             return
 
         below = [
@@ -362,7 +374,7 @@ class ControlCurve:
             else:
                 above = config_temp
                 break
-        self.controlled_fan.set_speed(read_time, _interpolate(below, above, temp))
+        self.controlled_fan.set_speed(_interpolate(below, above, temp), read_time)
 
     def smooth_temps(self, current_temp):
         if (

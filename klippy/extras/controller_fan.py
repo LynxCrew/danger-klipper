@@ -14,7 +14,8 @@ PIN_MIN_TIME = 0.100
 
 class ControllerFan:
     def __init__(self, config, defined_fan=None):
-        self.name = config.get_name().split()[1]
+        self.full_name = config.get_name()
+        self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
         self.klipper_threads = self.printer.get_klipper_threads()
         self.printer.register_event_handler("klippy:connect", self.handle_connect)
@@ -49,6 +50,9 @@ class ControllerFan:
             self.cmd_SET_CONTROLLER_FAN,
             desc=self.cmd_SET_CONTROLLER_FAN_help,
         )
+
+    def get_mcu(self):
+        return self.fan.get_mcu()
 
     def handle_connect(self):
         # Heater lookup
@@ -98,11 +102,10 @@ class ControllerFan:
 
     def callback(self):
         curtime = self.printer.get_reactor().monotonic()
-        print_time = self.fan.get_mcu().estimated_print_time(curtime)
-        speed = self.get_speed(print_time)
+        speed = self.get_speed(curtime)
         if self.enabled and speed != self.last_speed:
             self.last_speed = speed
-            self.fan.set_speed(print_time + PIN_MIN_TIME, speed)
+            self.fan.set_speed(speed)
         return 1.0
 
     cmd_SET_CONTROLLER_FAN_help = "Enable or Disable a controller_fan"
@@ -110,9 +113,7 @@ class ControllerFan:
     def cmd_SET_CONTROLLER_FAN(self, gcmd):
         self.enabled = gcmd.get_int("ENABLE", self.enabled, minval=0, maxval=1)
         if not self.enabled:
-            curtime = self.printer.get_reactor().monotonic()
-            print_time = self.fan.get_mcu().estimated_print_time(curtime)
-            self.fan.set_speed(print_time + PIN_MIN_TIME, 0.0)
+            self.fan.set_speed_from_command(0.0)
 
 
 def load_config_prefix(config):

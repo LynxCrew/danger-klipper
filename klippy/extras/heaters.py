@@ -47,7 +47,7 @@ MPC_PROFILE_OPTIONS = {
     "ambient_temp_sensor": (str, "%s", None, True),
     "filament_temp_sensor": (str, "%s", None, True),
     "filament_temp_source": (str, "%s", "ambient", False),
-    "smoothing": (float, "%f", 0.25, False),
+    "smoothing": (float, "%f", None, False),
     "target_reach_time": (float, "%f", 2.0, False),
     "maximum_retract": (float, "%f", 2.0, False),
     "steady_state_rate": (float, "%f", 0.5, False),
@@ -107,8 +107,10 @@ class Heater:
         self.config_smoothing_elements = sensor_config.getint(
             "smoothing_elements", 1, minval=1
         )
+        self.config_smoothing = sensor_config.getfloat("smoothing", 0.25, above=0.0)
         self.smooth_time = self.config_smooth_time
         self.smoothing_elements = self.config_smoothing_elements
+        self.smoothing = self.config_smoothing
         self.inv_smooth_time = 1.0 / self.smooth_time
         self.is_shutdown = False
         self.lock = threading.Lock()
@@ -280,6 +282,9 @@ class Heater:
     def get_smoothing_elements(self):
         return self.smoothing_elements
 
+    def get_smoothing(self):
+        return self.smoothing
+
     def set_inv_smooth_time(self, inv_smooth_time):
         self.inv_smooth_time = inv_smooth_time
 
@@ -372,6 +377,11 @@ class Heater:
     cmd_SET_SMOOTH_TIME_help = "Set the smooth time for the given heater"
 
     def cmd_SET_SMOOTH_TIME(self, gcmd):
+        if self.get_control().get_type() not in ("watermark", "pid", "pid_v", "pid_p"):
+            gcmd.respond_info(
+                "SMOOTH_TIME is only valid for watermark, pid, pid_v and pid_p"
+            )
+            return
         save_to_profile = gcmd.get_int("SAVE_TO_PROFILE", 0, minval=0, maxval=1)
         self.smooth_time = gcmd.get_float(
             "SMOOTH_TIME", self.config_smooth_time, minval=0.0
@@ -382,9 +392,27 @@ class Heater:
             self.get_control().get_profile()["smooth_time"] = self.smooth_time
             self.pmgr.save_profile()
 
+    cmd_SET_SMOOTHING_help = "Set the smoothing for the given heater"
+
+    def cmd_SET_SMOOTHING(self, gcmd):
+        if self.get_control().get_type() not in ("mpc"):
+            gcmd.respond_info("SMOOTHING is only valid for mpc")
+            return
+        save_to_profile = gcmd.get_int("SAVE_TO_PROFILE", 0, minval=0, maxval=1)
+        self.smoothing = gcmd.get_float(
+            "SMOOTHING", self.smoothing, minval=0.0, maxval=1.0
+        )
+        self.get_control().update_smoothing()
+        if save_to_profile:
+            self.get_control().get_profile()["smoothing"] = self.smooth_time
+            self.pmgr.save_profile()
+
     cmd_SET_SMOOTHING_ELEMENTS_help = "Set the smooth time for the given heater"
 
     def cmd_SET_SMOOTHING_ELEMENTS(self, gcmd):
+        if self.get_control().get_type() not in ("pid_v"):
+            gcmd.respond_info("SMOOTH_TIME is only valid for pid_v")
+            return
         save_to_profile = gcmd.get_int("SAVE_TO_PROFILE", 0, minval=0, maxval=1)
         self.smoothing_elements = gcmd.get_int(
             "SMOOTHING_ELEMENTS", self.config_smoothing_elements, minval=1
@@ -1147,8 +1175,6 @@ class ControlMPC:
             type,
             placeholder,
             default,
-            above,
-            minval,
             can_be_none,
         ) in MPC_PROFILE_OPTIONS.items():
             value = temp_profile[key]
@@ -1166,12 +1192,14 @@ class ControlMPC:
                             ", ".join([placeholder % p for p in value]),
                         )
                 elif key == "ambient_temp_sensor" or key == "cooling_fan":
-                    pmgr.heater.configfile.set(section_name, key, value.name)
+                    pmgr.heater.configfile.set(section_name, key, value.full_name)
                 elif key == "filament_temp_source":
                     if value[-1] != default:
                         pmgr.heater.configfile.set(
                             section_name, key, placeholder % value[-1]
                         )
+                elif key == "control":
+                    pmgr.heater.configfile.set(section_name, key, placeholder % value)
                 else:
                     if value != default:
                         pmgr.heater.configfile.set(
@@ -1248,7 +1276,11 @@ class ControlMPC:
             ]
         else:
             self.const_heater_power = self.profile["heater_powers"]
-        self.const_smoothing = self.profile["smoothing"]
+        self.const_smoothing = (
+            self.heater.get_smoothing()
+            if self.profile["smoothing"] is None
+            else self.profile["smoothing"]
+        )
         self.const_sensor_responsiveness = self.profile["sensor_responsiveness"]
         self.const_min_ambient_change = self.profile["min_ambient_change"]
         self.const_steady_state_rate = self.profile["steady_state_rate"]
@@ -1477,8 +1509,8 @@ class ControlMPC:
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         return abs(target_temp - smoothed_temp) > 1.0
 
-    def update_smooth_time(self):
-        self.const_smoothing = self.heater.get_smooth_time()  # smoothing window
+    def update_smoothing(self):
+        self.const_smoothing = self.heater.get_smoothing()  # smoothing window
 
     def set_name(self, name):
         self.profile["name"] = name

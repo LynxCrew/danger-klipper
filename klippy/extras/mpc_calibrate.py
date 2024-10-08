@@ -37,6 +37,7 @@ class MpcCalibrate:
         self.pmgr = heater.pmgr
         self.orig_control = None
         self.temp_control = None
+        self.fan = None
         self.max_error = self.config.getfloat("calibrate_max_error", None)
         self.check_gain_time = self.config.getfloat("calibrate_check_gain_time", None)
         self.hysteresis = self.config.getfloat("calibrate_hysteresis", None)
@@ -44,7 +45,9 @@ class MpcCalibrate:
 
     def run(self, gcmd):
         profile_name = gcmd.get("PROFILE", "default")
-        use_analytic = gcmd.get("USE_DELTA", None) is not None
+        use_analytic = gcmd.get_int(
+            "USE_DELTA", default=0, minval=0, maxval=1
+        ) or gcmd.get_int("USE_ANALYTIC", default=0, minval=0, maxval=1)
         ambient_max_measure_time = gcmd.get_float(
             "AMBIENT_MAX_MEASURE_TIME", 20.0, above=0.0
         )
@@ -62,6 +65,7 @@ class MpcCalibrate:
         self.temp_control = self.orig_control
         if self.temp_control.get_type() != "mpc":
             self.temp_control = self.pmgr._init_profile(self.config, "autotune", "mpc")
+        self.fan = self.temp_control.cooling_fan
         ambient_sensor_name = gcmd.get("AMBIENT_TEMP_SENSOR", None)
         if ambient_sensor_name is not None:
             try:
@@ -71,7 +75,7 @@ class MpcCalibrate:
                     f"Unknown ambient_temp_sensor '{ambient_sensor_name}' specified"
                 )
         else:
-            ambient_sensor = self.temp_control["ambient_temp_sensor"]
+            ambient_sensor = self.temp_control.ambient_sensor
         max_error = gcmd.get_float("MAX_ERROR", self.max_error)
         check_gain_time = gcmd.get_float("CHECK_GAIN_TIME", self.check_gain_time)
         hysteresis = gcmd.get_float("HYSTERESIS", self.hysteresis)
@@ -98,6 +102,8 @@ class MpcCalibrate:
             verify_heater.heating_gain = heating_gain
 
         try:
+            if self.fan is not None:
+                self.fan.set_speed(0.0)
             ambient_temp = self.await_ambient(
                 gcmd, control, threshold_temp, ambient_sensor
             )
@@ -304,8 +310,9 @@ class MpcCalibrate:
         ambient_max_measure_time,
         ambient_measure_sample_time,
         fan_breakpoints,
-        target_temp,
+        first_pass_results,
     ):
+        target_temp = round(first_pass_results["post_block_temp"])
         self.heater.set_temp(target_temp)
         gcmd.respond_info(
             "Performing ambient transfer tests, target is %.1f degrees" % (target_temp,)
@@ -313,10 +320,8 @@ class MpcCalibrate:
 
         self.wait_stable(5)
 
-        fan = self.temp_control.cooling_fan
-
         fan_powers = []
-        if fan is None:
+        if self.fan is None:
             power_base = self.measure_power(
                 ambient_max_measure_time, ambient_measure_sample_time
             )
@@ -324,9 +329,7 @@ class MpcCalibrate:
         else:
             for idx in range(0, fan_breakpoints):
                 speed = idx / (fan_breakpoints - 1)
-                curtime = self.heater.reactor.monotonic()
-                print_time = fan.get_mcu().estimated_print_time(curtime)
-                fan.set_speed(print_time + PIN_MIN_TIME, speed)
+                self.fan.set_speed(speed)
                 gcmd.respond_info("Waiting for temperature to stabilize")
                 self.wait_stable(3)
                 gcmd.respond_info(
@@ -337,9 +340,7 @@ class MpcCalibrate:
                 )
                 gcmd.respond_info(f"{speed*100.:.0f}% fan average power: {power:.2f} W")
                 fan_powers.append((speed, power))
-            curtime = self.heater.reactor.monotonic()
-            print_time = fan.get_mcu().estimated_print_time(curtime)
-            fan.set_speed(print_time + PIN_MIN_TIME, 0.0)
+            self.fan.set_speed(0.0)
             power_base = fan_powers[0][1]
 
         return {

@@ -17,15 +17,19 @@ PIN_MIN_TIME = 0.100
 class ControllerTemperatureFan:
     def __init__(self, config):
         self.config = config
-        self.name = config.get_name().split()[1]
+        self.full_name = config.get_name()
+        self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
         self.fan = fan.Fan(config, default_shutdown_speed=1.0)
         self.temperature_fan = temperature_fan.TemperatureFan(config, self.fan, self)
         self.controller_fan = controller_fan.ControllerFan(config, self.fan)
 
-    def set_speed(self, read_time, value):
+    def get_mcu(self):
+        return self.fan.get_mcu()
+
+    def set_speed(self, value, read_time):
         self.temperature_fan.set_speed(
-            read_time, max(value, self.controller_fan.get_speed(read_time))
+            max(value, self.controller_fan.get_speed(read_time)), read_time
         )
 
     def temperature_callback(self, read_time, temp):

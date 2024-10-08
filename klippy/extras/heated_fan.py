@@ -10,6 +10,8 @@ PIN_MIN_TIME = 0.100
 
 class HeatedFan:
     def __init__(self, config):
+        self.full_name = config.get_name()
+        self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
         self.gcode = config.get_printer().lookup_object("gcode")
@@ -32,7 +34,7 @@ class HeatedFan:
         self.min_speed = config.getfloat("min_speed", 1.0, minval=0.0, maxval=1.0)
         self.idle_timeout = config.getfloat("idle_timeout", 60.0, minval=0.0)
 
-        self.set_speed = 0.0
+        self.speed = 0.0
         self.timeout_timer = None
 
         self.gcode.register_command(
@@ -43,25 +45,28 @@ class HeatedFan:
 
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
 
+    def get_mcu(self):
+        return self.fan.get_mcu()
+
     def cmd_SET_HEATED_FAN_TARGET(self, gcmd):
         self.heater_temp = gcmd.get_float("TARGET", 0)
 
     def cmd_M106(self, gcmd):
-        self.set_speed = gcmd.get_float("S", 255.0, minval=0.0) / 255.0
-        if not self.set_speed:
+        self.speed = gcmd.get_float("S", 255.0, minval=0.0) / 255.0
+        if not self.speed:
             return self.cmd_M107(gcmd)
 
-        if self.set_speed < self.min_speed:
-            self.set_speed = self.min_speed
+        if self.speed < self.min_speed:
+            self.speed = self.min_speed
 
-        self.fan.set_speed_from_command(self.set_speed)
+        self.fan.set_speed_from_command(self.speed)
         _, target_temp = self.heater.get_temp(self.reactor.monotonic())
         # if the heater is off or has a different target temp than configured, set it
         if not target_temp or target_temp != self.heater_temp:
             self.heater.set_temp(self.heater_temp)
 
     def cmd_M107(self, gcmd):
-        self.set_speed = 0.0
+        self.speed = 0.0
         self.heater.set_temp(0)
         self.start_timeout_timer()
 
@@ -78,13 +83,13 @@ class HeatedFan:
         )
 
     def handle_timeout_timer(self, eventtime):
-        self.fan.set_speed_from_command(self.set_speed)
+        self.fan.set_speed_from_command(self.speed)
         return self.reactor.NEVER
 
     def callback(self, eventtime):
         _, target_temp = self.heater.get_temp(eventtime)
         # if the heater has a target and the fan is off, turn it on to min fan speed
-        if target_temp and not self.set_speed:
+        if target_temp and not self.speed:
             self.fan.set_speed_from_command(self.min_speed)
         return eventtime + 1.0
 

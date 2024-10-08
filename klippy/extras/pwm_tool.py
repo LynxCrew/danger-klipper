@@ -61,7 +61,7 @@ class MCU_queued_pwm:
         config_error = self._mcu.get_printer().config_error
         if self._max_duration and self._start_value != self._shutdown_value:
             raise config_error(
-                "Pin with max duration must have start" " value equal to shutdown value"
+                "Pin with max duration must have start " "value equal to shutdown value"
             )
         cmd_queue = self._mcu.alloc_command_queue()
         curtime = self._mcu.get_printer().get_reactor().monotonic()
@@ -191,11 +191,7 @@ class PrinterOutputPin:
         pin_name = config.get_name().split()[1]
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
-            "SET_PIN",
-            "PIN",
-            pin_name,
-            self.cmd_SET_PIN,
-            desc=self.cmd_SET_PIN_help,
+            "SET_PIN", "PIN", pin_name, self.cmd_SET_PIN, desc=self.cmd_SET_PIN_help
         )
 
     def get_status(self, eventtime):

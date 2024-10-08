@@ -19,7 +19,8 @@ class Temperature_HOST:
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
         self.klipper_threads = self.printer.get_klipper_threads()
-        self.name = config.get_name().split()[-1]
+        self.full_name = config.get_name()
+        self.name = self.full_name.split()[-1]
         self.path = config.get("sensor_path", RPI_PROC_TEMP_FILE)
 
         self.temp = self.min_temp = self.max_temp = 0.0

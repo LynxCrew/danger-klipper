@@ -732,6 +732,8 @@ class ToolHead:
     def cmd_G4(self, gcmd):
         # Dwell
         delay = gcmd.get_float("P", 0.0, minval=0.0) / 1000.0
+        delay += gcmd.get_float("S", 0.0, minval=0.0)
+        delay += gcmd.get_float("M", 0.0, minval=0.0) * 1000
         self.dwell(delay)
 
     def cmd_M400(self, gcmd):

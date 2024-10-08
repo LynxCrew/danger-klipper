@@ -4,10 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+import chelper
 
-PIN_MIN_TIME = 0.100
-RESEND_HOST_TIME = 0.900 + PIN_MIN_TIME
-MIN_RESEND_INTERVAL = 1.0
 MIN_ENABLE_TIME = 2.0
 MAX_ENABLE_TIME = 60.0
 DISABLE_STALL_TIME = 0.100
@@ -19,67 +17,128 @@ DISABLE_STALL_TIME = 0.100
 class StepperEnablePin:
     def __init__(
         self,
-        mcu_enable,
+        set_enable_pin,
         enable_count,
         printer,
-        max_enable_time=0.0,
-        resend_interval=MIN_RESEND_INTERVAL,
     ):
         self.printer = printer
         self.reactor = self.printer.get_reactor()
-        self.mcu_enable = mcu_enable
+        self.set_enable_pin = set_enable_pin
         self.enable_count = enable_count
         self.is_dedicated = True
-        self.last_value = 0
-        self.resend_timer = None
-        self.resend_interval = resend_interval if max_enable_time else 0.0
-        self.last_print_time = 0.0
 
     def set_enable(self, print_time):
-        if not self.enable_count and self.mcu_enable is not None:
-            self._set_pin(print_time, 1)
+        if not self.enable_count and self.set_enable_pin is not None:
+            self.set_enable_pin(print_time, 1)
         self.enable_count += 1
 
     def set_disable(self, print_time):
         self.enable_count -= 1
-        if not self.enable_count and self.mcu_enable is not None:
+        if not self.enable_count and self.set_enable_pin is not None:
             toolhead = self.printer.lookup_object("toolhead")
             toolhead.wait_moves()
             toolhead.dwell(DISABLE_STALL_TIME)
-            toolhead.register_lookahead_callback(lambda pt: self._set_pin(pt, 0))
+            toolhead.register_lookahead_callback(lambda pt: self.set_enable_pin(pt, 0))
 
-    def _set_pin(self, print_time, value, is_resend=False):
-        if value == self.last_value and not is_resend:
-            return
-        print_time = max(print_time, self.last_print_time + PIN_MIN_TIME)
-        self.last_value = value
-        self.last_print_time = print_time
-        self.mcu_enable.set_digital(print_time, value)
-        if self.resend_interval and self.resend_timer is None:
-            self.resend_timer = self.reactor.register_timer(
-                self._resend_current_val,
-                self.reactor.monotonic() + self.resend_interval,
+
+class error(Exception):
+    pass
+
+
+class StepperEnableOutputPin:
+    def __init__(self, pin_params):
+        self._mcu = pin_params["chip"]
+        self._max_duration = 2.0
+        self._oid = self._mcu.create_oid()
+        ffi_main, ffi_lib = chelper.get_ffi()
+        self._stepqueue = ffi_main.gc(
+            ffi_lib.stepcompress_alloc(self._oid), ffi_lib.stepcompress_free
+        )
+        self._mcu.register_stepqueue(self._stepqueue)
+        self._stepcompress_queue_mq_msg = ffi_lib.stepcompress_queue_mq_msg
+        self._mcu.register_config_callback(self._build_config)
+        self._pin = pin_params["pin"]
+        self._invert = pin_params["invert"]
+        self._last_clock = self._last_value = self._default_value = 0
+        self._duration_ticks = 0
+        self._set_cmd_tag = None
+        self._toolhead = None
+        self.is_dedicated = True
+        printer = self._mcu.get_printer()
+        printer.register_event_handler("klippy:connect", self._handle_connect)
+
+    def _handle_connect(self):
+        self._toolhead = self._mcu.get_printer().lookup_object("toolhead")
+
+    def get_mcu(self):
+        return self._mcu
+
+    def setup_max_duration(self, max_duration):
+        self._max_duration = max_duration
+
+    def _build_config(self):
+        config_error = self._mcu.get_printer().config_error
+        self._default_value = self._last_value = 1.0 if self._invert else 0.0
+        cmd_queue = self._mcu.alloc_command_queue()
+        curtime = self._mcu.get_printer().get_reactor().monotonic()
+        printtime = self._mcu.estimated_print_time(curtime)
+        self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
+        self._duration_ticks = self._mcu.seconds_to_clock(self._max_duration)
+        if self._duration_ticks >= 1 << 31:
+            raise config_error("PWM pin max duration too large")
+        if self._duration_ticks:
+            self._mcu.register_flush_callback(self._flush_notification)
+        self._mcu.add_config_cmd(
+            "config_digital_out oid=%d pin=%s value=%d"
+            " default_value=%d max_duration=%d"
+            % (
+                self._oid,
+                self._pin,
+                self._default_value,
+                self._default_value,
+                self._duration_ticks,
             )
+        )
+        self._mcu.add_config_cmd(
+            "queue_digital_out oid=%d clock=%d on_ticks=%d"
+            % (self._oid, self._last_clock, self._last_value),
+            is_init=True,
+        )
+        self._set_cmd_tag = self._mcu.lookup_command(
+            "queue_digital_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue
+        ).get_command_tag()
 
-    def _resend_current_val(self, eventtime):
-        if self.last_value == 0:
-            self.reactor.unregister_timer(self.resend_timer)
-            self.resend_timer = None
-            return self.reactor.NEVER
+    def _send_update(self, clock, val):
+        self._last_clock = clock = max(self._last_clock, clock)
+        self._last_value = val
+        data = (self._set_cmd_tag, self._oid, clock & 0xFFFFFFFF, val)
+        ret = self._stepcompress_queue_mq_msg(self._stepqueue, clock, data, len(data))
+        if ret:
+            raise error("Internal error in stepcompress")
+        # Notify toolhead so that it will flush this update
+        wakeclock = clock
+        if self._last_value != self._default_value:
+            # Continue flushing to resend time
+            wakeclock += self._duration_ticks
+        wake_print_time = self._mcu.clock_to_print_time(wakeclock)
+        self._toolhead.note_mcu_movequeue_activity(wake_print_time)
 
-        systime = self.reactor.monotonic()
-        print_time = self.mcu_enable.get_mcu().estimated_print_time(systime)
-        time_diff = (self.last_print_time + self.resend_interval) - print_time
-        if time_diff > 0.0:
-            # Reschedule for resend time
-            return systime + time_diff
-        self._set_pin(print_time + PIN_MIN_TIME, self.last_value, True)
-        return systime + self.resend_interval
+    def set_pin(self, print_time, value):
+        clock = self._mcu.print_time_to_clock(print_time)
+        if self._invert:
+            value = 1.0 - value
+        v = int(max(0.0, min(1.0, value)))
+        self._send_update(clock, v)
+
+    def _flush_notification(self, print_time, clock):
+        if self._last_value != self._default_value:
+            while clock >= self._last_clock + self._duration_ticks:
+                self._send_update(
+                    self._last_clock + self._duration_ticks, self._last_value
+                )
 
 
-def setup_enable_pin(
-    printer, pin, max_enable_time=0.0, resend_interval=MIN_RESEND_INTERVAL
-):
+def setup_enable_pin(printer, pin, max_enable_time=0.0):
     if pin is None:
         # No enable line (stepper always enabled)
         enable = StepperEnablePin(None, 9999, printer)
@@ -92,12 +151,14 @@ def setup_enable_pin(
         # Shared enable line
         enable.is_dedicated = False
         return enable
-    mcu_enable = pin_params["chip"].setup_pin("digital_out", pin_params)
+    if max_enable_time:
+        mcu_enable = StepperEnableOutputPin(pin_params)
+        set_enable_pin = mcu_enable.set_pin
+    else:
+        mcu_enable = pin_params["chip"].setup_pin("digital_out", pin_params)
+        set_enable_pin = mcu_enable.set_digital
     mcu_enable.setup_max_duration(max_enable_time)
-    # mcu_enable.setup_start_value(0, 0)
-    enable = pin_params["class"] = StepperEnablePin(
-        mcu_enable, 0, printer, max_enable_time, resend_interval
-    )
+    enable = pin_params["class"] = StepperEnablePin(set_enable_pin, 0, printer)
     return enable
 
 
@@ -165,17 +226,10 @@ class PrinterStepperEnable:
             config.deprecate("disable_on_error")
             if not max_enable_time:
                 max_enable_time = 5.0
-        resend_interval = config.getfloat(
-            "resend_interval",
-            MIN_RESEND_INTERVAL,
-            minval=MIN_RESEND_INTERVAL,
-            maxval=max_enable_time - 0.5,
-        )
         enable = setup_enable_pin(
             self.printer,
             config.get("enable_pin", None),
             max_enable_time,
-            resend_interval,
         )
         self.enable_lines[name] = EnableTracking(mcu_stepper, enable)
 
@@ -198,14 +252,13 @@ class PrinterStepperEnable:
         print_time = toolhead.get_last_move_time()
         kin = toolhead.get_kinematics()
         if 3 in axes:
-            if "extruder" in self.enable_lines:
-                self.stepper_off("extruder", print_time, "extruder")
-                i = 1
-                extruder_name = f"extruder{i}"
-                while extruder_name in self.enable_lines:
-                    self.stepper_off(extruder_name, print_time, "extruder")
-                    i += 1
-                    extruder_name = f"extruder{i}"
+            active_extruders = [
+                stepper
+                for stepper in self.enable_lines
+                if stepper.startswith("extruder")
+            ]
+            for extruder in active_extruders:
+                self.stepper_off(extruder, print_time, "extruder")
         if hasattr(kin, "get_connected_rails"):
             for axis in axes:
                 try:

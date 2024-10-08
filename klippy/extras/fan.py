@@ -7,14 +7,14 @@ import logging
 
 from . import pulse_counter, output_pin
 
-FAN_MIN_TIME = 0.100
 SAFETY_CHECK_INIT_TIME = 3.0
 
 
 class Fan:
     def __init__(self, config, default_shutdown_speed=0.0):
         self.printer = config.get_printer()
-        self.name = config.get_name().split()[-1]
+        self.full_name = config.get_name()
+        self.name = self.full_name.split()[-1]
         self.gcode = self.printer.lookup_object("gcode")
         self.reactor = self.printer.get_reactor()
         self.estimated_print_time = None
@@ -60,9 +60,6 @@ class Fan:
                 % (self.min_power, self.max_power)
             )
         self.full_speed_max_power = config.getboolean("full_speed_max_power", False)
-        self.shutdown_speed_on_restart = config.getboolean(
-            "shutdown_speed_on_restart", False
-        )
 
         cycle_time = config.getfloat("cycle_time", 0.010, above=0.0)
         hardware_pwm = config.getboolean("hardware_pwm", False)
@@ -179,10 +176,11 @@ class Fan:
             self.reactor.monotonic() + self.startup_check_delay,
         )
 
-    def startup_self_check(self, eventtime):
-        rpm = self.tachometer.get_status(eventtime)["rpm"]
+    def startup_self_check(self, eventtime=None):
+        rpm = self.tachometer.get_status()["rpm"]
         if rpm < self.startup_check_rpm:
             msg = (
+                "Fan startup check!\n"
                 "'%s' spinning below minimum safe speed.\n"
                 "expected: %d rev/min\n"
                 "actual: %d rev/min" % (self.name, self.startup_check_rpm, rpm)
@@ -190,15 +188,12 @@ class Fan:
             logging.error(msg)
             self.printer.invoke_shutdown(msg)
         self.printer.lookup_object("toolhead").register_lookahead_callback(
-            (lambda pt: self.set_speed(pt, self.last_pwm_value, force=True))
+            (lambda pt: self.set_speed(self.last_req_value, pt, force=True))
         )
         self.self_checking = False
 
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
-
-    def set_speed(self, print_time, value, force=False):
-        self.gcrq.send_async_request(print_time, value, force)
 
     def _apply_speed(self, print_time, value, force=False):
         if value > 0:
@@ -216,7 +211,6 @@ class Fan:
             and pwm_value == self.last_pwm_value
             and not force
         ):
-            self.last_fan_time = print_time
             return "discard", 0.0
 
         if force or not self.self_checking:
@@ -227,11 +221,10 @@ class Fan:
                     self.enable_pin.set_digital(print_time, 0)
             if (
                 pwm_value
-                and pwm_value < self.max_power
                 and self.kick_start_time
                 and (
-                    not self.last_fan_value
-                    or value - self.last_fan_value > self.kick_start_threshold
+                    not self.last_pwm_value
+                    or pwm_value - self.last_pwm_value > self.kick_start_threshold
                 )
             ):
                 # Run fan at full speed for specified kick_start_time
@@ -239,11 +232,11 @@ class Fan:
                 self.last_req_pwm_value = pwm_value
 
                 self.last_fan_value = self.max_power
-                self.last_fan_pwm_value = self.max_power
+                self.last_pwm_value = self.max_power
 
                 self.mcu_fan.set_pwm(print_time, self.max_power)
                 return "delay", self.kick_start_time
-            self.mcu_fan.set_pwm(print_time, value)
+            self.mcu_fan.set_pwm(print_time, pwm_value)
         self.last_fan_value = self.last_req_value = value
         self.last_pwm_value = self.last_req_pwm_value = pwm_value
 
@@ -259,13 +252,14 @@ class Fan:
                     self.fan_check_thread.unregister()
                     self.fan_check_thread = None
 
+    def set_speed(self, value, print_time=None, force=False):
+        self.gcrq.send_async_request(value, print_time, force)
+
     def set_speed_from_command(self, value, force=False):
         self.gcrq.queue_gcode_request(value, force)
 
     def _handle_request_restart(self, print_time):
-        self.mcu_fan.set_pwm(
-            print_time, self.shutdown_power if self.shutdown_speed_on_restart else 0.0
-        )
+        self.set_speed(0.0, print_time)
 
     def get_status(self, eventtime):
         tachometer_status = self.tachometer.get_status(eventtime)
@@ -276,8 +270,8 @@ class Fan:
         }
 
     def fan_check(self):
-        rpm = self.tachometer.get_status(self.reactor.monotonic())["rpm"]
-        if self.last_fan_value and rpm is not None and rpm < self.min_rpm:
+        rpm = self.tachometer.get_status()["rpm"]
+        if self.last_pwm_value and rpm is not None and rpm < self.min_rpm:
             self.num_err += 1
             if self.num_err > self.max_err:
                 msg = (
@@ -310,7 +304,7 @@ class Fan:
         self.min_rpm = gcmd.get_float("MIN_RPM", self.min_rpm, minval=0.0)
         curtime = self.reactor.monotonic()
         print_time = self.estimated_print_time(curtime)
-        self.set_speed(print_time, self.last_fan_value, force=True)
+        self.set_speed(self.last_fan_value, print_time, force=True)
 
 
 class FanTachometer:
@@ -327,7 +321,7 @@ class FanTachometer:
                 printer, pin, sample_time, poll_time
             )
 
-    def get_status(self, eventtime):
+    def get_status(self, eventtime=None):
         if self._freq_counter is not None:
             rpm = self._freq_counter.get_frequency() * 30.0 / self.ppr
         else:

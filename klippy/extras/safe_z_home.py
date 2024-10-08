@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
+
 class SafeZHoming:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -92,9 +93,7 @@ class SafeZHoming:
             if self.z_hop:
                 pos = toolhead.get_position()
                 if pos[2] < self.z_hop:
-                    toolhead.manual_move(
-                        [None, None, self.z_hop], self.z_hop_speed
-                    )
+                    toolhead.manual_move([None, None, self.z_hop], self.z_hop_speed)
 
             # Move XY back to previous positions
             if self.move_to_previous:
