@@ -65,15 +65,6 @@ class RunoutHelper:
 
     def _handle_ready(self):
         self.min_event_systime = self.reactor.monotonic() + 2.0
-        # if (
-        #     self.check_runout_timeout is not None
-        #     and not get_danger_options().modify_check_runout_timeout
-        # ):
-        #     raise self.config.error(
-        #         "'modify_check_runout_timeout' is not enabled in 'danger_options'"
-        #     )
-        # if self.check_runout_timeout is None:
-        #     self.check_runout_timeout = CHECK_RUNOUT_TIMEOUT
 
     def _runout_event_handler(self, eventtime):
         if self.immediate_runout_gcode is not None:

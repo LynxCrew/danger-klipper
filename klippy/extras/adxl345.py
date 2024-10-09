@@ -149,6 +149,19 @@ class AccelCommandHelper:
         if not values:
             raise Exception("No accelerometer measurements found")
 
+    def _handle_connect(self):
+        for heater_name in self.disabled_heaters:
+            heater_object = self.printer.lookup_object(heater_name)
+            if not hasattr(heater_object, "heater"):
+                raise self.printer.config_error(
+                    f"'{heater_name}' is not a valid heater in {self.base_name} {self.name}"
+                )
+            heater = heater_object.heater
+            if not hasattr(heater, "set_enabled"):
+                raise self.printer.config_error(
+                    f"'{heater_name}' is not a valid heater in {self.base_name} {self.name}"
+                )
+
     def _handle_ready(self):
         self.reactor.register_callback(self._init_accel, self.reactor.NOW)
 
@@ -160,15 +173,7 @@ class AccelCommandHelper:
             connected = False
         for heater_name in self.disabled_heaters:
             heater_object = self.printer.lookup_object(heater_name)
-            if not hasattr(heater_object, "heater"):
-                raise self.printer.config_error(
-                    "'%s' is not a valid heater." % (heater_name,)
-                )
             heater = heater_object.heater
-            if not hasattr(heater, "set_enabled"):
-                raise self.printer.config_error(
-                    "'%s' is not a valid heater." % (heater_name,)
-                )
             heater.set_enabled(not connected)
 
     def register_commands(self, name):
