@@ -264,9 +264,12 @@ FieldFormatters.update(
 # TMC stepper current config helper
 ######################################################################
 
+KIFS = [11750.0, 24000.0, 36000.0, 36000.0]
 
 class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
     def __init__(self, config, mcu_tmc, type="tmc2240"):
+        self.use_motor_peak_current = config.getboolean("use_motor_peak_current", False)
+        super().__init__(config, mcu_tmc, self._get_ifs(3))
         self.printer = config.get_printer()
         pconfig: PrinterConfig = self.printer.lookup_object("configfile")
         self.name = config.get_name().split()[-1]
@@ -285,27 +288,6 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
             )
             self.Rref = 12000.0
 
-        self.max_current = self._get_ifs_rms(3)
-        self.config_run_current = config.getfloat(
-            "run_current", above=0.0, maxval=self.max_current
-        )
-        self.config_hold_current = config.getfloat(
-            "hold_current", None, above=0.0, maxval=self.max_current
-        )
-        self.config_home_current = config.getfloat(
-            "home_current",
-            self.config_run_current,
-            above=0.0,
-            maxval=self.max_current,
-        )
-        self.current_change_dwell_time = config.getfloat(
-            "current_change_dwell_time", 0.5, above=0.0
-        )
-        self.req_run_current = self.config_run_current
-        self.req_hold_current = self.config_hold_current
-        self.req_home_current = self.config_home_current
-
-        self.actual_current = self.req_run_current
         current_range = self._calc_current_range(self.actual_current)
         self.fields.set_field("current_range", current_range)
 
@@ -332,35 +314,37 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         self.fields.set_field("ihold", ihold)
         self.fields.set_field("irun", self.cs)
 
-    def _get_ifs_rms(self, current_range=None):
+    def _get_ifs(self, current_range=None):
         if current_range is None:
             current_range = self.fields.get_field("current_range")
-        KIFS = [11750.0, 24000.0, 36000.0, 36000.0]
-        return (KIFS[current_range] / self.Rref) / math.sqrt(2.0)
+        ifs = KIFS[current_range] / self.Rref
+        if self.use_motor_peak_current:
+            return ifs
+        return ifs / math.sqrt(2)
 
     def _calc_current_range(self, current):
         current_range = 0
         for current_range in range(4):
-            if current <= self._get_ifs_rms(current_range):
+            if current <= self._get_ifs(current_range):
                 break
         return current_range
 
     def _calc_globalscaler(self, current):
-        ifs_rms = self._get_ifs_rms()
+        ifs_rms = self._get_ifs()
         globalscaler = int(((current * 256.0) / (ifs_rms * ((self.cs + 1) / 32))) + 0.5)
         # if globalscaler >= 256:
         #     globalscaler = 0
         return globalscaler
 
     def _calc_current_bits(self, current, globalscaler):
-        ifs_rms = self._get_ifs_rms()
+        ifs_rms = self._get_ifs()
         if not globalscaler:
             globalscaler = 256
         bits = int((current * 256.0 * 32.0) / (globalscaler * ifs_rms) - 1.0 + 0.5)
         return max(0, min(31, bits))
 
     def _calc_current_from_field(self, field_name):
-        ifs_rms = self._get_ifs_rms()
+        ifs_rms = self._get_ifs()
         globalscaler = self.fields.get_field("globalscaler")
         if not globalscaler:
             globalscaler = 256
@@ -368,7 +352,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         return globalscaler * (bits + 1) * ifs_rms / (256.0 * 32.0)
 
     def get_current(self):
-        ifs_rms = self._get_ifs_rms()
+        ifs_rms = self._get_ifs()
         run_current = self._calc_current_from_field("irun")
         hold_current = self._calc_current_from_field("ihold")
         return (
