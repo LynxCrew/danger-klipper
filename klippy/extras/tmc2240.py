@@ -313,7 +313,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         self.cs = config.getint("driver_cs", 31, maxval=31, minval=0)
 
         gscaler = self._calc_globalscaler(self.req_run_current)
-        if gscaler < 32:
+        if gscaler < 32 or gscaler > 255:
             raise config.error(
                 f"""[{self.name}] GLOBALSCALER ({gscaler}) calculation out of bounds.
                 The target current can't be achieved with the given RREF ({self.Rref})
@@ -350,8 +350,8 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
     def _calc_globalscaler(self, current):
         ifs_rms = self._get_ifs_rms()
         globalscaler = int(((current * 256.0) / (ifs_rms * ((self.cs + 1) / 32))) + 0.5)
-        if globalscaler >= 256:
-            globalscaler = 0
+        # if globalscaler >= 256:
+        #     globalscaler = 0
         return globalscaler
 
     def _calc_current_bits(self, current, globalscaler):
