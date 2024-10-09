@@ -301,7 +301,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
                 f"GLOBALSCALER ({gscaler}) calculation out of bounds.\n"
                 f"The target current can't be achieved with the given RREF ({self.Rref})"
                 f"and CS ({self.cs}). Please adjust your configuration.\n"
-                f"Calculated current_range bit: {bin(current_range)[2:]}.\n"
+                f"Calculated current_range bit: {current_range:02b}.\n"
                 f"Calculated KIFS: {KIFS[current_range]}."
             )
 
