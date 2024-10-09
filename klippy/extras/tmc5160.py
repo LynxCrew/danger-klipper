@@ -277,7 +277,7 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
         if gscaler > 256:
             raise config.error(
                 f"[{type} {self.name}]\n"
-                f"GLOBALSCALER ({gscaler}) calculation out of bounds.\n"
+                f"GLOBALSCALER({gscaler}) calculation out of bounds.\n"
                 f"The target current can't be achieved with the given R_SENSE({self.sense_resistor}) "
                 f"and CS ({self.cs}). Please adjust your configuration"
             )
