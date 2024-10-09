@@ -271,6 +271,7 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
             self.sense_resistor = 0.075
 
         self.cs = config.getint("driver_cs", 31, maxval=31, minval=0)
+        self.cap_global_scaler = config.getboolean("cap_global_scaler", False)
 
         gscaler = self._calc_globalscaler(self.req_run_current)
         if gscaler > 256:
@@ -298,7 +299,7 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
             / (VREF * ((self.cs + 1) / 32))
             + 0.5
         )
-        if globalscaler >= 256:
+        if globalscaler >= 256 and self.cap_global_scaler:
             globalscaler = 0
         return globalscaler
 

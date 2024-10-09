@@ -294,6 +294,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         self.fields.set_field("current_range", current_range)
 
         self.cs = config.getint("driver_cs", 31, maxval=31, minval=0)
+        self.cap_global_scaler = config.getboolean("cap_global_scaler", False)
 
         gscaler = self._calc_globalscaler(self.req_run_current)
         if 1 <= gscaler <= 31 or gscaler > 256:
@@ -336,7 +337,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
     def _calc_globalscaler(self, current):
         ifs_rms = self._get_ifs()
         globalscaler = int(((current * 256.0) / (ifs_rms * ((self.cs + 1) / 32))) + 0.5)
-        if globalscaler >= 256:
+        if self.cap_global_scaler and globalscaler >= 256:
             globalscaler = 0
         return globalscaler
 
