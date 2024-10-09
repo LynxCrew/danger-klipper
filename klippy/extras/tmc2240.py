@@ -317,7 +317,8 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
             raise config.error(
                 f"""[{self.name}] GLOBALSCALER ({gscaler}) calculation out of bounds.
                 The target current can't be achieved with the given RREF ({self.Rref})
-                and CS ({self.cs}). Please adjust your configuration"""
+                and CS ({self.cs}). Please adjust your configuration.
+                Calculated current_range: {current_range}."""
             )
 
         ihold = (
