@@ -266,6 +266,7 @@ FieldFormatters.update(
 
 KIFS = [11750.0, 24000.0, 36000.0, 36000.0]
 
+
 class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
     def __init__(self, config, mcu_tmc, type="tmc2240"):
         self.use_motor_peak_current = config.getboolean("use_motor_peak_current", False)
@@ -297,10 +298,10 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         gscaler = self._calc_globalscaler(self.req_run_current)
         if 1 <= gscaler <= 31 or gscaler > 256:
             raise config.error(
-                f"[{type} {self.name}]:\n"
+                f"[{type} {self.name}]\n"
                 f"GLOBALSCALER ({gscaler}) calculation out of bounds.\n"
-                f"The target current can't be achieved with the given RREF ({self.Rref})"
-                f"and CS ({self.cs}). Please adjust your configuration.\n"
+                f"The target current can't be achieved with the given RREF({self.Rref}) "
+                f"and CS({self.cs}). Please adjust your configuration.\n"
                 f"Calculated current_range bit: {current_range:02b}\n"
                 f"Calculated KIFS: {(KIFS[current_range]/1000):.2f}"
             )
@@ -335,8 +336,8 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
     def _calc_globalscaler(self, current):
         ifs_rms = self._get_ifs()
         globalscaler = int(((current * 256.0) / (ifs_rms * ((self.cs + 1) / 32))) + 0.5)
-        if globalscaler == 0:
-            globalscaler = 256
+        if globalscaler >= 256:
+            globalscaler = 0
         return globalscaler
 
     def _calc_current_bits(self, current, globalscaler):

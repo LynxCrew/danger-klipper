@@ -273,11 +273,12 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
         self.cs = config.getint("driver_cs", 31, maxval=31, minval=0)
 
         gscaler = self._calc_globalscaler(self.req_run_current)
-        if gscaler < 32:
+        if gscaler > 256:
             raise config.error(
-                f"""[{self.name}] GLOBALSCALER ({gscaler}) calculation out of bonds.
-                The target current can't be achieved with the given R_SENSE ({self.sense_resistor})
-                and CS ({self.cs}). Please adjust your configuration"""
+                f"[{type} {self.name}]\n"
+                f"GLOBALSCALER ({gscaler}) calculation out of bounds.\n"
+                f"The target current can't be achieved with the given R_SENSE({self.sense_resistor}) "
+                f"and CS ({self.cs}). Please adjust your configuration"
             )
 
         ihold = (
