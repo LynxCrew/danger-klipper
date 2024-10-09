@@ -302,7 +302,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
                 f"The target current can't be achieved with the given RREF ({self.Rref})"
                 f"and CS ({self.cs}). Please adjust your configuration.\n"
                 f"Calculated current_range bit: {current_range:02b}\n"
-                f"Calculated KIFS: {KIFS[current_range]/1000}"
+                f"Calculated KIFS: {(KIFS[current_range]/1000):.2f}"
             )
 
         ihold = (
