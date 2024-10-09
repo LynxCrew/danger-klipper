@@ -816,7 +816,7 @@ class BaseTMCCurrentHelper:
             "run_current", above=0.0, maxval=max_current
         )
         self.config_hold_current = config.getfloat(
-            "hold_current", max_current, above=0.0, maxval=max_current
+            "hold_current", None, above=0.0, maxval=max_current
         )
         self.config_home_current = config.getfloat(
             "home_current",
