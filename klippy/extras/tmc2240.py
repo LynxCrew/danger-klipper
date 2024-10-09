@@ -401,7 +401,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
             self.req_home_current,
         )
 
-    def apply_current(self, print_time):
+    def apply_current(self, print_time, recalculate_current_range=False):
         if recalculate_current_range:
             current_range = self._calc_current_range(self.actual_current)
             val = self.fields.set_field("current_range", current_range)
