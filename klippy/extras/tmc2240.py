@@ -298,10 +298,10 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         if 1 <= gscaler <= 31 or gscaler > 256:
             raise config.error(
                 f"[{type} {self.name}]:\n"
-                "GLOBALSCALER ({gscaler}) calculation out of bounds.\n"
-                "The target current can't be achieved with the given RREF ({self.Rref})"
-                "and CS ({self.cs}). Please adjust your configuration.\n"
-                "Calculated current_range: {current_range}."
+                f"GLOBALSCALER ({gscaler}) calculation out of bounds.\n"
+                f"The target current can't be achieved with the given RREF ({self.Rref})"
+                f"and CS ({self.cs}). Please adjust your configuration.\n"
+                f"Calculated current_range: {current_range}."
             )
 
         ihold = (
