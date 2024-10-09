@@ -249,7 +249,11 @@ class TMC2130CurrentHelper(tmc.BaseTMCCurrentHelper):
                 if abs(run_current - cur2) < abs(run_current - cur):
                     vsense = False
                     irun = irun2
-        ihold = self._calc_current_bits(min(hold_current, run_current), vsense)
+        ihold = (
+            irun
+            if hold_current is None
+            else self._calc_current_bits(min(hold_current, run_current), vsense)
+        )
         return vsense, irun, ihold
 
     def get_current(self):
@@ -261,7 +265,11 @@ class TMC2130CurrentHelper(tmc.BaseTMCCurrentHelper):
         return (
             run_current,
             hold_current,
-            self.req_hold_current,
+            (
+                self.req_run_current
+                if self.req_hold_current is None
+                else self.req_hold_current
+            ),
             MAX_CURRENT,
             self.req_home_current,
         )
