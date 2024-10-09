@@ -334,8 +334,8 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
     def _calc_globalscaler(self, current):
         ifs_rms = self._get_ifs()
         globalscaler = int(((current * 256.0) / (ifs_rms * ((self.cs + 1) / 32))) + 0.5)
-        # if globalscaler >= 256:
-        #     globalscaler = 0
+        if globalscaler == 0:
+            globalscaler = 256
         return globalscaler
 
     def _calc_current_bits(self, current, globalscaler):
