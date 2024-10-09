@@ -285,6 +285,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
             )
             self.Rref = 12000.0
 
+        self.peak_current = config.getboolean("peak_current", False)
         self.max_current = self._get_ifs_rms(3)
         self.config_run_current = config.getfloat(
             "run_current", above=0.0, maxval=self.max_current
@@ -335,7 +336,8 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         if current_range is None:
             current_range = self.fields.get_field("current_range")
         KIFS = [11750.0, 24000.0, 36000.0, 36000.0]
-        return (KIFS[current_range] / self.Rref) / math.sqrt(2.0)
+        divisor = 1 if self.peak_current else math.sqrt(2.0)
+        return (KIFS[current_range] / self.Rref) / divisor
 
     def _calc_current_range(self, current):
         current_range = 0
