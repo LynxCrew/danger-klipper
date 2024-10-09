@@ -269,7 +269,6 @@ KIFS = [11750.0, 24000.0, 36000.0, 36000.0]
 class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
     def __init__(self, config, mcu_tmc, type="tmc2240"):
         self.use_motor_peak_current = config.getboolean("use_motor_peak_current", False)
-        super().__init__(config, mcu_tmc, self._get_ifs(3))
         self.printer = config.get_printer()
         pconfig: PrinterConfig = self.printer.lookup_object("configfile")
         self.name = config.get_name().split()[-1]
@@ -287,6 +286,8 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
                 "rref",
             )
             self.Rref = 12000.0
+
+        super().__init__(config, mcu_tmc, self._get_ifs(3))
 
         current_range = self._calc_current_range(self.actual_current)
         self.fields.set_field("current_range", current_range)
