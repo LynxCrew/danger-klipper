@@ -250,22 +250,29 @@ FieldFormatters.update(
 
 VREF = 0.325
 MAX_CURRENT = 10.000  # Maximum dependent on board, but 10 is safe sanity check
+GLOBALSCALER_ERROR = (
+    "[%s %s]\n"
+    "GLOBALSCALER(%d) calculation out of bounds.\n"
+    "The target current can't be achieved with the given R_SENSE(%f) "
+    "and CS (%d). Please adjust your configuration.\n"
+    "Valid values range from 0-255."
+)
 
 
 class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
-    def __init__(self, config, mcu_tmc, type="tmc5160"):
-        super().__init__(config, mcu_tmc, MAX_CURRENT)
+    def __init__(self, config, mcu_tmc, tmc_type="tmc5160"):
+        super().__init__(config, mcu_tmc, MAX_CURRENT, tmc_type)
         pconfig: PrinterConfig = self.printer.lookup_object("configfile")
 
         self.sense_resistor = config.getfloat("sense_resistor", None, above=0.0)
         if self.sense_resistor is None:
             pconfig.warn(
                 "config",
-                f"""[{type} {self.name}] sense_resistor not specified; using default = 0.075.
+                f"""[{self.type} {self.name}] sense_resistor not specified; using default = 0.075.
                 If this value is wrong, it might burn your house down.
                 This parameter will be mandatory in future versions.
                 Specify the parameter to resolve this warning""",
-                f"{type} {self.name}",
+                f"{self.type} {self.name}",
                 "sense_resistor",
             )
             self.sense_resistor = 0.075
@@ -276,10 +283,8 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
         gscaler = self._calc_globalscaler(self.req_run_current)
         if gscaler > 256:
             raise config.error(
-                f"[{type} {self.name}]\n"
-                f"GLOBALSCALER({gscaler}) calculation out of bounds.\n"
-                f"The target current can't be achieved with the given R_SENSE({self.sense_resistor}) "
-                f"and CS ({self.cs}). Please adjust your configuration"
+                GLOBALSCALER_ERROR
+                % (self.type, self.name, gscaler, self.sense_resistor, self.cs)
             )
 
         ihold = (
@@ -299,8 +304,15 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
             / (VREF * ((self.cs + 1) / 32))
             + 0.5
         )
-        if globalscaler >= 256 and self.cap_global_scaler:
-            globalscaler = 0
+        if self.cap_global_scaler and globalscaler >= 256:
+            return 0
+        if globalscaler == 256:
+            return 0
+        if globalscaler > 255:
+            self.printer.invoke_shutdown(
+                GLOBALSCALER_ERROR
+                % (self.type, self.name, globalscaler, self.sense_resistor, self.cs)
+            )
         return globalscaler
 
     def _calc_current_bits(self, current, globalscaler):
@@ -341,7 +353,7 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
             self.req_home_current,
         )
 
-    def apply_current(self, print_time):
+    def apply_current(self, print_time, recalculate_current_range=False):
         gscaler = self._calc_globalscaler(self.actual_current)
         ihold = (
             self.cs

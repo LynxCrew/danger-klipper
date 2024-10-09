@@ -265,10 +265,19 @@ FieldFormatters.update(
 ######################################################################
 
 KIFS = [11750.0, 24000.0, 36000.0, 36000.0]
+GLOBALSCALER_ERROR = (
+    "[%s %s]\n"
+    "GLOBALSCALER(%d) calculation out of bounds.\n"
+    "The target current can't be achieved with the given RREF(%f) "
+    "and CS(%d). Please adjust your configuration.\n"
+    "Valid values are 0 and 32-255.\n"
+    "Calculated current_range bit: %d\n"
+    "Calculated KIFS: %f"
+)
 
 
 class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
-    def __init__(self, config, mcu_tmc, type="tmc2240"):
+    def __init__(self, config, mcu_tmc, tmc_type="tmc2240"):
         self.use_motor_peak_current = config.getboolean("use_motor_peak_current", False)
         self.printer = config.get_printer()
         pconfig: PrinterConfig = self.printer.lookup_object("configfile")
@@ -279,16 +288,16 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         if self.Rref is None:
             pconfig.warn(
                 "config",
-                f"""[{type} {self.name}] rref not specified; using default = 12000.
+                f"""[{self.type} {self.name}] rref not specified; using default = 12000.
                 If this value is wrong, it might burn your house down.
                 This parameter will be mandatory in future versions.
                 Specify the parameter to resolve this warning""",
-                f"{type} {self.name}",
+                f"{self.type} {self.name}",
                 "rref",
             )
             self.Rref = 12000.0
 
-        super().__init__(config, mcu_tmc, self._get_ifs(3))
+        super().__init__(config, mcu_tmc, self._get_ifs(3), tmc_type)
 
         current_range = self._calc_current_range(self.actual_current)
         self.fields.set_field("current_range", current_range)
@@ -299,12 +308,16 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         gscaler = self._calc_globalscaler(self.req_run_current)
         if 1 <= gscaler <= 31 or gscaler > 256:
             raise config.error(
-                f"[{type} {self.name}]\n"
-                f"GLOBALSCALER({gscaler}) calculation out of bounds.\n"
-                f"The target current can't be achieved with the given RREF({self.Rref}) "
-                f"and CS({self.cs}). Please adjust your configuration.\n"
-                f"Calculated current_range bit: {current_range:02b}\n"
-                f"Calculated KIFS: {(KIFS[current_range]/1000):.2f}"
+                GLOBALSCALER_ERROR
+                % (
+                    self.type,
+                    self.name,
+                    gscaler,
+                    self.Rref,
+                    self.cs,
+                    f"{current_range:02b}",
+                    f"{(KIFS[current_range]/1000):.2f}",
+                )
             )
 
         ihold = (
@@ -338,7 +351,23 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         ifs_rms = self._get_ifs()
         globalscaler = int(((current * 256.0 * 32) / (ifs_rms * (self.cs + 1))) + 0.5)
         if self.cap_global_scaler and globalscaler >= 256:
-            globalscaler = 0
+            return 0
+        if globalscaler == 256:
+            return 0
+        if 1 <= globalscaler <= 31 or globalscaler > 256:
+            current_range = self.fields.get_field("current_range")
+            self.printer.invoke_shutdown(
+                GLOBALSCALER_ERROR
+                % (
+                    self.type,
+                    self.name,
+                    globalscaler,
+                    self.Rref,
+                    self.cs,
+                    f"{current_range:02b}",
+                    f"{(KIFS[current_range] / 1000):.2f}",
+                )
+            )
         return globalscaler
 
     def _calc_current_bits(self, current, globalscaler):
@@ -373,6 +402,10 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         )
 
     def apply_current(self, print_time):
+        if recalculate_current_range:
+            current_range = self._calc_current_range(self.actual_current)
+            val = self.fields.set_field("current_range", current_range)
+            self.mcu_tmc.set_register("DRV_CONF", val, print_time)
         gscaler = self._calc_globalscaler(self.actual_current)
         ihold = (
             self.cs

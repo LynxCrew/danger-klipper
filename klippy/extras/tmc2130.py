@@ -274,7 +274,7 @@ class TMC2130CurrentHelper(tmc.BaseTMCCurrentHelper):
             self.req_home_current,
         )
 
-    def apply_current(self, print_time):
+    def apply_current(self, print_time, recalculate_current_range=False):
         vsense, irun, ihold = self._calc_current(
             self.actual_current, self.req_hold_current
         )

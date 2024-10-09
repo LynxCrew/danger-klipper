@@ -410,7 +410,9 @@ class TMCCommandHelper:
 
             toolhead = self.printer.lookup_object("toolhead")
             print_time = toolhead.get_last_move_time()
-            ch.set_current(run_current, hold_current, print_time)
+            ch.set_current(
+                run_current, hold_current, print_time, recalculate_current_range=True
+            )
             (
                 prev_cur,
                 prev_hold_cur,
@@ -804,9 +806,10 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
 
 
 class BaseTMCCurrentHelper:
-    def __init__(self, config, mcu_tmc, max_current):
+    def __init__(self, config, mcu_tmc, max_current, tmc_type):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
+        self.type = tmc_type
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
 
@@ -891,10 +894,17 @@ class BaseTMCCurrentHelper:
             return False
         return True
 
-    def apply_current(self, print_time):
+    def apply_current(self, print_time, recalculate_current_range=False):
         pass
 
-    def set_current(self, new_current, hold_current, print_time, force=False):
+    def set_current(
+        self,
+        new_current,
+        hold_current,
+        print_time,
+        force=False,
+        recalculate_current_range=False,
+    ):
         if not self.needs_current_changes(new_current, hold_current, force):
             return
 
@@ -902,7 +912,7 @@ class BaseTMCCurrentHelper:
             self.set_hold_current(hold_current)
 
         self.set_actual_current(new_current)
-        self.apply_current(print_time)
+        self.apply_current(print_time, recalculate_current_range)
 
 
 # Helper to configure StallGuard and CoolStep minimum velocity
