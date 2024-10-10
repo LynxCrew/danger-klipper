@@ -450,6 +450,12 @@ class PrinterRail:
         endstop_is_virtual = endstop_pin is not None and (
             ":virtual_endstop" in endstop_pin
         )
+        endstop_is_beacon = endstop_pin is not None and (
+            endstop_pin == "probe:z_virtual_endstop"
+            and config.get_printer().load_object(config, "beacon", None) is not None
+        )
+
+        default_homing_retract_dist = 0.0 if endstop_is_beacon else 5.0
 
         # Axis range
         if need_position_minmax:
@@ -475,7 +481,7 @@ class PrinterRail:
             "homing_retract_speed", self.homing_speed, above=0.0
         )
         self.homing_retract_dist = config.getfloat(
-            "homing_retract_dist", 5.0, minval=0.0
+            "homing_retract_dist", default_homing_retract_dist, minval=0.0
         )
         self.post_homing_retract_speed = config.getfloat(
             "post_homing_retract_speed", self.homing_retract_speed, above=0.0
