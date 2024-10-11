@@ -248,7 +248,7 @@ class Homing:
     def set_homed_position(self, pos):
         self.toolhead.set_position(self._fill_coord(pos))
 
-    def _set_current_homing(self, homing_axes, pre_homing):
+    def _set_current_homing(self, homing_axes, pre_homing, perform_dwell=False):
         print_time = self.toolhead.get_last_move_time()
         affected_rails = set()
         for axis in homing_axes:
@@ -262,7 +262,7 @@ class Homing:
             for ch in chs:
                 if ch is not None:
                     current_dwell_time = ch.set_current_for_homing(
-                        print_time, pre_homing
+                        print_time, pre_homing, get_dwell_time=perform_dwell
                     )
                     dwell_time = max(dwell_time, current_dwell_time)
 
@@ -314,6 +314,9 @@ class Homing:
             # Home again
             startpos = [rp - ad * retract_r for rp, ad in zip(retractpos, axes_d)]
             self.toolhead.set_position(startpos)
+            self._set_current_homing(
+                homing_axes, pre_homing=True, perform_dwell=hi.use_sensorless_homing
+            )
             self._reset_endstop_states(endstops)
             hmove = HomingMove(self.printer, endstops)
             hmove.homing_move(homepos, hi.second_homing_speed)
