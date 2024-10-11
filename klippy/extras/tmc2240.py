@@ -312,7 +312,9 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         self.cs = config.getint("driver_cs", 31, maxval=31, minval=0)
 
         gscaler = self._calc_globalscaler(self.req_run_current)
-        ihold = self._calc_current_bits(min(self.req_run_current, self.req_hold_current), gscaler)
+        ihold = self._calc_current_bits(
+            min(self.req_run_current, self.req_hold_current), gscaler
+        )
 
         self.fields.set_field("globalscaler", gscaler)
         self.fields.set_field("ihold", ihold)
