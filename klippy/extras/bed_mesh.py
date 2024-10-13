@@ -360,7 +360,6 @@ class BedMeshCalibrate:
 
     def __init__(self, config, bedmesh):
         self.printer = config.get_printer()
-        self.beacon = self.printer.load_object(config, "beacon", None)
         self.orig_config = {"radius": None, "origin": None}
         self.radius = self.origin = None
         self.mesh_min = self.mesh_max = (0.0, 0.0)
@@ -380,7 +379,7 @@ class BedMeshCalibrate:
             config, self.probe_finalize, self._get_adjusted_points()
         )
         self.scan_speed = None
-        if self.radius is None and self.beacon is not None:
+        if self.radius is None:
             self.scan_speed = config.getfloat(
                 "scan_speed", self.probe_helper.speed, above=0.0
             )
@@ -575,7 +574,7 @@ class BedMeshCalibrate:
         self.scan_mesh_pps = None
         self.scan_algo = None
         self.scan_tension = None
-        if self.radius is None and self.beacon is not None:
+        if self.radius is None:
             self.scan_probe_count = parse_config_pair(
                 config,
                 "scan_probe_count",
@@ -917,15 +916,15 @@ class BedMeshCalibrate:
         if not self._profile_name.strip():
             raise gcmd.error("Value for parameter 'PROFILE' must be specified")
         self.bedmesh.set_mesh(None)
+        beacon = self.printer.lookup_object("beacon", None)
+        beacon_scan = False
         horizontal_move_z = gcmd.get_float(
             "HORIZONTAL_MOVE_Z", self.bedmesh.horizontal_move_z
         )
-        beacon_scan = False
-        if self.beacon is not None:
+        if beacon is not None:
             if (
-                gcmd.get("PROBE_METHOD", self.beacon.default_mesh_method).lower()
-                == "scan"
-                and horizontal_move_z <= self.beacon.trigger_dive_threshold
+                gcmd.get("PROBE_METHOD", beacon.default_mesh_method).lower() == "scan"
+                and horizontal_move_z <= beacon.trigger_dive_threshold
             ):
                 beacon_scan = True
         self.update_config(gcmd, beacon_scan=beacon_scan)
