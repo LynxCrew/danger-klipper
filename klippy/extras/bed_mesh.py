@@ -379,7 +379,7 @@ class BedMeshCalibrate:
             config, self.probe_finalize, self._get_adjusted_points()
         )
         self.has_beacon = (
-            config.get_printer.lookup_object("beacon", None) is not None
+            config.get_printer().lookup_object("beacon", None) is not None
             or config.get_printer().load_object(config, "beacon", None) is not None
         )
         self.scan_speed = None
