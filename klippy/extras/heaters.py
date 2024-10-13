@@ -126,25 +126,25 @@ class Heater:
             default,
             can_be_none,
         ) in WATERMARK_PROFILE_OPTIONS.items():
-            sensor_config.get(key, None, note_valid=False)
+            sensor_config.get(key, None)
         for key, (
             type,
             placeholder,
             default,
             can_be_none,
         ) in PID_PROFILE_OPTIONS.items():
-            sensor_config.get(key, None, note_valid=False)
+            sensor_config.get(key, None)
         for key, (
             type,
             placeholder,
             default,
             can_be_none,
         ) in MPC_PROFILE_OPTIONS.items():
-            sensor_config.get(key, None, note_valid=False)
-        sensor_config.getfloat("calibrate_max_error", None, note_valid=False)
-        sensor_config.getfloat("calibrate_check_gain_time", None, note_valid=False)
-        sensor_config.getfloat("calibrate_hysteresis", None, note_valid=False)
-        sensor_config.getfloat("calibrate_heating_gain", None, note_valid=False)
+            sensor_config.get(key, None)
+        sensor_config.getfloat("calibrate_max_error", None)
+        sensor_config.getfloat("calibrate_check_gain_time", None)
+        sensor_config.getfloat("calibrate_hysteresis", None)
+        sensor_config.getfloat("calibrate_heating_gain", None)
         # Setup output heater pin
         heater_pin = sensor_config.get("heater_pin")
         ppins = self.printer.lookup_object("pins")
