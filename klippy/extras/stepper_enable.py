@@ -35,11 +35,7 @@ class StepperEnablePin:
     def set_disable(self, print_time):
         self.enable_count -= 1
         if not self.enable_count and self.set_enable_pin is not None:
-            toolhead = self.printer.lookup_object("toolhead")
-            toolhead.dwell(DISABLE_STALL_TIME)
-            toolhead.wait_moves()
-            toolhead.dwell(DISABLE_STALL_TIME)
-            self.set_enable_pin(toolhead.get_last_move_time(), 0)
+            self.set_enable_pin(print_time, 0)
 
 
 class error(Exception):
