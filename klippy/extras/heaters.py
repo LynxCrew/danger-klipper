@@ -126,7 +126,7 @@ class Heater:
             default,
             can_be_none,
         ) in WATERMARK_PROFILE_OPTIONS.items():
-            sensor_config.get(key, Non, note_valid=Falsee)
+            sensor_config.get(key, None, note_valid=False)
         for key, (
             type,
             placeholder,
