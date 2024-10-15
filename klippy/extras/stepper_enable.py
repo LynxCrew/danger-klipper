@@ -128,7 +128,7 @@ class StepperEnableOutputPin:
             toolhead.dwell(DISABLE_STALL_TIME)
             eventtime += DISABLE_STALL_TIME
             printer.get_reactor().register_callback(
-                lambda pt: self._disable_pin_callback,
+                self._disable_pin_callback,
                 eventtime,
             )
         else:
