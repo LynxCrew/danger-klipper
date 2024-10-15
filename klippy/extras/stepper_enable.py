@@ -40,7 +40,7 @@ class StepperEnablePin:
             toolhead.dwell(DISABLE_STALL_TIME)
             eventtime += DISABLE_STALL_TIME
             # toolhead.register_lookahead_callback(lambda pt: self.set_enable_pin(pt, 0))
-            toolhead.register_callback(lambda pt: self.set_enable_pin(pt, 0), eventtime)
+            self.reactor.register_callback(lambda pt: self.set_enable_pin(pt, 0), eventtime)
 
 
 class error(Exception):
