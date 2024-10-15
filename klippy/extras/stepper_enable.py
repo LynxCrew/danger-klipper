@@ -134,7 +134,7 @@ class StepperEnableOutputPin:
         else:
             self._set_pin(print_time, value)
 
-    def _disable_pin_callback(self, eventtime):
+    def _disable_pin_callback(self, eventtime=None):
         self._mcu.get_printer().lookup_object("toolhead").register_lookahead_callback(
             lambda pt: self._set_pin(pt, 0)
         )
