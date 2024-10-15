@@ -588,6 +588,7 @@ class ToolHead:
             if not self.can_pause:
                 break
             eventtime = self.reactor.pause(eventtime + 0.100)
+        return eventtime
 
     def set_extruder(self, extruder, extrude_pos):
         self.extruder = extruder
