@@ -7,9 +7,12 @@ import math
 import logging
 from extras.danger_options import get_danger_options
 
-HOMING_START_DELAY = 0.001
-ENDSTOP_SAMPLE_TIME = 0.000015
-ENDSTOP_SAMPLE_COUNT = 4
+# HOMING_START_DELAY = 0.001
+# ENDSTOP_SAMPLE_TIME = 0.000015
+# ENDSTOP_SAMPLE_COUNT = 4
+HOMING_START_DELAY = get_danger_options().homing_start_delay
+ENDSTOP_SAMPLE_TIME = get_danger_options().endstop_sample_time
+ENDSTOP_SAMPLE_COUNT = get_danger_options().endstop_sample_count
 
 
 # Return a completion that completes when all completions in a list complete
@@ -245,7 +248,7 @@ class Homing:
     def set_homed_position(self, pos):
         self.toolhead.set_position(self._fill_coord(pos))
 
-    def _set_current_homing(self, homing_axes, pre_homing):
+    def _set_current_homing(self, homing_axes, pre_homing, perform_dwell=False):
         print_time = self.toolhead.get_last_move_time()
         affected_rails = set()
         for axis in homing_axes:
@@ -259,7 +262,7 @@ class Homing:
             for ch in chs:
                 if ch is not None:
                     current_dwell_time = ch.set_current_for_homing(
-                        print_time, pre_homing
+                        print_time, pre_homing, get_dwell_time=perform_dwell
                     )
                     dwell_time = max(dwell_time, current_dwell_time)
 
@@ -311,6 +314,9 @@ class Homing:
             # Home again
             startpos = [rp - ad * retract_r for rp, ad in zip(retractpos, axes_d)]
             self.toolhead.set_position(startpos)
+            self._set_current_homing(
+                homing_axes, pre_homing=True, perform_dwell=hi.use_sensorless_homing
+            )
             self._reset_endstop_states(endstops)
             hmove = HomingMove(self.printer, endstops)
             hmove.homing_move(homepos, hi.second_homing_speed)

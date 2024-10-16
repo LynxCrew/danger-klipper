@@ -35,10 +35,7 @@ class StepperEnablePin:
     def set_disable(self, print_time):
         self.enable_count -= 1
         if not self.enable_count and self.set_enable_pin is not None:
-            toolhead = self.printer.lookup_object("toolhead")
-            toolhead.wait_moves()
-            toolhead.dwell(DISABLE_STALL_TIME)
-            toolhead.register_lookahead_callback(lambda pt: self.set_enable_pin(pt, 0))
+            self.set_enable_pin(print_time, 0)
 
 
 class error(Exception):
@@ -124,6 +121,22 @@ class StepperEnableOutputPin:
         self._toolhead.note_mcu_movequeue_activity(wake_print_time)
 
     def set_pin(self, print_time, value):
+        if value == 0:
+            printer = self._mcu.get_printer()
+            toolhead = printer.lookup_object("toolhead")
+            eventtime = toolhead.wait_moves()
+            toolhead.dwell(DISABLE_STALL_TIME)
+            eventtime += DISABLE_STALL_TIME
+            printer.get_reactor().register_callback(
+                lambda _: toolhead.register_lookahead_callback(
+                    lambda pt: self._set_pin(pt, 0)
+                ),
+                eventtime,
+            )
+        else:
+            self._set_pin(print_time, value)
+
+    def _set_pin(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
             value = 1.0 - value

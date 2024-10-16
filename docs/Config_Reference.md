@@ -110,8 +110,16 @@ A collection of DangerKlipper-specific system options
 #   This allows to set extra flush time (in seconds). Under certain conditions,
 #   a low value will result in an error if message is not get flushed, a high value
 #   (0.250) will result in homing/probing latency. The default is 0.250
+#homing_start_delay: 0.001
+#   How long to dwell before beginning a drip move for homing
+#endstop_sample_time: 0.000015
+#   How often the MCU should sample the endstop state
+#endstop_sample_count: 4
+#   How many times we should check the endstop state when homing
+#   Unless your endstop is noisy and unreliable, you should be able to lower this to 1
 
-# Logging options
+
+# Logging options:
 
 #minimal_logging: False
 #   Set all log parameters log options to False. The default is False.
@@ -5852,8 +5860,9 @@ Most Klipper micro-controller implementations only support an
 micro-controller supports a 400000 speed (_fast mode_, 400kbit/s), but it must be
 [set in the operating system](RPi_microcontroller.md#optional-enabling-i2c)
 and the `i2c_speed` parameter is otherwise ignored. The Klipper
-"RP2040" micro-controller and ATmega AVR family support a rate of 400000
-via the `i2c_speed` parameter. All other Klipper micro-controllers use a
+"RP2040" micro-controller and ATmega AVR family and some STM32
+(F0, G0, G4, L4, F7, H7) support a rate of 400000 via the `i2c_speed` parameter.
+All other Klipper micro-controllers use a
 100000 rate and ignore the `i2c_speed` parameter.
 
 ```
