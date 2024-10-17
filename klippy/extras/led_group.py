@@ -67,7 +67,10 @@ class PrinterLEDGroup:
 
     def get_status(self, eventtime=None):
         if self.led_helper is None:
-            return {}
+            return {
+                "color_data": [(0.0, 0.0, 0.0, 0.0)],
+                "active_template": None,
+            }
         return self.led_helper.get_status(eventtime)
 
 
