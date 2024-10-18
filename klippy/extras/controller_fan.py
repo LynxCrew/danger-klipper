@@ -26,8 +26,6 @@ class ControllerFan:
             self.fan = defined_fan
         self.stepper_names = config.getlist("stepper", None)
         self.stepper_enable = self.printer.load_object(config, "stepper_enable")
-        self.printer.load_object(config, "heaters")
-        self.heaters = []
         self.fan_speed = config.getfloat(
             "fan_speed", default=1.0, minval=0.0, maxval=1.0
         )
@@ -36,6 +34,7 @@ class ControllerFan:
         )
         self.idle_timeout = config.getint("idle_timeout", default=30, minval=-1)
         self.heater_names = config.getlist("heater", None)
+        self.pheaters = self.printer.load_object(config, "heaters")
         self.last_on = self.idle_timeout
         self.last_speed = 0.0
         self.enabled = True
@@ -56,13 +55,15 @@ class ControllerFan:
 
     def handle_connect(self):
         # Heater lookup
-        pheaters = self.printer.lookup_object("heaters")
+        all_heaters = self.pheaters.available_heaters
         if self.heater_names is None:
-            self.heaters = [
-                pheaters.lookup_heater(n) for n in pheaters.available_heaters
-            ]
-        else:
-            self.heaters = [pheaters.lookup_heater(n) for n in self.heater_names]
+            self.heater_names = all_heaters
+        if not all(x in all_heaters for x in self.heater_names):
+            raise self.printer.config_error(
+                "One or more of these heaters are unknown: "
+                "%s (valid heaters are: %s)"
+                % (self.heater_names, ", ".join(all_heaters))
+            )
         # Stepper lookup
         all_steppers = self.stepper_enable.get_steppers()
         if self.stepper_names is None:
@@ -86,8 +87,8 @@ class ControllerFan:
         active = False
         for name in self.stepper_names:
             active |= self.stepper_enable.lookup_enable(name).is_motor_enabled()
-        for heater in self.heaters:
-            _, target_temp = heater.get_temp(eventtime)
+        for name in self.heater_names:
+            _, target_temp = self.pheaters.lookup_heater(name).get_temp(eventtime)
             if target_temp:
                 active = True
         if active:
