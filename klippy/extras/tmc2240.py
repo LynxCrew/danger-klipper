@@ -306,19 +306,19 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         self.cap_global_scaler = config.getboolean("cap_global_scaler", False)
 
         gscaler = self._calc_globalscaler(self.req_run_current)
-        if 1 <= gscaler <= 31 or gscaler > 256:
-            raise config.error(
-                GLOBALSCALER_ERROR
-                % (
-                    self.type,
-                    self.name,
-                    gscaler,
-                    self.Rref,
-                    self.cs,
-                    f"{current_range:02b}",
-                    f"{(KIFS[current_range]/1000):.2f}",
-                )
-            )
+        # if 1 <= gscaler <= 31 or gscaler > 256:
+        #     raise config.error(
+        #         GLOBALSCALER_ERROR
+        #         % (
+        #             self.type,
+        #             self.name,
+        #             gscaler,
+        #             self.Rref,
+        #             self.cs,
+        #             f"{current_range:02b}",
+        #             f"{(KIFS[current_range]/1000):.2f}",
+        #         )
+        #    )
 
         ihold = (
             self.cs
