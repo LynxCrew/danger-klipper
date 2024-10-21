@@ -304,7 +304,8 @@ class Homing:
         if (not hi.use_sensorless_homing or needs_rehome) and retract_dist:
             if needs_rehome:
                 logging.info(
-                    "homing:needs rehome: %s", [("X", "Y", "Z")[axis] for axis in homing_axes]
+                    "homing:needs rehome: %s",
+                    [("X", "Y", "Z")[axis] for axis in homing_axes],
                 )
             # Retract
             startpos = self._fill_coord(forcepos)
