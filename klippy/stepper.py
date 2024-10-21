@@ -455,7 +455,7 @@ class PrinterRail:
             and config.get_printer().load_object(config, "beacon", None) is not None
         )
 
-        default_homing_retract_dist = 0.0 if endstop_is_beacon else 5.0
+        default_homing_retract_dist = 5.0 if endstop_is_beacon else 5.0
 
         # Axis range
         if need_position_minmax:
