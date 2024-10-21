@@ -314,6 +314,7 @@ class Homing:
             if needs_rehome:
                 logging.info("homing: needs rehome: %s", str(homing_axes))
                 logging.info("retract speed: %f" % hi.retract_speed)
+                logging.info("retract dist: %f" % retract_dist)
             # Retract
             startpos = self._fill_coord(forcepos)
             homepos = self._fill_coord(movepos)
