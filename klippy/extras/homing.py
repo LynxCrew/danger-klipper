@@ -359,6 +359,7 @@ class Homing:
             for axis in homing_axes:
                 homepos[axis] = newpos[axis]
             self.toolhead.set_position(homepos)
+
         if hi.post_retract_dist:
             self.toolhead.wait_moves()
             startpos = self._fill_coord(forcepos)
