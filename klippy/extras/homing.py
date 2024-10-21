@@ -324,6 +324,7 @@ class Homing:
                 hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
             ]
             self.toolhead.move(retractpos, hi.retract_speed)
+            logging.info(retractpos)
             if not hi.use_sensorless_homing or needs_rehome:
                 # Home again
                 startpos = [
