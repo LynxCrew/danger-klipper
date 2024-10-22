@@ -1128,7 +1128,6 @@ class MCU:
         return self._serial.check_connect(self._serialport, self._baud, rts)
 
     def _mcu_identify(self):
-        logging.info(self._name)
         if self.is_non_critical and not self._check_serial_exists():
             self.non_critical_disconnected = True
             return False

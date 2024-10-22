@@ -285,17 +285,14 @@ class SerialReader:
                 break
 
     def check_connect(self, serialport, baud, rts=True):
-        logging.info(f"start of identify: {self.reactor.monotonic()}")
         serial_dev = serial.Serial(baudrate=baud, timeout=0, exclusive=False)
         serial_dev.port = serialport
         serial_dev.rts = rts
         try:
             serial_dev.open()
         except Exception:
-            logging.info(f"end of identify: {self.reactor.monotonic()}")
             return False
         serial_dev.close()
-        logging.info(f"end of identify: {self.reactor.monotonic()}")
         return True
 
     def connect_file(self, debugoutput, dictionary, pace=False):
