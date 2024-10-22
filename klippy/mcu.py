@@ -792,7 +792,7 @@ class MCU:
         self.hot_plug = config.getboolean("hot_plug", None)
         if self.hot_plug is not None and not self.is_non_critical:
             raise config.error(
-                "'is_non_critical' must be enabled before " "enabling 'hot_plug'"
+                "'is_non_critical' must be enabled before enabling 'hot_plug'"
             )
         self.hot_plug = True if self.hot_plug is None else self.hot_plug
         if self.is_non_critical:
