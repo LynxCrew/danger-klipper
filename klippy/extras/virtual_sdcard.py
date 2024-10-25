@@ -238,7 +238,7 @@ DEFAULT_ERROR_GCODE = """
 class VirtualSD:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:shutdown", self.handle_shutdown)
+        self.printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
         # Print Stat Tracking
         self.print_stats = self.printer.load_object(config, "print_stats")
         # sdcard state

@@ -43,7 +43,7 @@ class HeatedFan:
         self.gcode.register_command("M106", self.cmd_M106)
         self.gcode.register_command("M107", self.cmd_M107)
 
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def get_mcu(self):
         return self.fan.get_mcu()

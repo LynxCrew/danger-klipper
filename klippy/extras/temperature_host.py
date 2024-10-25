@@ -41,7 +41,7 @@ class Temperature_HOST:
         except:
             raise config.error("Unable to open temperature file '%s'" % (self.path,))
 
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
     def _run_sample_timer(self):
         wait_time = self._sample_pi_temperature()

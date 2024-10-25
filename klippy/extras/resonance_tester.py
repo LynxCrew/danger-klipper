@@ -221,9 +221,9 @@ class ResonanceTester:
             self.cmd_SHAPER_CALIBRATE,
             desc=self.cmd_SHAPER_CALIBRATE_help,
         )
-        self.printer.register_event_handler("klippy:connect", self.connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
-    def connect(self):
+    def _handle_connect(self):
         self.accel_chips = [
             (chip_axis, self.printer.lookup_object(chip_name))
             for chip_axis, chip_name in self.accel_chip_names

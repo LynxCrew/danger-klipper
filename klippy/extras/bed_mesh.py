@@ -114,7 +114,7 @@ class BedMesh:
 
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         config_file = self.printer.lookup_object("configfile")
         self.last_position = [0.0, 0.0, 0.0, 0.0]
         self.bmc = BedMeshCalibrate(config, self)

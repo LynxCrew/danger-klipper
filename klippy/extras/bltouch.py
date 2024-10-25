@@ -37,7 +37,7 @@ Commands = {
 class BLTouchEndstopWrapper:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.printer.register_event_handler(
             "klippy:mcu_identify", self.handle_mcu_identify
         )

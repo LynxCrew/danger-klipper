@@ -26,8 +26,8 @@ class Belay:
             self.enable_initial = True
 
         # register event handlers
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
         for event in enable_events:
             self.printer.register_event_handler(event, self.handle_enable)
         for event in disable_events:

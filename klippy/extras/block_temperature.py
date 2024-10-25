@@ -29,7 +29,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def handle_ready(self):
         pheaters = self.printer.lookup_object("heaters")

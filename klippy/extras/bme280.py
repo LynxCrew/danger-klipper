@@ -194,7 +194,7 @@ class BME280:
         self.printer.add_object("bme280 " + self.name, self)
         if self.printer.get_start_args().get("debugoutput") is not None:
             return
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
     def handle_connect(self):
         self._init_bmxx80()

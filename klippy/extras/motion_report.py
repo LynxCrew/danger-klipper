@@ -336,14 +336,14 @@ class PrinterMotionReport:
             "trapq": [],
         }
         # Register handlers
-        self.printer.register_event_handler("klippy:connect", self._connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.printer.register_event_handler("klippy:shutdown", self._shutdown)
 
     def register_stepper(self, config, mcu_stepper):
         ds = DumpStepper(self.printer, mcu_stepper)
         self.steppers[mcu_stepper.get_name()] = ds
 
-    def _connect(self):
+    def _handle_connect(self):
         # Lookup toolhead trapq
         toolhead = self.printer.lookup_object("toolhead")
         trapq = toolhead.get_trapq()

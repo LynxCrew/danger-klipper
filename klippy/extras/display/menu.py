@@ -714,7 +714,7 @@ class MenuManager:
         self.gcode_macro = self.printer.load_object(config, "gcode_macro")
         # register itself for printer callbacks
         self.printer.add_object("menu", self)
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
         # register for key events
         menu_keys.MenuKeys(config, self.key_event)
         # Load local config file in same directory as current module

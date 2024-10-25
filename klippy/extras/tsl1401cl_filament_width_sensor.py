@@ -28,7 +28,7 @@ class FilamentWidthSensor:
         self.lastFilamentWidthReading = 0
         # printer objects
         self.toolhead = self.ppins = self.mcu_adc = None
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
         # Start adc
         self.ppins = self.printer.lookup_object("pins")
         self.mcu_adc = self.ppins.setup_pin("adc", self.pin)

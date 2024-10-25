@@ -18,9 +18,9 @@ class ControllerFan:
         self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
         self.klipper_threads = self.printer.get_klipper_threads()
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         if defined_fan is None:
-            self.printer.register_event_handler("klippy:ready", self.handle_ready)
+            self.printer.register_event_handler("klippy:ready", self._handle_ready)
             self.fan = fan.Fan(config)
         else:
             self.fan = defined_fan

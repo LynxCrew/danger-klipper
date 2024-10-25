@@ -14,7 +14,7 @@ class PauseResume:
         self.is_paused = False
         self.sd_paused = False
         self.pause_command_sent = False
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.gcode.register_command("PAUSE", self.cmd_PAUSE, desc=self.cmd_PAUSE_help)
         self.gcode.register_command(
             "RESUME", self.cmd_RESUME, desc=self.cmd_RESUME_help

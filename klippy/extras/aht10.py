@@ -46,7 +46,7 @@ class AHT10:
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("aht10 " + self.name, self)
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.is_calibrated = False
         self.init_sent = False
 

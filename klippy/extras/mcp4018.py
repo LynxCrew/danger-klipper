@@ -86,7 +86,7 @@ class mcp4018:
         self.scale = config.getfloat("scale", 1.0, above=0.0)
         self.start_value = config.getfloat("wiper", minval=0.0, maxval=self.scale)
         config.get_printer().register_event_handler(
-            "klippy:connect", self.handle_connect
+            "klippy:connect", self._handle_connect
         )
         # Register commands
         self.name = config.get_name().split()[1]

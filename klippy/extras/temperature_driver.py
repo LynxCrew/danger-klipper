@@ -32,7 +32,7 @@ class PrinterTemperatureDriver:
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
     def handle_connect(self):
         self.driver = self.printer.lookup_object(self.driver_name)

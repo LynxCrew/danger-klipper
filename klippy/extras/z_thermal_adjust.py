@@ -25,7 +25,7 @@ class ZThermalAdjuster:
         self.max_z_adjust_mm = config.getfloat("max_z_adjustment", 99999999.0)
 
         # Register printer events
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.printer.register_event_handler(
             "homing:home_rails_end", self.handle_homing_move_end
         )

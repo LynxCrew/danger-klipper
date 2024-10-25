@@ -643,7 +643,7 @@ class ShaperFactory:
 class InputShaper:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect", self.connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.toolhead = None
         self.extruders = []
         self.exact_mode = 0
@@ -681,7 +681,7 @@ class InputShaper:
     def get_shapers(self):
         return self.shapers
 
-    def connect(self):
+    def _handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
         for en in self.config_extruder_names:
             extruder = self.printer.lookup_object(en)

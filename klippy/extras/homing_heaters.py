@@ -8,7 +8,7 @@
 class HomingHeaters:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.printer.register_event_handler(
             "homing:homing_move_begin", self.handle_homing_move_begin
         )

@@ -27,8 +27,8 @@ class TradRack:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
         # read spool and buffer pull speeds
         self.spool_pull_speed = config.getfloat(
@@ -2467,7 +2467,7 @@ class TradRackExtruderSyncManager:
         self.tr_toolhead = tr_toolhead
         self.fil_driver_rail = fil_driver_rail
 
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.sync_state = None
         self._prev_sks = None
         self._prev_trapq = None

@@ -48,7 +48,7 @@ class AngleCalibration:
         self.printer.register_event_handler(
             "stepper:sync_mcu_position", self.handle_sync_mcu_pos
         )
-        self.printer.register_event_handler("klippy:connect", self.connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         cname = self.name.split()[-1]
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
@@ -154,7 +154,7 @@ class AngleCalibration:
             "Unable to find TMC driver for %s" % (self.stepper_name,)
         )
 
-    def connect(self):
+    def _handle_connect(self):
         self.tmc_module = self.lookup_tmc()
         fmove = self.printer.lookup_object("force_move")
         self.mcu_stepper = fmove.lookup_stepper(self.stepper_name)

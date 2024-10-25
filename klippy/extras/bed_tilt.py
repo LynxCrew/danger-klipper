@@ -11,7 +11,7 @@ from . import probe
 class BedTilt:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.x_adjust = config.getfloat("x_adjust", 0.0)
         self.y_adjust = config.getfloat("y_adjust", 0.0)
         self.z_adjust = config.getfloat("z_adjust", 0.0)
