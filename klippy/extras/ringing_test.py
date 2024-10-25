@@ -94,7 +94,7 @@ class RingingTest:
         self.progress = 0.0
         self.sdcard.print_with_gcode_provider(self)
 
-    def handle_shutdown(self):
+    def _handle_shutdown(self):
         # Nothing to do, no resources to free
         pass
 

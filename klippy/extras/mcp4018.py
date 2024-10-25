@@ -99,7 +99,7 @@ class mcp4018:
             desc=self.cmd_SET_DIGIPOT_help,
         )
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.set_dac(self.start_value)
 
     def set_dac(self, value):

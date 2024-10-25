@@ -22,7 +22,7 @@ class BedTilt:
         gcode_move = self.printer.load_object(config, "gcode_move")
         gcode_move.set_move_transform(self)
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
 
     def get_position(self):

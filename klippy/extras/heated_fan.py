@@ -77,7 +77,7 @@ class HeatedFan:
             self.reactor.monotonic() + self.idle_timeout,
         )
 
-    def handle_ready(self):
+    def _handle_ready(self):
         self.reactor.register_timer(
             self.callback, self.reactor.monotonic() + PIN_MIN_TIME
         )

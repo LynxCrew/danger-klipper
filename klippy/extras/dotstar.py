@@ -31,7 +31,7 @@ class PrinterDotstar:
         # Register commands
         printer.register_event_handler("klippy:connect", self._handle_connect)
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.update_leds(self.led_helper.get_status()["color_data"], None)
 
     def update_leds(self, led_state, print_time):

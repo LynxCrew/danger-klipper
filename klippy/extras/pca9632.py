@@ -46,7 +46,7 @@ class PCA9632:
             [reg, val], minclock=minclock, reqclock=BACKGROUND_PRIORITY_CLOCK
         )
 
-    def handle_connect(self):
+    def _handle_connect(self):
         # Configure MODE1
         self.reg_write(PCA9632_MODE1, 0x00)
         # Configure MODE2 (DIMMING, INVERT, CHANGE ON STOP,TOTEM)

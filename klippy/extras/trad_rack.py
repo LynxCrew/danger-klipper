@@ -370,7 +370,7 @@ class TradRack:
                     desc=self.cmd_SELECT_TOOL_help,
                 )
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
         save_variables = self.printer.lookup_object("save_variables", None)
         if save_variables is None:
@@ -379,7 +379,7 @@ class TradRack:
             )
         self.variables = save_variables.allVariables
 
-    def handle_ready(self):
+    def _handle_ready(self):
         self._load_saved_state()
 
     def _load_saved_state(self):
@@ -2473,7 +2473,7 @@ class TradRackExtruderSyncManager:
         self._prev_trapq = None
         self._prev_rotation_dists = None
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
 
     def _get_extruder_mcu_steppers(self):

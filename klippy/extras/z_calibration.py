@@ -73,7 +73,7 @@ class ZCalibrationHelper:
             "last_z_offset": self.last_z_offset,
         }
 
-    def handle_connect(self):
+    def _handle_connect(self):
         # get z-endstop object
         for endstop, name in self.query_endstops.endstops:
             if name == "z":

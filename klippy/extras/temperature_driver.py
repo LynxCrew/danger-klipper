@@ -34,7 +34,7 @@ class PrinterTemperatureDriver:
 
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.driver = self.printer.lookup_object(self.driver_name)
         self.temperature_sample_thread.start()
 

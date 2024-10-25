@@ -172,7 +172,7 @@ class BedMesh:
         # initialize status dict
         self.update_status()
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
         if get_danger_options().log_bed_mesh_at_startup:
             self.bmc.print_generated_points(logging.info)

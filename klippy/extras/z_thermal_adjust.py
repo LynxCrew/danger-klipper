@@ -63,7 +63,7 @@ class ZThermalAdjuster:
             desc=self.cmd_SET_Z_THERMAL_ADJUST_help,
         )
 
-    def handle_connect(self):
+    def _handle_connect(self):
         "Called after all printer objects are instantiated"
         self.toolhead = self.printer.lookup_object("toolhead")
         gcode_move = self.printer.lookup_object("gcode_move")

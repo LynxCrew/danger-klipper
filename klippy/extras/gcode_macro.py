@@ -245,7 +245,7 @@ class GCodeMacro:
                     % (option, config.get_name(), e)
                 )
 
-    def handle_connect(self):
+    def _handle_connect(self):
         prev_cmd = self.gcode.register_command(self.alias, None)
         if prev_cmd is None:
             raise self.printer.config_error(

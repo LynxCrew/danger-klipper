@@ -48,7 +48,7 @@ class FilamentWidthSensor:
         self.gcode.register_command("ENABLE_FILAMENT_WIDTH_SENSOR", self.cmd_M405)
 
     # Initialization
-    def handle_ready(self):
+    def _handle_ready(self):
         # Load printer objects
         self.toolhead = self.printer.lookup_object("toolhead")
 

@@ -32,7 +32,7 @@ class PauseResume:
         webhooks.register_endpoint("pause_resume/pause", self._handle_pause_request)
         webhooks.register_endpoint("pause_resume/resume", self._handle_resume_request)
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.v_sd = self.printer.lookup_object("virtual_sdcard", None)
 
     def _handle_cancel_request(self, web_request):

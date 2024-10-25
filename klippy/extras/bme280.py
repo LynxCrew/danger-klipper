@@ -196,7 +196,7 @@ class BME280:
             return
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self._init_bmxx80()
         self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
 

@@ -726,7 +726,7 @@ class MenuManager:
         # send init event
         self.send_event("init", self)
 
-    def handle_ready(self):
+    def _handle_ready(self):
         # start timer
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.timer_event, reactor.NOW)

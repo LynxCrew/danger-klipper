@@ -38,7 +38,7 @@ class PrinterHeaterFan:
     def get_mcu(self):
         return self.fan.get_mcu()
 
-    def handle_ready(self):
+    def _handle_ready(self):
         pheaters = self.printer.lookup_object("heaters")
         self.heaters = [pheaters.lookup_heater(n) for n in self.heater_names]
         reactor = self.printer.get_reactor()

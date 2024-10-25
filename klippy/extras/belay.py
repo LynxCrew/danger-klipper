@@ -87,7 +87,7 @@ class Belay:
                 desc=self.cmd_BELAY_SET_STEPPER_help,
             )
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
 
         # finish type-specific setup
@@ -109,7 +109,7 @@ class Belay:
             base_rotation_dist / m
         )
 
-    def handle_ready(self):
+    def _handle_ready(self):
         if self.enable_initial:
             self.handle_enable()
 

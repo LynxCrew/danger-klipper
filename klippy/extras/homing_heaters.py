@@ -20,7 +20,7 @@ class HomingHeaters:
         self.pheaters = self.printer.load_object(config, "heaters")
         self.target_save = {}
 
-    def handle_connect(self):
+    def _handle_connect(self):
         # heaters to disable
         all_heaters = self.pheaters.get_all_heaters()
         if self.disable_heaters is None:

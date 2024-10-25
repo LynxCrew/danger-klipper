@@ -92,7 +92,7 @@ class HallFilamentWidthSensor:
         )
 
     # Initialization
-    def handle_ready(self):
+    def _handle_ready(self):
         # Load printer objects
         self.toolhead = self.printer.lookup_object("toolhead")
 

@@ -119,7 +119,7 @@ class HTU21D:
         self.printer.add_object("htu21d " + self.name, self)
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self._init_htu21d()
         self.temperature_sample_thread.start()
 

@@ -74,7 +74,7 @@ class SHT3X:
         self.printer.add_object("sht3x " + self.name, self)
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self._init_sht3x()
         self.temperature_sample_thread.start()
 

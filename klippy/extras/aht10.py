@@ -50,7 +50,7 @@ class AHT10:
         self.is_calibrated = False
         self.init_sent = False
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self._init_aht10()
         self.temperature_sample_thread.start()
 

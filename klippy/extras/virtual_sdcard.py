@@ -31,7 +31,7 @@ class VirtualSDGCodeProvider:
             self.gcode.register_command(cmd, self.cmd_error)
 
     # Generic methods of GCode provider
-    def handle_shutdown(self):
+    def _handle_shutdown(self):
         if self.current_file is not None:
             try:
                 readpos = max(self.file_position - 1024, 0)
@@ -268,7 +268,7 @@ class VirtualSD:
             desc=self.cmd_SDCARD_PRINT_FILE_help,
         )
 
-    def handle_shutdown(self):
+    def _handle_shutdown(self):
         if self.work_timer is not None:
             self.must_pause_work = True
             self.gcode_provider.handle_shutdown()

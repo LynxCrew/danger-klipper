@@ -37,7 +37,7 @@ class ZAdjustHelper:
         self.z_steppers = []
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
-    def handle_connect(self):
+    def _handle_connect(self):
         kin = self.printer.lookup_object("toolhead").get_kinematics()
         z_steppers = [s for s in kin.get_steppers() if s.is_active_axis("z")]
         if self.z_count is None:

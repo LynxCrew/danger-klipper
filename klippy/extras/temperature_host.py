@@ -49,7 +49,7 @@ class Temperature_HOST:
             time.sleep(wait_time)
             wait_time = self._sample_pi_temperature()
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.temperature_sample_thread.start()
 
     def setup_minmax(self, min_temp, max_temp):

@@ -54,7 +54,7 @@ class ControllerFan:
     def get_mcu(self):
         return self.fan.get_mcu()
 
-    def handle_connect(self):
+    def _handle_connect(self):
         # Heater lookup
         pheaters = self.printer.lookup_object("heaters")
         if self.heater_names is None:
@@ -75,7 +75,7 @@ class ControllerFan:
                 % (self.stepper_names, ", ".join(all_steppers))
             )
 
-    def handle_ready(self):
+    def _handle_ready(self):
         self.temperature_sample_thread.start()
 
     def get_status(self, eventtime):

@@ -31,7 +31,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
 
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
-    def handle_ready(self):
+    def _handle_ready(self):
         pheaters = self.printer.lookup_object("heaters")
         self.heater = pheaters.lookup_heater(self.heater_name)
         self.temperature_sample_thread.start()

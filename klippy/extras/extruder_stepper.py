@@ -13,7 +13,7 @@ class PrinterExtruderStepper:
         self.extruder_name = config.get("extruder")
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.extruder_stepper.sync_to_extruder(self.extruder_name)
 
     def get_status(self, eventtime):

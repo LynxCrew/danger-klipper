@@ -32,7 +32,7 @@ class HeaterCheck:
         self.goal_systime = self.printer.get_reactor().NEVER
         self.check_timer = None
 
-    def handle_connect(self):
+    def _handle_connect(self):
         if self.printer.get_start_args().get("debugoutput") is not None:
             # Disable verify_heater if outputting to a debug file
             return
@@ -42,7 +42,7 @@ class HeaterCheck:
         reactor = self.printer.get_reactor()
         self.check_timer = reactor.register_timer(self.check_event, reactor.NOW)
 
-    def handle_shutdown(self):
+    def _handle_shutdown(self):
         if self.check_timer is not None:
             reactor = self.printer.get_reactor()
             reactor.update_timer(self.check_timer, reactor.NEVER)

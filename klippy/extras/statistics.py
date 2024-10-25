@@ -67,7 +67,7 @@ class PrinterStats:
         self.stats_cb = []
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
-    def handle_ready(self):
+    def _handle_ready(self):
         self.stats_cb = [
             o.stats for n, o in self.printer.lookup_objects() if hasattr(o, "stats")
         ]

@@ -275,7 +275,7 @@ class PrinterLCD:
     def handle_reconnect(self):
         self.lcd_chip.init()
 
-    def handle_ready(self):
+    def _handle_ready(self):
         self.lcd_chip.init()
         # Start screen update timer
         self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)

@@ -137,7 +137,7 @@ class DeltaCalibrate:
             desc=self.cmd_DELTA_ANALYZE_help,
         )
 
-    def handle_connect(self):
+    def _handle_connect(self):
         kin = self.printer.lookup_object("toolhead").get_kinematics()
         if not hasattr(kin, "get_calibration"):
             raise self.printer.config_error(

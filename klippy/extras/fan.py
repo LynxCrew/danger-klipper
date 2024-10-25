@@ -160,7 +160,7 @@ class Fan:
             desc=self.cmd_SET_FAN_help,
         )
 
-    def handle_ready(self):
+    def _handle_ready(self):
         self.estimated_print_time = self.get_mcu().estimated_print_time
         if self.startup_check:
             self.self_checking = True

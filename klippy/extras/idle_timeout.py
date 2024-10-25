@@ -43,7 +43,7 @@ class IdleTimeout:
             "last_print_start_time": self.last_print_start_systime,
         }
 
-    def handle_ready(self):
+    def _handle_ready(self):
         self.toolhead = self.printer.lookup_object("toolhead")
         self.timeout_timer = self.reactor.register_timer(self.timeout_handler)
         self.printer.register_event_handler(

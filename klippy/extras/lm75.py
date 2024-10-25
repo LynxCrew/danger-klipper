@@ -46,7 +46,7 @@ class LM75:
         self.printer.add_object("lm75 " + self.name, self)
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self._init_lm75()
         self.temperature_sample_thread.start()
 
