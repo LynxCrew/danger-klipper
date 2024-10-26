@@ -789,6 +789,7 @@ class InputShaper:
         axes = gcmd.get("AXIS", "")
         axis_shaper = gcmd.get_int("AXIS_SHAPER", 1, minval=0, maxval=1)
         motor_filter = gcmd.get_int("MOTOR_FILTER", 1, minval=0, maxval=1)
+        verbose = gcmd.get_int("VERBOSE", 1, minval=0, maxval=1)
         msg = ""
         for axis_str in axes.split(","):
             axis = axis_str.strip().lower()
@@ -820,7 +821,8 @@ class InputShaper:
             else:
                 msg += "Input shaper already enabled for '%s'\n" % (en,)
         self._update_input_shaping()
-        gcmd.respond_info(msg)
+        if verbose:
+            gcmd.respond_info(msg)
 
     cmd_DISABLE_INPUT_SHAPER_help = "Disable input shaper for given objects"
 
@@ -829,6 +831,7 @@ class InputShaper:
         axes = gcmd.get("AXIS", "")
         axis_shaper = gcmd.get_int("AXIS_SHAPER", 1, minval=0, maxval=1)
         motor_filter = gcmd.get_int("MOTOR_FILTER", 1, minval=0, maxval=1)
+        verbose = gcmd.get_int("VERBOSE", 1, minval=0, maxval=1)
         msg = ""
         for axis_str in axes.split(","):
             axis = axis_str.strip().lower()
@@ -862,7 +865,8 @@ class InputShaper:
             else:
                 msg += "Input shaper not enabled for '%s'\n" % (en,)
         self._update_input_shaping()
-        gcmd.respond_info(msg)
+        if verbose:
+            gcmd.respond_info(msg)
 
 
 def load_config(config):
