@@ -767,14 +767,16 @@ class InputShaper:
     cmd_SET_INPUT_SHAPER_help = "Set cartesian parameters for input shaper"
 
     def cmd_SET_INPUT_SHAPER(self, gcmd):
+        verbose = gcmd.get_int("VERBOSE", 1, minval=0, maxval=1)
         if gcmd.get_command_parameters():
             self.shapers = [
                 self.shaper_factory.update_shaper(shaper, gcmd)
                 for shaper in self.shapers
             ]
             self._update_input_shaping()
-        for shaper in self.shapers:
-            shaper.report(gcmd)
+        if verbose:
+            for shaper in self.shapers:
+                shaper.report(gcmd)
 
     cmd_GET_INPUT_SHAPER_help = "Report input shaper paramters"
 
