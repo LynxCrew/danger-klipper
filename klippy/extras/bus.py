@@ -195,7 +195,7 @@ class MCU_I2C:
             )
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.mcu.register_config_callback(self.build_config)
-        self.i2c_write_cmd = self.i2c_read_cmd = self.i2c_modify_bits_cmd = None
+        self.i2c_write_cmd = self.i2c_read_cmd = None
 
     def get_oid(self):
         return self.oid
@@ -221,10 +221,6 @@ class MCU_I2C:
             "i2c_read oid=%c reg=%*s read_len=%u",
             "i2c_read_response oid=%c response=%*s",
             oid=self.oid,
-            cq=self.cmd_queue,
-        )
-        self.i2c_modify_bits_cmd = self.mcu.lookup_command(
-            "i2c_modify_bits oid=%c reg=%*s clear_set_bits=%*s",
             cq=self.cmd_queue,
         )
 

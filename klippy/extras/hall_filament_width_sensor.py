@@ -41,7 +41,9 @@ class HallFilamentWidthSensor:
             "use_current_dia_while_delay", False
         )
         runout_distance = config.getfloat("runout_distance", 0.0, minval=0.0)
-        self.check_on_print_start = config.getboolean("check_on_print_start", False)
+        self.check_on_print_start = config.getboolean(
+            "check_on_print_start", False
+        )
         # filament array [position, filamentWidth]
         self.filament_array = []
         self.lastFilamentWidthReading = 0
@@ -87,6 +89,18 @@ class HallFilamentWidthSensor:
             "print_stats:start_printing", self._handle_printing_smart
         )
 
+        self.runout_helper = filament_switch_sensor.RunoutHelper(
+            config, self, runout_distance
+        )
+        if config.get("immediate_runout_gcode", None) is not None:
+            self.runout_helper.immediate_runout_gcode = (
+                gcode_macro.load_template(config, "immediate_runout_gcode", "")
+            )
+
+        self.printer.register_event_handler(
+            "print_stats:start_printing", self._handle_printing_smart
+        )
+
         self.printer.register_event_handler(
             "idle_timeout:printing", self._handle_printing
         )
@@ -102,6 +116,33 @@ class HallFilamentWidthSensor:
 
         # Start extrude factor update timer
         self.reactor.update_timer(self.extrude_factor_update_timer, self.reactor.NOW)
+
+    def _handle_printing(self, *args):
+        if not self.runout_helper.smart:
+            if self.check_on_print_start:
+                self.reset()
+                self.runout_helper.note_filament_present(
+                    self.runout_dia_min <= self.diameter <= self.runout_dia_max,
+                    True,
+                    True,
+                )
+
+    def _handle_printing_smart(self, *args):
+        if self.runout_helper.smart:
+            if self.check_on_print_start:
+                self.reset()
+                self.runout_helper.note_filament_present(
+                    self.runout_dia_min <= self.diameter <= self.runout_dia_max,
+                    True,
+                    True,
+                )
+
+    def get_extruder_pos(self, eventtime=None):
+        if eventtime is None:
+            eventtime = self.reactor.monotonic()
+        print_time = self.estimated_print_time(eventtime)
+        extruder = self.printer.lookup_object("toolhead").get_extruder()
+        return extruder.find_past_position(print_time)
 
     def _handle_printing(self, *args):
         if not self.runout_helper.smart:
@@ -307,7 +348,7 @@ class HallFilamentWidthSensor:
             "Always Fire Events: %s"
             % (
                 self.runout_helper.name,
-                ("enabled" if self.runout_helper.sensor_enabled else "disabled"),
+                "enabled" if self.runout_helper.sensor_enabled else "disabled",
                 "true" if self.runout_helper.filament_present else "false",
                 "true" if self.runout_helper.smart else "false",
                 "true" if self.runout_helper.always_fire_events else "false",
