@@ -75,4 +75,4 @@ class MPC_BLOCK_TEMP_WRAPPER:
 
 def load_config(config):
     pheaters = config.get_printer().load_object(config, "heaters")
-    pheaters.add_sensor_factory("block_temperature", MPC_BLOCK_TEMP_WRAPPER)
+    pheaters.add_sensor_factory("mpc_block_temperature", MPC_BLOCK_TEMP_WRAPPER)
