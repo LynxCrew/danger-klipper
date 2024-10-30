@@ -65,9 +65,7 @@ class ADS1220:
         }
         self.sps_options = self.sps_normal.copy()
         self.sps_options.update(self.sps_turbo)
-        self.sps = config.getchoice(
-            "sample_rate", self.sps_options, default="660"
-        )
+        self.sps = config.getchoice("sample_rate", self.sps_options, default="660")
         self.is_turbo = str(self.sps) in self.sps_turbo
         # Input multiplexer: AINP and AINN
         mux_options = {
@@ -84,9 +82,7 @@ class ADS1220:
             "AIN2_AVSS": 0b1010,
             "AIN3_AVSS": 0b1011,
         }
-        self.mux = config.getchoice(
-            "input_mux", mux_options, default="AIN0_AIN1"
-        )
+        self.mux = config.getchoice("input_mux", mux_options, default="AIN0_AIN1")
         # PGA Bypass
         self.pga_bypass = config.getboolean("pga_bypass", default=False)
         # bypass PGA when AVSS is the negative input
@@ -99,9 +95,7 @@ class ADS1220:
             "REF1": 0b10,
             "analog_supply": 0b11,
         }
-        self.vref = config.getchoice(
-            "vref", self.vref_options, default="internal"
-        )
+        self.vref = config.getchoice("vref", self.vref_options, default="internal")
         # check for conflict between REF1 and AIN0/AIN3
         mux_conflict = [
             0b0000,

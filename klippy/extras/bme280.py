@@ -590,9 +590,7 @@ class BME280:
             # wait until results are ready
             status = self.read_register("EAS_STATUS_0", 1)[0]
             while not data_ready(status, run_gas):
-                self.reactor.pause(
-                    self.reactor.monotonic() + self.max_sample_time
-                )
+                self.reactor.pause(self.reactor.monotonic() + self.max_sample_time)
                 status = self.read_register("EAS_STATUS_0", 1)[0]
 
             data = self.read_register("PRESSURE_MSB", 8)

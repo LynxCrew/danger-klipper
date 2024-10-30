@@ -54,9 +54,7 @@ class MenuElement(object):
             try:
                 self._enable = config.getboolean("enable", self._enable)
             except config.error:
-                self._enable_tpl = manager.gcode_macro.load_template(
-                    config, "enable"
-                )
+                self._enable_tpl = manager.gcode_macro.load_template(config, "enable")
             self._suffix_tpl = manager.gcode_macro.load_template(
                 config, "suffix", self._suffix
             )
@@ -67,9 +65,9 @@ class MenuElement(object):
             # ns - item namespace key, used in item relative paths
             # $__id - generated id text variable
             self._id = "__menu_" + hex(id(self)).lstrip("0x").rstrip("L")
-            self._ns = Template(
-                "menu " + kwargs.get("ns", self._id)
-            ).safe_substitute(__id=self._id)
+            self._ns = Template("menu " + kwargs.get("ns", self._id)).safe_substitute(
+                __id=self._id
+            )
         self._last_heartbeat = None
         self.__scroll_pos = None
         self.__scroll_request_pending = False
@@ -153,9 +151,7 @@ class MenuElement(object):
         try:
             return coerce(val)
         except:
-            logging.exception(
-                f"{self._ns} Failed to coerce {val!r} as {coerce}"
-            )
+            logging.exception(f"{self._ns} Failed to coerce {val!r} as {coerce}")
             raise
 
     def eval_enable(self, context):
@@ -407,9 +403,7 @@ class MenuContainer(MenuElement):
         if keep_pointer:
             selection = self.selected_item()
 
-        _a = [
-            (item, name) for item, name in self._allitems if item.is_enabled()
-        ]
+        _a = [(item, name) for item, name in self._allitems if item.is_enabled()]
         self._items, self._names = zip(*_a) or ([], [])
 
         if keep_pointer and selection in self._items:
@@ -565,9 +559,7 @@ class MenuInput(MenuCommand):
     def get_context(self, cxt=None):
         context = super().get_context(cxt)
         value = (
-            self._get_value(context)
-            if self._input_value is None
-            else self._input_value
+            self._get_value(context) if self._input_value is None else self._input_value
         )
         context["menu"].update({"input": value})
         return context
@@ -769,8 +761,7 @@ class MenuVSDList(MenuList):
                         name=repr(fname),
                         gcode=_cb,
                         context={
-                            "gcode": "SDCARD_PRINT_FILE FILENAME='/%s'"
-                            % str(fname)
+                            "gcode": "SDCARD_PRINT_FILE FILENAME='/%s'" % str(fname)
                         },
                     )
                 )
@@ -792,9 +783,7 @@ class MenuFileBrowser(MenuList):
         super().__init__(manager, config, **kwargs)
 
         self._sort_by = (
-            (config or self._context or {})
-            .get("sort_by", "last_modified")
-            .lower()
+            (config or self._context or {}).get("sort_by", "last_modified").lower()
         )
 
         if not self.manager.virtual_sdcard:
@@ -1033,9 +1022,7 @@ class MenuManager:
         self._reverse_navigation = config.getboolean("menu_reverse_navigation", False)
         # load printer objects
         self.gcode_macro = self.printer.load_object(config, "gcode_macro")
-        self.virtual_sdcard = self.printer.load_object(
-            config, "virtual_sdcard", None
-        )
+        self.virtual_sdcard = self.printer.load_object(config, "virtual_sdcard", None)
         # register itself for printer callbacks
         self.printer.add_object("menu", self)
         self.printer.register_event_handler("klippy:ready", self.handle_ready)

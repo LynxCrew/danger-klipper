@@ -41,9 +41,7 @@ class HallFilamentWidthSensor:
             "use_current_dia_while_delay", False
         )
         runout_distance = config.getfloat("runout_distance", 0.0, minval=0.0)
-        self.check_on_print_start = config.getboolean(
-            "check_on_print_start", False
-        )
+        self.check_on_print_start = config.getboolean("check_on_print_start", False)
         # filament array [position, filamentWidth]
         self.filament_array = []
         self.lastFilamentWidthReading = 0
@@ -93,8 +91,8 @@ class HallFilamentWidthSensor:
             config, self, runout_distance
         )
         if config.get("immediate_runout_gcode", None) is not None:
-            self.runout_helper.immediate_runout_gcode = (
-                gcode_macro.load_template(config, "immediate_runout_gcode", "")
+            self.runout_helper.immediate_runout_gcode = gcode_macro.load_template(
+                config, "immediate_runout_gcode", ""
             )
 
         self.printer.register_event_handler(

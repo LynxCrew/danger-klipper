@@ -1,9 +1,10 @@
 from extras.danger_options import get_danger_options
+from . import heaters
 
-BLOCK_REPORT_TIME = 1.0
+AMBIENT_REPORT_TIME = 1.0
 
 
-class MPC_BLOCK_TEMP_WRAPPER:
+class MPC_AMBIENT_TEMP_WRAPPER:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
@@ -14,7 +15,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
 
         self.temperature_callback = None
 
-        self.report_time = BLOCK_REPORT_TIME
+        self.report_time = AMBIENT_REPORT_TIME
 
         self.temp = self.min_temp = self.max_temp = 0.0
 
@@ -22,7 +23,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
         self.klipper_threads = self.printer.get_klipper_threads()
 
         self.temperature_sample_thread = self.klipper_threads.register_job(
-            target=self._sample_block_temperature
+            target=self._sample_ambient_temperature
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
@@ -43,18 +44,18 @@ class MPC_BLOCK_TEMP_WRAPPER:
     def get_report_time_delta(self):
         return self.report_time
 
-    def _sample_block_temperature(self):
+    def _sample_ambient_temperature(self):
         if self.heater.get_control().get_type() == "mpc":
-            self.temp = self.heater.get_control().state_block_temp
+            self.temp = self.heater.get_control().state_ambient_temp
         else:
-            self.temp = self.heater.smoothed_temp
+            self.temp = heaters.AMBIENT_TEMP
 
         if self.temp is not None:
             if (
                 self.temp < self.min_temp or self.temp > self.max_temp
             ) and not self.ignore:
                 self.printer.invoke_shutdown(
-                    "Heater Block [%s] temperature %0.1f outside range of %0.1f:%.01f"
+                    "Ambient MPC Temp [%s] temperature %0.1f outside range of %0.1f:%.01f"
                     % (self.name, self.temp, self.min_temp, self.max_temp)
                 )
         else:
@@ -75,4 +76,4 @@ class MPC_BLOCK_TEMP_WRAPPER:
 
 def load_config(config):
     pheaters = config.get_printer().load_object(config, "heaters")
-    pheaters.add_sensor_factory("block_temperature", MPC_BLOCK_TEMP_WRAPPER)
+    pheaters.add_sensor_factory("ambient_mpc_temperature", MPC_AMBIENT_TEMP_WRAPPER)

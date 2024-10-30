@@ -64,14 +64,10 @@ class SafeZHoming:
                 axis_order = "xy"
             for axis in axis_order:
                 if axis == "x" and need_x:
-                    g28_gcmd = self.gcode.create_gcode_command(
-                        "G28", "G28", {"X": "0"}
-                    )
+                    g28_gcmd = self.gcode.create_gcode_command("G28", "G28", {"X": "0"})
                     self.prev_G28(g28_gcmd)
                 elif axis == "y" and need_y:
-                    g28_gcmd = self.gcode.create_gcode_command(
-                        "G28", "G28", {"Y": "0"}
-                    )
+                    g28_gcmd = self.gcode.create_gcode_command("G28", "G28", {"Y": "0"})
                     self.prev_G28(g28_gcmd)
 
         # Home Z axis if necessary
