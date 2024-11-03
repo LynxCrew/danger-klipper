@@ -174,10 +174,28 @@ class LEDHelper:
         indices = self.get_indices(gcmd, self.led_count)
 
         if disable_template:
+            flush_callbacks = set()
+
+            def lookahead_bgfunc(print_time, callbacks):
+                for cb in callbacks:
+                    cb(print_time)
+
             for index in indices:
                 callback, flush_callback, set_color = self.tcallbacks[index - 1]
                 self.template_eval._activate_template(callback, None, {}, flush_callback)
+                set_color(color)
+                flush_callbacks.add(flush_callback)
             self.template_eval._activate_timer()
+
+            if sync:
+                toolhead = self.printer.lookup_object("toolhead")
+                toolhead.register_lookahead_callback(
+                    (lambda pt: lookahead_bgfunc(pt, flush_callbacks))
+                )
+            else:
+                lookahead_bgfunc(None, flush_callbacks)
+
+            return
 
         def lookahead_bgfunc(print_time):
             for index in indices:
