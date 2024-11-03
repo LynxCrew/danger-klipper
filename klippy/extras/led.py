@@ -183,7 +183,9 @@ class LEDHelper:
 
             for index in indices:
                 callback, flush_callback, set_color = self.tcallbacks[index - 1]
-                self.template_eval._activate_template(callback, None, {}, flush_callback)
+                self.template_eval._activate_template(
+                    callback, None, {}, flush_callback
+                )
                 set_color(color)
                 flush_callbacks.add(flush_callback)
 
@@ -194,7 +196,6 @@ class LEDHelper:
                 )
             else:
                 lookahead_bgfunc(None, flush_callbacks)
-
             return
 
         def lookahead_bgfunc(print_time):

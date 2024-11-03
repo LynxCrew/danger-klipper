@@ -185,6 +185,7 @@ class PrinterTemplateEvaluator:
         self._activate_template(callback, template, lparams, flush_callback)
         return tpl_name
 
+
 def lookup_template_eval(config):
     printer = config.get_printer()
     te = printer.lookup_object("template_evaluator", None)
