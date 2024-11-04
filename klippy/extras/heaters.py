@@ -214,12 +214,11 @@ class Heater:
         )
         self.printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
 
-    def notify_disabled(self, gcmd):
-        if gcmd is not None:
-            gcmd.respond_info(
-                "Heater [%s] is disabled due to an "
-                "accelerometer being connected." % self.sensor_short_name
-            )
+    def notify_disabled(self):
+        raise self.printer.command_error(
+            "Heater [%s] is disabled due to an "
+            "accelerometer being connected." % self.sensor_short_name
+        )
 
     def lookup_control(self, profile, load_clean=False):
         algos = collections.OrderedDict(
@@ -372,7 +371,7 @@ class Heater:
     def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
         temp = gcmd.get_float("TARGET", 0.0)
         pheaters = self.printer.lookup_object("heaters")
-        pheaters.set_temperature(self, temp, gcmd=gcmd)
+        pheaters.set_temperature(self, temp)
 
     cmd_SET_SMOOTH_TIME_help = "Set the smooth time for the given heater"
 
@@ -1682,9 +1681,9 @@ class PrinterHeaters:
 
         self.printer.wait_while(check)
 
-    def set_temperature(self, heater, temp, wait=False, gcmd=None):
+    def set_temperature(self, heater, temp, wait=False):
         if not heater.enabled:
-            heater.notify_disabled(gcmd)
+            heater.notify_disabled()
             return
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.register_lookahead_callback((lambda pt: None))
