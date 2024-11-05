@@ -174,11 +174,15 @@ class LEDHelper:
         indices = self.get_indices(gcmd, self.led_count)
 
         if disable_template:
+            color_callbacks = set()
             flush_callbacks = set()
 
-            def lookahead_bgfunc(print_time, callbacks):
+            def lookahead_bgfunc(print_time):
+                for cb in color_callbacks:
+                    cb(color)
                 if transmit:
-                    for cb in callbacks:
+                    for cb in flush_callbacks:
+                        # noinspection PyArgumentList
                         cb(print_time)
 
             for index in indices:
@@ -186,16 +190,16 @@ class LEDHelper:
                 self.template_eval._activate_template(
                     callback, None, {}, flush_callback
                 )
-                set_color(color)
+                color_callbacks.add(set_color)
                 flush_callbacks.add(flush_callback)
 
             if sync:
                 toolhead = self.printer.lookup_object("toolhead")
                 toolhead.register_lookahead_callback(
-                    (lambda pt: lookahead_bgfunc(pt, flush_callbacks))
+                    (lambda pt: lookahead_bgfunc(pt))
                 )
             else:
-                lookahead_bgfunc(None, flush_callbacks)
+                lookahead_bgfunc(None)
             return
 
         def lookahead_bgfunc(print_time):
