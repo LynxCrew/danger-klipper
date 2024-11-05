@@ -123,14 +123,13 @@ class StepperEnableOutputPin:
 
     def set_pin(self, print_time, value):
         if value == 0:
-            self._toolhead._flush_lookahead()
+            # self._toolhead._flush_lookahead()
             eventtime = self._printer.get_reactor().monotonic()
             while self._toolhead.print_time >= self._mcu.estimated_print_time(
                 eventtime
             ):
                 eventtime += 0.1
             eventtime += DISABLE_STALL_TIME
-            # eventtime += DISABLE_STALL_TIME
             self._printer.get_reactor().register_callback(
                 lambda _: self._toolhead.register_lookahead_callback(
                     lambda pt: self._set_pin(pt, 0)
