@@ -271,7 +271,7 @@ class VirtualSD:
     def _handle_shutdown(self):
         if self.work_timer is not None:
             self.must_pause_work = True
-            self.gcode_provider.handle_shutdown()
+            self.gcode_provider._handle_shutdown()
 
     def get_file_list(self, check_subdirs=False):
         return self.virtualsd_gcode_provider.get_file_list(check_subdirs)
