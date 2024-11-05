@@ -45,8 +45,7 @@ class error(Exception):
 class StepperEnableOutputPin:
     def __init__(self, pin_params):
         self._mcu = pin_params["chip"]
-        self.printer = self._mcu.get_printer()
-        self.toolhead = self.printer.lookup_object("toolhead")
+        self._printer = self._mcu.get_printer()
         self._max_duration = 5.0
         self._oid = self._mcu.create_oid()
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -124,11 +123,11 @@ class StepperEnableOutputPin:
 
     def set_pin(self, print_time, value):
         if value == 0:
-            eventtime = self.toolhead.wait_moves() + DISABLE_STALL_TIME
-            self.toolhead.dwell(DISABLE_STALL_TIME)
+            eventtime = self._toolhead.wait_moves() + DISABLE_STALL_TIME
+            self._toolhead.dwell(DISABLE_STALL_TIME)
             # eventtime += DISABLE_STALL_TIME
-            self.printer.get_reactor().register_callback(
-                lambda _: self.toolhead.register_lookahead_callback(
+            self._printer.get_reactor().register_callback(
+                lambda _: self._toolhead.register_lookahead_callback(
                     lambda pt: self._set_pin(pt, 0)
                 ),
                 eventtime,
