@@ -195,9 +195,7 @@ class LEDHelper:
 
             if sync:
                 toolhead = self.printer.lookup_object("toolhead")
-                toolhead.register_lookahead_callback(
-                    (lambda pt: lookahead_bgfunc(pt))
-                )
+                toolhead.register_lookahead_callback((lambda pt: lookahead_bgfunc(pt)))
             else:
                 lookahead_bgfunc(None)
             return

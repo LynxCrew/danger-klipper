@@ -49,6 +49,7 @@ class DangerOptions:
             self.disable_webhook_logging = True
 
         self.temp_ignore_limits = config.getlist("temp_ignore_limits", [])
+        self.echo_limits_to_console = config.getboolean("echo_limits_to_console", False)
         self.modify_check_runout_timeout = config.getboolean(
             "modify_check_runout_timeout", False
         )
