@@ -138,11 +138,18 @@ class SHT3X:
             self.temp = self.humidity = 0.0
             return 0
 
-        if (self.temp < self.min_temp or self.temp > self.max_temp) and not self.ignore:
-            self.printer.invoke_shutdown(
-                "sht3x: temperature %0.1f outside range of %0.1f:%.01f"
-                % (self.temp, self.min_temp, self.max_temp)
-            )
+        if self.temp < self.min_temp or self.temp > self.max_temp:
+            if not self.ignore:
+                self.printer.invoke_shutdown(
+                    "[sht3x %s]\nTemperature %0.1f outside range of %0.1f:%.01f"
+                    % (self.name, self.temp, self.min_temp, self.max_temp)
+                )
+            elif get_danger_options().echo_limits_to_console:
+                gcode = self.printer.lookup_object("gcode")
+                gcode._respond_error(
+                    "[sht3x %s]\nTemperature %0.1f outside range of %0.1f:%.01f"
+                    % (self.name, self.temp, self.min_temp, self.max_temp)
+                )
 
         measured_time = self.reactor.monotonic()
         print_time = self.i2c.get_mcu().estimated_print_time(measured_time)

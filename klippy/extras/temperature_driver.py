@@ -52,13 +52,18 @@ class PrinterTemperatureDriver:
         self.temp = self.driver.get_temperature()
 
         if self.temp is not None:
-            if (
-                self.temp < self.min_temp or self.temp > self.max_temp
-            ) and not self.ignore:
-                self.printer.invoke_shutdown(
-                    "DRIVER [%s] temperature %0.1f outside range of %0.1f:%.01f"
-                    % (self.name, self.temp, self.min_temp, self.max_temp)
-                )
+            if self.temp < self.min_temp or self.temp > self.max_temp:
+                if not self.ignore:
+                    self.printer.invoke_shutdown(
+                        "[%s] temperature %0.1f outside range of %0.1f:%.01f"
+                        % (self.full_name, self.temp, self.min_temp, self.max_temp)
+                    )
+                elif get_danger_options().echo_limits_to_console:
+                    gcode = self.printer.lookup_object("gcode")
+                    gcode._respond_error(
+                        "[%s] temperature %0.1f outside range of %0.1f:%.01f"
+                        % (self.full_name, self.temp, self.min_temp, self.max_temp)
+                    )
 
         measured_time = self.reactor.monotonic()
 

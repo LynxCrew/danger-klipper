@@ -66,11 +66,6 @@ class SensorBase:
         clock = self.mcu.get_query_slot(self.oid)
         self._report_clock = self.mcu.seconds_to_clock(REPORT_TIME)
 
-        if get_danger_options().temp_ignore_limits:
-            danger_check_count = 0
-        else:
-            danger_check_count = MAX_INVALID_COUNT
-
         self.mcu.add_config_cmd(
             "query_thermocouple oid=%u clock=%u rest_ticks=%u"
             " min_value=%u max_value=%u max_invalid_count=%u"

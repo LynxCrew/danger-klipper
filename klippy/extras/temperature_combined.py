@@ -22,9 +22,7 @@ class PrinterSensorCombined:
         self.max_deviation = config.getfloat(
             "maximum_deviation", default=None, above=0.0
         )
-        self.ignore = (
-            self.name in get_danger_options().temp_ignore_limits
-        ) or self.max_deviation is None
+        self.ignore = self.name in get_danger_options().temp_ignore_limits
         # ensure compatibility with itself
         self.sensor = self
         # get empty list for sensors, could be any sensor class or a heater
@@ -93,18 +91,32 @@ class PrinterSensorCombined:
 
         if values:
             # check if values are out of max_deviation range
-            if not self.ignore and (max(values) - min(values)) > self.max_deviation:
-                self.printer.invoke_shutdown(
-                    "[temperature_combined %s]\n"
-                    "Maximum deviation exceeded limit of %0.1f, "
-                    "max sensor value %0.1f, min sensor value %0.1f."
-                    % (
-                        self.name,
-                        self.max_deviation,
-                        max(values),
-                        min(values),
+            if (max(values) - min(values)) > self.max_deviation:
+                if self.max_deviation is not None:
+                    self.printer.invoke_shutdown(
+                        "[%s]\n"
+                        "Maximum deviation exceeded limit of %0.1f, "
+                        "max sensor value %0.1f, min sensor value %0.1f."
+                        % (
+                            self.full_name,
+                            self.max_deviation,
+                            max(values),
+                            min(values),
+                        )
                     )
-                )
+                elif get_danger_options().echo_limits_to_console:
+                    gcode = self.printer.lookup_object("gcode")
+                    gcode._respond_error(
+                        "[%s]\n"
+                        "Maximum deviation exceeded limit of %0.1f, "
+                        "max sensor value %0.1f, min sensor value %0.1f."
+                        % (
+                            self.full_name,
+                            self.max_deviation,
+                            max(values),
+                            min(values),
+                        )
+                    )
 
             temp = self.apply_mode(values)
             if temp is not None:
@@ -127,25 +139,19 @@ class PrinterSensorCombined:
         # update sensor value
         self.update_temp(eventtime)
 
-        if not self.ignore:
-            # check min / max temp values
-            if self.initialized and self.last_temp < self.min_temp:
+        if self.initialized and (
+            self.last_temp < self.min_temp or self.last_temp > self.max_temp
+        ):
+            if not self.ignore:
                 self.printer.invoke_shutdown(
-                    "COMBINED SENSOR temperature %0.1f "
-                    "below minimum temperature of %0.1f."
-                    % (
-                        self.last_temp,
-                        self.min_temp,
-                    )
+                    "[temperature_combined %s]\nTemperature %0.1f outside range of %0.1f:%.01f"
+                    % (self.name, self.last_temp, self.min_temp, self.max_temp)
                 )
-            if self.initialized and self.last_temp > self.max_temp:
-                self.printer.invoke_shutdown(
-                    "COMBINED SENSOR temperature %0.1f "
-                    "above maximum temperature of %0.1f."
-                    % (
-                        self.last_temp,
-                        self.max_temp,
-                    )
+            elif get_danger_options().echo_limits_to_console:
+                gcode = self.printer.lookup_object("gcode")
+                gcode._respond_error(
+                    "[temperature_combined %s]\nTemperature %0.1f outside range of %0.1f:%.01f"
+                    % (self.name, self.last_temp, self.min_temp, self.max_temp)
                 )
 
         # this is copied from temperature_host to enable time triggered updates
