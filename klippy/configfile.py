@@ -700,4 +700,4 @@ class PrinterConfig:
         else:
             # flag config updated to false since config saved with no restart
             self.save_config_pending = False
-            gcode.respond_info("Config update without restart successful")
+            gcmd.respond_info("Config update without restart successful")
