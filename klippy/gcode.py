@@ -344,7 +344,7 @@ class GCodeDispatch:
     def respond_error(self, msg):
         logging.warning(msg)
         lines = msg.strip().split("\n")
-        self.respond_raw("!! %s" % ("\n!! ".join(lines),))
+        self.respond_raw("!! %s" % ("\n ".join(lines),))
         if self.is_fileinput:
             self.printer.request_exit("error_exit")
 
