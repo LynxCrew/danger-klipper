@@ -483,19 +483,19 @@ class BME280:
             self.humidity = self._compensate_humidity_bme280(humid_raw)
         if (self.temp < self.min_temp or self.temp > self.max_temp) and not self.ignore:
             self.printer.invoke_shutdown(
-                "BME280 temperature %0.1f outside range of %0.1f:%.01f"
+                "BME280 temperature %0.1f outside range of %0.1f - %.01f"
                 % (self.temp, self.min_temp, self.max_temp)
             )
         if self.temp < self.min_temp or self.temp > self.max_temp:
             if not self.ignore:
                 self.printer.invoke_shutdown(
-                    "[bme280 %s]\nTemperature %0.1f outside range of %0.1f:%.01f"
+                    "[bme280 %s]\nTemperature %0.1f outside range of %0.1f - %.01f"
                     % (self.name, self.temp, self.min_temp, self.max_temp)
                 )
             elif get_danger_options().echo_limits_to_console:
                 gcode = self.printer.lookup_object("gcode")
-                gcode._respond_error(
-                    "[bme280 %s]\nTemperature %0.1f outside range of %0.1f:%.01f"
+                gcode.respond_error(
+                    "[bme280 %s]\nTemperature %0.1f outside range of %0.1f - %.01f"
                     % (self.name, self.temp, self.min_temp, self.max_temp)
                 )
         measured_time = self.reactor.monotonic()
@@ -508,7 +508,7 @@ class BME280:
             self.temp = self._sample_bmp388_temp()
             if self.temp < self.min_temp or self.temp > self.max_temp:
                 self.printer.invoke_shutdown(
-                    "BME280 temperature %0.1f outside range of %0.1f:%.01f"
+                    "BME280 temperature %0.1f outside range of %0.1f - %.01f"
                     % (self.temp, self.min_temp, self.max_temp)
                 )
 
@@ -638,7 +638,7 @@ class BME280:
 
         if self.temp < self.min_temp or self.temp > self.max_temp:
             self.printer.invoke_shutdown(
-                "BME680 temperature %0.1f outside range of %0.1f:%.01f"
+                "BME680 temperature %0.1f outside range of %0.1f - %.01f"
                 % (self.temp, self.min_temp, self.max_temp)
             )
         measured_time = self.reactor.monotonic()
@@ -676,7 +676,7 @@ class BME280:
         self.pressure = self._compensate_pressure_bmp180(pressure_raw) / 100.0
         if self.temp < self.min_temp or self.temp > self.max_temp:
             self.printer.invoke_shutdown(
-                "BMP180 temperature %0.1f outside range of %0.1f:%.01f"
+                "BMP180 temperature %0.1f outside range of %0.1f - %.01f"
                 % (self.temp, self.min_temp, self.max_temp)
             )
         measured_time = self.reactor.monotonic()

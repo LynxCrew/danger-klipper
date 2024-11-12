@@ -133,13 +133,13 @@ class PrinterSensorCombined:
         ):
             if not self.ignore:
                 self.printer.invoke_shutdown(
-                    "[temperature_combined %s]\nTemperature %0.1f outside range of %0.1f:%.01f"
+                    "[temperature_combined %s]\nTemperature %0.1f outside range of %0.1f - %.01f"
                     % (self.name, self.last_temp, self.min_temp, self.max_temp)
                 )
             elif get_danger_options().echo_limits_to_console:
                 gcode = self.printer.lookup_object("gcode")
-                gcode._respond_error(
-                    "[temperature_combined %s]\nTemperature %0.1f outside range of %0.1f:%.01f"
+                gcode.respond_error(
+                    "[temperature_combined %s]\nTemperature %0.1f outside range of %0.1f - %.01f"
                     % (self.name, self.last_temp, self.min_temp, self.max_temp)
                 )
 
