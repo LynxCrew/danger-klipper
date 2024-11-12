@@ -59,7 +59,7 @@ class MPC_AMBIENT_TEMP_WRAPPER:
                     )
                 elif get_danger_options().echo_limits_to_console:
                     gcode = self.printer.lookup_object("gcode")
-                    gcode._respond_error(
+                    gcode.respond_error(
                         "Ambient MPC %s\nTemperature %0.1f outside range of %0.1f:%.01f"
                         % (self.name, self.temp, self.min_temp, self.max_temp)
                     )
