@@ -373,6 +373,7 @@ class Homing:
             retract_r = min(1.0, hi.post_retract_dist / move_d)
             retractpos = [hp - ad * retract_r for hp, ad in zip(homepos, axes_d)]
             self.toolhead.move(retractpos, hi.post_retract_speed)
+            self.toolhead.wait_moves()
 
 
 class PrinterHoming:
