@@ -373,8 +373,7 @@ class Homing:
             retract_r = min(1.0, hi.post_retract_dist / move_d)
             retractpos = [hp - ad * retract_r for hp, ad in zip(homepos, axes_d)]
             self.toolhead.move(retractpos, hi.post_retract_speed)
-            logging.info(retractpos)
-            # self.printer.lookup_object("gcode_move").last_position = retractpos
+            self.printer.lookup_object("gcode_move").last_position = retractpos
 
 
 class PrinterHoming:
