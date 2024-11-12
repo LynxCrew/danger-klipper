@@ -365,7 +365,7 @@ class Homing:
             self.toolhead.set_position(homepos)
 
         if hi.post_retract_dist:
-            # self.toolhead.wait_moves()
+            self.toolhead.wait_moves()
             startpos = self._fill_coord(forcepos)
             homepos = self._fill_coord(movepos)
             axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
@@ -373,7 +373,7 @@ class Homing:
             retract_r = min(1.0, hi.post_retract_dist / move_d)
             retractpos = [hp - ad * retract_r for hp, ad in zip(homepos, axes_d)]
             self.toolhead.move(retractpos, hi.post_retract_speed)
-            self.toolhead.wait_moves()
+            self.toolhead.flush_step_generation()
 
 
 class PrinterHoming:
