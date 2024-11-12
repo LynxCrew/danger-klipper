@@ -365,7 +365,7 @@ class Homing:
             self.toolhead.set_position(homepos)
 
         if hi.post_retract_dist:
-            self.toolhead.wait_moves()
+            # self.toolhead.wait_moves()
             startpos = self._fill_coord(forcepos)
             homepos = self._fill_coord(movepos)
             axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
