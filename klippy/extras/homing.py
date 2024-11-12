@@ -365,15 +365,18 @@ class Homing:
             self.toolhead.set_position(homepos)
 
         if hi.post_retract_dist:
-            self.toolhead.wait_moves()
-            startpos = self._fill_coord(forcepos)
-            homepos = self._fill_coord(movepos)
-            axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
-            move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
-            retract_r = min(1.0, hi.post_retract_dist / move_d)
-            retractpos = [hp - ad * retract_r for hp, ad in zip(homepos, axes_d)]
-            self.toolhead.move(retractpos, hi.post_retract_speed)
-            self.printer.send_event("homing:home_rails_end", self, rails)
+            self.toolhead.register_lookahead_callback(lambda pt: (
+                self.retract_after_homing(forcepos, movepos, hi)
+            ))
+
+    def retract_after_homing(self, forcepos, movepos, hi):
+        startpos = self._fill_coord(forcepos)
+        homepos = self._fill_coord(movepos)
+        axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
+        move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
+        retract_r = min(1.0, hi.post_retract_dist / move_d)
+        retractpos = [hp - ad * retract_r for hp, ad in zip(homepos, axes_d)]
+        self.toolhead.move(retractpos, hi.post_retract_speed)
 
 
 class PrinterHoming:
