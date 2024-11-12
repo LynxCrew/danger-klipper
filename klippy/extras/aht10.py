@@ -159,13 +159,13 @@ class AHT10:
         if self.temp < self.min_temp or self.temp > self.max_temp:
             if not self.ignore:
                 self.printer.invoke_shutdown(
-                    "[aht10 %s] temperature %0.1f outside range of %0.1f - %.01f"
+                    "[aht10 %s] temperature %0.1f outside range of %0.1f-%.01f"
                     % (self.name, self.temp, self.min_temp, self.max_temp)
                 )
             elif get_danger_options().echo_limits_to_console:
                 gcode = self.printer.lookup_object("gcode")
                 gcode.respond_error(
-                    "[aht10 %s] temperature %0.1f outside range of %0.1f - %.01f"
+                    "[aht10 %s] temperature %0.1f outside range of %0.1f-%.01f"
                     % (self.name, self.temp, self.min_temp, self.max_temp)
                 )
 
