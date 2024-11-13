@@ -176,6 +176,7 @@ class LEDHelper:
         if disable_template:
             color_callbacks = set()
             flush_callbacks = set()
+            callback_delay = 0
 
             def lookahead_bgfunc(print_time):
                 for cb in color_callbacks:
@@ -189,6 +190,7 @@ class LEDHelper:
                 callback, flush_callback, set_color = self.tcallbacks[index - 1]
                 if callback in self.template_eval.active_templates:
                     del self.template_eval.active_templates[callback]
+                    callback_delay = output_pin.RENDER_TIME
                 color_callbacks.add(set_color)
                 flush_callbacks.add(flush_callback)
 
@@ -199,7 +201,7 @@ class LEDHelper:
                     lambda _: toolhead.register_lookahead_callback(
                         (lambda pt: lookahead_bgfunc(pt))
                     ),
-                    reactor.monotonic() + output_pin.RENDER_TIME,
+                    reactor.monotonic() + callback_delay,
                 )
             else:
                 lookahead_bgfunc(None)
