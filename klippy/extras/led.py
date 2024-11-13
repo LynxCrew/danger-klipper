@@ -193,7 +193,7 @@ class LEDHelper:
                 flush_callbacks.add(flush_callback)
 
             if sync:
-                reactor = self.printer.lookup_object("reactor")
+                reactor = self.printer.get_reactor()
                 toolhead = self.printer.lookup_object("toolhead")
                 reactor.register_callback(
                     lambda _: toolhead.register_lookahead_callback(
