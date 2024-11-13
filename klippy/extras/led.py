@@ -187,15 +187,20 @@ class LEDHelper:
 
             for index in indices:
                 callback, flush_callback, set_color = self.tcallbacks[index - 1]
-                self.template_eval._activate_template(
-                    callback, None, {}, flush_callback
-                )
+                if callback in self.template_eval.active_templates:
+                    del self.template_eval.active_templates[callback]
                 color_callbacks.add(set_color)
                 flush_callbacks.add(flush_callback)
 
             if sync:
+                reactor = self.printer.lookup_object("reactor")
                 toolhead = self.printer.lookup_object("toolhead")
-                toolhead.register_lookahead_callback((lambda pt: lookahead_bgfunc(pt)))
+                reactor.register_callback(
+                    lambda _: toolhead.register_lookahead_callback(
+                        (lambda pt: lookahead_bgfunc(pt))
+                    ),
+                    reactor.monotonic() + output_pin.RENDER_TIME,
+                )
             else:
                 lookahead_bgfunc(None)
             return
