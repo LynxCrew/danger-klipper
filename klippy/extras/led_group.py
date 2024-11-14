@@ -42,6 +42,7 @@ class PrinterLEDGroup:
         self.printer = config.get_printer()
         self.config_leds = config.get("leds")
         self.config_chains = self.config_leds.split("\n")
+        self.led_helper = None
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
     def _handle_connect(self):
@@ -65,6 +66,11 @@ class PrinterLEDGroup:
             flush_callback(print_time)
 
     def get_status(self, eventtime=None):
+        if self.led_helper is None:
+            return {
+                "color_data": [(0.0, 0.0, 0.0, 0.0)],
+                "active_template": None,
+            }
         return self.led_helper.get_status(eventtime)
 
 

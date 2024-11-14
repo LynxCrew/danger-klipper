@@ -4993,7 +4993,7 @@ thus they do not support the "menu" options or button configuration.
 # See the "display" section for available parameters.
 ```
 
-### [menu]
+### ⚠️ [menu]
 
 Customizable lcd display menus.
 
@@ -5015,15 +5015,21 @@ information on menu attributes available during template rendering.
 #[menu some_name]
 #type:
 #   One of command, input, list, text:
-#       command - basic menu element with various script triggers
-#       input   - same like 'command' but has value changing capabilities.
-#                 Press will start/stop edit mode.
-#       list    - it allows for menu items to be grouped together in a
-#                 scrollable list.  Add to the list by creating menu
-#                 configurations using "some_list" as a prefix - for
-#                 example: [menu some_list some_item_in_the_list]
-#       vsdlist - same as 'list' but will append files from virtual sdcard
-#                 (will be removed in the future)
+#       command      - basic menu element with various script triggers
+#       input        - same like 'command' but has value changing capabilities.
+#                      Press will start/stop edit mode.
+#       list         - it allows for menu items to be grouped together in a
+#                      scrollable list.  Add to the list by creating menu
+#                      configurations using "some_list" as a prefix - for
+#                      example: [menu some_list some_item_in_the_list]
+#       vsdlist      - same as 'list' but will append files from virtual sdcard
+#                      (deprecated, will be removed in the future)
+#    ⚠️ file_browser - Extended SD Card browser, supporting directories and
+#                      sorting. (replaces vsdlist)
+#    ⚠️ dialog       - Menu Dialogs, a list of inputs with a final choice to
+#                      confirm or cancel. Used for more complex scenarios like
+#                      PID/MPC calibration where you may want to set multiple
+#                      values for a single command
 #name:
 #   Name of menu item - evaluated as a template.
 #enable:
@@ -5035,6 +5041,14 @@ information on menu attributes available during template rendering.
 #[menu some_list]
 #type: list
 #name:
+#enable:
+#   See above for a description of these parameters.
+
+#[menu sdcard]
+#type: file_browser
+#name:
+#sort_by:
+#   `last_modified` (default) or `name`
 #enable:
 #   See above for a description of these parameters.
 
@@ -5071,6 +5085,22 @@ information on menu attributes available during template rendering.
 #   Script to run on button click, long click or value change.
 #   Evaluated as a template. The button click will trigger the edit
 #   mode start or end.
+
+#[menu neopixel]
+#type: dialog
+#name:
+#enable:
+#   See above for a description of these parameters.
+#title:
+#   An optional title to display at the top of the dialog. `name` will
+#   used if not set
+#confirm_text:
+#cancel_text
+#   Templates for the confirmation and cancel options
+#gcode:
+#   G-Code to run on confirmation. The dialog will be closed on
+#   confirmation. `{menu.exit()}` may be used to close the menu
+#   instead.
 ```
 
 ## Filament sensors
@@ -5232,10 +5262,14 @@ adc2:
 #   Use the current diameter instead of the nominal diameter while
 #   the measurement delay has not run through.
 #pause_on_runout:
+#immediate_runout_gcode:
 #runout_gcode:
 #insert_gcode:
 #event_delay:
 #pause_delay:
+#smart:
+#always_fire_events:
+#check_on_print_start:
 #   See the "filament_switch_sensor" section for a description of the
 #   above parameters.
 ```
@@ -5288,7 +5322,6 @@ sensor_type:
 ```
 
 #### HX711
-Has conversation started by @naikymen. Original line has conversation started by @naikymen.
 This is a 24 bit low sample rate chip using "bit-bang" communications. It is
 suitable for filament scales.
 ```
@@ -5356,13 +5389,30 @@ data_ready_pin:
 #gain: 128
 #   Valid gain values are 128, 64, 32, 16, 8, 4, 2, 1
 #   The default is 128
+#pga_bypass: False
+#   Disable the internal Programmable Gain Amplifier. If
+#   True the PGA will be disabled for gains 1, 2, and 4. The PGA is always
+#   enabled for gain settings 8 to 128, regardless of the pga_bypass setting.
+#   If AVSS is used as an input pga_bypass is forced to True.
+#   The default is False.
 #sample_rate: 660
 #   This chip supports two ranges of sample rates, Normal and Turbo. In turbo
-#   mode the chips c internal clock runs twice as fast and the SPI communication
+#   mode the chip's internal clock runs twice as fast and the SPI communication
 #   speed is also doubled.
 #   Normal sample rates: 20, 45, 90, 175, 330, 600, 1000
 #   Turbo sample rates: 40, 90, 180, 350, 660, 1200, 2000
 #   The default is 660
+#input_mux:
+#   Input multiplexer configuration, select a pair of pins to use. The first pin
+#   is the positive, AINP, and the second pin is the negative, AINN. Valid
+#   values are: 'AIN0_AIN1', 'AIN0_AIN2', 'AIN0_AIN3', 'AIN1_AIN2', 'AIN1_AIN3',
+#   'AIN2_AIN3', 'AIN1_AIN0', 'AIN3_AIN2', 'AIN0_AVSS', 'AIN1_AVSS', 'AIN2_AVSS'
+#   and 'AIN3_AVSS'. If AVSS is used the PGA is bypassed and the pga_bypass
+#   setting will be forced to True.
+#   The default is AIN0_AIN1.
+#vref:
+#   The selected voltage reference. Valid values are: 'internal', 'REF0', 'REF1'
+#   and 'analog_supply'. Default is 'internal'.
 ```
 
 

@@ -61,6 +61,7 @@ class PrintStats:
 
     def note_error(self, message):
         self._note_finish("error", message)
+        self.printer.send_event("print_stats:error_printing")
 
     def note_cancel(self):
         self._note_finish("cancelled")
@@ -108,6 +109,7 @@ class PrintStats:
         self.init_duration = 0.0
         self.info_total_layer = None
         self.info_current_layer = None
+        self.printer.send_event("print_stats:reset")
 
     def get_status(self, eventtime):
         time_paused = self.prev_pause_duration

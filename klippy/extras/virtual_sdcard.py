@@ -31,7 +31,7 @@ class VirtualSDGCodeProvider:
             self.gcode.register_command(cmd, self.cmd_error)
 
     # Generic methods of GCode provider
-    def handle_shutdown(self):
+    def _handle_shutdown(self):
         if self.current_file is not None:
             try:
                 readpos = max(self.file_position - 1024, 0)
@@ -238,7 +238,7 @@ DEFAULT_ERROR_GCODE = """
 class VirtualSD:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:shutdown", self.handle_shutdown)
+        self.printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
         # Print Stat Tracking
         self.print_stats = self.printer.load_object(config, "print_stats")
         # sdcard state
@@ -268,10 +268,10 @@ class VirtualSD:
             desc=self.cmd_SDCARD_PRINT_FILE_help,
         )
 
-    def handle_shutdown(self):
+    def _handle_shutdown(self):
         if self.work_timer is not None:
             self.must_pause_work = True
-            self.gcode_provider.handle_shutdown()
+            self.gcode_provider._handle_shutdown()
 
     def get_file_list(self, check_subdirs=False):
         return self.virtualsd_gcode_provider.get_file_list(check_subdirs)
@@ -357,6 +357,7 @@ class VirtualSD:
             filename = filename[1:]
         self.virtualsd_gcode_provider.load_file(gcmd, filename, check_subdirs=True)
         self._set_gcode_provider(self.virtualsd_gcode_provider)
+        self.printer.send_event("virtual_sdcard:load_file")
         self.do_resume()
 
     def cmd_M23(self, gcmd):

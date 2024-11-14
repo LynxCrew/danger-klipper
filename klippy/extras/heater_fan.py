@@ -14,7 +14,7 @@ class PrinterHeaterFan:
         self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
         self.printer.load_object(config, "heaters")
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
         self.heater_names = config.getlist("heater", ("extruder",))
         self.heater_temp = config.getfloat("heater_temp", 50.0)
         self.fan_off_hysteresis = config.getfloat("fan_off_hysteresis", 0.0)
@@ -38,7 +38,7 @@ class PrinterHeaterFan:
     def get_mcu(self):
         return self.fan.get_mcu()
 
-    def handle_ready(self):
+    def _handle_ready(self):
         pheaters = self.printer.lookup_object("heaters")
         self.heaters = [pheaters.lookup_heater(n) for n in self.heater_names]
         reactor = self.printer.get_reactor()

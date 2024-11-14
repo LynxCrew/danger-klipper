@@ -165,7 +165,7 @@ class AccelCommandHelper:
     def _handle_ready(self):
         self.reactor.register_callback(self._init_accel, self.reactor.NOW)
 
-    def _init_accel(self, eventtime):
+    def _init_accel(self, eventtime=None):
         try:
             self.read_accelerometer()
             connected = True

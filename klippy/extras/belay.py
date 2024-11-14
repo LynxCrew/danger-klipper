@@ -26,8 +26,8 @@ class Belay:
             self.enable_initial = True
 
         # register event handlers
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
         for event in enable_events:
             self.printer.register_event_handler(event, self.handle_enable)
         for event in disable_events:
@@ -87,7 +87,7 @@ class Belay:
                 desc=self.cmd_BELAY_SET_STEPPER_help,
             )
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
 
         # finish type-specific setup
@@ -109,7 +109,7 @@ class Belay:
             base_rotation_dist / m
         )
 
-    def handle_ready(self):
+    def _handle_ready(self):
         if self.enable_initial:
             self.handle_enable()
 

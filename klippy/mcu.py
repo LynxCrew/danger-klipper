@@ -792,7 +792,7 @@ class MCU:
         self.hot_plug = config.getboolean("hot_plug", None)
         if self.hot_plug is not None and not self.is_non_critical:
             raise config.error(
-                "'is_non_critical' must be enabled before " "enabling 'hot_plug'"
+                "'is_non_critical' must be enabled before enabling 'hot_plug'"
             )
         self.hot_plug = True if self.hot_plug is None else self.hot_plug
         if self.is_non_critical:
@@ -1199,9 +1199,10 @@ class MCU:
         systime = self._reactor.monotonic()
         get_clock = self._clocksync.get_clock
         calc_freq = get_clock(systime + 1) - get_clock(systime)
+        freq_diff = abs(mcu_freq - calc_freq)
         mcu_freq_mhz = int(mcu_freq / 1000000.0 + 0.5)
         calc_freq_mhz = int(calc_freq / 1000000.0 + 0.5)
-        if mcu_freq_mhz != calc_freq_mhz:
+        if freq_diff > mcu_freq * 0.01 and mcu_freq_mhz != calc_freq_mhz:
             pconfig = self._printer.lookup_object("configfile")
             msg = "MCU '%s' configured for %dMhz but running at %dMhz!" % (
                 self._name,

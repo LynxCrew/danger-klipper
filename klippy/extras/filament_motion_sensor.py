@@ -3,8 +3,6 @@
 # Copyright (C) 2021 Joshua Wherrett <thejoshw.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
-
 from . import filament_switch_sensor
 
 
@@ -16,6 +14,7 @@ class EncoderSensor:
         switch_pin = config.get("switch_pin")
         self.extruder_name = config.get("extruder")
         self.detection_length = config.getfloat("detection_length", 7.0, above=0.0)
+        self.keep_enabled = config.getboolean("keep_enabled", False)
         # Configure pins
         buttons = self.printer.load_object(config, "buttons")
         buttons.register_buttons([switch_pin], self.encoder_event)
@@ -73,21 +72,23 @@ class EncoderSensor:
         self.runout_helper.note_filament_present(True)
 
     def _handle_printing(self, *args):
-        if not self.runout_helper.smart:
+        if self.keep_enabled and not self.runout_helper.smart:
+            self.reset()
             self.reactor.update_timer(self._extruder_pos_update_timer, self.reactor.NOW)
 
     def _handle_printing_smart(self, *args):
-        if self.runout_helper.smart:
+        if self.keep_enabled and self.runout_helper.smart:
+            self.reset()
             self.reactor.update_timer(self._extruder_pos_update_timer, self.reactor.NOW)
 
     def _handle_not_printing(self, *args):
-        if not self.runout_helper.smart:
+        if self.keep_enabled and not self.runout_helper.smart:
             self.reactor.update_timer(
                 self._extruder_pos_update_timer, self.reactor.NEVER
             )
 
     def _handle_not_printing_smart(self, *args):
-        if self.runout_helper.smart:
+        if self.keep_enabled and self.runout_helper.smart:
             self.reactor.update_timer(
                 self._extruder_pos_update_timer, self.reactor.NEVER
             )
@@ -119,13 +120,15 @@ class EncoderSensor:
             "Filament Detected: %s\n"
             "Detection Length: %.2f\n"
             "Smart: %s\n"
+            "Keep enabled: %s\n"
             "Always Fire Events: %s"
             % (
                 self.runout_helper.name,
-                ("enabled" if self.runout_helper.sensor_enabled > 0 else "disabled"),
+                "enabled" if self.runout_helper.sensor_enabled else "disabled",
                 "true" if self.runout_helper.filament_present else "false",
                 self.detection_length,
                 "true" if self.runout_helper.smart else "false",
+                "true" if self.keep_enabled else "false",
                 "true" if self.runout_helper.always_fire_events else "false",
             )
         )
@@ -134,8 +137,9 @@ class EncoderSensor:
         return {"detection_length": float(self.detection_length)}
 
     def get_info(self, gcmd):
+        keep_enabled = gcmd.get_int("KEEP_ENABLED", None, minval=0, maxval=1)
         detection_length = gcmd.get_float("DETECTION_LENGTH", None, minval=0.0)
-        if detection_length is None:
+        if keep_enabled is None and detection_length is None:
             gcmd.respond_info(self.get_sensor_status())
             return True
         return False
@@ -147,11 +151,16 @@ class EncoderSensor:
 
     def set_filament_sensor(self, gcmd):
         reset_needed = False
+        keep_enabled = gcmd.get_int("KEEP_ENABLED", None, minval=0, maxval=1)
         detection_length = gcmd.get_float("DETECTION_LENGTH", None, minval=0.0)
         if detection_length is not None:
             if detection_length != self.detection_length:
                 reset_needed = True
             self.detection_length = detection_length
+        if keep_enabled is not None:
+            if keep_enabled and not self.keep_enabled:
+                reset_needed = True
+            self.keep_enabled = keep_enabled
         return reset_needed
 
     def reset(self):

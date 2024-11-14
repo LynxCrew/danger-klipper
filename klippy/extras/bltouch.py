@@ -37,7 +37,7 @@ Commands = {
 class BLTouchEndstopWrapper:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.printer.register_event_handler(
             "klippy:mcu_identify", self.handle_mcu_identify
         )
@@ -97,7 +97,7 @@ class BLTouchEndstopWrapper:
             if stepper.is_active_axis("z"):
                 self.add_stepper(stepper)
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.sync_mcu_print_time()
         self.next_cmd_time += 0.200
         self.set_output_mode(self.output_mode)

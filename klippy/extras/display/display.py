@@ -247,7 +247,7 @@ class PrinterLCD:
         if self.show_data_group is None:
             raise config.error("Unknown display_data group '%s'" % (dgroup,))
         # Screen updating
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
         self.printer.register_event_handler(
             self.lcd_chip.mcu.get_non_critical_reconnect_event_name(),
             self.handle_reconnect,
@@ -275,7 +275,7 @@ class PrinterLCD:
     def handle_reconnect(self):
         self.lcd_chip.init()
 
-    def handle_ready(self):
+    def _handle_ready(self):
         self.lcd_chip.init()
         # Start screen update timer
         self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)

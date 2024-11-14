@@ -45,7 +45,8 @@ class error(Exception):
 class StepperEnableOutputPin:
     def __init__(self, pin_params):
         self._mcu = pin_params["chip"]
-        self._max_duration = 2.0
+        self._printer = self._mcu.get_printer()
+        self._max_duration = 5.0
         self._oid = self._mcu.create_oid()
         ffi_main, ffi_lib = chelper.get_ffi()
         self._stepqueue = ffi_main.gc(
@@ -80,7 +81,7 @@ class StepperEnableOutputPin:
         curtime = self._mcu.get_printer().get_reactor().monotonic()
         printtime = self._mcu.estimated_print_time(curtime)
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
-        self._duration_ticks = self._mcu.seconds_to_clock(self._max_duration)
+        self._duration_ticks = self._mcu.seconds_to_clock(self._max_duration - 1)
         if self._duration_ticks >= 1 << 31:
             raise config_error("PWM pin max duration too large")
         if self._duration_ticks:
@@ -122,13 +123,15 @@ class StepperEnableOutputPin:
 
     def set_pin(self, print_time, value):
         if value == 0:
-            printer = self._mcu.get_printer()
-            toolhead = printer.lookup_object("toolhead")
-            eventtime = toolhead.wait_moves()
-            toolhead.dwell(DISABLE_STALL_TIME)
+            # self._toolhead._flush_lookahead()
+            eventtime = self._printer.get_reactor().monotonic()
+            while self._toolhead.print_time >= self._mcu.estimated_print_time(
+                eventtime
+            ):
+                eventtime += 0.1
             eventtime += DISABLE_STALL_TIME
-            printer.get_reactor().register_callback(
-                lambda _: toolhead.register_lookahead_callback(
+            self._printer.get_reactor().register_callback(
+                lambda _: self._toolhead.register_lookahead_callback(
                     lambda pt: self._set_pin(pt, 0)
                 ),
                 eventtime,

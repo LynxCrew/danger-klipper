@@ -35,9 +35,9 @@ class ZAdjustHelper:
         self.name = config.get_name()
         self.z_count = z_count
         self.z_steppers = []
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
-    def handle_connect(self):
+    def _handle_connect(self):
         kin = self.printer.lookup_object("toolhead").get_kinematics()
         z_steppers = [s for s in kin.get_steppers() if s.is_active_axis("z")]
         if self.z_count is None:
@@ -107,7 +107,7 @@ class ZAdjustStatus:
 
     def check_retry_result(self, retry_result):
         if (isinstance(retry_result, str) and retry_result == "done") or (
-            isinstance(retry_result, (int, float)) and not retry_result
+            isinstance(retry_result, float) and retry_result == 0.0
         ):
             self.applied = True
         return retry_result

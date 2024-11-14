@@ -65,9 +65,9 @@ class PrinterStats:
         reactor = self.printer.get_reactor()
         self.stats_timer = reactor.register_timer(self.generate_stats)
         self.stats_cb = []
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
-    def handle_ready(self):
+    def _handle_ready(self):
         self.stats_cb = [
             o.stats for n, o in self.printer.lookup_objects() if hasattr(o, "stats")
         ]

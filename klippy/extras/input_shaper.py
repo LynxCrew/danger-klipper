@@ -643,7 +643,7 @@ class ShaperFactory:
 class InputShaper:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect", self.connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.toolhead = None
         self.extruders = []
         self.exact_mode = 0
@@ -681,7 +681,7 @@ class InputShaper:
     def get_shapers(self):
         return self.shapers
 
-    def connect(self):
+    def _handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
         for en in self.config_extruder_names:
             extruder = self.printer.lookup_object(en)
@@ -767,14 +767,16 @@ class InputShaper:
     cmd_SET_INPUT_SHAPER_help = "Set cartesian parameters for input shaper"
 
     def cmd_SET_INPUT_SHAPER(self, gcmd):
+        verbose = gcmd.get_int("VERBOSE", 1, minval=0, maxval=1)
         if gcmd.get_command_parameters():
             self.shapers = [
                 self.shaper_factory.update_shaper(shaper, gcmd)
                 for shaper in self.shapers
             ]
             self._update_input_shaping()
-        for shaper in self.shapers:
-            shaper.report(gcmd)
+        if verbose:
+            for shaper in self.shapers:
+                shaper.report(gcmd)
 
     cmd_GET_INPUT_SHAPER_help = "Report input shaper paramters"
 
@@ -789,6 +791,7 @@ class InputShaper:
         axes = gcmd.get("AXIS", "")
         axis_shaper = gcmd.get_int("AXIS_SHAPER", 1, minval=0, maxval=1)
         motor_filter = gcmd.get_int("MOTOR_FILTER", 1, minval=0, maxval=1)
+        verbose = gcmd.get_int("VERBOSE", 1, minval=0, maxval=1)
         msg = ""
         for axis_str in axes.split(","):
             axis = axis_str.strip().lower()
@@ -820,7 +823,8 @@ class InputShaper:
             else:
                 msg += "Input shaper already enabled for '%s'\n" % (en,)
         self._update_input_shaping()
-        gcmd.respond_info(msg)
+        if verbose:
+            gcmd.respond_info(msg)
 
     cmd_DISABLE_INPUT_SHAPER_help = "Disable input shaper for given objects"
 
@@ -829,6 +833,7 @@ class InputShaper:
         axes = gcmd.get("AXIS", "")
         axis_shaper = gcmd.get_int("AXIS_SHAPER", 1, minval=0, maxval=1)
         motor_filter = gcmd.get_int("MOTOR_FILTER", 1, minval=0, maxval=1)
+        verbose = gcmd.get_int("VERBOSE", 1, minval=0, maxval=1)
         msg = ""
         for axis_str in axes.split(","):
             axis = axis_str.strip().lower()
@@ -862,7 +867,8 @@ class InputShaper:
             else:
                 msg += "Input shaper not enabled for '%s'\n" % (en,)
         self._update_input_shaping()
-        gcmd.respond_info(msg)
+        if verbose:
+            gcmd.respond_info(msg)
 
 
 def load_config(config):

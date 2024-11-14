@@ -146,7 +146,7 @@ class Fan:
         )
         self.self_checking = False
 
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
         # Register callbacks
         self.printer.register_event_handler(
             "gcode:request_restart", self._handle_request_restart
@@ -160,7 +160,7 @@ class Fan:
             desc=self.cmd_SET_FAN_help,
         )
 
-    def handle_ready(self):
+    def _handle_ready(self):
         self.estimated_print_time = self.get_mcu().estimated_print_time
         if self.startup_check:
             self.self_checking = True

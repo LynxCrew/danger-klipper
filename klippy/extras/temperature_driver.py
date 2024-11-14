@@ -32,9 +32,9 @@ class PrinterTemperatureDriver:
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.driver = self.printer.lookup_object(self.driver_name)
         self.temperature_sample_thread.start()
 
@@ -52,13 +52,18 @@ class PrinterTemperatureDriver:
         self.temp = self.driver.get_temperature()
 
         if self.temp is not None:
-            if (
-                self.temp < self.min_temp or self.temp > self.max_temp
-            ) and not self.ignore:
-                self.printer.invoke_shutdown(
-                    "DRIVER [%s] temperature %0.1f outside range of %0.1f:%.01f"
-                    % (self.name, self.temp, self.min_temp, self.max_temp)
-                )
+            if self.temp < self.min_temp or self.temp > self.max_temp:
+                if not self.ignore:
+                    self.printer.invoke_shutdown(
+                        "[%s] temperature %0.1f outside range of %0.1f-%.01f"
+                        % (self.full_name, self.temp, self.min_temp, self.max_temp)
+                    )
+                elif get_danger_options().echo_limits_to_console:
+                    gcode = self.printer.lookup_object("gcode")
+                    gcode.respond_error(
+                        "[%s] temperature %0.1f outside range of %0.1f-%.01f"
+                        % (self.full_name, self.temp, self.min_temp, self.max_temp)
+                    )
 
         measured_time = self.reactor.monotonic()
 

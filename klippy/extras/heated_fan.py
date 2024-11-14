@@ -43,7 +43,7 @@ class HeatedFan:
         self.gcode.register_command("M106", self.cmd_M106)
         self.gcode.register_command("M107", self.cmd_M107)
 
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def get_mcu(self):
         return self.fan.get_mcu()
@@ -77,7 +77,7 @@ class HeatedFan:
             self.reactor.monotonic() + self.idle_timeout,
         )
 
-    def handle_ready(self):
+    def _handle_ready(self):
         self.reactor.register_timer(
             self.callback, self.reactor.monotonic() + PIN_MIN_TIME
         )

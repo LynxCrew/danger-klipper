@@ -18,9 +18,9 @@ class ControllerFan:
         self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
         self.klipper_threads = self.printer.get_klipper_threads()
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         if defined_fan is None:
-            self.printer.register_event_handler("klippy:ready", self.handle_ready)
+            self.printer.register_event_handler("klippy:ready", self._handle_ready)
             self.fan = fan.Fan(config)
         else:
             self.fan = defined_fan
@@ -53,7 +53,7 @@ class ControllerFan:
     def get_mcu(self):
         return self.fan.get_mcu()
 
-    def handle_connect(self):
+    def _handle_connect(self):
         # Heater lookup
         all_heaters = self.pheaters.available_heaters
         if self.heater_names is None:
@@ -76,7 +76,7 @@ class ControllerFan:
                 % (self.stepper_names, ", ".join(all_steppers))
             )
 
-    def handle_ready(self):
+    def _handle_ready(self):
         self.temperature_sample_thread.start()
 
     def get_status(self, eventtime):

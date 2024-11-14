@@ -36,7 +36,7 @@ class PCA9632:
         self.color_map = ["RGBW".index(c) for c in color_order]
         self.prev_regs = {}
         self.led_helper = led.LEDHelper(config, self.update_leds, 1)
-        printer.register_event_handler("klippy:connect", self.handle_connect)
+        printer.register_event_handler("klippy:connect", self._handle_connect)
 
     def reg_write(self, reg, val, minclock=0):
         if self.prev_regs.get(reg) == val:
@@ -46,7 +46,7 @@ class PCA9632:
             [reg, val], minclock=minclock, reqclock=BACKGROUND_PRIORITY_CLOCK
         )
 
-    def handle_connect(self):
+    def _handle_connect(self):
         # Configure MODE1
         self.reg_write(PCA9632_MODE1, 0x00)
         # Configure MODE2 (DIMMING, INVERT, CHANGE ON STOP,TOTEM)

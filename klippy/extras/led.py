@@ -164,14 +164,51 @@ class LEDHelper:
         green = gcmd.get_float("GREEN", 0.0, minval=0.0, maxval=1.0)
         blue = gcmd.get_float("BLUE", 0.0, minval=0.0, maxval=1.0)
         white = gcmd.get_float("WHITE", 0.0, minval=0.0, maxval=1.0)
+        disable_template = gcmd.get_int("DISABLE_TEMPLATE", 0, minval=0, maxval=1)
         transmit = gcmd.get_int("TRANSMIT", 1)
         sync = gcmd.get_int("SYNC", 1)
         color = (red, green, blue, white)
 
         # Update and transmit data
 
+        indices = self.get_indices(gcmd, self.led_count)
+
+        if disable_template:
+            color_callbacks = set()
+            flush_callbacks = set()
+            callback_delay = 0
+
+            def lookahead_bgfunc(print_time):
+                for cb in color_callbacks:
+                    cb(color)
+                if transmit:
+                    for cb in flush_callbacks:
+                        # noinspection PyArgumentList
+                        cb(print_time)
+
+            for index in indices:
+                callback, flush_callback, set_color = self.tcallbacks[index - 1]
+                if callback in self.template_eval.active_templates:
+                    del self.template_eval.active_templates[callback]
+                    callback_delay = output_pin.RENDER_TIME
+                color_callbacks.add(set_color)
+                flush_callbacks.add(flush_callback)
+
+            if sync:
+                reactor = self.printer.get_reactor()
+                toolhead = self.printer.lookup_object("toolhead")
+                reactor.register_callback(
+                    lambda _: toolhead.register_lookahead_callback(
+                        (lambda pt: lookahead_bgfunc(pt))
+                    ),
+                    reactor.monotonic() + callback_delay,
+                )
+            else:
+                lookahead_bgfunc(None)
+            return
+
         def lookahead_bgfunc(print_time):
-            for index in self.get_indices(gcmd, self.led_count):
+            for index in indices:
                 self._set_color(index, color)
             if transmit:
                 self._check_transmit(print_time)
@@ -194,7 +231,7 @@ class LEDHelper:
         sync = gcmd.get_int("SYNC", 1)
 
         flush_callbacks = set()
-        set_template = self.template_eval.set_template
+        set_template = self.template_eval._set_template
         tpl_name = None
         for index in self.get_indices(gcmd, self.led_count):
             callback, flush_callback, set_color = self.tcallbacks[index - 1]
@@ -202,6 +239,7 @@ class LEDHelper:
             if tpl_name == "":
                 set_color((0, 0, 0, 0))
                 flush_callbacks.add(flush_callback)
+        self.template_eval._activate_timer()
         self.active_template = tpl_name
         if sync:
             toolhead = self.printer.lookup_object("toolhead")

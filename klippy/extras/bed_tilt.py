@@ -11,7 +11,7 @@ from . import probe
 class BedTilt:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.x_adjust = config.getfloat("x_adjust", 0.0)
         self.y_adjust = config.getfloat("y_adjust", 0.0)
         self.z_adjust = config.getfloat("z_adjust", 0.0)
@@ -22,7 +22,7 @@ class BedTilt:
         gcode_move = self.printer.load_object(config, "gcode_move")
         gcode_move.set_move_transform(self)
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
 
     def get_position(self):

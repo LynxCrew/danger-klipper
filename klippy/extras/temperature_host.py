@@ -41,7 +41,7 @@ class Temperature_HOST:
         except:
             raise config.error("Unable to open temperature file '%s'" % (self.path,))
 
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
     def _run_sample_timer(self):
         wait_time = self._sample_pi_temperature()
@@ -49,7 +49,7 @@ class Temperature_HOST:
             time.sleep(wait_time)
             wait_time = self._sample_pi_temperature()
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.temperature_sample_thread.start()
 
     def setup_minmax(self, min_temp, max_temp):
@@ -71,22 +71,17 @@ class Temperature_HOST:
             self.temp = 0.0
             return 0
 
-        if not self.ignore:
-            if self.temp < self.min_temp:
+        if self.temp < self.min_temp or self.temp > self.max_temp:
+            if not self.ignore:
                 self.printer.invoke_shutdown(
-                    "HOST temperature %0.1f below minimum temperature of %0.1f."
-                    % (
-                        self.temp,
-                        self.min_temp,
-                    )
+                    "HOST: temperature %0.1f outside range of %0.1f-%.01f"
+                    % (self.temp, self.min_temp, self.max_temp)
                 )
-            if self.temp > self.max_temp:
-                self.printer.invoke_shutdown(
-                    "HOST temperature %0.1f above maximum temperature of %0.1f."
-                    % (
-                        self.temp,
-                        self.max_temp,
-                    )
+            elif get_danger_options().echo_limits_to_console:
+                gcode = self.printer.lookup_object("gcode")
+                gcode.respond_error(
+                    "HOST: temperature %0.1f outside range of %0.1f-%.01f"
+                    % (self.temp, self.min_temp, self.max_temp)
                 )
 
         mcu = self.printer.lookup_object("mcu")

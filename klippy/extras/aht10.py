@@ -46,11 +46,11 @@ class AHT10:
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("aht10 " + self.name, self)
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.is_calibrated = False
         self.init_sent = False
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self._init_aht10()
         self.temperature_sample_thread.start()
 
@@ -156,11 +156,18 @@ class AHT10:
             self.temp = self.humidity = 0.0
             return 0
 
-        if (self.temp < self.min_temp or self.temp > self.max_temp) and not self.ignore:
-            self.printer.invoke_shutdown(
-                "AHT10 temperature %0.1f outside range of %0.1f:%.01f"
-                % (self.temp, self.min_temp, self.max_temp)
-            )
+        if self.temp < self.min_temp or self.temp > self.max_temp:
+            if not self.ignore:
+                self.printer.invoke_shutdown(
+                    "[aht10 %s] temperature %0.1f outside range of %0.1f-%.01f"
+                    % (self.name, self.temp, self.min_temp, self.max_temp)
+                )
+            elif get_danger_options().echo_limits_to_console:
+                gcode = self.printer.lookup_object("gcode")
+                gcode.respond_error(
+                    "[aht10 %s] temperature %0.1f outside range of %0.1f-%.01f"
+                    % (self.name, self.temp, self.min_temp, self.max_temp)
+                )
 
         measured_time = self.reactor.monotonic()
         print_time = self.i2c.get_mcu().estimated_print_time(measured_time)

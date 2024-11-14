@@ -214,7 +214,7 @@ class GCodeMacro:
                     "G-Code macro rename of different types ('%s' vs '%s')"
                     % (self.alias, self.rename_existing)
                 )
-            printer.register_event_handler("klippy:connect", self.handle_connect)
+            printer.register_event_handler("klippy:connect", self._handle_connect)
         else:
             self.gcode.register_command(self.alias, self.cmd, desc=self.cmd_desc)
         self.gcode.register_mux_command(
@@ -245,7 +245,7 @@ class GCodeMacro:
                     % (option, config.get_name(), e)
                 )
 
-    def handle_connect(self):
+    def _handle_connect(self):
         prev_cmd = self.gcode.register_command(self.alias, None)
         if prev_cmd is None:
             raise self.printer.config_error(

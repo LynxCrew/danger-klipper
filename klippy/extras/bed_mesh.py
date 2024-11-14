@@ -114,7 +114,7 @@ class BedMesh:
 
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         config_file = self.printer.lookup_object("configfile")
         self.last_position = [0.0, 0.0, 0.0, 0.0]
         self.bmc = BedMeshCalibrate(config, self)
@@ -172,7 +172,7 @@ class BedMesh:
         # initialize status dict
         self.update_status()
 
-    def handle_connect(self):
+    def _handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
         if get_danger_options().log_bed_mesh_at_startup:
             self.bmc.print_generated_points(logging.info)

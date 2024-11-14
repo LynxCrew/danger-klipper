@@ -48,7 +48,7 @@ class ZCalibrationHelper:
         self.switch_gcode = gcode_macro.load_template(config, "before_switch_gcode", "")
         self.end_gcode = gcode_macro.load_template(config, "end_gcode", "")
         self.query_endstops = self.printer.load_object(config, "query_endstops")
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.printer.register_event_handler(
             "homing:home_rails_end", self.handle_home_rails_end
         )
@@ -73,7 +73,7 @@ class ZCalibrationHelper:
             "last_z_offset": self.last_z_offset,
         }
 
-    def handle_connect(self):
+    def _handle_connect(self):
         # get z-endstop object
         for endstop, name in self.query_endstops.endstops:
             if name == "z":

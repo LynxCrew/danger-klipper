@@ -159,6 +159,11 @@ class PrinterTemplateEvaluator:
         return eventtime + RENDER_TIME
 
     def set_template(self, gcmd, callback, flush_callback=None):
+        tpl_name = self._set_template(gcmd, callback, flush_callback)
+        self._activate_timer()
+        return tpl_name
+
+    def _set_template(self, gcmd, callback, flush_callback=None):
         template = None
         lparams = {}
         tpl_name = gcmd.get("TEMPLATE", "")
@@ -178,7 +183,6 @@ class PrinterTemplateEvaluator:
                 except ValueError as e:
                     raise gcmd.error("Unable to parse '%s' as a literal" % (v,))
         self._activate_template(callback, template, lparams, flush_callback)
-        self._activate_timer()
         return tpl_name
 
 

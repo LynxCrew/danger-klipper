@@ -8,7 +8,7 @@
 class HomingHeaters:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.printer.register_event_handler(
             "homing:homing_move_begin", self.handle_homing_move_begin
         )
@@ -20,7 +20,7 @@ class HomingHeaters:
         self.pheaters = self.printer.load_object(config, "heaters")
         self.target_save = {}
 
-    def handle_connect(self):
+    def _handle_connect(self):
         # heaters to disable
         all_heaters = self.pheaters.get_all_heaters()
         if self.disable_heaters is None:

@@ -302,7 +302,11 @@ class Homing:
             retract_dist = hi.min_home_dist
 
         if (not hi.use_sensorless_homing or needs_rehome) and retract_dist:
-            logging.info("homing:needs rehome: %s", needs_rehome)
+            if needs_rehome:
+                logging.info(
+                    "homing:needs rehome: %s",
+                    [("X", "Y", "Z")[axis] for axis in homing_axes],
+                )
             # Retract
             startpos = self._fill_coord(forcepos)
             homepos = self._fill_coord(movepos)
@@ -336,14 +340,6 @@ class Homing:
                     )
             finally:
                 self._set_current_homing(homing_axes, pre_homing=False)
-        if hi.post_retract_dist:
-            startpos = self._fill_coord(forcepos)
-            homepos = self._fill_coord(movepos)
-            axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
-            move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
-            retract_r = min(1.0, hi.post_retract_dist / move_d)
-            retractpos = [hp - ad * retract_r for hp, ad in zip(homepos, axes_d)]
-            self.toolhead.move(retractpos, hi.post_retract_speed)
 
         self._set_current_homing(homing_axes, pre_homing=False)
         # Signal home operation complete
@@ -367,6 +363,17 @@ class Homing:
             for axis in homing_axes:
                 homepos[axis] = newpos[axis]
             self.toolhead.set_position(homepos)
+
+        if hi.post_retract_dist:
+            self.toolhead.wait_moves()
+            startpos = self._fill_coord(forcepos)
+            homepos = self._fill_coord(movepos)
+            axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
+            move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
+            retract_r = min(1.0, hi.post_retract_dist / move_d)
+            retractpos = [hp - ad * retract_r for hp, ad in zip(homepos, axes_d)]
+            self.printer.lookup_object("gcode_move").last_position = retractpos
+            self.toolhead.move(retractpos, hi.post_retract_speed)
 
 
 class PrinterHoming:

@@ -57,7 +57,7 @@ class PIDCalibrate:
             else:
                 algorithm = "pid"
         try:
-            pheaters.set_temperature(heater, target, True, gcmd=gcmd)
+            pheaters.set_temperature(heater, target, True)
         except self.printer.command_error as e:
             raise
         finally:
