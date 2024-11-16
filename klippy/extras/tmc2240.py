@@ -300,7 +300,12 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
 
         super().__init__(config, mcu_tmc, self._get_ifs(3), tmc_type)
 
-        current_range = self._calc_current_range(self.actual_current)
+        current_range = config.getint(
+            "driver_cr",
+            self._calc_current_range(self.actual_current),
+            minval=0,
+            maxval=4,
+        )
         self.fields.set_field("current_range", current_range)
 
         self.cs = config.getint("driver_cs", 31, maxval=31, minval=0)
