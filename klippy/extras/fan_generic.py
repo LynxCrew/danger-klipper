@@ -12,7 +12,12 @@ class PrinterFanGeneric:
 
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.fan = fan.Fan(config, default_shutdown_speed=0.0)
+        self.fan = fan.Fan(
+            config,
+            default_shutdown_speed=0.0,
+            cmd_set_fan=self.cmd_SET_FAN_SPEED,
+            cmd_set_fan_description=self.cmd_SET_FAN_SPEED_help,
+        )
         self.full_name = config.get_name()
         self.fan_name = self.full_name.split()[-1]
 
@@ -27,13 +32,14 @@ class PrinterFanGeneric:
             self.cmd_SET_FAN_SPEED,
             desc=self.cmd_SET_FAN_SPEED_help,
         )
-        gcode.register_mux_command(
-            "SET_FAN",
-            "FAN",
-            self.fan_name,
-            self.cmd_SET_FAN_SPEED,
-            desc=self.cmd_SET_FAN_SPEED_help,
-        )
+
+    #         gcode.register_mux_command(
+    #             "SET_FAN",
+    #             "FAN",
+    #             self.fan_name,
+    #             self.cmd_SET_FAN_SPEED,
+    #             desc=self.cmd_SET_FAN_SPEED_help,
+    #         )
 
     def get_mcu(self):
         return self.fan.get_mcu()

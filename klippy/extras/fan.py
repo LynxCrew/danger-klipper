@@ -11,7 +11,13 @@ SAFETY_CHECK_INIT_TIME = 3.0
 
 
 class Fan:
-    def __init__(self, config, default_shutdown_speed=0.0):
+    def __init__(
+        self,
+        config,
+        default_shutdown_speed=0.0,
+        cmd_set_fan=None,
+        cmd_set_fan_description=None,
+    ):
         self.printer = config.get_printer()
         self.full_name = config.get_name()
         self.name = self.full_name.split()[-1]
@@ -156,8 +162,12 @@ class Fan:
             "SET_FAN",
             "FAN",
             self.name,
-            self.cmd_SET_FAN,
-            desc=self.cmd_SET_FAN_help,
+            self.cmd_SET_FAN if cmd_set_fan is None else cmd_set_fan,
+            desc=(
+                self.cmd_SET_FAN_help
+                if cmd_set_fan_description is None
+                else cmd_set_fan_description
+            ),
         )
 
     def _handle_ready(self):
