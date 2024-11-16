@@ -63,7 +63,8 @@ class PrinterFanGeneric:
         if template is not None:
             self.template_eval.set_template(gcmd, self._template_update)
             return
-        self.fan.set_speed_from_command(speed)
+        self.fan.last_fan_value = speed
+        self.fan.cmd_SET_FAN(gcmd)
 
 
 def load_config_prefix(config):

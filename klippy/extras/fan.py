@@ -312,9 +312,7 @@ class Fan:
             "MAX_POWER", self.max_power, above=self.min_power, maxval=1.0
         )
         self.min_rpm = gcmd.get_float("MIN_RPM", self.min_rpm, minval=0.0)
-        curtime = self.reactor.monotonic()
-        print_time = self.estimated_print_time(curtime)
-        self.set_speed(self.last_fan_value, print_time, force=True)
+        self.set_speed_from_command(self.last_fan_value, force=True)
 
 
 class FanTachometer:
