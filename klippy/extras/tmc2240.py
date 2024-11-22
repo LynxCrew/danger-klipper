@@ -304,7 +304,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
             "driver_cr",
             self._calc_current_range(self.actual_current),
             minval=0,
-            maxval=4,
+            maxval=3,
         )
         self.fields.set_field("current_range", current_range)
 
