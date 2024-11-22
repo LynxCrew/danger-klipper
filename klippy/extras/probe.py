@@ -492,6 +492,7 @@ class ProbePointsHelper:
         default_points=None,
         option_name="points",
         enable_adaptive_move_z=False,
+        use_probe_offsets=False,
     ):
         self.printer = config.get_printer()
         self.enable_adaptive_move_z = enable_adaptive_move_z
@@ -541,7 +542,7 @@ class ProbePointsHelper:
                 else self.def_additional_horizontal_move_z
             )
         self.speed = config.getfloat("speed", 50.0, above=0.0)
-        self.use_offsets = False
+        self.use_offsets = config.getboolean("use_probe_offsets", use_probe_offsets)
         # Internal probing state
         self.lift_speed = self.speed
         self.probe_offsets = (0.0, 0.0, 0.0)

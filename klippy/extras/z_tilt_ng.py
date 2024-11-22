@@ -217,13 +217,6 @@ class ZTilt:
         self.z_positions = config.getlists(
             "z_positions", seps=(",", "\n"), parser=float, count=2
         )
-        self.use_probe_offsets = config.getboolean("use_probe_offsets", None)
-        if self.use_probe_offsets is None:
-            self.use_probe_offsets = config.getboolean("use_offsets", None)
-            if self.use_probe_offsets is not None:
-                config.deprecate("use_offsets")
-            else:
-                self.use_probe_offsets = False
         self.z_count = len(self.z_positions)
 
         self.retry_helper = RetryHelper(config)
@@ -294,11 +287,7 @@ class ZTilt:
             return
         self.z_status.reset()
         self.retry_helper.start(gcmd)
-        use_probe_offsets = self.probe_helper.use_offsets
-        if self.use_probe_offsets:
-            self.probe_helper.use_xy_offsets(True)
         self.probe_helper.start_probe(gcmd)
-        self.probe_helper.use_xy_offsets(use_probe_offsets)
 
     def perform_coordinate_descent(self, offsets, positions):
         # Setup for coordinate descent analysis
@@ -356,11 +345,7 @@ class ZTilt:
         self.cal_avg_len = gcmd.get_int("AVGLEN", self.cal_conf_avg_len)
         self.cal_gcmd = gcmd
         self.cal_runs = []
-        use_probe_offsets = self.cal_helper.use_offsets
-        if self.use_probe_offsets:
-            self.cal_helper.use_xy_offsets(True)
         self.cal_helper.start_probe(gcmd)
-        self.cal_helper.use_xy_offsets(use_probe_offsets)
 
     def cal_finalize(self, offsets, positions):
         avlen = self.cal_avg_len
@@ -403,11 +388,7 @@ class ZTilt:
         self.ad_runs = []
         self.ad_points = []
         self.ad_error = None
-        use_probe_offsets = self.ad_helper.use_offsets
-        if self.use_probe_offsets:
-            self.ad_helper.use_xy_offsets(True)
         self.ad_helper.start_probe(gcmd)
-        self.ad_helper.use_xy_offsets(use_probe_offsets)
 
     ad_adjustments = [
         [0.5, -0.5, -0.5],  # p1 up

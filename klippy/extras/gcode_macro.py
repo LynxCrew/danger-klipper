@@ -125,9 +125,7 @@ class TemplateWrapperPython:
         self.vars = None
 
         try:
-            script = "\n".join(
-                map(lambda l: l.removeprefix("!"), script.split("\n"))
-            )
+            script = "\n".join(map(lambda l: l.removeprefix("!"), script.split("\n")))
             self.func = compile(script, name, "exec")
         except SyntaxError as e:
             msg = "Error compiling expression '%s': %s at line %d column %d" % (
@@ -162,9 +160,7 @@ class TemplateWrapperPython:
 
         if not self.checked_own_macro:
             self.checked_own_macro = True
-            own_macro = self.printer.lookup_object(
-                self.name.split(":")[0], None
-            )
+            own_macro = self.printer.lookup_object(self.name.split(":")[0], None)
             if own_macro is not None and isinstance(own_macro, GCodeMacro):
                 self.vars = TemplateVariableWrapperPython(own_macro)
         if self.vars is not None:
@@ -283,9 +279,7 @@ class Template:
                 self.printer, self.env, self.name, script
             )
         else:
-            self.function = TemplateWrapper(
-                self.printer, self.env, self.name, script
-            )
+            self.function = TemplateWrapper(self.printer, self.env, self.name, script)
 
 
 # Main gcode macro template tracking
