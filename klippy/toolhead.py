@@ -585,6 +585,10 @@ class ToolHead:
             not self.special_queuing_state
             or self.print_time >= self.mcu.estimated_print_time(eventtime)
         ):
+            if self.printer.is_shutdown():
+                raise self.printer.command_error(
+                    "Wait_Moves failed due to printer shutdown"
+                )
             if not self.can_pause:
                 break
             eventtime = self.reactor.pause(eventtime + 0.100)
