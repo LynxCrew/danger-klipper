@@ -221,6 +221,7 @@ class Homing:
     def __init__(self, printer):
         self.printer = printer
         self.toolhead = printer.lookup_object("toolhead")
+        self.gcode = self.printer.lookup_object("gcode")
         self.changed_axes = []
         self.trigger_mcu_pos = {}
         self.adjust_pos = {}
@@ -374,7 +375,7 @@ class Homing:
             retractpos = [hp - ad * retract_r for hp, ad in zip(homepos, axes_d)]
             self.printer.lookup_object("gcode_move").last_position = retractpos
             self.toolhead.move(retractpos, hi.post_retract_speed)
-            self.toolhead.wait_moves()
+            self.gcode.run_script_from_command("M400")
 
 
 class PrinterHoming:
