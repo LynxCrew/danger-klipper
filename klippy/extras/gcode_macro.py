@@ -79,7 +79,7 @@ class GetStatusWrapperPython:
 
 
 # Wrapper around a Jinja2 template
-class TemplateWrapperJinja:
+class TemplateWrapper:
     def __init__(self, printer, env, name, script):
         self.printer = printer
         self.name = name
@@ -283,7 +283,7 @@ class Template:
                 self.printer, self.env, self.name, script
             )
         else:
-            self.function = TemplateWrapperJinja(
+            self.function = TemplateWrapper(
                 self.printer, self.env, self.name, script
             )
 
