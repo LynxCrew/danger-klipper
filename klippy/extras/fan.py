@@ -40,6 +40,9 @@ class Fan:
         self.off_below = config.getfloat(
             "off_below", default=None, minval=0.0, maxval=1.0
         )
+        if self.off_below is not None:
+            config.deprecate("off_below")
+
         # handles switchover of variable
         # if new var is not set, and old var is, set new var to old var
         # if new var is not set and neither is old var, set new var to default of 0.0
