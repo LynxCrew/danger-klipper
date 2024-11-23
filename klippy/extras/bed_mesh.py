@@ -1093,7 +1093,7 @@ class MoveSplitter:
     def __init__(self, config, gcode):
         self.split_delta_z = config.getfloat("split_delta_z", 0.025, minval=0.01)
         self.move_check_distance = config.getfloat(
-            "move_check_distance", 5.0, minval=3.0
+            "move_check_distance", 5.0, minval=2.5
         )
         self.z_mesh = None
         self.fade_offset = 0.0
