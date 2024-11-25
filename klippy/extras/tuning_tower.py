@@ -40,7 +40,9 @@ class TuningTower:
         self.step_height = gcmd.get_float("STEP_HEIGHT", 0.0, minval=0.0)
         self.skip = gcmd.get_float("SKIP", 0.0, minval=0.0)
         if self.factor and (self.step_height or self.step_delta):
-            raise gcmd.error("Cannot specify both FACTOR and STEP_DELTA/STEP_HEIGHT")
+            raise gcmd.error(
+                "Cannot specify both FACTOR and STEP_DELTA/STEP_HEIGHT"
+            )
         if (self.step_delta != 0.0) != (self.step_height != 0.0):
             raise gcmd.error("Must specify both STEP_DELTA and STEP_HEIGHT")
         # Enable test mode
@@ -64,7 +66,9 @@ class TuningTower:
             message_parts.append("step_height=%.6f" % (self.step_height,))
         if self.skip:
             message_parts.append("skip=%.6f" % (self.skip,))
-        gcmd.respond_info("Starting tuning test (" + " ".join(message_parts) + ")")
+        gcmd.respond_info(
+            "Starting tuning test (" + " ".join(message_parts) + ")"
+        )
 
     def get_position(self):
         pos = self.normal_transform.get_position()
@@ -75,7 +79,9 @@ class TuningTower:
         if self.skip:
             z = max(0.0, z - self.skip)
         if self.step_height:
-            return self.start + self.step_delta * math.floor(z / self.step_height)
+            return self.start + self.step_delta * math.floor(
+                z / self.step_height
+            )
         if self.band:
             z = (math.floor(z / self.band) + 0.5) * self.band
         return self.start + z * self.factor
@@ -99,7 +105,9 @@ class TuningTower:
                 self.last_z = z
                 if newval != self.last_command_value:
                     self.last_command_value = newval
-                    self.gcode.run_script_from_command(self.command_fmt % (newval,))
+                    self.gcode.run_script_from_command(
+                        self.command_fmt % (newval,)
+                    )
         # Forward move to actual handler
         self.last_position[:] = newpos
         normal_transform.move(newpos, speed)

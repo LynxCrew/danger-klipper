@@ -5,7 +5,6 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 import logging
-import threading
 import time
 
 from extras.danger_options import get_danger_options
@@ -39,9 +38,13 @@ class Temperature_HOST:
         try:
             self.file_handle = open(self.path, "r")
         except:
-            raise config.error("Unable to open temperature file '%s'" % (self.path,))
+            raise config.error(
+                "Unable to open temperature file '%s'" % (self.path,)
+            )
 
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
 
     def _run_sample_timer(self):
         wait_time = self._sample_pi_temperature()

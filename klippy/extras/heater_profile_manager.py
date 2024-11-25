@@ -34,7 +34,8 @@ class ProfileManager:
         else:
             raise self.heater.printer.config_error(
                 "Unknown control type '%s' "
-                "in [heater_profile %s %s]." % (control, self.heater.sensor_name, name)
+                "in [heater_profile %s %s]."
+                % (control, self.heater.sensor_name, name)
             )
 
     def _check_value_config(
@@ -81,7 +82,9 @@ class ProfileManager:
         return (
             self.heater.sensor_name
             if profile_name == "default"
-            else ("heater_profile " + self.heater.sensor_name + " " + profile_name)
+            else (
+                "heater_profile " + self.heater.sensor_name + " " + profile_name
+            )
         )
 
     def _check_value_gcmd(
@@ -205,7 +208,8 @@ class ProfileManager:
             if profile is None:
                 raise self.heater.gcode.error(
                     "heater_profile: Unknown default "
-                    "profile [%s] for heater [%s]." % (default, self.heater.sensor_name)
+                    "profile [%s] for heater [%s]."
+                    % (default, self.heater.sensor_name)
                 )
         control = self.heater.lookup_control(profile, load_clean)
         self.heater.set_control(control, keep_target)
@@ -234,15 +238,10 @@ class ProfileManager:
                 if profile["smoothing_elements"] is None
                 else profile["smoothing_elements"]
             )
-            msg = (
-                "Target: %.2f\n"
-                "Tolerance: %.4f\n"
-                "Control: %s\n"
-                % (
-                    profile["pid_target"],
-                    profile["pid_tolerance"],
-                    profile["control"],
-                )
+            msg = "Target: %.2f\n" "Tolerance: %.4f\n" "Control: %s\n" % (
+                profile["pid_target"],
+                profile["pid_tolerance"],
+                profile["control"],
             )
             if smooth_time is not None:
                 msg += "Smooth Time: %.3f\n" % smooth_time

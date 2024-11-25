@@ -208,7 +208,11 @@ class ForceMove:
             axes = axes_str.split(",")
         invalid_axis = []
         for axis in axes:
-            if axis.lower() != "x" and axis.lower() != "y" and axis.lower() != "z":
+            if (
+                axis.lower() != "x"
+                and axis.lower() != "y"
+                and axis.lower() != "z"
+            ):
                 invalid_axis.append(axis)
         if invalid_axis:
             gcmd.respond_info("MARK_AS_HOMED: Invalid axis %s" % invalid_axis)

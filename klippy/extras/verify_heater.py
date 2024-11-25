@@ -14,8 +14,12 @@ for the parameters that control this check.
 class HeaterCheck:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
-        self.printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
+        self.printer.register_event_handler(
+            "klippy:shutdown", self._handle_shutdown
+        )
         self.heater_name = config.get_name().split()[1]
         self.heater = None
         self.hysteresis = config.getfloat("hysteresis", 5.0, minval=0.0)
@@ -52,7 +56,9 @@ class HeaterCheck:
         if temp >= target - self.hysteresis or target <= 0.0:
             # Temperature near target - reset checks
             if self.approaching_target and target:
-                logging.info("Heater %s within range of %.3f", self.heater_name, target)
+                logging.info(
+                    "Heater %s within range of %.3f", self.heater_name, target
+                )
             self.approaching_target = self.starting_approach = False
             if temp <= target + self.hysteresis:
                 self.error = 0.0

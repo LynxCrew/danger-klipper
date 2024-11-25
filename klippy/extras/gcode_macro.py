@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import pipes
+import threading
 import traceback, logging, ast, copy, json
 import jinja2, math
 import configfile
@@ -125,7 +126,9 @@ class TemplateWrapperPython:
         self.vars = None
 
         try:
-            script = "\n".join(map(lambda l: l.removeprefix("!"), script.split("\n")))
+            script = "\n".join(
+                map(lambda l: l.removeprefix("!"), script.split("\n"))
+            )
             self.func = compile(script, name, "exec")
         except SyntaxError as e:
             msg = "Error compiling expression '%s': %s at line %d column %d" % (
@@ -160,7 +163,9 @@ class TemplateWrapperPython:
 
         if not self.checked_own_macro:
             self.checked_own_macro = True
-            own_macro = self.printer.lookup_object(self.name.split(":")[0], None)
+            own_macro = self.printer.lookup_object(
+                self.name.split(":")[0], None
+            )
             if own_macro is not None and isinstance(own_macro, GCodeMacro):
                 self.vars = TemplateVariableWrapperPython(own_macro)
         if self.vars is not None:
@@ -279,7 +284,9 @@ class Template:
                 self.printer, self.env, self.name, script
             )
         else:
-            self.function = TemplateWrapper(self.printer, self.env, self.name, script)
+            self.function = TemplateWrapper(
+                self.printer, self.env, self.name, script
+            )
 
 
 # Main gcode macro template tracking
@@ -301,7 +308,9 @@ class PrinterGCodeMacro:
         self.env.filters["repr"] = repr
         self.env.filters["shell_quote"] = pipes.quote
         self.gcode = self.printer.lookup_object("gcode")
-        self.gcode.register_command("RELOAD_GCODE_MACROS", self.cmd_RELOAD_GCODE_MACROS)
+        self.gcode.register_command(
+            "RELOAD_GCODE_MACROS", self.cmd_RELOAD_GCODE_MACROS
+        )
 
     def boolean(self, value):
         lowercase_value = str(value).lower()
@@ -360,7 +369,8 @@ class PrinterGCodeMacro:
                 continue
 
             if name in [
-                s.get_name() for s in new_config.get_prefix_sections("gcode_macro")
+                s.get_name()
+                for s in new_config.get_prefix_sections("gcode_macro")
             ]:
                 template = obj.template
                 new_script = new_section.get("gcode").strip()
@@ -380,7 +390,8 @@ class GCodeMacro:
     def __init__(self, config):
         if len(config.get_name().split()) > 2:
             raise config.error(
-                "Name of section '%s' contains illegal whitespace" % (config.get_name())
+                "Name of section '%s' contains illegal whitespace"
+                % (config.get_name())
             )
         name = config.get_name().split()[1]
         self.alias = name.upper()
@@ -398,9 +409,13 @@ class GCodeMacro:
                     "G-Code macro rename of different types ('%s' vs '%s')"
                     % (self.alias, self.rename_existing)
                 )
-            printer.register_event_handler("klippy:connect", self._handle_connect)
+            printer.register_event_handler(
+                "klippy:connect", self._handle_connect
+            )
         else:
-            self.gcode.register_command(self.alias, self.cmd, desc=self.cmd_desc)
+            self.gcode.register_command(
+                self.alias, self.cmd, desc=self.cmd_desc
+            )
         self.gcode.register_mux_command(
             "SET_GCODE_VARIABLE",
             "MACRO",
@@ -433,7 +448,8 @@ class GCodeMacro:
         prev_cmd = self.gcode.register_command(self.alias, None)
         if prev_cmd is None:
             raise self.printer.config_error(
-                "Existing command '%s' not found in gcode_macro rename" % (self.alias,)
+                "Existing command '%s' not found in gcode_macro rename"
+                % (self.alias,)
             )
         pdesc = "Renamed builtin of '%s'" % (self.alias,)
         self.gcode.register_command(self.rename_existing, prev_cmd, desc=pdesc)
@@ -453,7 +469,9 @@ class GCodeMacro:
             literal = ast.literal_eval(value)
             json.dumps(literal, separators=(",", ":"))
         except (SyntaxError, TypeError, ValueError) as e:
-            raise gcmd.error("Unable to parse '%s' as a literal: %s" % (value, e))
+            raise gcmd.error(
+                "Unable to parse '%s' as a literal: %s" % (value, e)
+            )
         v = dict(self.variables)
         v[variable] = literal
         self.variables = v

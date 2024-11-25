@@ -22,7 +22,9 @@ class Fan:
         self.last_pwm_value = self.last_req_pwm_value = 0.0
         self.last_fan_value = self.last_req_value = 0.0
         # Read config
-        self.kick_start_time = config.getfloat("kick_start_time", 0.1, minval=0.0)
+        self.kick_start_time = config.getfloat(
+            "kick_start_time", 0.1, minval=0.0
+        )
         self.kick_start_threshold = (
             config.getfloat("kick_start_threshold", 0.5, minval=0.0, maxval=1.0)
             if self.kick_start_time
@@ -48,7 +50,9 @@ class Fan:
         # if new var is not set and neither is old var, set new var to default of 0.0
         # if new var is set, use new var
         if self.min_power is not None and self.off_below is not None:
-            raise config.error("min_power and off_below are both set. Remove one!")
+            raise config.error(
+                "min_power and off_below are both set. Remove one!"
+            )
         if self.min_power is None:
             if self.off_below is None:
                 # both unset, set to 0.0
@@ -56,13 +60,17 @@ class Fan:
             else:
                 self.min_power = self.off_below
 
-        self.max_power = config.getfloat("max_power", 1.0, above=0.0, maxval=1.0)
+        self.max_power = config.getfloat(
+            "max_power", 1.0, above=0.0, maxval=1.0
+        )
         if self.min_power > self.max_power:
             raise config.error(
                 "min_power=%f can't be larger than max_power=%f"
                 % (self.min_power, self.max_power)
             )
-        self.full_speed_max_power = config.getboolean("full_speed_max_power", False)
+        self.full_speed_max_power = config.getboolean(
+            "full_speed_max_power", False
+        )
 
         cycle_time = config.getfloat("cycle_time", 0.010, above=0.0)
         hardware_pwm = config.getboolean("hardware_pwm", False)
@@ -103,7 +111,9 @@ class Fan:
         self.on_error_gcode = config.get("on_error_gcode", None)
         self.startup_check = config.getboolean("startup_check", None)
         self.startup_check_delay = config.getfloat("startup_check_delay", None)
-        self.startup_check_rpm = config.getfloat("startup_check_rpm", None, minval=0)
+        self.startup_check_rpm = config.getfloat(
+            "startup_check_rpm", None, minval=0
+        )
         if (
             self.min_rpm is not None
             and self.min_rpm > 0
@@ -138,14 +148,18 @@ class Fan:
         self.max_err = 3 if self.max_err is None else self.max_err
         self.fan_check_thread = None
 
-        self.startup_check = False if self.startup_check is None else self.startup_check
+        self.startup_check = (
+            False if self.startup_check is None else self.startup_check
+        )
         self.startup_check_delay = (
             SAFETY_CHECK_INIT_TIME
             if self.startup_check_delay is None
             else self.startup_check_delay
         )
         self.startup_check_rpm = (
-            self.min_rpm if self.startup_check_rpm is None else self.startup_check_rpm
+            self.min_rpm
+            if self.startup_check_rpm is None
+            else self.startup_check_rpm
         )
         self.self_checking = False
 
@@ -204,7 +218,9 @@ class Fan:
                 pwm_value = 1.0
             else:
                 # Scale value between min_power and max_power
-                pwm_value = value * (self.max_power - self.min_power) + self.min_power
+                pwm_value = (
+                    value * (self.max_power - self.min_power) + self.min_power
+                )
                 pwm_value = max(self.min_power, min(self.max_power, pwm_value))
         else:
             pwm_value = 0
@@ -227,7 +243,8 @@ class Fan:
                 and self.kick_start_time
                 and (
                     not self.last_pwm_value
-                    or pwm_value - self.last_pwm_value > self.kick_start_threshold
+                    or pwm_value - self.last_pwm_value
+                    > self.kick_start_threshold
                 )
             ):
                 # Run fan at full speed for specified kick_start_time
@@ -318,7 +335,9 @@ class FanTachometer:
         pin = config.get("tachometer_pin", None)
         if pin is not None:
             self.ppr = config.getint("tachometer_ppr", 2, minval=1)
-            poll_time = config.getfloat("tachometer_poll_interval", 0.0015, above=0.0)
+            poll_time = config.getfloat(
+                "tachometer_poll_interval", 0.0015, above=0.0
+            )
             sample_time = 1.0
             self._freq_counter = pulse_counter.FrequencyCounter(
                 printer, pin, sample_time, poll_time

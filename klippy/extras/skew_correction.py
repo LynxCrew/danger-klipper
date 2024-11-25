@@ -15,7 +15,8 @@ import math
 def calc_skew_factor(ac, bd, ad):
     side = math.sqrt(2 * ac * ac + 2 * bd * bd - 4 * ad * ad) / 2.0
     return math.tan(
-        math.pi / 2 - math.acos((ac * ac - side * side - ad * ad) / (2 * side * ad))
+        math.pi / 2
+        - math.acos((ac * ac - side * side - ad * ad) / (2 * side * ad))
     )
 
 
@@ -29,7 +30,9 @@ class PrinterSkew:
         self.yz_factor = 0.0
         self.skew_profiles = {}
         self._load_storage(config)
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
         self.next_transform = None
         gcode = self.printer.lookup_object("gcode")
         gcode.register_command(
@@ -152,7 +155,8 @@ class PrinterSkew:
             prof = self.skew_profiles.get(name)
             if prof is None:
                 gcmd.respond_info(
-                    "skew_correction:  Load failed, unknown profile [%s]" % (name)
+                    "skew_correction:  Load failed, unknown profile [%s]"
+                    % (name)
                 )
                 return
             self._update_skew(prof["xy_skew"], prof["xz_skew"], prof["yz_skew"])
@@ -172,7 +176,8 @@ class PrinterSkew:
             gcmd.respond_info(
                 "Skew Correction state has been saved to profile [%s]\n"
                 "for the current session.  The SAVE_CONFIG command will\n"
-                "update the printer config file and restart the printer." % (name)
+                "update the printer config file and restart the printer."
+                % (name)
             )
         elif gcmd.get("REMOVE", None) is not None:
             name = gcmd.get("REMOVE")

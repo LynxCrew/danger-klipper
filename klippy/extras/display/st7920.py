@@ -29,7 +29,8 @@ class DisplayBase:
             (self.glyph_framebuffer, bytearray(b"~" * 128), 0x40),
             # Graphics framebuffers
         ] + [
-            (self.graphics_framebuffers[i], bytearray(b"~" * 32), i) for i in range(32)
+            (self.graphics_framebuffers[i], bytearray(b"~" * 32), i)
+            for i in range(32)
         ]
         self.cached_glyphs = {}
         self.icons = {}
@@ -41,7 +42,9 @@ class DisplayBase:
                 continue
             # Find the position of all changed bytes in this framebuffer
             diffs = [
-                [i, 1] for i, (n, o) in enumerate(zip(new_data, old_data)) if n != o
+                [i, 1]
+                for i, (n, o) in enumerate(zip(new_data, old_data))
+                if n != o
             ]
             # Batch together changes that are close to each other
             for i in range(len(diffs) - 2, -1, -1):
@@ -244,7 +247,8 @@ class EmulatedST7920(DisplayBase):
             "spi_software_%s_pin" % (name,) for name in ["miso", "mosi", "sclk"]
         ]
         sw_pin_params = [
-            ppins.lookup_pin(config.get(name), share_type=name) for name in sw_pin_names
+            ppins.lookup_pin(config.get(name), share_type=name)
+            for name in sw_pin_names
         ]
         mcu = None
         for pin_params in sw_pin_params:

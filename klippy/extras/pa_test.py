@@ -51,7 +51,9 @@ class PATest:
         self.fast_velocity = config.getfloat(
             "fast_velocity", 80.0, above=self.medium_velocity
         )
-        self.filament_diameter = config.getfloat("filament_diameter", 1.75, above=0.0)
+        self.filament_diameter = config.getfloat(
+            "filament_diameter", 1.75, above=0.0
+        )
         # Register commands
         self.gcode = self.printer.lookup_object("gcode")
         self.gcode.register_command(
@@ -151,7 +153,9 @@ class PATest:
         # Get tower params with overrides from the GCode command
         origin_x = gcmd.get_float("ORIGIN_X", self.origin_x)
         origin_y = gcmd.get_float("ORIGIN_Y", self.origin_y)
-        size_x = gcmd.get_float("SIZE_X", self.size_x, minval=SLOW_NOTCH_SIZE * 4)
+        size_x = gcmd.get_float(
+            "SIZE_X", self.size_x, minval=SLOW_NOTCH_SIZE * 4
+        )
         size_y = gcmd.get_float(
             "SIZE_Y",
             self.size_y,
@@ -159,7 +163,9 @@ class PATest:
             maxval=MAX_YX_SIZE_RATIO * size_x,
         )
         perimeters = gcmd.get_int("PERIMETERS", self.perimeters, minval=1)
-        slow_velocity = gcmd.get_float("SLOW_VELOCITY", self.slow_velocity, above=0.0)
+        slow_velocity = gcmd.get_float(
+            "SLOW_VELOCITY", self.slow_velocity, above=0.0
+        )
         medium_velocity = gcmd.get_float(
             "MEDIUM_VELOCITY", self.medium_velocity, above=slow_velocity
         )
@@ -172,7 +178,9 @@ class PATest:
         filament_diameter = gcmd.get_float(
             "FILAMENT_DIAMETER", self.filament_diameter, above=0.0
         )
-        layer_height = gcmd.get_float("LAYER_HEIGHT", self.layer_height, above=0.0)
+        layer_height = gcmd.get_float(
+            "LAYER_HEIGHT", self.layer_height, above=0.0
+        )
         first_layer_height = gcmd.get_float(
             "FIRST_LAYER_HEIGHT", self.first_layer_height, above=layer_height
         )
@@ -269,7 +277,10 @@ class PATest:
                     perimeter_x_offset -= extra_offs
                     perimeter_y_offset -= extra_offs
                 extr_r = (
-                    4.0 * layer_height * line_width / (math.pi * filament_diameter**2)
+                    4.0
+                    * layer_height
+                    * line_width
+                    / (math.pi * filament_diameter**2)
                 )
                 # Move to the start of the perimeter
                 yield "G1 X%.3f Y%.3f F%.f" % (
@@ -357,7 +368,8 @@ class PATest:
                     yield "G1 X%.3f Y%.3f E%.6f F%.f" % (
                         origin_x + perimeter_x_offset,
                         origin_y - perimeter_y_offset,
-                        (perimeter_x_offset - x_switching_pos - VERY_SLOW_SEG) * extr_r,
+                        (perimeter_x_offset - x_switching_pos - VERY_SLOW_SEG)
+                        * extr_r,
                         fast_velocity * 60.0,
                     )
                     yield "G1 X%.3f Y%.3f E%.6f F%.f" % (
@@ -424,7 +436,9 @@ class PATest:
         for line in gen_tower():
             yield line
         if final_gcode_id is not None:
-            yield "UPDATE_DELAYED_GCODE ID='%s' DURATION=0.01" % (final_gcode_id,)
+            yield "UPDATE_DELAYED_GCODE ID='%s' DURATION=0.01" % (
+                final_gcode_id,
+            )
         self.progress = 1.0
 
 

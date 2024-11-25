@@ -30,7 +30,9 @@ class DisplayTemplate:
         self.printer = config.get_printer()
         name_parts = config.get_name().split()
         if len(name_parts) != 2:
-            raise config.error("Section name '%s' is not valid" % (config.get_name(),))
+            raise config.error(
+                "Section name '%s' is not valid" % (config.get_name(),)
+            )
         self.name = name_parts[1]
         self.params = {}
         for option in config.get_prefix_options("param_"):
@@ -70,7 +72,8 @@ class DisplayGroup:
                 row, col = [int(v.strip()) for v in pos.split(",")]
             except:
                 raise config.error(
-                    "Unable to parse 'position' in section '%s'" % (c.get_name(),)
+                    "Unable to parse 'position' in section '%s'"
+                    % (c.get_name(),)
                 )
             items.append((row, col, c.get_name()))
         # Load all templates and store sorted by display position
@@ -136,7 +139,9 @@ class PrinterDisplayTemplate:
         try:
             dconfig = pconfig.read_config(filename)
         except Exception:
-            raise self.printer.config_error("Cannot load config '%s'" % (filename,))
+            raise self.printer.config_error(
+                "Cannot load config '%s'" % (filename,)
+            )
         # Load display_template sections
         dt_main = config.get_prefix_sections(
             (
@@ -182,7 +187,9 @@ class PrinterDisplayTemplate:
         for c in dd_main + dd_def:
             name_parts = c.get_name().split()
             if len(name_parts) != 3:
-                raise config.error("Section name '%s' is not valid" % (c.get_name(),))
+                raise config.error(
+                    "Section name '%s' is not valid" % (c.get_name(),)
+                )
             groups.setdefault(name_parts[1], []).append(c)
         for group_name, data_configs in groups.items():
             dg = DisplayGroup(config, group_name, data_configs)
@@ -252,7 +259,9 @@ class PrinterLCD:
             self.lcd_chip.mcu.get_non_critical_reconnect_event_name(),
             self.handle_reconnect,
         )
-        self.screen_update_timer = self.reactor.register_timer(self.screen_update_event)
+        self.screen_update_timer = self.reactor.register_timer(
+            self.screen_update_event
+        )
         self.redraw_request_pending = False
         self.redraw_time = 0.0
         # Register g-code commands

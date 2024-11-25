@@ -20,12 +20,16 @@ class ZThermalAdjuster:
         self.config = config
 
         # Get config parameters, convert to SI units where necessary
-        self.temp_coeff = config.getfloat("temp_coeff", minval=-1, maxval=1, default=0)
+        self.temp_coeff = config.getfloat(
+            "temp_coeff", minval=-1, maxval=1, default=0
+        )
         self.off_above_z = config.getfloat("z_adjust_off_above", 99999999.0)
         self.max_z_adjust_mm = config.getfloat("max_z_adjustment", 99999999.0)
 
         # Register printer events
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
         self.printer.register_event_handler(
             "homing:home_rails_end", self.handle_homing_move_end
         )
@@ -106,7 +110,9 @@ class ZThermalAdjuster:
 
             # Don't apply adjustments smaller than step distance
             if abs(adjust - self.z_adjust_mm) > self.z_step_dist:
-                self.z_adjust_mm = min([self.max_z_adjust_mm * sign, adjust], key=abs)
+                self.z_adjust_mm = min(
+                    [self.max_z_adjust_mm * sign, adjust], key=abs
+                )
 
         # Apply Z adjustment
         new_z = pos[2] + self.z_adjust_mm

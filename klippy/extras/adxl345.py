@@ -111,7 +111,9 @@ class AccelQueryHelper:
             f.write("#time,accel_x,accel_y,accel_z\n")
             samples = self.samples or self.get_samples()
             for t, accel_x, accel_y, accel_z in samples:
-                f.write("%.6f,%.6f,%.6f,%.6f\n" % (t, accel_x, accel_y, accel_z))
+                f.write(
+                    "%.6f,%.6f,%.6f,%.6f\n" % (t, accel_x, accel_y, accel_z)
+                )
             f.close()
 
         write_proc = multiprocessing.Process(target=write_impl)
@@ -132,7 +134,6 @@ class AccelCommandHelper:
         if len(name_parts) == 1:
             if self.name == "adxl345" or not config.has_section("adxl345"):
                 self.register_commands(None)
-
 
     def register_commands(self, name):
         # Register commands
@@ -187,7 +188,9 @@ class AccelCommandHelper:
         else:
             filename = "/tmp/%s-%s-%s.csv" % (self.base_name, self.name, name)
         bg_client.write_to_file(filename)
-        gcmd.respond_info("Writing raw accelerometer data to %s file" % (filename,))
+        gcmd.respond_info(
+            "Writing raw accelerometer data to %s file" % (filename,)
+        )
 
     cmd_ACCELEROMETER_QUERY_help = "Query accelerometer for the current values"
 

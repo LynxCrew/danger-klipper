@@ -82,7 +82,10 @@ class KeyboardReader:
             "MCU config: %s"
             % (
                 " ".join(
-                    ["%s=%s" % (k, v) for k, v in msgparser.get_constants().items()]
+                    [
+                        "%s=%s" % (k, v)
+                        for k, v in msgparser.get_constants().items()
+                    ]
                 )
             )
         )
@@ -194,7 +197,8 @@ class KeyboardReader:
         msg = " ".join(parts[3:])
         delay_clock = int(delay * self.mcu_freq)
         msg_clock = int(
-            self.clocksync.get_clock(self.reactor.monotonic()) + self.mcu_freq * 0.200
+            self.clocksync.get_clock(self.reactor.monotonic())
+            + self.mcu_freq * 0.200
         )
         try:
             for i in range(count):
@@ -218,7 +222,9 @@ class KeyboardReader:
 
     def command_STATS(self, parts):
         curtime = self.reactor.monotonic()
-        self.output(" ".join([self.ser.stats(curtime), self.clocksync.stats(curtime)]))
+        self.output(
+            " ".join([self.ser.stats(curtime), self.clocksync.stats(curtime)])
+        )
 
     def command_LIST(self, parts):
         self.update_evals(self.reactor.monotonic())

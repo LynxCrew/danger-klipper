@@ -27,7 +27,9 @@ class PolarKinematics:
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        self.printer.register_event_handler("stepper_enable:motor_off", self._motor_off)
+        self.printer.register_event_handler(
+            "stepper_enable:motor_off", self._motor_off
+        )
 
         self.printer.register_event_handler(
             "stepper_enable:disable_bed", self._set_unhomed_xy
@@ -124,7 +126,13 @@ class PolarKinematics:
             forcepos[axis] += position_max - hi.position_endstop
         # Perform homing
         axis_name = (
-            "x" if axis == 0 else "y" if axis == 1 else "z" if axis == 2 else None
+            "x"
+            if axis == 0
+            else "y"
+            if axis == 1
+            else "z"
+            if axis == 2
+            else None
         )
         if axis_name is not None:
             self.printer.send_event("homing:homing_move_begin_%s" % axis_name)
@@ -181,7 +189,9 @@ class PolarKinematics:
                 raise move.move_error()
             # Move with Z - update velocity and accel for slower Z axis
             z_ratio = move.move_d / abs(move.axes_d[2])
-            move.limit_speed(self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
+            move.limit_speed(
+                self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio
+            )
 
     def get_status(self, eventtime):
         xy_home = "xy" if self.limit_xy2 >= 0.0 else ""

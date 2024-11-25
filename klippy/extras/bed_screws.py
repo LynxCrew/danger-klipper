@@ -74,7 +74,9 @@ class BedScrews:
         self.gcode.register_command(
             "ADJUSTED", self.cmd_ADJUSTED, desc=self.cmd_ADJUSTED_help
         )
-        self.gcode.register_command("ABORT", self.cmd_ABORT, desc=self.cmd_ABORT_help)
+        self.gcode.register_command(
+            "ABORT", self.cmd_ABORT, desc=self.cmd_ABORT_help
+        )
 
     def unregister_commands(self):
         self.gcode.register_command("ACCEPT", None)

@@ -41,7 +41,9 @@ class PIDCalibrate:
             )
         algorithm = gcmd.get("ALGORITHM", None)
         if algorithm is not None and algorithm not in ALGORITHMS:
-            raise gcmd.error("Invalid algorithm, valid algorithms are: %s" % ALGORITHMS)
+            raise gcmd.error(
+                "Invalid algorithm, valid algorithms are: %s" % ALGORITHMS
+            )
         profile_name = gcmd.get("PROFILE", "default")
         pheaters = self.printer.lookup_object("heaters")
         try:
@@ -164,7 +166,9 @@ class ControlAutoTune:
         if self.done:
             return
         # store test data
-        self.data.append((read_time, temp, self.heater.last_pwm_value, self.target))
+        self.data.append(
+            (read_time, temp, self.heater.last_pwm_value, self.target)
+        )
         # ensure the starting temp is low enough to run the test.
         if not self.started and temp >= self.temp_low:
             self.errored = True
@@ -349,7 +353,9 @@ class ControlAutoTune:
         Km = -math.sqrt(tau**2 * Wu**2 + 1.0) / Ku
         # log the extra details
         logging.info("Ziegler-Nichols constants: Ku=%f Tu=%f", Ku, Tu)
-        logging.info("Cohen-Coon constants: Km=%f Theta=%f Tau=%f", Km, theta, tau)
+        logging.info(
+            "Cohen-Coon constants: Km=%f Theta=%f Tau=%f", Km, theta, tau
+        )
         Ti, Td, Kp = CALCULATION_METHODS[calculation_method](Tu, Ku)
         Ki = Kp / Ti
         Kd = Kp * Td

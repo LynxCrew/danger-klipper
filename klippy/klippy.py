@@ -108,12 +108,17 @@ class Printer:
     def _set_state(self, msg):
         if self.state_message in (message_ready, message_startup):
             self.state_message = msg
-        if msg != message_ready and self.start_args.get("debuginput") is not None:
+        if (
+            msg != message_ready
+            and self.start_args.get("debuginput") is not None
+        ):
             self.request_exit("error_exit")
 
     def add_object(self, name, obj):
         if name in self.objects:
-            raise self.config_error("Printer object '%s' already created" % (name,))
+            raise self.config_error(
+                "Printer object '%s' already created" % (name,)
+            )
         self.objects[name] = obj
 
     def lookup_object(self, name, default=configfile.sentinel):
@@ -127,7 +132,9 @@ class Printer:
         if module is None:
             return list(self.objects.items())
         prefix = module + " "
-        objs = [(n, self.objects[n]) for n in self.objects if n.startswith(prefix)]
+        objs = [
+            (n, self.objects[n]) for n in self.objects if n.startswith(prefix)
+        ]
         if module in self.objects:
             return [(module, self.objects[module])] + objs
         return objs
@@ -313,7 +320,9 @@ class Printer:
                 cb()
         except Exception as e:
             logging.exception("Unhandled exception during ready callback")
-            self.invoke_shutdown("Internal error during ready callback: %s" % (str(e),))
+            self.invoke_shutdown(
+                "Internal error during ready callback: %s" % (str(e),)
+            )
 
     def run(self):
         systime = time.time()
@@ -334,7 +343,9 @@ class Printer:
             logging.exception(msg)
             # Exception from a reactor callback - try to shutdown
             try:
-                self.reactor.register_callback((lambda pt: self.invoke_shutdown(msg)))
+                self.reactor.register_callback(
+                    (lambda pt: self.invoke_shutdown(msg))
+                )
                 self.klipper_threads.run()
                 self.reactor.run()
             except:
@@ -371,10 +382,14 @@ class Printer:
                 cb()
             except:
                 logging.exception("Exception during shutdown handler")
-        logging.info("Reactor garbage collection: %s", self.reactor.get_gc_stats())
+        logging.info(
+            "Reactor garbage collection: %s", self.reactor.get_gc_stats()
+        )
 
     def invoke_async_shutdown(self, msg):
-        self.reactor.register_async_callback((lambda e: self.invoke_shutdown(msg)))
+        self.reactor.register_async_callback(
+            (lambda e: self.invoke_shutdown(msg))
+        )
 
     def register_event_handler(self, event, callback):
         self.event_handlers.setdefault(event, []).append(callback)
@@ -557,7 +572,9 @@ def main():
         )
         logging.info(versions)
     elif not options.debugoutput:
-        logging.warning("No log file specified!" " Severe timing issues may result!")
+        logging.warning(
+            "No log file specified!" " Severe timing issues may result!"
+        )
     gc.disable()
 
     # Start Printer() class

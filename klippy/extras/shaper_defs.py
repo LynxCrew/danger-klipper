@@ -104,7 +104,9 @@ def get_3hump_ei_shaper(shaper_freq, damping_ratio):
     t_d = 1.0 / (shaper_freq * df)
 
     K2 = K * K
-    a1 = 0.0625 * (1.0 + 3.0 * v_tol + 2.0 * math.sqrt(2.0 * (v_tol + 1.0) * v_tol))
+    a1 = 0.0625 * (
+        1.0 + 3.0 * v_tol + 2.0 * math.sqrt(2.0 * (v_tol + 1.0) * v_tol)
+    )
     a2 = 0.25 * (1.0 - v_tol) * K
     a3 = (0.5 * (1.0 + v_tol) - 2.0 * a1) * K2
     a4 = a2 * K2
@@ -162,7 +164,9 @@ def get_none_smoother():
 # of the extruder with the toolhead motion).
 
 
-def get_zv_smoother(shaper_freq, damping_ratio_unused=None, normalize_coeffs=True):
+def get_zv_smoother(
+    shaper_freq, damping_ratio_unused=None, normalize_coeffs=True
+):
     coeffs = [
         -118.4265334338076,
         5.861885495127615,
@@ -173,7 +177,9 @@ def get_zv_smoother(shaper_freq, damping_ratio_unused=None, normalize_coeffs=Tru
     return init_smoother(coeffs, 0.8025 / shaper_freq, normalize_coeffs)
 
 
-def get_mzv_smoother(shaper_freq, damping_ratio_unused=None, normalize_coeffs=True):
+def get_mzv_smoother(
+    shaper_freq, damping_ratio_unused=None, normalize_coeffs=True
+):
     coeffs = [
         -1906.717580206364,
         125.8892756660212,
@@ -186,7 +192,9 @@ def get_mzv_smoother(shaper_freq, damping_ratio_unused=None, normalize_coeffs=Tr
     return init_smoother(coeffs, 0.95625 / shaper_freq, normalize_coeffs)
 
 
-def get_ei_smoother(shaper_freq, damping_ratio_unused=None, normalize_coeffs=True):
+def get_ei_smoother(
+    shaper_freq, damping_ratio_unused=None, normalize_coeffs=True
+):
     coeffs = [
         -1797.048868963208,
         120.5310596109878,
@@ -216,7 +224,9 @@ def get_2hump_ei_smoother(
     return init_smoother(coeffs, 1.14875 / shaper_freq, normalize_coeffs)
 
 
-def get_si_smoother(shaper_freq, damping_ratio_unused=None, normalize_coeffs=True):
+def get_si_smoother(
+    shaper_freq, damping_ratio_unused=None, normalize_coeffs=True
+):
     coeffs = [
         -6186.76006449789,
         1206.747198930197,
@@ -231,7 +241,9 @@ def get_si_smoother(shaper_freq, damping_ratio_unused=None, normalize_coeffs=Tru
     return init_smoother(coeffs, 1.245 / shaper_freq, normalize_coeffs)
 
 
-def get_zvd_ei_smoother(shaper_freq, damping_ratio_unused=None, normalize_coeffs=True):
+def get_zvd_ei_smoother(
+    shaper_freq, damping_ratio_unused=None, normalize_coeffs=True
+):
     coeffs = [
         -18835.07746719777,
         1914.349309746547,

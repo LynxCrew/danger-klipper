@@ -4,8 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import threading
-import time
 
 from . import bus
 
@@ -33,7 +31,9 @@ class LM75:
         self.name = config.get_name().split()[-1]
         self.reactor = self.printer.get_reactor()
         self.klipper_threads = self.printer.get_klipper_threads()
-        self.i2c = bus.MCU_I2C_from_config(config, LM75_CHIP_ADDR, LM75_I2C_SPEED)
+        self.i2c = bus.MCU_I2C_from_config(
+            config, LM75_CHIP_ADDR, LM75_I2C_SPEED
+        )
         self.mcu = self.i2c.get_mcu()
         self.report_time = config.getfloat(
             "lm75_report_time", LM75_REPORT_TIME, minval=LM75_MIN_REPORT_TIME
@@ -44,7 +44,9 @@ class LM75:
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("lm75 " + self.name, self)
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
 
     def _handle_connect(self):
         self._init_lm75()
