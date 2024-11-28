@@ -165,9 +165,6 @@ class RetryHelper:
             minval=0.0,
             maxval=MAX_RETRY_TOLERANCE,
         )
-        self.increasing_threshold = gcmd.get_float(
-            "INCREASING_THRESHOLD", self.default_increasing_threshold, above=0.0
-        )
         self.max_deviation = gcmd.get_float(
             "MAX_DEVIATION",
             self.default_max_deviation,
