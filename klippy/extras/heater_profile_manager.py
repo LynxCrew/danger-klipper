@@ -228,31 +228,7 @@ class ProfileManager:
             % (profile["name"], self.heater.sensor_name)
         )
         if verbose == "high":
-            smooth_time = (
-                self.heater.get_smooth_time()
-                if profile["smooth_time"] is None
-                else profile["smooth_time"]
-            )
-            smoothing_elements = (
-                self.heater.get_smoothing_elements()
-                if profile["smoothing_elements"] is None
-                else profile["smoothing_elements"]
-            )
-            msg = "Target: %.2f\n" "Tolerance: %.4f\n" "Control: %s\n" % (
-                profile["pid_target"],
-                profile["pid_tolerance"],
-                profile["control"],
-            )
-            if smooth_time is not None:
-                msg += "Smooth Time: %.3f\n" % smooth_time
-            if smoothing_elements is not None:
-                msg += "Smoothing Elements: %d\n" % smoothing_elements
-            msg += "PID Parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n" % (
-                profile["pid_kp"],
-                profile["pid_ki"],
-                profile["pid_kd"],
-            )
-            self.heater.gcode.respond_info(msg)
+            self.heater.gcode.respond_info(control.load_console_message())
 
     def remove_profile(self, profile_name, gcmd=None):
         if profile_name in self.profiles:

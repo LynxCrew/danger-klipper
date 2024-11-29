@@ -594,6 +594,16 @@ class ControlBangBang:
                 % (pmgr.heater.sensor_name, profile_name)
             )
 
+    @staticmethod
+    def load_console_message(profile, heater):
+        max_delta = profile["max_delta"]
+        msg = "Control: %s\n" % (
+            profile["control"],
+        )
+        if max_delta is not None:
+            msg += "Max Delta: %.3f\n" % max_delta
+        return msg
+
     def __init__(self, profile, heater, load_clean=False):
         self.profile = profile
         self.heater = heater
@@ -619,6 +629,9 @@ class ControlBangBang:
 
     def set_name(self, name):
         self.profile["name"] = name
+
+    def _load_console_message(self):
+        return ControlBangBang.load_console_message(self.profile, self.heater)
 
     def get_profile(self):
         return self.profile
@@ -759,6 +772,34 @@ class ControlPID:
                 % (pmgr.heater.sensor_name, profile_name)
             )
 
+    @staticmethod
+    def load_console_message(profile, heater):
+        smooth_time = (
+            heater.get_smooth_time()
+            if profile["smooth_time"] is None
+            else profile["smooth_time"]
+        )
+        smoothing_elements = (
+            heater.get_smoothing_elements()
+            if profile["smoothing_elements"] is None
+            else profile["smoothing_elements"]
+        )
+        msg = "Target: %.2f\n" "Tolerance: %.4f\n" "Control: %s\n" % (
+            profile["pid_target"],
+            profile["pid_tolerance"],
+            profile["control"],
+        )
+        if smooth_time is not None:
+            msg += "Smooth Time: %.3f\n" % smooth_time
+        if smoothing_elements is not None:
+            msg += "Smoothing Elements: %d\n" % smoothing_elements
+        msg += "PID Parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n" % (
+            profile["pid_kp"],
+            profile["pid_ki"],
+            profile["pid_kd"],
+        )
+        return msg
+
     def __init__(self, profile, heater, load_clean=False):
         self.profile = profile
         self.heater = heater
@@ -838,6 +879,9 @@ class ControlPID:
     def set_name(self, name):
         self.profile["name"] = name
 
+    def _load_console_message(self):
+        return ControlPID.load_console_message(self.profile, self.heater)
+
     def get_profile(self):
         return self.profile
 
@@ -862,6 +906,10 @@ class ControlVelocityPID:
     @staticmethod
     def save_profile(pmgr, temp_profile, profile_name=None, verbose=True):
         ControlPID.save_profile(pmgr, temp_profile, profile_name, verbose)
+
+    @staticmethod
+    def load_console_message(profile, heater):
+        return ControlPID.load_console_message(profile, heater)
 
     @staticmethod
     def median(temps):
@@ -988,6 +1036,9 @@ class ControlVelocityPID:
     def set_name(self, name):
         self.profile["name"] = name
 
+    def _load_console_message(self):
+        return ControlVelocityPID.load_console_message(self.profile, self.heater)
+
     def get_profile(self):
         return self.profile
 
@@ -1007,6 +1058,10 @@ class ControlPositionalPID:
     @staticmethod
     def save_profile(pmgr, temp_profile, profile_name=None, verbose=True):
         ControlPID.save_profile(pmgr, temp_profile, profile_name, verbose)
+
+    @staticmethod
+    def load_console_message(profile, heater):
+        return ControlPID.load_console_message(profile, heater)
 
     def __init__(self, profile, heater, load_clean=False):
         self.profile = profile
@@ -1098,6 +1153,9 @@ class ControlPositionalPID:
 
     def set_name(self, name):
         self.profile["name"] = name
+
+    def _load_console_message(self):
+        return ControlPositionalPID.load_console_message(self.profile, self.heater)
 
     def get_profile(self):
         return self.profile
@@ -1277,6 +1335,10 @@ class ControlMPC:
                 "update the printer config file and restart the printer."
                 % (pmgr.heater.sensor_name, profile_name)
             )
+
+    @staticmethod
+    def load_console_message(profile, heater):
+        return "" #TODO
 
     @staticmethod
     def get_power_at_temp(temperature, power_table):
@@ -1593,6 +1655,9 @@ class ControlMPC:
 
     def set_name(self, name):
         self.profile["name"] = name
+
+    def _load_console_message(self):
+        return ControlMPC.load_console_message(self.profile, self.heater)
 
     def get_profile(self):
         return self.profile
