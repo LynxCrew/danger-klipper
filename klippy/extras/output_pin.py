@@ -117,7 +117,12 @@ class PrinterTemplateEvaluator:
     def _activate_template(self, callback, template, lparams, flush_callback):
         if template is not None:
             uid = (template,) + tuple(sorted(lparams.items()))
-            self.active_templates[callback] = (uid, template, lparams, flush_callback)
+            self.active_templates[callback] = (
+                uid,
+                template,
+                lparams,
+                flush_callback,
+            )
             return
         if callback in self.active_templates:
             del self.active_templates[callback]
@@ -222,22 +227,31 @@ class PrinterOutputPin:
         self.mcu_pin.setup_max_duration(0.0)
         # Determine start and shutdown values
         self.last_value = (
-            config.getfloat("value", 0.0, minval=0.0, maxval=self.scale) / self.scale
+            config.getfloat("value", 0.0, minval=0.0, maxval=self.scale)
+            / self.scale
         )
         self.shutdown_value = (
-            config.getfloat("shutdown_value", 0.0, minval=0.0, maxval=self.scale)
+            config.getfloat(
+                "shutdown_value", 0.0, minval=0.0, maxval=self.scale
+            )
             / self.scale
         )
         self.mcu_pin.setup_start_value(self.last_value, self.shutdown_value)
         # Create gcode request queue
-        self.gcrq = GCodeRequestQueue(config, self.mcu_pin.get_mcu(), self._set_pin)
+        self.gcrq = GCodeRequestQueue(
+            config, self.mcu_pin.get_mcu(), self._set_pin
+        )
         # Template handling
         self.template_eval = lookup_template_eval(config)
         # Register commands
         pin_name = config.get_name().split()[1]
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
-            "SET_PIN", "PIN", pin_name, self.cmd_SET_PIN, desc=self.cmd_SET_PIN_help
+            "SET_PIN",
+            "PIN",
+            pin_name,
+            self.cmd_SET_PIN,
+            desc=self.cmd_SET_PIN_help,
         )
 
     def get_status(self, eventtime):

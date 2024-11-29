@@ -23,7 +23,9 @@ class HD44780:
             ppins.lookup_pin(config.get(name + "_pin"))
             for name in ["rs", "e", "d4", "d5", "d6", "d7"]
         ]
-        self.hd44780_protocol_init = config.getboolean("hd44780_protocol_init", True)
+        self.hd44780_protocol_init = config.getboolean(
+            "hd44780_protocol_init", True
+        )
         self.line_length = config.getchoice(
             "line_length", LINE_LENGTH_OPTIONS, LINE_LENGTH_DEFAULT
         )
@@ -97,7 +99,9 @@ class HD44780:
                 continue
             # Find the position of all changed bytes in this framebuffer
             diffs = [
-                [i, 1] for i, (n, o) in enumerate(zip(new_data, old_data)) if n != o
+                [i, 1]
+                for i, (n, o) in enumerate(zip(new_data, old_data))
+                if n != o
             ]
             # Batch together changes that are close to each other
             for i in range(len(diffs) - 2, -1, -1):

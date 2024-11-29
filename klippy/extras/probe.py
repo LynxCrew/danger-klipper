@@ -37,7 +37,9 @@ class PrinterProbe:
         # Infer Z position to move to during a probe
         if config.has_section("stepper_z"):
             zconfig = config.getsection("stepper_z")
-            self.z_position = zconfig.getfloat("position_min", 0.0, note_valid=False)
+            self.z_position = zconfig.getfloat(
+                "position_min", 0.0, note_valid=False
+            )
         else:
             pconfig = config.getsection("printer")
             self.z_position = pconfig.getfloat(
@@ -49,9 +51,15 @@ class PrinterProbe:
             "sample_retract_dist", 2.0, above=0.0
         )
         atypes = ["median", "average"]
-        self.samples_result = config.getchoice("samples_result", atypes, "average")
-        self.samples_tolerance = config.getfloat("samples_tolerance", 0.100, minval=0.0)
-        self.samples_retries = config.getint("samples_tolerance_retries", 0, minval=0)
+        self.samples_result = config.getchoice(
+            "samples_result", atypes, "average"
+        )
+        self.samples_tolerance = config.getfloat(
+            "samples_tolerance", 0.100, minval=0.0
+        )
+        self.samples_retries = config.getint(
+            "samples_tolerance_retries", 0, minval=0
+        )
         # Register z_virtual_endstop pin
         self.printer.lookup_object("pins").register_chip("probe", self)
         # Register homing event handlers
@@ -72,7 +80,9 @@ class PrinterProbe:
         )
         # Register PROBE/QUERY_PROBE commands
         self.gcode = self.printer.lookup_object("gcode")
-        self.gcode.register_command("PROBE", self.cmd_PROBE, desc=self.cmd_PROBE_help)
+        self.gcode.register_command(
+            "PROBE", self.cmd_PROBE, desc=self.cmd_PROBE_help
+        )
         self.gcode.register_command(
             "QUERY_PROBE", self.cmd_QUERY_PROBE, desc=self.cmd_QUERY_PROBE_help
         )
@@ -163,7 +173,9 @@ class PrinterProbe:
         )
         z_compensation = 0
         if axis_twist_compensation is not None:
-            z_compensation = axis_twist_compensation.get_z_compensation_value(pos)
+            z_compensation = axis_twist_compensation.get_z_compensation_value(
+                pos
+            )
         # add z compensation to probe position
         epos[2] += z_compensation
         self.gcode.respond_info(
@@ -247,7 +259,9 @@ class PrinterProbe:
     cmd_PROBE_help = "Probe Z-height at current XY position"
 
     def cmd_PROBE(self, gcmd):
-        drop_first_result = gcmd.get_int("DROP_FIRST_RESULT", self.drop_first_result)
+        drop_first_result = gcmd.get_int(
+            "DROP_FIRST_RESULT", self.drop_first_result
+        )
         original_drop_first_result = self.drop_first_result
         self.drop_first_result = drop_first_result
 
@@ -276,7 +290,9 @@ class PrinterProbe:
     cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
 
     def cmd_PROBE_ACCURACY(self, gcmd):
-        drop_first_result = gcmd.get_int("DROP_FIRST_RESULT", self.drop_first_result)
+        drop_first_result = gcmd.get_int(
+            "DROP_FIRST_RESULT", self.drop_first_result
+        )
         original_drop_first_result = self.drop_first_result
         self.drop_first_result = drop_first_result
 
@@ -357,7 +373,9 @@ class PrinterProbe:
     cmd_PROBE_CALIBRATE_help = "Calibrate the probe's z_offset"
 
     def cmd_PROBE_CALIBRATE(self, gcmd):
-        drop_first_result = gcmd.get_int("DROP_FIRST_RESULT", self.drop_first_result)
+        drop_first_result = gcmd.get_int(
+            "DROP_FIRST_RESULT", self.drop_first_result
+        )
         original_drop_first_result = self.drop_first_result
         self.drop_first_result = drop_first_result
 
@@ -390,7 +408,8 @@ class PrinterProbe:
             self.gcode.respond_info(
                 "%s: z_offset: %.3f\n"
                 "The SAVE_CONFIG command will update the printer config file\n"
-                "with the above and restart the printer." % (self.name, new_calibrate)
+                "with the above and restart the printer."
+                % (self.name, new_calibrate)
             )
             configfile.set(self.name, "z_offset", "%.3f" % (new_calibrate,))
 
@@ -402,9 +421,13 @@ class ProbeEndstopWrapper:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.position_endstop = config.getfloat("z_offset")
-        self.stow_on_each_sample = config.getboolean("deactivate_on_each_sample", True)
+        self.stow_on_each_sample = config.getboolean(
+            "deactivate_on_each_sample", True
+        )
         gcode_macro = self.printer.load_object(config, "gcode_macro")
-        self.activate_gcode = gcode_macro.load_template(config, "activate_gcode", "")
+        self.activate_gcode = gcode_macro.load_template(
+            config, "activate_gcode", ""
+        )
         self.deactivate_gcode = gcode_macro.load_template(
             config, "deactivate_gcode", ""
         )
@@ -492,6 +515,7 @@ class ProbePointsHelper:
         default_points=None,
         option_name="points",
         enable_adaptive_move_z=False,
+        use_probe_offsets=False,
     ):
         self.printer = config.get_printer()
         self.enable_adaptive_move_z = enable_adaptive_move_z
@@ -505,7 +529,9 @@ class ProbePointsHelper:
                 option_name, seps=(",", "\n"), parser=float, count=2
             )
         self.z_move_speed = config.getfloat("z_move_speed", None, above=0.0)
-        self.default_horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
+        self.default_horizontal_move_z = config.getfloat(
+            "horizontal_move_z", 5.0
+        )
         if self.enable_adaptive_move_z:
             self.def_adaptive_horizontal_move_z = config.getboolean(
                 "adaptive_horizontal_move_z", False
@@ -541,7 +567,9 @@ class ProbePointsHelper:
                 else self.def_additional_horizontal_move_z
             )
         self.speed = config.getfloat("speed", 50.0, above=0.0)
-        self.use_offsets = False
+        self.use_offsets = config.getboolean(
+            "use_probe_offsets", use_probe_offsets
+        )
         # Internal probing state
         self.lift_speed = self.speed
         self.probe_offsets = (0.0, 0.0, 0.0)
@@ -587,7 +615,10 @@ class ProbePointsHelper:
             if isinstance(res, (int, float)):
                 if res == 0:
                     done = True
-                if self.enable_adaptive_move_z and self.adaptive_horizontal_move_z:
+                if (
+                    self.enable_adaptive_move_z
+                    and self.adaptive_horizontal_move_z
+                ):
                     # then res is error
                     error = math.ceil(res) or 1.0
                     self.horizontal_move_z = (
@@ -624,9 +655,12 @@ class ProbePointsHelper:
         )
         if self.enable_adaptive_move_z:
             self.adaptive_horizontal_move_z = gcmd.get_int(
-                "ADAPTIVE_HORIZONTAL_MOVE_Z", self.def_adaptive_horizontal_move_z
+                "ADAPTIVE_HORIZONTAL_MOVE_Z",
+                self.def_adaptive_horizontal_move_z,
             )
-            self.min_horizontal_move_z = gcmd.get_float("MIN_HORIZONTAL_MOVE_Z", None)
+            self.min_horizontal_move_z = gcmd.get_float(
+                "MIN_HORIZONTAL_MOVE_Z", None
+            )
             if (
                 self.min_horizontal_move_z is not None
                 and not self.adaptive_horizontal_move_z
@@ -666,7 +700,9 @@ class ProbePointsHelper:
         self.lift_speed = probe.get_lift_speed(gcmd)
         self.probe_offsets = probe.get_offsets()
         if self.horizontal_move_z < self.probe_offsets[2]:
-            raise gcmd.error("horizontal_move_z can't be less than probe's z_offset")
+            raise gcmd.error(
+                "horizontal_move_z can't be less than probe's z_offset"
+            )
         probe.multi_probe_begin()
         while True:
             done = self._move_next(speed=speed)

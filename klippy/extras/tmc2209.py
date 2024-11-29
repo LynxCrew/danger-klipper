@@ -48,7 +48,9 @@ FieldFormatters = dict(tmc2208.FieldFormatters)
 class TMC2209:
     def __init__(self, config):
         # Setup mcu communication
-        self.fields = tmc.FieldHelper(Fields, tmc2208.SignedFields, FieldFormatters)
+        self.fields = tmc.FieldHelper(
+            Fields, tmc2208.SignedFields, FieldFormatters
+        )
         self.mcu_tmc = tmc_uart.MCU_TMC_uart(
             config, Registers, self.fields, 3, TMC_FREQUENCY
         )
@@ -58,7 +60,9 @@ class TMC2209:
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
-        current_helper = tmc2130.TMC2130CurrentHelper(config, self.mcu_tmc, "tmc2209")
+        current_helper = tmc2130.TMC2130CurrentHelper(
+            config, self.mcu_tmc, "tmc2209"
+        )
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
         self.get_phase_offset = cmdhelper.get_phase_offset

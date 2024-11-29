@@ -44,7 +44,9 @@ class PrinterSensorCombined:
             target=self._temperature_update_event
         )
 
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def _handle_connect(self):
@@ -52,9 +54,9 @@ class PrinterSensorCombined:
             sensor = self.printer.lookup_object(sensor_name)
             # check if sensor has get_status function and
             # get_status has a 'temperature' value
-            if hasattr(sensor, "get_status") and "temperature" in sensor.get_status(
-                self.reactor.monotonic()
-            ):
+            if hasattr(
+                sensor, "get_status"
+            ) and "temperature" in sensor.get_status(self.reactor.monotonic()):
                 self.sensors.append(sensor)
             else:
                 raise self.printer.config_error(
@@ -147,7 +149,9 @@ class PrinterSensorCombined:
         # get mcu and measured / current(?) time
         mcu = self.printer.lookup_object("mcu")
         # convert to print time?! for the callback???
-        self.temperature_callback(mcu.estimated_print_time(eventtime), self.last_temp)
+        self.temperature_callback(
+            mcu.estimated_print_time(eventtime), self.last_temp
+        )
         # set next update time
         return REPORT_TIME
 

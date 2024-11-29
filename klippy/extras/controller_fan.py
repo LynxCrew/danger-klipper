@@ -3,9 +3,6 @@
 # Copyright (C) 2019  Nils Friedchen <nils.friedchen@googlemail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
-import threading
-import time
 
 from . import fan
 
@@ -18,9 +15,13 @@ class ControllerFan:
         self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
         self.klipper_threads = self.printer.get_klipper_threads()
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
         if defined_fan is None:
-            self.printer.register_event_handler("klippy:ready", self._handle_ready)
+            self.printer.register_event_handler(
+                "klippy:ready", self._handle_ready
+            )
             self.fan = fan.Fan(config)
         else:
             self.fan = defined_fan
@@ -62,7 +63,9 @@ class ControllerFan:
                 pheaters.lookup_heater(n) for n in pheaters.available_heaters
             ]
         else:
-            self.heaters = [pheaters.lookup_heater(n) for n in self.heater_names]
+            self.heaters = [
+                pheaters.lookup_heater(n) for n in self.heater_names
+            ]
         # Stepper lookup
         all_steppers = self.stepper_enable.get_steppers()
         if self.stepper_names is None:

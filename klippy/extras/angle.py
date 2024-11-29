@@ -48,7 +48,9 @@ class AngleCalibration:
         self.printer.register_event_handler(
             "stepper:sync_mcu_position", self.handle_sync_mcu_pos
         )
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
         cname = self.name.split()[-1]
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
@@ -236,7 +238,9 @@ class AngleCalibration:
                 "Failed calibration - incomplete sensor data"
             )
         fcal = {i: cal[i] for i in range(full_steps)}
-        rcal = {full_steps - i - 1: cal[i + full_steps] for i in range(full_steps)}
+        rcal = {
+            full_steps - i - 1: cal[i + full_steps] for i in range(full_steps)
+        }
         return fcal, rcal
 
     def calc_angles(self, meas):
@@ -459,7 +463,9 @@ class HelperTLE5012B:
         mcu_clock, chip_clock = self._query_clock()
         self.last_chip_clock = chip_clock
         self.last_chip_mcu_clock = mcu_clock
-        self.chip_freq = float(1 << 5) / self.mcu.seconds_to_clock(1.0 / 750000.0)
+        self.chip_freq = float(1 << 5) / self.mcu.seconds_to_clock(
+            1.0 / 750000.0
+        )
         self.update_clock()
 
     cmd_ANGLE_DEBUG_READ_help = "Query low-level angle sensor register"
@@ -473,7 +479,9 @@ class HelperTLE5012B:
 
     def cmd_ANGLE_DEBUG_WRITE(self, gcmd):
         reg = gcmd.get("REG", minval=0, maxval=0x30, parser=lambda x: int(x, 0))
-        val = gcmd.get("VAL", minval=0, maxval=0xFFFF, parser=lambda x: int(x, 0))
+        val = gcmd.get(
+            "VAL", minval=0, maxval=0xFFFF, parser=lambda x: int(x, 0)
+        )
         self._write_reg(reg, val)
 
 
@@ -487,7 +495,9 @@ BATCH_UPDATES = 0.100
 class Angle:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.sample_period = config.getfloat("sample_period", SAMPLE_PERIOD, above=0.0)
+        self.sample_period = config.getfloat(
+            "sample_period", SAMPLE_PERIOD, above=0.0
+        )
         self.calibration = AngleCalibration(config)
         # Measurement conversion
         self.start_clock = self.time_shift = self.sample_ticks = 0

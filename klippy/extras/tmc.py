@@ -42,7 +42,10 @@ class FieldHelper:
             reg_value = self.registers.get(reg_name, 0)
         mask = self.all_fields[reg_name][field_name]
         field_value = (reg_value & mask) >> ffs(mask)
-        if field_name in self.signed_fields and ((reg_value & mask) << 1) > mask:
+        if (
+            field_name in self.signed_fields
+            and ((reg_value & mask) << 1) > mask
+        ):
             field_value -= 1 << field_value.bit_length()
         return field_value
 
@@ -147,9 +150,13 @@ class TMCErrorCheck:
         if self.adc_temp_reg is not None:
             pheaters = self.printer.load_object(config, "heaters")
             pheaters.register_monitor(config)
-        self.query_while_disabled = config.getboolean("query_while_disabled", False)
+        self.query_while_disabled = config.getboolean(
+            "query_while_disabled", False
+        )
         if self.query_while_disabled:
-            self.printer.register_event_handler("klippy:ready", self._handle_ready)
+            self.printer.register_event_handler(
+                "klippy:ready", self._handle_ready
+            )
 
     def _handle_ready(self):
         self.printer.get_reactor().register_callback(self.start_checks)
@@ -179,7 +186,9 @@ class TMCErrorCheck:
                 irun = self.fields.get_field(self.irun_field)
                 if self.check_timer is None or irun < 4:
                     break
-                if self.irun_field == "irun" and not self.fields.get_field("ihold"):
+                if self.irun_field == "irun" and not self.fields.get_field(
+                    "ihold"
+                ):
                     break
                 # CS_ACTUAL field of zero - indicates a driver reset
             count += 1
@@ -224,7 +233,9 @@ class TMCErrorCheck:
         )
 
     def stop_check_timer(self, force=False):
-        if self.check_timer is None or (self.query_while_disabled and not force):
+        if self.check_timer is None or (
+            self.query_while_disabled and not force
+        ):
             return
         self.printer.get_reactor().unregister_timer(self.check_timer)
         self.check_timer = None
@@ -256,10 +267,14 @@ class TMCErrorCheck:
     def get_status(self, eventtime=None):
         if self.check_timer is None:
             measured_min = (
-                0.0 if self.measured_min is None else round(self.measured_min, 2)
+                0.0
+                if self.measured_min is None
+                else round(self.measured_min, 2)
             )
             measured_max = (
-                0.0 if self.measured_max is None else round(self.measured_max, 2)
+                0.0
+                if self.measured_max is None
+                else round(self.measured_max, 2)
             )
             return {
                 "drv_status": None,
@@ -275,13 +290,18 @@ class TMCErrorCheck:
             self.last_drv_fields = {n: v for n, v in fields.items() if v}
         if temp:
             self.measured_min = min(
-                99999999.0 if self.measured_min is None else self.measured_min, temp
+                99999999.0 if self.measured_min is None else self.measured_min,
+                temp,
             )
             self.measured_max = max(
                 0.0 if self.measured_max is None else self.measured_max, temp
             )
-        measured_min = 0.0 if self.measured_min is None else round(self.measured_min, 2)
-        measured_max = 0.0 if self.measured_max is None else round(self.measured_max, 2)
+        measured_min = (
+            0.0 if self.measured_min is None else round(self.measured_min, 2)
+        )
+        measured_max = (
+            0.0 if self.measured_max is None else round(self.measured_max, 2)
+        )
         return {
             "drv_status": self.last_drv_fields,
             "temperature": temp,
@@ -318,7 +338,9 @@ class TMCCommandHelper:
         self.printer.register_event_handler(
             "klippy:mcu_identify", self._handle_mcu_identify
         )
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
         # Set microstep config options
         TMCMicrostepHelper(config, mcu_tmc)
         # Register commands
@@ -371,8 +393,12 @@ class TMCCommandHelper:
             raise gcmd.error("Specify either VALUE or VELOCITY")
         if velocity is not None:
             if self.mcu_tmc.get_tmc_frequency() is None:
-                raise gcmd.error("VELOCITY parameter not supported by this driver")
-            value = TMCtstepHelper(self.mcu_tmc, velocity, pstepper=self.stepper)
+                raise gcmd.error(
+                    "VELOCITY parameter not supported by this driver"
+                )
+            value = TMCtstepHelper(
+                self.mcu_tmc, velocity, pstepper=self.stepper
+            )
         reg_val = self.fields.set_field(field_name, value)
         print_time = self.printer.lookup_object("toolhead").get_last_move_time()
         self.mcu_tmc.set_register(reg_name, reg_val, print_time)
@@ -388,9 +414,15 @@ class TMCCommandHelper:
             max_cur,
             prev_home_cur,
         ) = ch.get_current()
-        run_current = gcmd.get_float("CURRENT", None, minval=0.0, maxval=max_cur)
-        hold_current = gcmd.get_float("HOLDCURRENT", None, above=0.0, maxval=max_cur)
-        home_current = gcmd.get_float("HOMECURRENT", None, above=0.0, maxval=max_cur)
+        run_current = gcmd.get_float(
+            "CURRENT", None, minval=0.0, maxval=max_cur
+        )
+        hold_current = gcmd.get_float(
+            "HOLDCURRENT", None, above=0.0, maxval=max_cur
+        )
+        home_current = gcmd.get_float(
+            "HOMECURRENT", None, above=0.0, maxval=max_cur
+        )
         verbose = gcmd.get("VERBOSE", "low")
         if (
             run_current is not None
@@ -541,7 +573,9 @@ class TMCCommandHelper:
         if not enable_line.has_dedicated_enable():
             self.toff = self.fields.get_field("toff")
             self.fields.set_field("toff", 0)
-            logging.info("Enabling TMC virtual enable for '%s'", self.stepper_name)
+            logging.info(
+                "Enabling TMC virtual enable for '%s'", self.stepper_name
+            )
         # Send init
         try:
             if self.mcu_tmc.mcu.non_critical_disconnected:
@@ -877,10 +911,14 @@ class BaseTMCCurrentHelper:
         self, print_time, pre_homing, get_dwell_time=False
     ) -> float:
         if pre_homing and self.needs_home_current_change():
-            self.set_current(self.req_home_current, self.req_hold_current, print_time)
+            self.set_current(
+                self.req_home_current, self.req_hold_current, print_time
+            )
             return self.current_change_dwell_time
         elif not pre_homing and self.needs_run_current_change():
-            self.set_current(self.req_run_current, self.req_hold_current, print_time)
+            self.set_current(
+                self.req_run_current, self.req_hold_current, print_time
+            )
             return self.current_change_dwell_time
         if get_dwell_time:
             return self.current_change_dwell_time

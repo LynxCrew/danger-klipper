@@ -7,7 +7,6 @@ import logging, mcu
 
 from extras.danger_options import get_danger_options
 
-from extras.danger_options import get_danger_options
 
 DS18_REPORT_TIME = 3.0
 # Temperature can be sampled at any time but conversion time is ~750ms, so
@@ -64,7 +63,9 @@ class DS18B20:
         temp = params["value"] / 1000.0
 
         if params["fault"]:
-            logging.info("ds18b20 reports fault %d (temp=%0.1f)", params["fault"], temp)
+            logging.info(
+                "ds18b20 reports fault %d (temp=%0.1f)", params["fault"], temp
+            )
             return
 
         next_clock = self._mcu.clock32_to_clock64(params["next_clock"])

@@ -99,13 +99,17 @@ class SmartEffectorEndstopWrapper:
             systime = self.printer.get_reactor().monotonic()
             toolhead_info = toolhead.get_status(systime)
             self.old_max_accel = toolhead_info["max_accel"]
-            self.gcode.run_script_from_command("M204 S%.3f" % (self.probe_accel,))
+            self.gcode.run_script_from_command(
+                "M204 S%.3f" % (self.probe_accel,)
+            )
         if self.recovery_time:
             toolhead.dwell(self.recovery_time)
 
     def probe_finish(self, hmove):
         if self.probe_accel:
-            self.gcode.run_script_from_command("M204 S%.3f" % (self.old_max_accel,))
+            self.gcode.run_script_from_command(
+                "M204 S%.3f" % (self.old_max_accel,)
+            )
         self.probe_wrapper.probe_finish(hmove)
 
     def _send_command(self, buf):
@@ -150,11 +154,15 @@ class SmartEffectorEndstopWrapper:
             "RECOVERY_TIME", self.recovery_time, minval=0.0
         )
         if self.probe_accel:
-            respond_info.append("probing accelartion: %.3f" % (self.probe_accel,))
+            respond_info.append(
+                "probing accelartion: %.3f" % (self.probe_accel,)
+            )
         else:
             respond_info.append("probing acceleration control disabled")
         if self.recovery_time:
-            respond_info.append("probe recovery time: %.3f" % (self.recovery_time,))
+            respond_info.append(
+                "probe recovery time: %.3f" % (self.recovery_time,)
+            )
         else:
             respond_info.append("probe recovery time disabled")
         gcmd.respond_info("SmartEffector:\n" + "\n".join(respond_info))
@@ -169,5 +177,7 @@ class SmartEffectorEndstopWrapper:
 
 def load_config(config):
     smart_effector = SmartEffectorEndstopWrapper(config)
-    config.get_printer().add_object("probe", probe.PrinterProbe(config, smart_effector))
+    config.get_printer().add_object(
+        "probe", probe.PrinterProbe(config, smart_effector)
+    )
     return smart_effector

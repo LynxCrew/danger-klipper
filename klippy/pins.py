@@ -56,10 +56,13 @@ class PinResolver:
                 and self.validate_aliases
             ):
                 raise error(
-                    "pin %s is an alias for %s" % (name, self.active_pins[pin_id])
+                    "pin %s is an alias for %s"
+                    % (name, self.active_pins[pin_id])
                 )
             if pin_id in self.reserved:
-                raise error("pin %s is reserved for %s" % (name, self.reserved[pin_id]))
+                raise error(
+                    "pin %s is reserved for %s" % (name, self.reserved[pin_id])
+                )
             return m.group("prefix") + str(pin_id)
 
         return re_pin.sub(pin_fixup, cmd)
@@ -115,7 +118,9 @@ class PrinterPins:
         }
         return pin_params
 
-    def lookup_pin(self, pin_desc, can_invert=False, can_pullup=False, share_type=None):
+    def lookup_pin(
+        self, pin_desc, can_invert=False, can_pullup=False, share_type=None
+    ):
         pin_params = self.parse_pin(pin_desc, can_invert, can_pullup)
         pin = pin_params["pin"]
         share_name = "%s:%s" % (pin_params["chip_name"], pin)

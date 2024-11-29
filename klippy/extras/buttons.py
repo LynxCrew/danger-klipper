@@ -39,7 +39,8 @@ class MCU_buttons:
             return
         self.oid = self.mcu.create_oid()
         self.mcu.add_config_cmd(
-            "config_buttons oid=%d button_count=%d" % (self.oid, len(self.pin_list))
+            "config_buttons oid=%d button_count=%d"
+            % (self.oid, len(self.pin_list))
         )
         for i, (pin, pull_up) in enumerate(self.pin_list):
             self.mcu.add_config_cmd(
@@ -59,7 +60,9 @@ class MCU_buttons:
             % (self.oid, clock, rest_ticks, RETRANSMIT_COUNT, self.invert),
             is_init=True,
         )
-        self.mcu.register_response(self.handle_buttons_state, "buttons_state", self.oid)
+        self.mcu.register_response(
+            self.handle_buttons_state, "buttons_state", self.oid
+        )
 
     def handle_buttons_state(self, params):
         # Expand the message ack_count from 8-bit
@@ -158,7 +161,9 @@ class MCU_ADC_buttons:
 
     def call_button(self, button, state):
         minval, maxval, callback = self.buttons[button]
-        self.reactor.register_async_callback((lambda e, cb=callback, s=state: cb(e, s)))
+        self.reactor.register_async_callback(
+            (lambda e, cb=callback, s=state: cb(e, s))
+        )
 
 
 ######################################################################
@@ -326,8 +331,13 @@ class PrinterButtons:
             pin_params_list.append(pin_params)
         # Register pins and callback with the appropriate MCU
         mcu_buttons = self.mcu_buttons.get(mcu_name)
-        if mcu_buttons is None or len(mcu_buttons.pin_list) + len(pin_params_list) > 8:
-            self.mcu_buttons[mcu_name] = mcu_buttons = MCU_buttons(self.printer, mcu)
+        if (
+            mcu_buttons is None
+            or len(mcu_buttons.pin_list) + len(pin_params_list) > 8
+        ):
+            self.mcu_buttons[mcu_name] = mcu_buttons = MCU_buttons(
+                self.printer, mcu
+            )
         mcu_buttons.setup_buttons(pin_params_list, callback)
 
     def register_rotary_encoder(

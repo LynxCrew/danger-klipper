@@ -53,7 +53,9 @@ def _estimate_shaper(np, shaper, test_damping_ratio, test_freqs):
         )
         response += A[i] * s_r
     response *= inv_D
-    velocity = (response[:, 1:] - response[:, :-1]) / (omega * dt)[:, np.newaxis]
+    velocity = (response[:, 1:] - response[:, :-1]) / (omega * dt)[
+        :, np.newaxis
+    ]
     return time[:-1], velocity
 
 
@@ -93,7 +95,9 @@ def _estimate_smoother(np, smoother, test_damping_ratio, test_freqs):
     s_r = shaper_calibrate.step_response(np, time, omega, test_damping_ratio)
     w_dt = w[w_ind] * ((1.0 / norms) * dt)
     response = np.einsum("ijk,k->ij", get_windows(s_r, wl), w_dt[::-1])
-    velocity = (response[:, 1:] - response[:, :-1]) / (omega * dt)[:, np.newaxis]
+    velocity = (response[:, 1:] - response[:, :-1]) / (omega * dt)[
+        :, np.newaxis
+    ]
     return time[w_ind], velocity
 
 
@@ -150,13 +154,15 @@ def get_extruder_smoother(
     try:
         np = importlib.import_module("numpy")
     except ImportError:
-        raise self.error(
+        raise Exception(
             "Failed to import `numpy` module, make sure it was "
             "installed via `~/klippy-env/bin/pip install` (refer to "
             "docs/Measuring_Resonances.md for more details)."
         )
     shaper_name = shaper_name.lower()
-    smoother_cfg = EXTURDER_SMOOTHERS.get(shaper_name, EXTURDER_SMOOTHERS["default"])
+    smoother_cfg = EXTURDER_SMOOTHERS.get(
+        shaper_name, EXTURDER_SMOOTHERS["default"]
+    )
     test_freqs = np.linspace(*smoother_cfg.freq_opt_range)
     n = smoother_cfg.order
     for s in shaper_defs.INPUT_SHAPERS:
@@ -166,7 +172,9 @@ def get_extruder_smoother(
                 n = 2 * len(A) + 1
             t_sm = T[-1] - T[0]
             shaper = A, T
-            t, velocities = _estimate_shaper(np, shaper, damping_ratio, test_freqs)
+            t, velocities = _estimate_shaper(
+                np, shaper, damping_ratio, test_freqs
+            )
             break
     for s in shaper_defs.INPUT_SMOOTHERS:
         if s.name == shaper_name:
@@ -174,10 +182,14 @@ def get_extruder_smoother(
             if n < 0:
                 n = len(C)
             smoother = C, t_sm
-            t, velocities = _estimate_smoother(np, smoother, damping_ratio, test_freqs)
+            t, velocities = _estimate_smoother(
+                np, smoother, damping_ratio, test_freqs
+            )
             break
     C_e = _calc_extruder_smoother(np, shaper_name, t, velocities, n, t_sm)
-    smoother = shaper_defs.init_smoother(C_e[::-1], smooth_time, normalize_coeffs)
+    smoother = shaper_defs.init_smoother(
+        C_e[::-1], smooth_time, normalize_coeffs
+    )
     if not return_velocities:
         return smoother
     return smoother, (t, velocities)

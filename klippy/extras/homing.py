@@ -24,7 +24,9 @@ def multi_complete(printer, completions):
     cp = reactor.register_callback(lambda e: [c.wait() for c in completions])
     # If any completion indicates an error, then exit main completion early
     for c in completions:
-        reactor.register_callback(lambda e, c=c: cp.complete(1) if c.wait() else 0)
+        reactor.register_callback(
+            lambda e, c=c: cp.complete(1) if c.wait() else 0
+        )
     return cp
 
 
@@ -179,7 +181,8 @@ class HomingMove:
             if any(over_steps.values()):
                 self.toolhead.set_position(movepos)
                 halt_kin_spos = {
-                    s.get_name(): s.get_commanded_position() for s in kin.get_steppers()
+                    s.get_name(): s.get_commanded_position()
+                    for s in kin.get_steppers()
                 }
                 haltpos = self.calc_toolhead_pos(halt_kin_spos, over_steps)
         self.toolhead.set_position(haltpos)
@@ -203,12 +206,17 @@ class HomingMove:
 
     def moved_less_than_dist(self, min_dist, homing_axes):
         homing_axis_distances = [
-            dist for i, dist in enumerate(self.distance_elapsed) if i in homing_axes
+            dist
+            for i, dist in enumerate(self.distance_elapsed)
+            if i in homing_axes
         ]
-        distance_tolerance = get_danger_options().homing_elapsed_distance_tolerance
+        distance_tolerance = (
+            get_danger_options().homing_elapsed_distance_tolerance
+        )
         if any(
             [
-                abs(dist) < min_dist and min_dist - abs(dist) >= distance_tolerance
+                abs(dist) < min_dist
+                and min_dist - abs(dist) >= distance_tolerance
                 for dist in homing_axis_distances
             ]
         ):
@@ -221,6 +229,7 @@ class Homing:
     def __init__(self, printer):
         self.printer = printer
         self.toolhead = printer.lookup_object("toolhead")
+        self.gcode = self.printer.lookup_object("gcode")
         self.changed_axes = []
         self.trigger_mcu_pos = {}
         self.adjust_pos = {}
@@ -313,13 +322,19 @@ class Homing:
             axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
             move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
             retract_r = min(1.0, retract_dist / move_d)
-            retractpos = [hp - ad * retract_r for hp, ad in zip(homepos, axes_d)]
+            retractpos = [
+                hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
+            ]
             self.toolhead.move(retractpos, hi.retract_speed)
             # Home again
-            startpos = [rp - ad * retract_r for rp, ad in zip(retractpos, axes_d)]
+            startpos = [
+                rp - ad * retract_r for rp, ad in zip(retractpos, axes_d)
+            ]
             self.toolhead.set_position(startpos)
             self._set_current_homing(
-                homing_axes, pre_homing=True, perform_dwell=hi.use_sensorless_homing
+                homing_axes,
+                pre_homing=True,
+                perform_dwell=hi.use_sensorless_homing,
             )
             self._reset_endstop_states(endstops)
             hmove = HomingMove(self.printer, endstops)
@@ -333,7 +348,9 @@ class Homing:
                 if (
                     hi.use_sensorless_homing
                     and needs_rehome
-                    and hmove.moved_less_than_dist(hi.min_home_dist, homing_axes)
+                    and hmove.moved_less_than_dist(
+                        hi.min_home_dist, homing_axes
+                    )
                 ):
                     raise self.printer.command_error(
                         "Early homing trigger on second home!"
@@ -355,7 +372,8 @@ class Homing:
             homepos = self.toolhead.get_position()
             kin_spos = {
                 s.get_name(): (
-                    s.get_commanded_position() + self.adjust_pos.get(s.get_name(), 0.0)
+                    s.get_commanded_position()
+                    + self.adjust_pos.get(s.get_name(), 0.0)
                 )
                 for s in kin.get_steppers()
             }
@@ -371,9 +389,12 @@ class Homing:
             axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
             move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
             retract_r = min(1.0, hi.post_retract_dist / move_d)
-            retractpos = [hp - ad * retract_r for hp, ad in zip(homepos, axes_d)]
+            retractpos = [
+                hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
+            ]
             self.printer.lookup_object("gcode_move").last_position = retractpos
             self.toolhead.move(retractpos, hi.post_retract_speed)
+            self.gcode.run_script_from_command("M400")
 
 
 class PrinterHoming:
@@ -383,7 +404,9 @@ class PrinterHoming:
         gcode = self.printer.lookup_object("gcode")
         gcode.register_command("G28", self.cmd_G28)
 
-    def manual_home(self, toolhead, endstops, pos, speed, triggered, check_triggered):
+    def manual_home(
+        self, toolhead, endstops, pos, speed, triggered, check_triggered
+    ):
         hmove = HomingMove(self.printer, endstops, toolhead)
         try:
             hmove.homing_move(
@@ -408,7 +431,9 @@ class PrinterHoming:
                 )
             raise
         if hmove.check_no_movement() is not None:
-            raise self.printer.command_error("Probe triggered prior to movement")
+            raise self.printer.command_error(
+                "Probe triggered prior to movement"
+            )
         return epos
 
     def cmd_G28(self, gcmd):

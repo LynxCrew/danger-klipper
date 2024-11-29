@@ -85,10 +85,14 @@ class EndstopPhase:
         if trigger_phase is not None:
             p, ps = config.getintlist("trigger_phase", sep="/", count=2)
             if p >= ps:
-                raise config.error("Invalid trigger_phase '%s'" % (trigger_phase,))
+                raise config.error(
+                    "Invalid trigger_phase '%s'" % (trigger_phase,)
+                )
             self.endstop_phase = self.phase_calc.convert_phase(p, ps)
         self.endstop_align_zero = config.getboolean("endstop_align_zero", False)
-        self.endstop_accuracy = config.getfloat("endstop_accuracy", None, above=0.0)
+        self.endstop_accuracy = config.getfloat(
+            "endstop_accuracy", None, above=0.0
+        )
         # Determine endstop accuracy
         if self.endstop_accuracy is None:
             self.endstop_phase_accuracy = self.phases // 2 - 1
@@ -115,7 +119,8 @@ class EndstopPhase:
         microsteps = self.phases // 4
         half_microsteps = microsteps // 2
         phase_offset = (
-            ((self.endstop_phase + half_microsteps) % microsteps) - half_microsteps
+            ((self.endstop_phase + half_microsteps) % microsteps)
+            - half_microsteps
         ) * self.step_dist
         full_step = microsteps * self.step_dist
         pe = rail.get_homing_info().position_endstop
@@ -204,14 +209,18 @@ class EndstopPhases:
             return
         phase_calc = self.tracking.get(stepper_name)
         if phase_calc is None or phase_calc.phase_history is None:
-            raise gcmd.error("Stats not available for stepper %s" % (stepper_name,))
+            raise gcmd.error(
+                "Stats not available for stepper %s" % (stepper_name,)
+            )
         endstop_phase, phases = self.generate_stats(stepper_name, phase_calc)
         if not phase_calc.is_primary:
             return
         configfile = self.printer.lookup_object("configfile")
         section = "endstop_phase %s" % (stepper_name,)
         configfile.remove_section(section)
-        configfile.set(section, "trigger_phase", "%s/%s" % (endstop_phase, phases))
+        configfile.set(
+            section, "trigger_phase", "%s/%s" % (endstop_phase, phases)
+        )
         gcmd.respond_info(
             "The SAVE_CONFIG command will update the printer config\n"
             "file with these parameters and restart the printer."
@@ -229,7 +238,9 @@ class EndstopPhases:
             res.append((cost, phase))
         res.sort()
         best = res[0][1]
-        found = [j for j in range(best - half_phases, best + half_phases) if wph[j]]
+        found = [
+            j for j in range(best - half_phases, best + half_phases) if wph[j]
+        ]
         best_phase = best % phases
         lo, hi = found[0] % phases, found[-1] % phases
         self.gcode.respond_info(

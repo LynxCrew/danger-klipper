@@ -23,7 +23,9 @@ fix_sigint()
 
 # Set a file-descriptor as non-blocking
 def set_nonblock(fd):
-    fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
+    fcntl.fcntl(
+        fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK
+    )
 
 
 # Clear HUPCL flag
@@ -79,7 +81,8 @@ def dump_mcu_build():
         data = f.read(32 * 1024)
         f.close()
         logging.info(
-            "========= Last MCU build config =========\n%s" "=======================",
+            "========= Last MCU build config =========\n%s"
+            "=======================",
             data,
         )
     except:
@@ -131,7 +134,9 @@ def get_cpu_info():
         data = f.read()
         f.close()
     except (IOError, OSError) as e:
-        logging.debug("Exception on read /proc/cpuinfo: %s", traceback.format_exc())
+        logging.debug(
+            "Exception on read /proc/cpuinfo: %s", traceback.format_exc()
+        )
         return "?"
     lines = [l.split(":", 1) for l in data.split("\n")]
     lines = [(l[0].strip(), l[1].strip()) for l in lines if len(l) == 2]
@@ -243,7 +248,9 @@ def get_git_version(from_file=True):
                 prog_status, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
             stat, err = process.communicate()
-            status = [l.split(None, 1) for l in str(stat.strip().decode()).split("\n")]
+            status = [
+                l.split(None, 1) for l in str(stat.strip().decode()).split("\n")
+            ]
             retcode = process.wait()
             if retcode == 0:
                 git_info["file_status"] = status

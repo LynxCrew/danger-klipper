@@ -3,8 +3,6 @@
 # Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import threading
-import time
 
 from extras.danger_options import get_danger_options
 
@@ -32,7 +30,9 @@ class PrinterTemperatureDriver:
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
 
     def _handle_connect(self):
         self.driver = self.printer.lookup_object(self.driver_name)
@@ -56,13 +56,23 @@ class PrinterTemperatureDriver:
                 if not self.ignore:
                     self.printer.invoke_shutdown(
                         "[%s] temperature %0.1f outside range of %0.1f-%.01f"
-                        % (self.full_name, self.temp, self.min_temp, self.max_temp)
+                        % (
+                            self.full_name,
+                            self.temp,
+                            self.min_temp,
+                            self.max_temp,
+                        )
                     )
                 elif get_danger_options().echo_limits_to_console:
                     gcode = self.printer.lookup_object("gcode")
                     gcode.respond_error(
                         "[%s] temperature %0.1f outside range of %0.1f-%.01f"
-                        % (self.full_name, self.temp, self.min_temp, self.max_temp)
+                        % (
+                            self.full_name,
+                            self.temp,
+                            self.min_temp,
+                            self.max_temp,
+                        )
                     )
 
         measured_time = self.reactor.monotonic()
@@ -71,7 +81,9 @@ class PrinterTemperatureDriver:
             self.temp = 0.0
 
         mcu = self.driver.get_mcu()
-        self.temperature_callback(mcu.estimated_print_time(measured_time), self.temp)
+        self.temperature_callback(
+            mcu.estimated_print_time(measured_time), self.temp
+        )
 
         return self.report_time
 

@@ -35,7 +35,9 @@ class ZAdjustHelper:
         self.name = config.get_name()
         self.z_count = z_count
         self.z_steppers = []
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
 
     def _handle_connect(self):
         kin = self.printer.lookup_object("toolhead").get_kinematics()
@@ -43,11 +45,13 @@ class ZAdjustHelper:
         if self.z_count is None:
             if len(z_steppers) != 3:
                 raise self.printer.config_error(
-                    "%s z_positions needs exactly 3 items for calibration" % (self.name)
+                    "%s z_positions needs exactly 3 items for calibration"
+                    % (self.name)
                 )
         elif len(z_steppers) != self.z_count:
             raise self.printer.config_error(
-                "%s z_positions needs exactly %d items" % (self.name, len(z_steppers))
+                "%s z_positions needs exactly %d items"
+                % (self.name, len(z_steppers))
             )
         if len(z_steppers) < 2:
             raise self.printer.config_error(
@@ -71,7 +75,9 @@ class ZAdjustHelper:
         for s in self.z_steppers:
             s.set_trapq(None)
         # Move each z stepper (sorted from lowest to highest) until they match
-        positions = [(float(-a), s) for a, s in zip(adjustments, self.z_steppers)]
+        positions = [
+            (float(-a), s) for a, s in zip(adjustments, self.z_steppers)
+        ]
         positions.sort(key=(lambda k: k[0]))
         first_stepper_offset, first_stepper = positions[0]
         z_low = curpos[2] - first_stepper_offset
@@ -101,9 +107,15 @@ class ZAdjustHelper:
 class ZAdjustStatus:
     def __init__(self, printer):
         self.applied = False
-        printer.register_event_handler("stepper_enable:motor_off", self._motor_off)
-        printer.register_event_handler("stepper_enable:disable_z", self._motor_off)
-        printer.register_event_handler("unhome:mark_as_unhomed_z", self._motor_off)
+        printer.register_event_handler(
+            "stepper_enable:motor_off", self._motor_off
+        )
+        printer.register_event_handler(
+            "stepper_enable:disable_z", self._motor_off
+        )
+        printer.register_event_handler(
+            "unhome:mark_as_unhomed_z", self._motor_off
+        )
 
     def check_retry_result(self, retry_result):
         if (isinstance(retry_result, str) and retry_result == "done") or (
@@ -214,13 +226,6 @@ class ZTilt:
         self.z_positions = config.getlists(
             "z_positions", seps=(",", "\n"), parser=float, count=2
         )
-        self.use_probe_offsets = config.getboolean("use_probe_offsets", None)
-        if self.use_probe_offsets is None:
-            self.use_probe_offsets = config.getboolean("use_offsets", None)
-            if self.use_probe_offsets is not None:
-                config.deprecate("use_offsets")
-            else:
-                self.use_probe_offsets = False
         self.z_count = len(self.z_positions)
 
         self.retry_helper = RetryHelper(config)
@@ -254,7 +259,9 @@ class ZTilt:
         )
         self.ad_helper.update_probe_points(cal_probe_points, 3)
         self.cal_conf_avg_len = config.getint("averaging_len", 3, minval=1)
-        self.ad_conf_delta = config.getfloat("autodetect_delta", 1.0, minval=0.1)
+        self.ad_conf_delta = config.getfloat(
+            "autodetect_delta", 1.0, minval=0.1
+        )
 
         # Register Z_TILT_ADJUST command
         gcode = self.printer.lookup_object("gcode")
@@ -281,21 +288,21 @@ class ZTilt:
         )
 
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
-    cmd_Z_TILT_CALIBRATE_help = "Calibrate Z tilt with additional probing " "points"
+    cmd_Z_TILT_CALIBRATE_help = (
+        "Calibrate Z tilt with additional probing " "points"
+    )
     cmd_Z_TILT_AUTODETECT_help = "Autodetect pivot point of Z motors"
     cmd_Z_TILT_SET_OFFSETS_help = "Set the offsets for the z_positions"
 
     def cmd_Z_TILT_ADJUST(self, gcmd):
         if self.z_positions is None:
-            gcmd.respond_info("No z_positions configured. Run Z_TILT_AUTODETECT first")
+            gcmd.respond_info(
+                "No z_positions configured. Run Z_TILT_AUTODETECT first"
+            )
             return
         self.z_status.reset()
         self.retry_helper.start(gcmd)
-        use_probe_offsets = self.probe_helper.use_offsets
-        if self.use_probe_offsets:
-            self.probe_helper.use_xy_offsets(True)
         self.probe_helper.start_probe(gcmd)
-        self.probe_helper.use_xy_offsets(use_probe_offsets)
 
     def perform_coordinate_descent(self, offsets, positions):
         # Setup for coordinate descent analysis
@@ -307,7 +314,10 @@ class ZTilt:
         def adjusted_height(pos, params):
             x, y, z = pos
             return (
-                z - x * params["x_adjust"] - y * params["y_adjust"] - params["z_adjust"]
+                z
+                - x * params["x_adjust"]
+                - y * params["y_adjust"]
+                - params["z_adjust"]
             )
 
         def errorfunc(params):
@@ -316,7 +326,9 @@ class ZTilt:
                 total_error += adjusted_height(pos, params) ** 2
             return total_error
 
-        new_params = mathutil.coordinate_descent(params.keys(), params, errorfunc)
+        new_params = mathutil.coordinate_descent(
+            params.keys(), params, errorfunc
+        )
 
         # Apply results
         logging.info("Calculated bed tilt parameters: %s", new_params)
@@ -341,7 +353,8 @@ class ZTilt:
     def probe_finalize(self, offsets, positions):
         if self.z_offsets is not None:
             positions = [
-                [p[0], p[1], p[2] - o] for (p, o) in zip(positions, self.z_offsets)
+                [p[0], p[1], p[2] - o]
+                for (p, o) in zip(positions, self.z_offsets)
             ]
         new_params = self.perform_coordinate_descent(offsets, positions)
         self.apply_adjustments(offsets, new_params)
@@ -353,11 +366,7 @@ class ZTilt:
         self.cal_avg_len = gcmd.get_int("AVGLEN", self.cal_conf_avg_len)
         self.cal_gcmd = gcmd
         self.cal_runs = []
-        use_probe_offsets = self.cal_helper.use_offsets
-        if self.use_probe_offsets:
-            self.cal_helper.use_xy_offsets(True)
         self.cal_helper.start_probe(gcmd)
-        self.cal_helper.use_xy_offsets(use_probe_offsets)
 
     def cal_finalize(self, offsets, positions):
         avlen = self.cal_avg_len
@@ -371,14 +380,17 @@ class ZTilt:
         this_error = np.std(self.cal_runs[-avlen:], axis=0)
         this_error = np.std(this_error)
         self.cal_gcmd.respond_info(
-            "previous error: %.6f current error: %.6f" % (prev_error, this_error)
+            "previous error: %.6f current error: %.6f"
+            % (prev_error, this_error)
         )
         if this_error < prev_error:
             return "retry"
         z_offsets = np.mean(self.cal_runs[-avlen:], axis=0).tolist()
         z_offsets = [z - offsets[2] for z in z_offsets]
         self.z_offsets = z_offsets
-        s_zoff = ", ".join(["%.6f" % off for off in z_offsets[: self.num_probe_points]])
+        s_zoff = ", ".join(
+            ["%.6f" % off for off in z_offsets[: self.num_probe_points]]
+        )
         self.cal_gcmd.respond_info("final z_offsets are: %s" % s_zoff)
         configfile = self.printer.lookup_object("configfile")
         section = self.section
@@ -400,11 +412,7 @@ class ZTilt:
         self.ad_runs = []
         self.ad_points = []
         self.ad_error = None
-        use_probe_offsets = self.ad_helper.use_offsets
-        if self.use_probe_offsets:
-            self.ad_helper.use_xy_offsets(True)
         self.ad_helper.start_probe(gcmd)
-        self.ad_helper.use_xy_offsets(use_probe_offsets)
 
     ad_adjustments = [
         [0.5, -0.5, -0.5],  # p1 up
@@ -426,7 +434,9 @@ class ZTilt:
         if self.ad_phase in range(4, 7):
             new_params["z_adjust"] += delta / 2
         if self.ad_phase == 0:
-            self.ad_points.append([z for _, _, z in positions[: self.num_probe_points]])
+            self.ad_points.append(
+                [z for _, _, z in positions[: self.num_probe_points]]
+            )
         self.ad_params.append(new_params)
         adjustments = [_a * delta for _a in self.ad_adjustments[self.ad_phase]]
         self.z_helper.adjust_steppers(adjustments, speed)
@@ -499,7 +509,8 @@ class ZTilt:
                 self.ad_gcmd.respond_info("current error: %.6f" % (error))
             else:
                 self.ad_gcmd.respond_info(
-                    "previous error: %.6f current error: %.6f" % (self.ad_error, error)
+                    "previous error: %.6f current error: %.6f"
+                    % (self.ad_error, error)
                 )
             if self.ad_error is not None:
                 if error >= self.ad_error:

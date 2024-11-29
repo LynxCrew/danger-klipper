@@ -4,7 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import threading
 import time
 
 from . import bus
@@ -117,7 +116,9 @@ class HTU21D:
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("htu21d " + self.name, self)
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
 
     def _handle_connect(self):
         self._init_htu21d()
@@ -193,7 +194,9 @@ class HTU21D:
             rtemp = response[0] << 8
             rtemp |= response[1]
             if self._chekCRC8(rtemp) != response[2]:
-                logging.warning("htu21d: Checksum error on Temperature reading!")
+                logging.warning(
+                    "htu21d: Checksum error on Temperature reading!"
+                )
             else:
                 self.temp = 0.002681 * float(rtemp) - 46.85
                 logging.debug("htu21d: Temperature %.2f " % self.temp)

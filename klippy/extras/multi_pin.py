@@ -32,7 +32,8 @@ class PrinterMultiPin:
         if pin_params["invert"]:
             invert = "!"
         self.mcu_pins = [
-            ppins.setup_pin(pin_type, invert + pin_desc) for pin_desc in self.pin_list
+            ppins.setup_pin(pin_type, invert + pin_desc)
+            for pin_desc in self.pin_list
         ]
         return self
 

@@ -12,7 +12,9 @@ class QueryEndstops:
         self.last_state = []
         # Register webhook if server is available
         webhooks = self.printer.lookup_object("webhooks")
-        webhooks.register_endpoint("query_endstops/status", self._handle_web_request)
+        webhooks.register_endpoint(
+            "query_endstops/status", self._handle_web_request
+        )
         gcode = self.printer.lookup_object("gcode")
         gcode.register_command(
             "QUERY_ENDSTOPS",
@@ -37,7 +39,10 @@ class QueryEndstops:
                 for mcu_endstop, name in self.endstops
             ]
         web_request.send(
-            {name: ["open", "TRIGGERED"][not not t] for name, t in self.last_state}
+            {
+                name: ["open", "TRIGGERED"][not not t]
+                for name, t in self.last_state
+            }
         )
 
     cmd_QUERY_ENDSTOPS_help = "Report on the status of each endstop"

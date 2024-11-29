@@ -3,7 +3,6 @@
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
 
 from . import fan, temperature_fan, controller_fan
 
@@ -21,7 +20,9 @@ class ControllerTemperatureFan:
         self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
         self.fan = fan.Fan(config, default_shutdown_speed=1.0)
-        self.temperature_fan = temperature_fan.TemperatureFan(config, self.fan, self)
+        self.temperature_fan = temperature_fan.TemperatureFan(
+            config, self.fan, self
+        )
         self.controller_fan = controller_fan.ControllerFan(config, self.fan)
 
     def get_mcu(self):
