@@ -60,7 +60,9 @@ class PALinearModel:
     def __init__(self, config=None):
         self.pa_enabled = True
         if config:
-            self.pressure_advance = config.getfloat("pressure_advance", 0.0, minval=0.0)
+            self.pressure_advance = config.getfloat(
+                "pressure_advance", 0.0, minval=0.0
+            )
         else:
             self.pressure_advance = 0.0
 
@@ -96,8 +98,12 @@ class PANonLinearModel:
     def __init__(self, config=None):
         self.pa_enabled = True
         if config:
-            self.linear_advance = config.getfloat("linear_advance", 0.0, minval=0.0)
-            self.linear_offset = config.getfloat("linear_offset", 0.0, minval=0.0)
+            self.linear_advance = config.getfloat(
+                "linear_advance", 0.0, minval=0.0
+            )
+            self.linear_offset = config.getfloat(
+                "linear_offset", 0.0, minval=0.0
+            )
             if self.linear_offset:
                 self.linearization_velocity = config.getfloat(
                     "linearization_velocity", above=0.0
@@ -115,14 +121,19 @@ class PANonLinearModel:
         self.pa_enabled = enable
 
     def update(self, gcmd):
-        self.linear_advance = gcmd.get_float("ADVANCE", self.linear_advance, minval=0.0)
-        self.linear_offset = gcmd.get_float("OFFSET", self.linear_offset, minval=0.0)
+        self.linear_advance = gcmd.get_float(
+            "ADVANCE", self.linear_advance, minval=0.0
+        )
+        self.linear_offset = gcmd.get_float(
+            "OFFSET", self.linear_offset, minval=0.0
+        )
         self.linearization_velocity = gcmd.get_float(
             "VELOCITY", self.linearization_velocity
         )
         if self.linear_offset and self.linearization_velocity <= 0.0:
             raise gcmd.error(
-                "VELOCITY must be set to a positive value " "when OFFSET is non-zero"
+                "VELOCITY must be set to a positive value "
+                "when OFFSET is non-zero"
             )
 
     def enabled(self):
@@ -210,7 +221,9 @@ class ExtruderStepper:
         # Setup stepper
         self.stepper = stepper.PrinterStepper(config)
         ffi_main, ffi_lib = chelper.get_ffi()
-        self.sk_extruder = ffi_main.gc(ffi_lib.extruder_stepper_alloc(), ffi_lib.free)
+        self.sk_extruder = ffi_main.gc(
+            ffi_lib.extruder_stepper_alloc(), ffi_lib.free
+        )
         self.stepper.set_stepper_kinematics(self.sk_extruder)
         ffi_lib.extruder_set_pressure_advance_model_func(
             self.sk_extruder, self.pa_model.get_func()
@@ -218,7 +231,9 @@ class ExtruderStepper:
         self.motion_queue = None
         self.extruder = None
         # Register commands
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
         gcode = self.printer.lookup_object("gcode")
         if self.name == "extruder":
             gcode.register_mux_command(
@@ -267,7 +282,9 @@ class ExtruderStepper:
     def _handle_connect(self):
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.register_step_generator(self.stepper.generate_steps)
-        self._update_pressure_advance(self.pa_model, self.pressure_advance_time_offset)
+        self._update_pressure_advance(
+            self.pa_model, self.pressure_advance_time_offset
+        )
         self.smoother.update_extruder_kinematics(self.sk_extruder)
 
     def get_status(self, eventtime):
@@ -310,7 +327,9 @@ class ExtruderStepper:
         old_delay = ffi_lib.extruder_get_step_gen_window(self.sk_extruder)
         if self.pa_model.name != pa_model.name:
             pa_func = pa_model.get_func()
-            ffi_lib.extruder_set_pressure_advance_model_func(self.sk_extruder, pa_func)
+            ffi_lib.extruder_set_pressure_advance_model_func(
+                self.sk_extruder, pa_func
+            )
         pa_params = pa_model.get_pa_params()
         ffi_lib.extruder_set_pressure_advance(
             self.sk_extruder, len(pa_params), pa_params, time_offset
@@ -328,7 +347,9 @@ class ExtruderStepper:
         old_delay = ffi_lib.extruder_get_step_gen_window(self.sk_extruder)
         failed_shapers = []
         for shaper in shapers:
-            if not shaper.update_extruder_kinematics(self.sk_extruder, exact_mode):
+            if not shaper.update_extruder_kinematics(
+                self.sk_extruder, exact_mode
+            ):
                 failed_shapers.append(shaper)
             # Pressure advance requires extruder smoothing, make sure that
             # some smoothing is enabled
@@ -407,7 +428,8 @@ class ExtruderStepper:
         if invert_dir != orig_invert_dir:
             rotation_dist = -rotation_dist
         gcmd.respond_info(
-            "Extruder '%s' rotation distance set to %0.6f" % (self.name, rotation_dist)
+            "Extruder '%s' rotation distance set to %0.6f"
+            % (self.name, rotation_dist)
         )
 
     cmd_SYNC_EXTRUDER_MOTION_help = "Set extruder stepper motion queue"
@@ -415,7 +437,9 @@ class ExtruderStepper:
     def cmd_SYNC_EXTRUDER_MOTION(self, gcmd):
         ename = gcmd.get("MOTION_QUEUE")
         self.sync_to_extruder(ename)
-        gcmd.respond_info("Extruder '%s' now syncing with '%s'" % (self.name, ename))
+        gcmd.respond_info(
+            "Extruder '%s' now syncing with '%s'" % (self.name, ename)
+        )
 
     cmd_SET_E_STEP_DISTANCE_help = "Set extruder step distance"
 
@@ -437,7 +461,9 @@ class ExtruderStepper:
     def cmd_SYNC_STEPPER_TO_EXTRUDER(self, gcmd):
         ename = gcmd.get("EXTRUDER")
         self.sync_to_extruder(ename)
-        gcmd.respond_info("Extruder '%s' now syncing with '%s'" % (self.name, ename))
+        gcmd.respond_info(
+            "Extruder '%s' now syncing with '%s'" % (self.name, ename)
+        )
 
 
 # Tracking for hotend heater, extrusion motion queue, and extruder stepper
@@ -462,7 +488,9 @@ class PrinterExtruder:
             config.deprecate("shared_heater")
             self.heater = pheaters.lookup_heater(shared_heater)
         # Setup kinematic checks
-        self.nozzle_diameter = hotend_config.getfloat("nozzle_diameter", above=0.0)
+        self.nozzle_diameter = hotend_config.getfloat(
+            "nozzle_diameter", above=0.0
+        )
         filament_diameter = hotend_config.getfloat(
             "filament_diameter", minval=self.nozzle_diameter
         )
@@ -485,7 +513,9 @@ class PrinterExtruder:
             max_accel * def_max_extrude_ratio,
             above=0.0,
         )
-        self.max_e_dist = config.getfloat("max_extrude_only_distance", 50.0, minval=0.0)
+        self.max_e_dist = config.getfloat(
+            "max_extrude_only_distance", 50.0, minval=0.0
+        )
         self.instant_corner_v = config.getfloat(
             "instantaneous_corner_velocity", 1.0, minval=0.0
         )
@@ -680,7 +710,9 @@ class PrinterExtruder:
         toolhead.set_extruder(self, sum(self.last_position))
         self.printer.send_event("extruder:activate_extruder")
 
-    cmd_CHANGE_MAX_EXTRUDE_ONLY_VALUES_help = "Change the maximum extrude only values"
+    cmd_CHANGE_MAX_EXTRUDE_ONLY_VALUES_help = (
+        "Change the maximum extrude only values"
+    )
 
     def cmd_CHANGE_MAX_EXTRUDE_ONLY_VALUES(self, gcmd):
         self.max_cross_section = gcmd.get_float(
@@ -696,7 +728,9 @@ class PrinterExtruder:
             "ACCEL",
             self.max_e_accel,
         )
-        self.max_e_dist = gcmd.get_float("DISTANCE", self.max_e_dist, minval=0.0)
+        self.max_e_dist = gcmd.get_float(
+            "DISTANCE", self.max_e_dist, minval=0.0
+        )
         gcmd.respond_info(
             "New maximum extrude values for extruder %s:\n"
             "Cross section: %.2f\n"

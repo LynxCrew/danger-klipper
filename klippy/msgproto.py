@@ -308,7 +308,9 @@ class MessageParser:
             return 0
         if s[msglen - MESSAGE_TRAILER_SYNC] != MESSAGE_SYNC:
             return -1
-        msgcrc = s[msglen - MESSAGE_TRAILER_CRC : msglen - MESSAGE_TRAILER_CRC + 2]
+        msgcrc = s[
+            msglen - MESSAGE_TRAILER_CRC : msglen - MESSAGE_TRAILER_CRC + 2
+        ]
         crc = crc16_ccitt(s[: msglen - MESSAGE_TRAILER_SIZE])
         if crc != list(msgcrc):
             # logging.debug("got crc %s vs %s", repr(crc), repr(msgcrc))
@@ -373,7 +375,9 @@ class MessageParser:
         if mp is None:
             self._error("Unknown command: %s", msgname)
         if msgformat != mp.msgformat:
-            self._error("Command format mismatch: %s vs %s", msgformat, mp.msgformat)
+            self._error(
+                "Command format mismatch: %s vs %s", msgformat, mp.msgformat
+            )
         return mp
 
     def lookup_msgid(self, msgformat):
@@ -446,7 +450,9 @@ class MessageParser:
             msgid_bytes = []
             self.msgid_parser.encode(msgid_bytes, msgid)
             if msgtype == "output":
-                self.messages_by_id[msgid] = OutputFormat(msgid_bytes, msgformat)
+                self.messages_by_id[msgid] = OutputFormat(
+                    msgid_bytes, msgformat
+                )
             else:
                 msg = MessageFormat(msgid_bytes, msgformat, self.enumerations)
                 self.messages_by_id[msgid] = msg
@@ -465,7 +471,9 @@ class MessageParser:
             all_messages = dict(commands)
             all_messages.update(responses)
             all_messages.update(output)
-            self._init_messages(all_messages, commands.values(), output.values())
+            self._init_messages(
+                all_messages, commands.values(), output.values()
+            )
             self.config.update(data.get("config", {}))
             self.app = data.get("app", "")
             self.version = data.get("version", "")

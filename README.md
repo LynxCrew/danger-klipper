@@ -1,3 +1,6 @@
+This is a custom fork of DangerKlipper, incorporating a few self written features but also a bunch of rejected klipper prs that are still very good in my opinion or features written by other people that just didnt make it into DangerKlipper.
+I dont take credit for that code as I didnt write it!
+
 <p align="center"><a href="https://dangerklipper.io"><img align="center" src="docs/img/klipper-logo.png" alt="Danger-Klipper Logo"></a></p>
 
 [![Action Status](https://github.com/DangerKlippers/danger-klipper/actions/workflows/ci-build_test.yaml/badge.svg?branch=master)](https://github.com/DangerKlippers/danger-klipper/actions/workflows/ci-build_test.yaml)
@@ -121,6 +124,8 @@ See the [Danger Features document](https://dangerklipper.io/Danger_Features.html
 - [z_tilt, quad_gantry_level: adaptive horizontal move z](https://github.com/DangerKlippers/danger-klipper/pull/336)
 
 - [core: non-critical-mcus](https://github.com/DangerKlippers/danger-klipper/pull/339)
+
+- [gcode_macros: !python templates](https://github.com/DangerKlippers/danger-klipper/pull/360)
 
 - [core: action_log](https://github.com/DangerKlippers/danger-klipper/pull/367)
 

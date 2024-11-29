@@ -96,7 +96,10 @@ class pca9685_pwm:
             self._is_enable = is_enable
             self._reactor.register_async_callback(
                 (
-                    lambda e, s=self, pt=print_time, ie=is_enable: s._replicape.note_pwm_enable(
+                    lambda e,
+                    s=self,
+                    pt=print_time,
+                    ie=is_enable: s._replicape.note_pwm_enable(
                         pt, s._channel, ie
                     )
                 )
@@ -252,7 +255,10 @@ class Replicape:
         if [i for i in [3, 4] if 11 + i in self.stepper_dacs]:
             # Enable eh steppers
             shift_registers[3] &= ~1
-        if config.getboolean("standstill_power_down", False) and self.stepper_dacs:
+        if (
+            config.getboolean("standstill_power_down", False)
+            and self.stepper_dacs
+        ):
             shift_registers[4] &= ~1
         self.sr_enabled = list(reversed(shift_registers))
         sr_spi_bus = "spidev1.1"
@@ -286,7 +292,9 @@ class Replicape:
         # Check if need to set the stepper enable lines
         if channel not in self.stepper_dacs:
             return
-        on_dacs = [1 for c in self.stepper_dacs.keys() if self.enabled_channels[c]]
+        on_dacs = [
+            1 for c in self.stepper_dacs.keys() if self.enabled_channels[c]
+        ]
         if not on_dacs:
             sr = self.sr_disabled
         elif is_enable and len(on_dacs) == 1:

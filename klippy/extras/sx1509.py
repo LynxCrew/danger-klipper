@@ -200,7 +200,9 @@ class SX1509_pwm(object):
         self._sx1509.set_bits_in_register(REG_INPUT_DISABLE, self._bitmask)
         self._sx1509.clear_bits_in_register(REG_PULLUP, self._bitmask)
         self._sx1509.clear_bits_in_register(REG_DIR, self._bitmask)
-        self._sx1509.set_bits_in_register(REG_ANALOG_DRIVER_ENABLE, self._bitmask)
+        self._sx1509.set_bits_in_register(
+            REG_ANALOG_DRIVER_ENABLE, self._bitmask
+        )
         self._sx1509.clear_bits_in_register(REG_DATA, self._bitmask)
 
     def _build_config(self):
@@ -209,7 +211,9 @@ class SX1509_pwm(object):
         if self._max_duration:
             raise pins.error("SX1509 pins are not suitable for heaters")
         # Send initial value
-        self._sx1509.set_register(self._i_on_reg, ~int(255 * self._start_value) & 0xFF)
+        self._sx1509.set_register(
+            self._i_on_reg, ~int(255 * self._start_value) & 0xFF
+        )
         self._mcu.add_config_cmd(
             "i2c_write oid=%d data=%02x%02x"
             % (

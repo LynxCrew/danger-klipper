@@ -42,7 +42,9 @@ class PrinterHeaterFan:
         pheaters = self.printer.lookup_object("heaters")
         self.heaters = [pheaters.lookup_heater(n) for n in self.heater_names]
         reactor = self.printer.get_reactor()
-        reactor.register_timer(self.callback, reactor.monotonic() + PIN_MIN_TIME)
+        reactor.register_timer(
+            self.callback, reactor.monotonic() + PIN_MIN_TIME
+        )
 
     def get_status(self, eventtime):
         status = self.fan.get_status(eventtime)
@@ -71,7 +73,9 @@ class PrinterHeaterFan:
 
     def cmd_SET_HEATER_FAN(self, gcmd):
         self.enabled = gcmd.get_int("ENABLE", self.enabled, minval=0, maxval=1)
-        self.fan_speed = gcmd.get_float("FAN_SPEED", self.fan_speed, minval=0, maxval=1)
+        self.fan_speed = gcmd.get_float(
+            "FAN_SPEED", self.fan_speed, minval=0, maxval=1
+        )
         if self.enabled:
             self.fan.set_speed(self.fan_speed)
         if not self.enabled:

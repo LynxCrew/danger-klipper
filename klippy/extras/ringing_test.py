@@ -33,10 +33,16 @@ class RingingTest:
             "first_layer_height", 0.2, above=self.layer_height
         )
         self.perimeters = config.getint("perimeters", 2, minval=1)
-        self.brim_width = config.getfloat("brim_width", 10.0, minval=self.notch + 2.0)
+        self.brim_width = config.getfloat(
+            "brim_width", 10.0, minval=self.notch + 2.0
+        )
         self.brim_velocity = config.getfloat("brim_velocity", 30.0, above=0.0)
-        self.filament_diameter = config.getfloat("filament_diameter", 1.75, above=0.0)
-        self.deceleration_points = config.getint("deceleration_points", 100, minval=10)
+        self.filament_diameter = config.getfloat(
+            "filament_diameter", 1.75, above=0.0
+        )
+        self.deceleration_points = config.getint(
+            "deceleration_points", 100, minval=10
+        )
         # Register commands
         self.gcode = self.printer.lookup_object("gcode")
         self.gcode.register_command(
@@ -77,7 +83,8 @@ class RingingTest:
                 self.notch_offset = self.size * DEFAULT_NOTCH_OFFSET_RATIO
             if self.notch_offset < 2.0 or self.notch_offset > 0.5 * self.size:
                 raise self.printer.config_error(
-                    "notch_offset must not be in range [2.0, %.3f]" % (0.5 * self.size,)
+                    "notch_offset must not be in range [2.0, %.3f]"
+                    % (0.5 * self.size,)
                 )
 
     cmd_PRINT_RINGING_TOWER_help = "Start Ringing Tower print"
@@ -138,11 +145,15 @@ class RingingTest:
         center_y = gcmd.get_float("CENTER_Y", self.center_y)
         size = gcmd.get_float("SIZE", self.size, minval=50.0)
         perimeters = gcmd.get_int("PERIMETERS", self.perimeters, minval=1)
-        brim_velocity = gcmd.get_float("BRIM_VELOCITY", self.brim_velocity, above=0.0)
+        brim_velocity = gcmd.get_float(
+            "BRIM_VELOCITY", self.brim_velocity, above=0.0
+        )
         filament_diameter = gcmd.get_float(
             "FILAMENT_DIAMETER", self.filament_diameter, above=0.0
         )
-        layer_height = gcmd.get_float("LAYER_HEIGHT", self.layer_height, above=0.0)
+        layer_height = gcmd.get_float(
+            "LAYER_HEIGHT", self.layer_height, above=0.0
+        )
         first_layer_height = gcmd.get_float(
             "FIRST_LAYER_HEIGHT", self.first_layer_height, above=layer_height
         )
@@ -165,7 +176,9 @@ class RingingTest:
         accel_step = gcmd.get_float("ACCEL_STEP", self.accel_step)
         brim_width = gcmd.get_float("BRIM_WIDTH", self.brim_width)
         min_brim_width = (notch_offset - notch) / (1.0 + 1.0 / TAN_TEST_ANGLE)
-        brim_width = max(brim_width, min_brim_width + perimeters * line_width + 1.0)
+        brim_width = max(
+            brim_width, min_brim_width + perimeters * line_width + 1.0
+        )
         final_gcode_id = gcmd.get("FINAL_GCODE_ID", None)
         deceleration_points = gcmd.get_int(
             "DECELERATION_POINTS", self.deceleration_points, minval=10
@@ -272,7 +285,12 @@ class RingingTest:
         def gen_tower():
             prev_z = first_layer_height
             z = first_layer_height + layer_height
-            extr_r = 4.0 * layer_height * line_width / (math.pi * filament_diameter**2)
+            extr_r = (
+                4.0
+                * layer_height
+                * line_width
+                / (math.pi * filament_diameter**2)
+            )
             letter_offset = 0.5 * (size - band) - notch_offset * TAN_TEST_ANGLE
             while z < height - 0.00000001:
                 next_z = z + layer_height
@@ -307,8 +325,12 @@ class RingingTest:
 
                         def rotated_G1(x, y, e, v):
                             return "G1 X%.6f Y%.6f E%.9f F%.3f" % (
-                                center_x + notch_axis[0] * x + other_axis[0] * y,
-                                center_y + notch_axis[1] * x + other_axis[1] * y,
+                                center_x
+                                + notch_axis[0] * x
+                                + other_axis[0] * y,
+                                center_y
+                                + notch_axis[1] * x
+                                + other_axis[1] * y,
                                 e * extr_r,
                                 v * 60.0,
                             )
@@ -323,11 +345,18 @@ class RingingTest:
                         yield rotated_G1(
                             notch_pos - d_x - 1.0 - 0.5 * size,
                             perimeter_offset - d_y - TAN_TEST_ANGLE,
-                            (notch_pos - d_x - 1.0 - 0.5 * size + perimeter_offset),
+                            (
+                                notch_pos
+                                - d_x
+                                - 1.0
+                                - 0.5 * size
+                                + perimeter_offset
+                            ),
                             recipr_cos * velocity,
                         )
                         yield (
-                            "SET_VELOCITY_LIMIT ACCEL=%.6f" + " ACCEL_TO_DECEL=%.6f"
+                            "SET_VELOCITY_LIMIT ACCEL=%.6f"
+                            + " ACCEL_TO_DECEL=%.6f"
                         ) % (INFINITE_ACCEL, INFINITE_ACCEL)
                         yield rotated_G1(
                             notch_pos - d_x - 0.5 * size,
@@ -354,7 +383,8 @@ class RingingTest:
                             )
                             old_x, old_y = x, y
                         yield (
-                            "SET_VELOCITY_LIMIT ACCEL=%.6f" + " ACCEL_TO_DECEL=%.6f"
+                            "SET_VELOCITY_LIMIT ACCEL=%.6f"
+                            + " ACCEL_TO_DECEL=%.6f"
                         ) % (max_accel, 0.5 * max_accel)
                         if i < perimeters - 1 or (
                             abs(band_part - 0.5) >= 0.5 * LETTER_BAND_PART
@@ -403,25 +433,41 @@ class RingingTest:
                         )
                         if letter_width > 2.0 * elem_size:
                             yield rotated_G1(
-                                (letter_offset - letter_width * 0.5 + elem_size),
+                                (
+                                    letter_offset
+                                    - letter_width * 0.5
+                                    + elem_size
+                                ),
                                 perimeter_offset - letter_perimeter_offset,
                                 elem_size,
                                 velocity,
                             )
                             yield rotated_G1(
-                                (letter_offset - letter_width * 0.5 + elem_size),
+                                (
+                                    letter_offset
+                                    - letter_width * 0.5
+                                    + elem_size
+                                ),
                                 perimeter_offset,
                                 abs(letter_perimeter_offset),
                                 velocity,
                             )
                             yield rotated_G1(
-                                (letter_offset + letter_width * 0.5 - elem_size),
+                                (
+                                    letter_offset
+                                    + letter_width * 0.5
+                                    - elem_size
+                                ),
                                 perimeter_offset,
                                 letter_width - 2.0 * elem_size,
                                 velocity,
                             )
                             yield rotated_G1(
-                                (letter_offset + letter_width * 0.5 - elem_size),
+                                (
+                                    letter_offset
+                                    + letter_width * 0.5
+                                    - elem_size
+                                ),
                                 perimeter_offset - letter_perimeter_offset,
                                 abs(letter_perimeter_offset),
                                 velocity,
@@ -448,14 +494,19 @@ class RingingTest:
                         yield rotated_G1(
                             next_y_offset,
                             perimeter_offset,
-                            (next_y_offset - letter_offset - letter_width * 0.5),
+                            (
+                                next_y_offset
+                                - letter_offset
+                                - letter_width * 0.5
+                            ),
                             velocity,
                         )
                     perimeter_offset += line_width
                 self.progress = z / height
                 prev_z, z = z, next_z
             yield (
-                "SET_VELOCITY_LIMIT ACCEL=%.3f ACCEL_TO_DECEL=%.f" + " VELOCITY=%.3f"
+                "SET_VELOCITY_LIMIT ACCEL=%.3f ACCEL_TO_DECEL=%.f"
+                + " VELOCITY=%.3f"
             ) % (old_max_accel, old_max_accel_to_decel, old_max_velocity)
 
         yield "M83"
@@ -466,7 +517,9 @@ class RingingTest:
         for line in gen_tower():
             yield line
         if final_gcode_id is not None:
-            yield "UPDATE_DELAYED_GCODE ID='%s' DURATION=0.01" % (final_gcode_id,)
+            yield "UPDATE_DELAYED_GCODE ID='%s' DURATION=0.01" % (
+                final_gcode_id,
+            )
         self.progress = 1.0
 
 

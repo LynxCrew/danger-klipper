@@ -17,7 +17,9 @@ class PrinterSensorGeneric:
         self.min_temp = config.getfloat(
             "min_temp", KELVIN_TO_CELSIUS, minval=KELVIN_TO_CELSIUS
         )
-        self.max_temp = config.getfloat("max_temp", 99999999.9, above=self.min_temp)
+        self.max_temp = config.getfloat(
+            "max_temp", 99999999.9, above=self.min_temp
+        )
         if hasattr(self.sensor, "set_report_time"):
             report_time = config.getfloat("report_time", None)
             if report_time is not None:

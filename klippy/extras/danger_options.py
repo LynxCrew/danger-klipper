@@ -23,7 +23,9 @@ class DangerOptions:
             "jinja_boolean_filter", ["true", "1"]
         )
         self.jinja_extensions = config.getlist("jinja_extensions", [])
-        self.allow_plugin_override = config.getboolean("allow_plugin_override", False)
+        self.allow_plugin_override = config.getboolean(
+            "allow_plugin_override", False
+        )
         self.multi_mcu_trsync_timeout = config.getfloat(
             "multi_mcu_trsync_timeout", 0.025, minval=0.0
         )
@@ -49,7 +51,9 @@ class DangerOptions:
             self.disable_webhook_logging = True
 
         self.temp_ignore_limits = config.getlist("temp_ignore_limits", [])
-        self.echo_limits_to_console = config.getboolean("echo_limits_to_console", False)
+        self.echo_limits_to_console = config.getboolean(
+            "echo_limits_to_console", False
+        )
         self.modify_check_runout_timeout = config.getboolean(
             "modify_check_runout_timeout", False
         )
@@ -66,7 +70,9 @@ class DangerOptions:
         self.endstop_sample_time = config.getfloat(
             "endstop_sample_time", 0.000015, minval=0
         )
-        self.endstop_sample_count = config.getint("endstop_sample_count", 4, minval=1)
+        self.endstop_sample_count = config.getint(
+            "endstop_sample_count", 4, minval=1
+        )
 
         if self.minimal_logging:
             self.log_statistics = False

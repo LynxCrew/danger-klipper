@@ -26,9 +26,13 @@ class RunoutHelper:
         self.insert_gcode = None
         gcode_macro = self.printer.load_object(config, "gcode_macro")
         if self.runout_pause or config.get("runout_gcode", None) is not None:
-            self.runout_gcode = gcode_macro.load_template(config, "runout_gcode", "")
+            self.runout_gcode = gcode_macro.load_template(
+                config, "runout_gcode", ""
+            )
         if config.get("insert_gcode", None) is not None:
-            self.insert_gcode = gcode_macro.load_template(config, "insert_gcode")
+            self.insert_gcode = gcode_macro.load_template(
+                config, "insert_gcode"
+            )
         self.pause_delay = config.getfloat("pause_delay", 0.5, minval=0.0)
         self.event_delay = config.getfloat("event_delay", 3.0, minval=0.0)
         self.check_runout_timeout = CHECK_RUNOUT_TIMEOUT
@@ -73,7 +77,9 @@ class RunoutHelper:
         # of pause_resume execute immediately.
         if self.runout_distance > 0:
             if self.runout_distance_timer is None:
-                self.runout_position = self.defined_sensor.get_extruder_pos(eventtime)
+                self.runout_position = self.defined_sensor.get_extruder_pos(
+                    eventtime
+                )
                 self.runout_distance_timer = self.reactor.register_timer(
                     self._pause_after_distance, self.reactor.NOW
                 )
@@ -99,7 +105,8 @@ class RunoutHelper:
     def _pause_after_distance(self, eventtime):
         runout_elapsed = max(
             0.0,
-            self.defined_sensor.get_extruder_pos(eventtime) - self.runout_position,
+            self.defined_sensor.get_extruder_pos(eventtime)
+            - self.runout_position,
         )
         if runout_elapsed < self.runout_distance:
             self.runout_elapsed = runout_elapsed
@@ -166,7 +173,9 @@ class RunoutHelper:
                 % (self.name, eventtime)
             )
             self.reactor.register_callback(
-                self._execute_runout if immediate else self._runout_event_handler
+                self._execute_runout
+                if immediate
+                else self._runout_event_handler
             )
 
     def get_status(self, eventtime):
@@ -232,13 +241,15 @@ class SwitchSensor:
         switch_pin = config.get("switch_pin")
         runout_distance = config.getfloat("runout_distance", 0.0, minval=0.0)
         buttons.register_buttons([switch_pin], self._button_handler)
-        self.check_on_print_start = config.getboolean("check_on_print_start", False)
+        self.check_on_print_start = config.getboolean(
+            "check_on_print_start", False
+        )
         self.reactor = self.printer.get_reactor()
         self.estimated_print_time = None
         self.runout_helper = RunoutHelper(config, self, runout_distance)
         if config.get("immediate_runout_gcode", None) is not None:
-            self.runout_helper.immediate_runout_gcode = gcode_macro.load_template(
-                config, "immediate_runout_gcode", ""
+            self.runout_helper.immediate_runout_gcode = (
+                gcode_macro.load_template(config, "immediate_runout_gcode", "")
             )
         self.get_status = self.runout_helper.get_status
         self.printer.register_event_handler("klippy:ready", self._handle_ready)

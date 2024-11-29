@@ -179,7 +179,9 @@ class TMC2660CurrentHelper(tmc.BaseTMCCurrentHelper):
         )
 
     def _handle_ready(self, print_time):
-        current = self.req_run_current * float(self.idle_current_percentage) / 100.0
+        current = (
+            self.req_run_current * float(self.idle_current_percentage) / 100.0
+        )
         self.printer.get_reactor().register_callback(
             (lambda ev: self._update_current(current, print_time))
         )
@@ -296,7 +298,9 @@ class TMC2660:
         set_config_field(config, "hstrt", 3)
         set_config_field(config, "toff", 4)
         if not self.fields.get_field("chm"):
-            if (self.fields.get_field("hstrt") + self.fields.get_field("hend")) > 15:
+            if (
+                self.fields.get_field("hstrt") + self.fields.get_field("hend")
+            ) > 15:
                 raise config.error("driver_HEND + driver_HSTRT must be <= 15")
         # SMARTEN
         set_config_field(config, "seimin", 0)

@@ -4,7 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import collections
-import logging
 import math
 import chelper, msgproto
 
@@ -279,7 +278,9 @@ class MCU_stepper:
         print_time = self._mcu.estimated_print_time(params["#receive_time"])
         clock = self._mcu.print_time_to_clock(print_time)
         ffi_main, ffi_lib = chelper.get_ffi()
-        ret = ffi_lib.stepcompress_set_last_position(self._stepqueue, clock, last_pos)
+        ret = ffi_lib.stepcompress_set_last_position(
+            self._stepqueue, clock, last_pos
+        )
         if ret:
             raise error("Internal error in stepcompress")
         self._set_mcu_position(last_pos)
@@ -343,7 +344,9 @@ def PrinterStepper(config, units_in_radians=False):
     step_pulse_duration = config.getfloat(
         "step_pulse_duration", None, minval=0.0, maxval=0.001
     )
-    high_precision_stepcompr = config.getboolean("high_precision_step_compress", False)
+    high_precision_stepcompr = config.getboolean(
+        "high_precision_step_compress", False
+    )
     mcu_stepper = MCU_stepper(
         name,
         high_precision_stepcompr,
@@ -401,7 +404,8 @@ def parse_step_distance(config, units_in_radians=None, note_valid=False):
     )
     if full_steps % 4:
         raise config.error(
-            "full_steps_per_rotation invalid in section '%s'" % (config.get_name(),)
+            "full_steps_per_rotation invalid in section '%s'"
+            % (config.get_name(),)
         )
     gearing = parse_gear_ratio(config, note_valid)
     return rotation_dist, full_steps * microsteps * gearing
@@ -434,7 +438,9 @@ class PrinterRail:
         self._tmc_current_helpers = None
         self.get_name = self.mcu_stepper.get_name
         self.get_commanded_position = self.mcu_stepper.get_commanded_position
-        self.calc_position_from_coord = self.mcu_stepper.calc_position_from_coord
+        self.calc_position_from_coord = (
+            self.mcu_stepper.calc_position_from_coord
+        )
         # Primary endstop position
         mcu_endstop = self.endstops[0][0]
         if hasattr(mcu_endstop, "get_position_endstop"):
@@ -452,7 +458,8 @@ class PrinterRail:
         )
         endstop_is_beacon = endstop_pin is not None and (
             endstop_pin == "probe:z_virtual_endstop"
-            and config.get_printer().load_object(config, "beacon", None) is not None
+            and config.get_printer().load_object(config, "beacon", None)
+            is not None
         )
 
         default_homing_retract_dist = 5.0 if endstop_is_beacon else 5.0
@@ -460,7 +467,9 @@ class PrinterRail:
         # Axis range
         if need_position_minmax:
             self.position_min = config.getfloat("position_min", 0.0)
-            self.position_max = config.getfloat("position_max", above=self.position_min)
+            self.position_max = config.getfloat(
+                "position_max", above=self.position_min
+            )
         else:
             self.position_min = 0.0
             self.position_max = self.position_endstop
@@ -489,7 +498,9 @@ class PrinterRail:
         self.post_homing_retract_dist = config.getfloat(
             "post_homing_retract_dist", self.homing_retract_dist, minval=0.0
         )
-        self.homing_positive_dir = config.getboolean("homing_positive_dir", None)
+        self.homing_positive_dir = config.getboolean(
+            "homing_positive_dir", None
+        )
         self.use_sensorless_homing = config.getboolean(
             "use_sensorless_homing", endstop_is_virtual
         )
@@ -510,9 +521,11 @@ class PrinterRail:
                 )
             config.getboolean("homing_positive_dir", self.homing_positive_dir)
         elif (
-            self.homing_positive_dir and self.position_endstop == self.position_min
+            self.homing_positive_dir
+            and self.position_endstop == self.position_min
         ) or (
-            not self.homing_positive_dir and self.position_endstop == self.position_max
+            not self.homing_positive_dir
+            and self.position_endstop == self.position_max
         ):
             raise config.error(
                 "Invalid homing_positive_dir / position_endstop in '%s'"

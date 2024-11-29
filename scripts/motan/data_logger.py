@@ -189,6 +189,7 @@ class DataLogger:
                     lname = "%s:%s" % (st, aname)
                     qcmd = "%s/dump_%s" % (st, st)
                     self.send_subscribe(lname, qcmd, {"sensor": aname})
+
     def handle_dump(self, msg, raw_msg):
         msg_id = msg["id"]
         if "result" not in msg:

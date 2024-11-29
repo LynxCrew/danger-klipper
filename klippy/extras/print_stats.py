@@ -22,7 +22,9 @@ class PrintStats:
     def _update_filament_usage(self, eventtime):
         gc_status = self.gcode_move.get_status(eventtime)
         cur_epos = gc_status["position"].e
-        self.filament_used += (cur_epos - self.last_epos) / gc_status["extrude_factor"]
+        self.filament_used += (cur_epos - self.last_epos) / gc_status[
+            "extrude_factor"
+        ]
         self.last_epos = cur_epos
 
     def set_current_file(self, filename):
@@ -84,8 +86,12 @@ class PrintStats:
     )
 
     def cmd_SET_PRINT_STATS_INFO(self, gcmd):
-        total_layer = gcmd.get_int("TOTAL_LAYER", self.info_total_layer, minval=0)
-        current_layer = gcmd.get_int("CURRENT_LAYER", self.info_current_layer, minval=0)
+        total_layer = gcmd.get_int(
+            "TOTAL_LAYER", self.info_total_layer, minval=0
+        )
+        current_layer = gcmd.get_int(
+            "CURRENT_LAYER", self.info_current_layer, minval=0
+        )
         if total_layer == 0:
             self.info_total_layer = None
             self.info_current_layer = None

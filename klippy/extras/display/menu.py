@@ -54,7 +54,9 @@ class MenuElement(object):
             try:
                 self._enable = config.getboolean("enable", self._enable)
             except config.error:
-                self._enable_tpl = manager.gcode_macro.load_template(config, "enable")
+                self._enable_tpl = manager.gcode_macro.load_template(
+                    config, "enable"
+                )
             self._suffix_tpl = manager.gcode_macro.load_template(
                 config, "suffix", self._suffix
             )
@@ -65,9 +67,9 @@ class MenuElement(object):
             # ns - item namespace key, used in item relative paths
             # $__id - generated id text variable
             self._id = "__menu_" + hex(id(self)).lstrip("0x").rstrip("L")
-            self._ns = Template("menu " + kwargs.get("ns", self._id)).safe_substitute(
-                __id=self._id
-            )
+            self._ns = Template(
+                "menu " + kwargs.get("ns", self._id)
+            ).safe_substitute(__id=self._id)
         self._last_heartbeat = None
         self.__scroll_pos = None
         self.__scroll_request_pending = False
@@ -97,7 +99,8 @@ class MenuElement(object):
         """Load script template from config or callback from dict"""
         if name in self._scripts:
             logging.info(
-                "Declaration of '%s' hides " "previous script declaration" % (name,)
+                "Declaration of '%s' hides "
+                "previous script declaration" % (name,)
             )
         option = option or name
         if isinstance(config, dict):
@@ -151,7 +154,9 @@ class MenuElement(object):
         try:
             return coerce(val)
         except:
-            logging.exception(f"{self._ns} Failed to coerce {val!r} as {coerce}")
+            logging.exception(
+                f"{self._ns} Failed to coerce {val!r} as {coerce}"
+            )
             raise
 
     def eval_enable(self, context):
@@ -230,7 +235,9 @@ class MenuElement(object):
         return name.strip()
 
     def send_event(self, event, *args):
-        return self.manager.send_event("%s:%s" % (self.get_ns(), str(event)), *args)
+        return self.manager.send_event(
+            "%s:%s" % (self.get_ns(), str(event)), *args
+        )
 
     def get_script(self, name):
         if name in self._scripts:
@@ -290,7 +297,9 @@ class MenuContainer(MenuElement):
 
     def __init__(self, manager, config, **kwargs):
         if type(self) is MenuContainer:
-            raise error("Abstract MenuContainer cannot be instantiated directly")
+            raise error(
+                "Abstract MenuContainer cannot be instantiated directly"
+            )
         super(MenuContainer, self).__init__(manager, config, **kwargs)
         self._populate_cb = kwargs.get("populate", None)
         self._cursor = ">"
@@ -360,9 +369,9 @@ class MenuContainer(MenuElement):
             self._parents.append(parents)
 
     def assert_recursive_relation(self, parents=None):
-        assert self not in (
-            parents or self._parents
-        ), "Recursive relation of '%s' container" % (self.get_ns(),)
+        assert self not in (parents or self._parents), (
+            "Recursive relation of '%s' container" % (self.get_ns(),)
+        )
 
     def insert_item(self, s, index=None):
         self._insert_item(s, index)
@@ -403,7 +412,9 @@ class MenuContainer(MenuElement):
         if keep_pointer:
             selection = self.selected_item()
 
-        _a = [(item, name) for item, name in self._allitems if item.is_enabled()]
+        _a = [
+            (item, name) for item, name in self._allitems if item.is_enabled()
+        ]
         self._items, self._names = zip(*_a) or ([], [])
 
         if keep_pointer and selection in self._items:
@@ -559,7 +570,9 @@ class MenuInput(MenuCommand):
     def get_context(self, cxt=None):
         context = super().get_context(cxt)
         value = (
-            self._get_value(context) if self._input_value is None else self._input_value
+            self._get_value(context)
+            if self._input_value is None
+            else self._input_value
         )
         context["menu"].update({"input": value})
         return context
@@ -673,7 +686,9 @@ class MenuList(MenuContainer):
             el.manager.back()
 
         # create back item
-        self._itemBack = self.manager.menuitem_from("command", name="..", gcode=_cb)
+        self._itemBack = self.manager.menuitem_from(
+            "command", name="..", gcode=_cb
+        )
 
     def _names_aslist(self):
         return self.manager.lookup_children(self.get_ns())
@@ -727,7 +742,11 @@ class MenuList(MenuContainer):
                 # draw item name
                 tpos = display.draw_text(y, ppos, text.ljust(width), eventtime)
                 # check scroller
-                if selected and tpos > self.manager.cols and current.is_scrollable():
+                if (
+                    selected
+                    and tpos > self.manager.cols
+                    and current.is_scrollable()
+                ):
                     # scroll next
                     current.need_scroller(True)
                 else:
@@ -735,7 +754,9 @@ class MenuList(MenuContainer):
                     current.need_scroller(None)
                 # draw item suffix
                 if suffix:
-                    display.draw_text(y, self.manager.cols - slen, suffix, eventtime)
+                    display.draw_text(
+                        y, self.manager.cols - slen, suffix, eventtime
+                    )
                 # next display row
                 y += 1
         except Exception:
@@ -761,7 +782,8 @@ class MenuVSDList(MenuList):
                         name=repr(fname),
                         gcode=_cb,
                         context={
-                            "gcode": "SDCARD_PRINT_FILE FILENAME='/%s'" % str(fname)
+                            "gcode": "SDCARD_PRINT_FILE FILENAME='/%s'"
+                            % str(fname)
                         },
                     )
                 )
@@ -783,7 +805,9 @@ class MenuFileBrowser(MenuList):
         super().__init__(manager, config, **kwargs)
 
         self._sort_by = (
-            (config or self._context or {}).get("sort_by", "last_modified").lower()
+            (config or self._context or {})
+            .get("sort_by", "last_modified")
+            .lower()
         )
 
         if not self.manager.virtual_sdcard:
@@ -1019,10 +1043,14 @@ class MenuManager:
         self.timeout = config.getint("menu_timeout", 0)
         self.timer = 0
         # reverse container navigation
-        self._reverse_navigation = config.getboolean("menu_reverse_navigation", False)
+        self._reverse_navigation = config.getboolean(
+            "menu_reverse_navigation", False
+        )
         # load printer objects
         self.gcode_macro = self.printer.load_object(config, "gcode_macro")
-        self.virtual_sdcard = self.printer.load_object(config, "virtual_sdcard", None)
+        self.virtual_sdcard = self.printer.load_object(
+            config, "virtual_sdcard", None
+        )
         # register itself for printer callbacks
         self.printer.add_object("menu", self)
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
@@ -1277,7 +1305,11 @@ class MenuManager:
         if self.running and isinstance(container, MenuContainer):
             self.timer = 0
             current = container.selected_item()
-            if not force and isinstance(current, MenuInput) and current.is_editing():
+            if (
+                not force
+                and isinstance(current, MenuInput)
+                and current.is_editing()
+            ):
                 return
             if isinstance(container, MenuList):
                 container.run_script("leave")
@@ -1344,7 +1376,8 @@ class MenuManager:
         if name in self.menuitems:
             existing_item = True
             logging.info(
-                "Declaration of '%s' hides " "previous menuitem declaration" % (name,)
+                "Declaration of '%s' hides "
+                "previous menuitem declaration" % (name,)
             )
         self.menuitems[name] = item
         if isinstance(item, MenuElement):
@@ -1377,7 +1410,9 @@ class MenuManager:
         try:
             cfg = self.pconfig.read_config(filename)
         except Exception:
-            raise self.printer.config_error("Cannot load config '%s'" % (filename,))
+            raise self.printer.config_error(
+                "Cannot load config '%s'" % (filename,)
+            )
         if cfg:
             self.load_menuitems(cfg)
         return cfg

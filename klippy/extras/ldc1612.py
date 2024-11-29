@@ -163,13 +163,17 @@ class LDC1612:
         return (response[0] << 8) | response[1]
 
     def set_reg(self, reg, val, minclock=0):
-        self.i2c.i2c_write([reg, (val >> 8) & 0xFF, val & 0xFF], minclock=minclock)
+        self.i2c.i2c_write(
+            [reg, (val >> 8) & 0xFF, val & 0xFF], minclock=minclock
+        )
 
     def add_client(self, cb):
         self.batch_bulk.add_client(cb)
 
     # Homing
-    def setup_home(self, print_time, trigger_freq, trsync_oid, hit_reason, err_reason):
+    def setup_home(
+        self, print_time, trigger_freq, trsync_oid, hit_reason, err_reason
+    ):
         clock = self.mcu.print_time_to_clock(print_time)
         tfreq = int(trigger_freq * (1 << 28) / float(LDC1612_FREQ) + 0.5)
         self.ldc1612_setup_home_cmd.send(
@@ -212,7 +216,9 @@ class LDC1612:
         rcount0 = LDC1612_FREQ / (16.0 * (self.data_rate - 4))
         self.set_reg(REG_RCOUNT0, int(rcount0 + 0.5))
         self.set_reg(REG_OFFSET0, 0)
-        self.set_reg(REG_SETTLECOUNT0, int(SETTLETIME * LDC1612_FREQ / 16.0 + 0.5))
+        self.set_reg(
+            REG_SETTLECOUNT0, int(SETTLETIME * LDC1612_FREQ / 16.0 + 0.5)
+        )
         self.set_reg(REG_CLOCK_DIVIDERS0, (1 << 12) | 1)
         self.set_reg(REG_ERROR_CONFIG, (0x1F << 11) | 1)
         self.set_reg(REG_MUX_CONFIG, 0x0208 | DEGLITCH)

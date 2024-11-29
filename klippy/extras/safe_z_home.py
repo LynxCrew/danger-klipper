@@ -28,7 +28,8 @@ class SafeZHoming:
 
         if config.has_section("homing_override"):
             raise config.error(
-                "homing_override and safe_z_homing cannot" + " be used simultaneously"
+                "homing_override and safe_z_homing cannot"
+                + " be used simultaneously"
             )
 
     def cmd_G28(self, gcmd):
@@ -53,7 +54,9 @@ class SafeZHoming:
                 toolhead.manual_move([None, None, self.z_hop], self.z_hop_speed)
 
         # Determine which axes we need to home
-        need_x, need_y, need_z = [gcmd.get(axis, None) is not None for axis in "XYZ"]
+        need_x, need_y, need_z = [
+            gcmd.get(axis, None) is not None for axis in "XYZ"
+        ]
         if not need_x and not need_y and not need_z:
             need_x = need_y = need_z = True
 
@@ -64,10 +67,14 @@ class SafeZHoming:
                 axis_order = "xy"
             for axis in axis_order:
                 if axis == "x" and need_x:
-                    g28_gcmd = self.gcode.create_gcode_command("G28", "G28", {"X": "0"})
+                    g28_gcmd = self.gcode.create_gcode_command(
+                        "G28", "G28", {"X": "0"}
+                    )
                     self.prev_G28(g28_gcmd)
                 elif axis == "y" and need_y:
-                    g28_gcmd = self.gcode.create_gcode_command("G28", "G28", {"Y": "0"})
+                    g28_gcmd = self.gcode.create_gcode_command(
+                        "G28", "G28", {"Y": "0"}
+                    )
                     self.prev_G28(g28_gcmd)
 
         # Home Z axis if necessary
@@ -93,7 +100,9 @@ class SafeZHoming:
             if self.z_hop:
                 pos = toolhead.get_position()
                 if pos[2] < self.z_hop:
-                    toolhead.manual_move([None, None, self.z_hop], self.z_hop_speed)
+                    toolhead.manual_move(
+                        [None, None, self.z_hop], self.z_hop_speed
+                    )
 
             # Move XY back to previous positions
             if self.move_to_previous:
