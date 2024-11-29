@@ -178,14 +178,16 @@ class Heater:
         self.printer.load_object(config, "pid_calibrate")
         self.printer.load_object(config, "mpc_calibrate")
         self.gcode = self.printer.lookup_object("gcode")
-        control_types = {
-            "watermark": ControlBangBang,
-            "pid": ControlPID,
-            "pid_v": ControlVelocityPID,
-            "pid_p": ControlPositionalPID,
-            "mpc": ControlMPC,
-        }
-        self.pmgr = ProfileManager(self, control_types)
+        self.control_types = collections.OrderedDict(
+            {
+                "watermark": ControlBangBang,
+                "pid": ControlPID,
+                "pid_v": ControlVelocityPID,
+                "pid_p": ControlPositionalPID,
+                "mpc": ControlMPC,
+            }
+        )
+        self.pmgr = ProfileManager(self, self.control_types)
         self.control = self.lookup_control(
             self.pmgr.init_default_profile(), True
         )
@@ -246,16 +248,7 @@ class Heater:
         )
 
     def lookup_control(self, profile, load_clean=False):
-        algos = collections.OrderedDict(
-            {
-                "watermark": ControlBangBang,
-                "pid": ControlPID,
-                "pid_v": ControlVelocityPID,
-                "pid_p": ControlPositionalPID,
-                "mpc": ControlMPC,
-            }
-        )
-        return algos[profile["control"]](profile, self, load_clean)
+        return self.control_types[profile["control"]](profile, self, load_clean)
 
     def set_pwm(self, read_time, value):
         if self.target_temp <= 0.0 or self.is_shutdown:
