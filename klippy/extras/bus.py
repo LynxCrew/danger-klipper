@@ -41,7 +41,9 @@ def resolve_bus_name(mcu, param, bus):
 
 # Helper code for working with devices connected to an MCU via an SPI bus
 class MCU_SPI:
-    def __init__(self, mcu, bus, pin, mode, speed, sw_pins=None, cs_active_high=False):
+    def __init__(
+        self, mcu, bus, pin, mode, speed, sw_pins=None, cs_active_high=False
+    ):
         self.mcu = mcu
         self.bus = bus
         # Config SPI object (set all CS pins high before spi_set_bus commands)
@@ -61,10 +63,13 @@ class MCU_SPI:
                 % (self.oid, sw_pins[0], sw_pins[1], sw_pins[2], mode, speed)
             )
         else:
-            self.config_fmt = "spi_set_bus oid=%d spi_bus=%%s mode=%d rate=%d" % (
-                self.oid,
-                mode,
-                speed,
+            self.config_fmt = (
+                "spi_set_bus oid=%d spi_bus=%%s mode=%d rate=%d"
+                % (
+                    self.oid,
+                    mode,
+                    speed,
+                )
             )
         self.cmd_queue = mcu.alloc_command_queue()
         mcu.register_config_callback(self.build_config)
@@ -109,14 +114,18 @@ class MCU_SPI:
                 "spi_send oid=%d data=%s" % (self.oid, data_msg), is_init=True
             )
             return
-        self.spi_send_cmd.send([self.oid, data], minclock=minclock, reqclock=reqclock)
+        self.spi_send_cmd.send(
+            [self.oid, data], minclock=minclock, reqclock=reqclock
+        )
 
     def spi_transfer(self, data, minclock=0, reqclock=0):
         return self.spi_transfer_cmd.send(
             [self.oid, data], minclock=minclock, reqclock=reqclock
         )
 
-    def spi_transfer_with_preface(self, preface_data, data, minclock=0, reqclock=0):
+    def spi_transfer_with_preface(
+        self, preface_data, data, minclock=0, reqclock=0
+    ):
         return self.spi_transfer_cmd.send_with_preface(
             self.spi_send_cmd,
             [self.oid, preface_data],
@@ -151,7 +160,8 @@ def MCU_SPI_from_config(
             "spi_software_%s_pin" % (name,) for name in ["miso", "mosi", "sclk"]
         ]
         sw_pin_params = [
-            ppins.lookup_pin(config.get(name), share_type=name) for name in sw_pin_names
+            ppins.lookup_pin(config.get(name), share_type=name)
+            for name in sw_pin_names
         ]
         for pin_params in sw_pin_params:
             if pin_params["chip"] != mcu:
@@ -188,10 +198,13 @@ class MCU_I2C:
                 % (self.oid, sw_pins[0], sw_pins[1], speed, addr)
             )
         else:
-            self.config_fmt = "i2c_set_bus oid=%d i2c_bus=%%s rate=%d address=%d" % (
-                self.oid,
-                speed,
-                addr,
+            self.config_fmt = (
+                "i2c_set_bus oid=%d i2c_bus=%%s rate=%d address=%d"
+                % (
+                    self.oid,
+                    speed,
+                    addr,
+                )
             )
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.mcu.register_config_callback(self.build_config)
@@ -232,7 +245,9 @@ class MCU_I2C:
                 "i2c_write oid=%d data=%s" % (self.oid, data_msg), is_init=True
             )
             return
-        self.i2c_write_cmd.send([self.oid, data], minclock=minclock, reqclock=reqclock)
+        self.i2c_write_cmd.send(
+            [self.oid, data], minclock=minclock, reqclock=reqclock
+        )
 
     def i2c_write_wait_ack(self, data, minclock=0, reqclock=0):
         self.i2c_write_cmd.send_wait_ack(
@@ -242,7 +257,9 @@ class MCU_I2C:
     def i2c_read(self, write, read_len):
         return self.i2c_read_cmd.send([self.oid, write, read_len])
 
-    def i2c_modify_bits(self, reg, clear_bits, set_bits, minclock=0, reqclock=0):
+    def i2c_modify_bits(
+        self, reg, clear_bits, set_bits, minclock=0, reqclock=0
+    ):
         clearset = clear_bits + set_bits
         if self.i2c_modify_bits_cmd is None:
             # Send setup message via mcu initialization
@@ -271,9 +288,12 @@ def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
     # Determine pin from config
     ppins = config.get_printer().lookup_object("pins")
     if config.get("i2c_software_scl_pin", None) is not None:
-        sw_pin_names = ["i2c_software_%s_pin" % (name,) for name in ["scl", "sda"]]
+        sw_pin_names = [
+            "i2c_software_%s_pin" % (name,) for name in ["scl", "sda"]
+        ]
         sw_pin_params = [
-            ppins.lookup_pin(config.get(name), share_type=name) for name in sw_pin_names
+            ppins.lookup_pin(config.get(name), share_type=name)
+            for name in sw_pin_names
         ]
         sw_pins = tuple([pin_params["pin"] for pin_params in sw_pin_params])
         bus = None
@@ -297,7 +317,9 @@ class MCU_bus_digital_out:
         ppins = mcu.get_printer().lookup_object("pins")
         pin_params = ppins.lookup_pin(pin_desc)
         if pin_params["chip"] is not mcu:
-            raise ppins.error("Pin %s must be on mcu %s" % (pin_desc, mcu.get_name()))
+            raise ppins.error(
+                "Pin %s must be on mcu %s" % (pin_desc, mcu.get_name())
+            )
         mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d"
             " default_value=%d max_duration=%d"

@@ -20,12 +20,16 @@ class ZThermalAdjuster:
         self.config = config
 
         # Get config parameters, convert to SI units where necessary
-        self.temp_coeff = config.getfloat("temp_coeff", minval=-1, maxval=1, default=0)
+        self.temp_coeff = config.getfloat(
+            "temp_coeff", minval=-1, maxval=1, default=0
+        )
         self.off_above_z = config.getfloat("z_adjust_off_above", 99999999.0)
         self.max_z_adjust_mm = config.getfloat("max_z_adjustment", 99999999.0)
 
         # Register printer events
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
         self.printer.register_event_handler(
             "homing:home_rails_end", self.handle_homing_move_end
         )
@@ -38,7 +42,7 @@ class ZThermalAdjuster:
         pheaters = self.printer.load_object(config, "heaters")
         self.sensor = pheaters.setup_sensor(config)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
-        self.sensor.setup_callback(self.temperature_callback)
+        self.sensor.setup_callback(self.init_temperature_callback)
         pheaters.register_sensor(config, self)
 
         self.last_temp = 0.0
@@ -51,7 +55,6 @@ class ZThermalAdjuster:
 
         # Z transformation
         self.z_adjust_mm = 0.0
-        self.last_z_adjust_mm = 0.0
         self.adjust_enable = True
         self.last_position = [0.0, 0.0, 0.0, 0.0]
         self.next_transform = None
@@ -107,11 +110,12 @@ class ZThermalAdjuster:
 
             # Don't apply adjustments smaller than step distance
             if abs(adjust - self.z_adjust_mm) > self.z_step_dist:
-                self.z_adjust_mm = min([self.max_z_adjust_mm * sign, adjust], key=abs)
+                self.z_adjust_mm = min(
+                    [self.max_z_adjust_mm * sign, adjust], key=abs
+                )
 
         # Apply Z adjustment
         new_z = pos[2] + self.z_adjust_mm
-        self.last_z_adjust_mm = self.z_adjust_mm
         return [pos[0], pos[1], new_z, pos[3]]
 
     def calc_unadjust(self, pos):
@@ -126,14 +130,20 @@ class ZThermalAdjuster:
 
     def move(self, newpos, speed):
         # don't apply to extrude only moves or when disabled
-        if (newpos[0:2] == self.last_position[0:2]) or not self.adjust_enable:
-            z = newpos[2] + self.last_z_adjust_mm
+        if (newpos[0:3] == self.last_position[0:3]) or not self.adjust_enable:
+            z = newpos[2] + self.z_adjust_mm
             adjusted_pos = [newpos[0], newpos[1], z, newpos[3]]
             self.next_transform.move(adjusted_pos, speed)
         else:
             adjusted_pos = self.calc_adjust(newpos)
             self.next_transform.move(adjusted_pos, speed)
         self.last_position[:] = newpos
+
+    def init_temperature_callback(self, read_time, temp):
+        "Initialize Z adjust thermistor ref temp"
+        with self.lock:
+            self.ref_temperature = temp
+            self.sensor.setup_callback(self.temperature_callback)
 
     def temperature_callback(self, read_time, temp):
         "Called everytime the Z adjust thermistor is read"

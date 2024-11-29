@@ -6,7 +6,6 @@
 import logging
 from . import output_pin
 
-from .display import display
 
 # Time between each led template update
 RENDER_TIME = 0.500
@@ -42,7 +41,11 @@ class LEDHelper:
         self.name = config.get_name().split()[-1]
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
-            "SET_LED", "LED", self.name, self.cmd_SET_LED, desc=self.cmd_SET_LED_help
+            "SET_LED",
+            "LED",
+            self.name,
+            self.cmd_SET_LED,
+            desc=self.cmd_SET_LED_help,
         )
         gcode.register_mux_command(
             "SET_LED_TEMPLATE",
@@ -78,7 +81,9 @@ class LEDHelper:
         if i < 1:
             raise gcmd.error("step can not be less than 1(was '%d')" % i)
         if i > max - min:
-            raise gcmd.error("Steps can not be bigger than range " "(was '%d')" % i)
+            raise gcmd.error(
+                "Steps can not be bigger than range " "(was '%d')" % i
+            )
         return i
 
     def get_indices(self, gcmd, led_count):
@@ -90,12 +95,14 @@ class LEDHelper:
             led_range = index.split("-")
             if len(led_range) > 2:
                 raise gcmd.error(
-                    "More than one '-' found in '%s', " "only one allowed" % index
+                    "More than one '-' found in '%s', "
+                    "only one allowed" % index
                 )
             elif len(led_range) == 1:
                 if "|" in led_range[0]:
                     raise gcmd.error(
-                        "'|' specified without preceding " "range in '%s'" % index
+                        "'|' specified without preceding "
+                        "range in '%s'" % index
                     )
                 indices.add(self.check_index(index, gcmd, led_count))
             else:
@@ -105,7 +112,8 @@ class LEDHelper:
                 range_steps = max_val.split("|")
                 if len(range_steps) > 2:
                     raise gcmd.error(
-                        "More than one '|' found in '%s', " "only one allowed" % index
+                        "More than one '|' found in '%s', "
+                        "only one allowed" % index
                     )
                 elif len(range_steps) == 2:
                     step = range_steps[1]
@@ -113,8 +121,12 @@ class LEDHelper:
                 min = self.check_index(min_val, gcmd, led_count)
                 max = self.check_index(max_val, gcmd, led_count)
                 if max < min:
-                    raise gcmd.error("Min value greater than max value in '%s'" % index)
-                for i in range(min, (max + 1), self.check_step(step, min, max, gcmd)):
+                    raise gcmd.error(
+                        "Min value greater than max value in '%s'" % index
+                    )
+                for i in range(
+                    min, (max + 1), self.check_step(step, min, max, gcmd)
+                ):
                     indices.add(i)
         return indices
 
@@ -164,7 +176,9 @@ class LEDHelper:
         green = gcmd.get_float("GREEN", 0.0, minval=0.0, maxval=1.0)
         blue = gcmd.get_float("BLUE", 0.0, minval=0.0, maxval=1.0)
         white = gcmd.get_float("WHITE", 0.0, minval=0.0, maxval=1.0)
-        disable_template = gcmd.get_int("DISABLE_TEMPLATE", 0, minval=0, maxval=1)
+        disable_template = gcmd.get_int(
+            "DISABLE_TEMPLATE", 0, minval=0, maxval=1
+        )
         transmit = gcmd.get_int("TRANSMIT", 1)
         sync = gcmd.get_int("SYNC", 1)
         color = (red, green, blue, white)

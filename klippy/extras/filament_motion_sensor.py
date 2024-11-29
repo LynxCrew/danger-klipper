@@ -13,7 +13,9 @@ class EncoderSensor:
         self.gcode = self.printer.lookup_object("gcode")
         switch_pin = config.get("switch_pin")
         self.extruder_name = config.get("extruder")
-        self.detection_length = config.getfloat("detection_length", 7.0, above=0.0)
+        self.detection_length = config.getfloat(
+            "detection_length", 7.0, above=0.0
+        )
         self.keep_enabled = config.getboolean("keep_enabled", False)
         # Configure pins
         buttons = self.printer.load_object(config, "buttons")
@@ -74,12 +76,16 @@ class EncoderSensor:
     def _handle_printing(self, *args):
         if self.keep_enabled and not self.runout_helper.smart:
             self.reset()
-            self.reactor.update_timer(self._extruder_pos_update_timer, self.reactor.NOW)
+            self.reactor.update_timer(
+                self._extruder_pos_update_timer, self.reactor.NOW
+            )
 
     def _handle_printing_smart(self, *args):
         if self.keep_enabled and self.runout_helper.smart:
             self.reset()
-            self.reactor.update_timer(self._extruder_pos_update_timer, self.reactor.NOW)
+            self.reactor.update_timer(
+                self._extruder_pos_update_timer, self.reactor.NOW
+            )
 
     def _handle_not_printing(self, *args):
         if self.keep_enabled and not self.runout_helper.smart:

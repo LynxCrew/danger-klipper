@@ -13,7 +13,14 @@ class KlipperThreads:
         self.running = True
 
     def register_job(
-        self, group=None, target=None, name=None, args=(), kwargs=None, *, daemon=None
+        self,
+        group=None,
+        target=None,
+        name=None,
+        args=(),
+        kwargs=None,
+        *,
+        daemon=None,
     ):
         return KlipperThread(
             self,
@@ -47,7 +54,7 @@ class KlipperThread:
         args=(),
         kwargs=None,
         *,
-        daemon=None
+        daemon=None,
     ):
         self.k_threads = k_threads
         self.thread = threading.Thread(

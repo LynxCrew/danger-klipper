@@ -4,13 +4,10 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import threading
-import time
 
 from . import bus
 from extras.danger_options import get_danger_options
 
-from extras.danger_options import get_danger_options
 
 ######################################################################
 # Compatible Sensors:
@@ -46,7 +43,9 @@ class AHT10:
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("aht10 " + self.name, self)
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
         self.is_calibrated = False
         self.init_sent = False
 
@@ -95,7 +94,9 @@ class AHT10:
                 # Read data
                 read = self.i2c.i2c_read([], 6)
                 if read is None:
-                    logging.warning("aht10: received data from" + " i2c_read is None")
+                    logging.warning(
+                        "aht10: received data from" + " i2c_read is None"
+                    )
                     continue
                 data = bytearray(read["response"])
                 if len(data) < 6:

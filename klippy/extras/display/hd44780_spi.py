@@ -18,7 +18,9 @@ TextGlyphs = {"right_arrow": b"\x7e"}
 class hd44780_spi:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.hd44780_protocol_init = config.getboolean("hd44780_protocol_init", True)
+        self.hd44780_protocol_init = config.getboolean(
+            "hd44780_protocol_init", True
+        )
         # spi config
         self.spi = bus.MCU_SPI_from_config(config, 0x00, pin_option="latch_pin")
         self.mcu = self.spi.get_mcu()
@@ -75,7 +77,9 @@ class hd44780_spi:
                 continue
             # Find the position of all changed bytes in this framebuffer
             diffs = [
-                [i, 1] for i, (n, o) in enumerate(zip(new_data, old_data)) if n != o
+                [i, 1]
+                for i, (n, o) in enumerate(zip(new_data, old_data))
+                if n != o
             ]
             # Batch together changes that are close to each other
             for i in range(len(diffs) - 2, -1, -1):

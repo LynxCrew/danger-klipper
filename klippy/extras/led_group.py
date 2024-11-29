@@ -3,7 +3,6 @@
 # Copyright (C) 2022 Julian Schill <j.schill@web.de>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
 
 from . import led
 
@@ -11,7 +10,9 @@ from . import led
 def parse_chain(chain):
     chain = chain.strip()
     leds = []
-    parms = [parameter.strip() for parameter in chain.split() if parameter.strip()]
+    parms = [
+        parameter.strip() for parameter in chain.split() if parameter.strip()
+    ]
     if parms:
         chainName = parms[0].replace(":", " ")
         ledIndices = "".join(parms[1:]).strip("()").split(",")
@@ -43,7 +44,9 @@ class PrinterLEDGroup:
         self.config_leds = config.get("leds")
         self.config_chains = self.config_leds.split("\n")
         self.led_helper = None
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
 
     def _handle_connect(self):
         tcallbacks = []
@@ -54,12 +57,16 @@ class PrinterLEDGroup:
                 for led_index in led_indices:
                     tcallbacks.append(led_helper.tcallbacks[led_index])
         self.ledCount = len(tcallbacks)
-        self.led_helper = led.LEDHelper(self.config, self.update_leds, self.ledCount)
+        self.led_helper = led.LEDHelper(
+            self.config, self.update_leds, self.ledCount
+        )
         self.led_helper.tcallbacks = tcallbacks
 
     def update_leds(self, led_state, print_time):
         flush_callbacks = set()
-        for i, (_, flush_callback, set_color) in enumerate(self.led_helper.tcallbacks):
+        for i, (_, flush_callback, set_color) in enumerate(
+            self.led_helper.tcallbacks
+        ):
             set_color(led_state[i])
             flush_callbacks.add(flush_callback)
         for flush_callback in flush_callbacks:

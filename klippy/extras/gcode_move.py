@@ -14,8 +14,12 @@ class GCodeMove:
         printer.register_event_handler(
             "toolhead:set_position", self.reset_last_position
         )
-        printer.register_event_handler("toolhead:manual_move", self.reset_last_position)
-        printer.register_event_handler("gcode:command_error", self.reset_last_position)
+        printer.register_event_handler(
+            "toolhead:manual_move", self.reset_last_position
+        )
+        printer.register_event_handler(
+            "gcode:command_error", self.reset_last_position
+        )
         printer.register_event_handler(
             "extruder:activate_extruder", self._handle_activate_extruder
         )
@@ -104,7 +108,9 @@ class GCodeMove:
 
     def set_move_transform(self, transform, force=False):
         if self.move_transform is not None and not force:
-            raise self.printer.config_error("G-Code move transform already specified")
+            raise self.printer.config_error(
+                "G-Code move transform already specified"
+            )
         old_transform = self.move_transform
         if old_transform is None:
             old_transform = self.printer.lookup_object("toolhead", None)
@@ -171,7 +177,9 @@ class GCodeMove:
                     )
                 self.speed = gcode_speed * self.speed_factor
         except ValueError as e:
-            raise gcmd.error("Unable to parse move '%s'" % (gcmd.get_commandline(),))
+            raise gcmd.error(
+                "Unable to parse move '%s'" % (gcmd.get_commandline(),)
+            )
         self.move_with_transform(self.last_position, self.speed)
 
     # G-Code coordinate manipulation
@@ -290,7 +298,9 @@ class GCodeMove:
             self.last_position[:3] = state["last_position"][:3]
             self.move_with_transform(self.last_position, speed)
 
-    cmd_GET_POSITION_help = "Return information on the current location of the toolhead"
+    cmd_GET_POSITION_help = (
+        "Return information on the current location of the toolhead"
+    )
 
     def cmd_GET_POSITION(self, gcmd):
         toolhead = self.printer.lookup_object("toolhead", None)
@@ -306,7 +316,10 @@ class GCodeMove:
         kinfo = zip("XYZ", kin.calc_position(dict(cinfo)))
         kin_pos = " ".join(["%s:%.6f" % (a, v) for a, v in kinfo])
         toolhead_pos = " ".join(
-            ["%s:%.6f" % (a, v) for a, v in zip("XYZE", toolhead.get_position())]
+            [
+                "%s:%.6f" % (a, v)
+                for a, v in zip("XYZE", toolhead.get_position())
+            ]
         )
         gcode_pos = " ".join(
             ["%s:%.6f" % (a, v) for a, v in zip("XYZE", self.last_position)]

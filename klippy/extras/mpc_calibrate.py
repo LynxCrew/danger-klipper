@@ -39,7 +39,9 @@ class MpcCalibrate:
         self.temp_control = None
         self.fan = None
         self.max_error = self.config.getfloat("calibrate_max_error", None)
-        self.check_gain_time = self.config.getfloat("calibrate_check_gain_time", None)
+        self.check_gain_time = self.config.getfloat(
+            "calibrate_check_gain_time", None
+        )
         self.hysteresis = self.config.getfloat("calibrate_hysteresis", None)
         self.heating_gain = self.config.getfloat("calibrate_heating_gain", None)
 
@@ -64,7 +66,9 @@ class MpcCalibrate:
         self.orig_control = self.heater.set_control(control)
         self.temp_control = self.orig_control
         if self.temp_control.get_type() != "mpc":
-            self.temp_control = self.pmgr._init_profile(self.config, "autotune", "mpc")
+            self.temp_control = self.pmgr._init_profile(
+                self.config, "autotune", "mpc"
+            )
         self.fan = self.temp_control.cooling_fan
         ambient_sensor_name = gcmd.get("AMBIENT_TEMP_SENSOR", None)
         if ambient_sensor_name is not None:
@@ -77,7 +81,9 @@ class MpcCalibrate:
         else:
             ambient_sensor = self.temp_control.ambient_sensor
         max_error = gcmd.get_float("MAX_ERROR", self.max_error)
-        check_gain_time = gcmd.get_float("CHECK_GAIN_TIME", self.check_gain_time)
+        check_gain_time = gcmd.get_float(
+            "CHECK_GAIN_TIME", self.check_gain_time
+        )
         hysteresis = gcmd.get_float("HYSTERESIS", self.hysteresis)
         heating_gain = gcmd.get_float("HEATING_GAIN", self.heating_gain)
 
@@ -170,8 +176,12 @@ class MpcCalibrate:
             profile["name"] = profile_name
             profile["mpc_target"] = target_temp
 
-            self.heater.set_control(self.heater.lookup_control(profile, True), False)
-            self.heater.pmgr.save_profile(profile_name=profile_name, verbose=False)
+            self.heater.set_control(
+                self.heater.lookup_control(profile, True), False
+            )
+            self.heater.pmgr.save_profile(
+                profile_name=profile_name, verbose=False
+            )
 
             msg = (
                 f"Finished MPC calibration of heater '{self.heater.short_name}'\n"
@@ -315,7 +325,8 @@ class MpcCalibrate:
         target_temp = round(first_pass_results["post_block_temp"])
         self.heater.set_temp(target_temp)
         gcmd.respond_info(
-            "Performing ambient transfer tests, target is %.1f degrees" % (target_temp,)
+            "Performing ambient transfer tests, target is %.1f degrees"
+            % (target_temp,)
         )
 
         self.wait_stable(5)
@@ -338,7 +349,9 @@ class MpcCalibrate:
                 power = self.measure_power(
                     ambient_max_measure_time, ambient_measure_sample_time
                 )
-                gcmd.respond_info(f"{speed*100.:.0f}% fan average power: {power:.2f} W")
+                gcmd.respond_info(
+                    f"{speed*100.:.0f}% fan average power: {power:.2f} W"
+                )
                 fan_powers.append((speed, power))
             self.fan.set_speed(0.0)
             power_base = fan_powers[0][1]
@@ -355,7 +368,9 @@ class MpcCalibrate:
         last_time = [None]
 
         def process(eventtime):
-            dt = eventtime - (last_time[0] if last_time[0] is not None else eventtime)
+            dt = eventtime - (
+                last_time[0] if last_time[0] is not None else eventtime
+            )
             last_time[0] = eventtime
             status = self.heater.get_status(eventtime)
             samples.append((dt, status["control_stats"]["power"] * dt))
@@ -431,11 +446,17 @@ class MpcCalibrate:
             )
 
         # Differential method
-        if not use_analytic or block_heat_capacity < 0 or sensor_responsiveness < 0:
+        if (
+            not use_analytic
+            or block_heat_capacity < 0
+            or sensor_responsiveness < 0
+        ):
             fastest_rate = self.fastest_rate(samples)
             block_heat_capacity = heater_power / fastest_rate[2]
             sensor_responsiveness = fastest_rate[2] / (
-                fastest_rate[2] * fastest_rate[0] + ambient_temp - fastest_rate[0]
+                fastest_rate[2] * fastest_rate[0]
+                + ambient_temp
+                - fastest_rate[0]
             )
 
         heat_time = all_samples[-1][0] - all_samples[0][0]
@@ -459,7 +480,9 @@ class MpcCalibrate:
             "dt": dt,
         }
 
-    def process_second_pass(self, first_res, transfer_res, ambient_temp, heater_power):
+    def process_second_pass(
+        self, first_res, transfer_res, ambient_temp, heater_power
+    ):
         target_ambient_temp = transfer_res["target_temp"] - ambient_temp
         ambient_transfer = transfer_res["base_power"] / target_ambient_temp
         asymp_T = ambient_temp + heater_power / ambient_transfer

@@ -11,7 +11,9 @@ from . import probe
 class BedTilt:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
         self.x_adjust = config.getfloat("x_adjust", 0.0)
         self.y_adjust = config.getfloat("y_adjust", 0.0)
         self.z_adjust = config.getfloat("z_adjust", 0.0)
@@ -93,7 +95,10 @@ class BedTiltCalibrate:
         def adjusted_height(pos, params):
             x, y, z = pos
             return (
-                z - x * params["x_adjust"] - y * params["y_adjust"] - params["z_adjust"]
+                z
+                - x * params["x_adjust"]
+                - y * params["y_adjust"]
+                - params["z_adjust"]
             )
 
         def errorfunc(params):
@@ -102,7 +107,9 @@ class BedTiltCalibrate:
                 total_error += adjusted_height(pos, params) ** 2
             return total_error
 
-        new_params = mathutil.coordinate_descent(params.keys(), params, errorfunc)
+        new_params = mathutil.coordinate_descent(
+            params.keys(), params, errorfunc
+        )
         # Update current bed_tilt calculations
         x_adjust = new_params["x_adjust"]
         y_adjust = new_params["y_adjust"]

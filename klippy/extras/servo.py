@@ -27,7 +27,9 @@ class PrinterServo:
         self.width_to_value = 1.0 / SERVO_SIGNAL_PERIOD
         self.last_value = 0.0
         initial_pwm = 0.0
-        iangle = config.getfloat("initial_angle", None, minval=0.0, maxval=360.0)
+        iangle = config.getfloat(
+            "initial_angle", None, minval=0.0, maxval=360.0
+        )
         if iangle is not None:
             initial_pwm = self._get_pwm_from_angle(iangle)
         else:
@@ -69,7 +71,9 @@ class PrinterServo:
                 self.gcrq.send_async_request(self._get_pwm_from_angle(angle))
             elif type == "WIDTH":
                 width = float(value.strip())
-                self.gcrq.send_async_request(self._get_pwm_from_pulse_width(width))
+                self.gcrq.send_async_request(
+                    self._get_pwm_from_pulse_width(width)
+                )
         except ValueError as e:
             logging.exception("servo template render error")
 

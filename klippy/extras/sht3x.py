@@ -5,8 +5,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import threading
-import time
 
 from . import bus
 
@@ -72,7 +70,9 @@ class SHT3X:
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         self.printer.add_object("sht3x " + self.name, self)
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
 
     def _handle_connect(self):
         self._init_sht3x()

@@ -17,13 +17,17 @@ class GCodeButton:
             buttons.register_buttons([self.pin], self.button_callback)
         else:
             amin, amax = config.getfloatlist("analog_range", count=2)
-            pullup = config.getfloat("analog_pullup_resistor", 4700.0, above=0.0)
+            pullup = config.getfloat(
+                "analog_pullup_resistor", 4700.0, above=0.0
+            )
             buttons.register_adc_button(
                 self.pin, amin, amax, pullup, self.button_callback
             )
         gcode_macro = self.printer.load_object(config, "gcode_macro")
         self.press_template = gcode_macro.load_template(config, "press_gcode")
-        self.release_template = gcode_macro.load_template(config, "release_gcode", "")
+        self.release_template = gcode_macro.load_template(
+            config, "release_gcode", ""
+        )
         self.gcode = self.printer.lookup_object("gcode")
         self.gcode.register_mux_command(
             "QUERY_BUTTON",

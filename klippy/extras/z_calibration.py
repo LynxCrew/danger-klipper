@@ -21,7 +21,9 @@ class ZCalibrationHelper:
         # max_deviation is deprecated
         self.max_deviation = config.getfloat("max_deviation", None, above=0.0)
         config.deprecate("max_deviation")
-        self.offset_margins = self._get_offset_margins("offset_margins", "-1.0,1.0")
+        self.offset_margins = self._get_offset_margins(
+            "offset_margins", "-1.0,1.0"
+        )
         self.speed = config.getfloat("speed", 50.0, above=0.0)
         # clearance is deprecated
         self.clearance = config.getfloat("clearance", None, above=0.0)
@@ -29,13 +31,19 @@ class ZCalibrationHelper:
         self.safe_z_height = config.getfloat("safe_z_height", None, above=0.0)
         self.samples = config.getint("samples", None, minval=1)
         self.tolerance = config.getfloat("samples_tolerance", None, above=0.0)
-        self.retries = config.getint("samples_tolerance_retries", None, minval=0)
+        self.retries = config.getint(
+            "samples_tolerance_retries", None, minval=0
+        )
         atypes = {"none": None, "median": "median", "average": "average"}
         self.samples_result = config.getchoice("samples_result", atypes, "none")
         self.lift_speed = config.getfloat("lift_speed", None, above=0.0)
         self.probing_speed = config.getfloat("probing_speed", None, above=0.0)
-        self.second_speed = config.getfloat("probing_second_speed", None, above=0.0)
-        self.retract_dist = config.getfloat("probing_retract_dist", None, above=0.0)
+        self.second_speed = config.getfloat(
+            "probing_second_speed", None, above=0.0
+        )
+        self.retract_dist = config.getfloat(
+            "probing_retract_dist", None, above=0.0
+        )
         self.position_min = config.getfloat("position_min", None)
         self.first_fast = config.getboolean("probing_first_fast", False)
         self.nozzle_site = self._get_xy("nozzle_xy_position", True)
@@ -45,10 +53,14 @@ class ZCalibrationHelper:
         self.wiggle_offsets = self._get_xy("wiggle_xy_offsets", True)
         gcode_macro = self.printer.load_object(config, "gcode_macro")
         self.start_gcode = gcode_macro.load_template(config, "start_gcode", "")
-        self.switch_gcode = gcode_macro.load_template(config, "before_switch_gcode", "")
+        self.switch_gcode = gcode_macro.load_template(
+            config, "before_switch_gcode", ""
+        )
         self.end_gcode = gcode_macro.load_template(config, "end_gcode", "")
         self.query_endstops = self.printer.load_object(config, "query_endstops")
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
         self.printer.register_event_handler(
             "homing:home_rails_end", self.handle_home_rails_end
         )
@@ -86,10 +98,13 @@ class ZCalibrationHelper:
                 self.z_endstop = EndstopWrapper(self.config, endstop)
         # get z-endstop position from safe_z_home
         if self.nozzle_site is None:
-            safe_z_home = self.printer.lookup_object("safe_z_home", default=None)
+            safe_z_home = self.printer.lookup_object(
+                "safe_z_home", default=None
+            )
             if safe_z_home is None:
                 raise self.printer.config_error(
-                    "No nozzle position" " configured for %s" % (self.config.get_name())
+                    "No nozzle position"
+                    " configured for %s" % (self.config.get_name())
                 )
             self.nozzle_site = [
                 safe_z_home.home_x_pos,
@@ -100,7 +115,8 @@ class ZCalibrationHelper:
         if self.switch_site is None:
             if self.switch_xy_offsets is None:
                 raise self.printer.config_error(
-                    "No switch position" " configured for %s" % (self.config.get_name())
+                    "No switch position"
+                    " configured for %s" % (self.config.get_name())
                 )
             self.switch_site = [
                 self.nozzle_site[0] + self.switch_xy_offsets[0],
@@ -192,7 +208,9 @@ class ZCalibrationHelper:
         state = CalibrationState(self, gcmd)
         state.calibrate_z()
 
-    cmd_PROBE_Z_ACCURACY_help = "Probe Z-Endstop accuracy at" " Nozzle-Endstop position"
+    cmd_PROBE_Z_ACCURACY_help = (
+        "Probe Z-Endstop accuracy at" " Nozzle-Endstop position"
+    )
 
     def cmd_PROBE_Z_ACCURACY(self, gcmd):
         if self.z_homing is None:
@@ -463,7 +481,9 @@ class CalibrationState:
                 if retries >= self.helper.retries:
                     self.helper.end_gcode.run_gcode_from_command()
                     raise self.gcmd.error("Probe samples exceed tolerance")
-                self.gcmd.respond_info("Probe samples exceed tolerance." " Retrying...")
+                self.gcmd.respond_info(
+                    "Probe samples exceed tolerance." " Retrying..."
+                )
                 retries += 1
                 positions = []
         # calculate result
@@ -515,7 +535,9 @@ class CalibrationState:
         )
         self.probe.multi_probe_end()
         # calculate the offset
-        offset = probe_zero - (switch_zero - nozzle_zero + self.helper.switch_offset)
+        offset = probe_zero - (
+            switch_zero - nozzle_zero + self.helper.switch_offset
+        )
         # print result
         self.gcmd.respond_info(
             "Z-CALIBRATION: probe=%.3f - (switch=%.3f"

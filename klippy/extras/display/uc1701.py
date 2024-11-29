@@ -23,7 +23,9 @@ class DisplayBase:
             (self.vram[i], bytearray(b"~" * self.columns), i) for i in range(8)
         ]
         # Cache fonts and icons in display byte order
-        self.font = [self._swizzle_bits(bytearray(c)) for c in font8x14.VGA_FONT]
+        self.font = [
+            self._swizzle_bits(bytearray(c)) for c in font8x14.VGA_FONT
+        ]
         self.icons = {}
 
     def flush(self):
@@ -33,7 +35,9 @@ class DisplayBase:
                 continue
             # Find the position of all changed bytes in this framebuffer
             diffs = [
-                [i, 1] for i, (n, o) in enumerate(zip(new_data, old_data)) if n != o
+                [i, 1]
+                for i, (n, o) in enumerate(zip(new_data, old_data))
+                if n != o
             ]
             # Batch together changes that are close to each other
             for i in range(len(diffs) - 2, -1, -1):
@@ -134,7 +138,9 @@ class SPI4wire:
         )
 
     def send(self, cmds, is_data=False):
-        self.mcu_dc.update_digital_out(is_data, reqclock=BACKGROUND_PRIORITY_CLOCK)
+        self.mcu_dc.update_digital_out(
+            is_data, reqclock=BACKGROUND_PRIORITY_CLOCK
+        )
         self.spi.spi_send(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
 
 

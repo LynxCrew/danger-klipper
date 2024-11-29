@@ -81,7 +81,9 @@ class StepperEnableOutputPin:
         curtime = self._mcu.get_printer().get_reactor().monotonic()
         printtime = self._mcu.estimated_print_time(curtime)
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
-        self._duration_ticks = self._mcu.seconds_to_clock(self._max_duration - 1)
+        self._duration_ticks = self._mcu.seconds_to_clock(
+            self._max_duration - 1
+        )
         if self._duration_ticks >= 1 << 31:
             raise config_error("PWM pin max duration too large")
         if self._duration_ticks:
@@ -110,7 +112,9 @@ class StepperEnableOutputPin:
         self._last_clock = clock = max(self._last_clock, clock)
         self._last_value = val
         data = (self._set_cmd_tag, self._oid, clock & 0xFFFFFFFF, val)
-        ret = self._stepcompress_queue_mq_msg(self._stepqueue, clock, data, len(data))
+        ret = self._stepcompress_queue_mq_msg(
+            self._stepqueue, clock, data, len(data)
+        )
         if ret:
             raise error("Internal error in stepcompress")
         # Notify toolhead so that it will flush this update
@@ -161,7 +165,9 @@ def setup_enable_pin(printer, pin, max_enable_time=0.0):
         enable.is_dedicated = False
         return enable
     ppins = printer.lookup_object("pins")
-    pin_params = ppins.lookup_pin(pin, can_invert=True, share_type="stepper_enable")
+    pin_params = ppins.lookup_pin(
+        pin, can_invert=True, share_type="stepper_enable"
+    )
     enable = pin_params.get("class")
     if enable is not None:
         # Shared enable line
@@ -235,7 +241,10 @@ class PrinterStepperEnable:
     def register_stepper(self, config, mcu_stepper):
         name = mcu_stepper.get_name()
         max_enable_time = config.getfloat(
-            "max_enable_time", 0.0, minval=MIN_ENABLE_TIME, maxval=MAX_ENABLE_TIME
+            "max_enable_time",
+            0.0,
+            minval=MIN_ENABLE_TIME,
+            maxval=MAX_ENABLE_TIME,
         )
         disable_on_error = config.getboolean("disable_on_error", False)
         if disable_on_error:
@@ -283,7 +292,9 @@ class PrinterStepperEnable:
                         steppers = rail.get_steppers()
                         rail_name = rail.mcu_stepper.get_name(True)
                         for stepper in steppers:
-                            self.stepper_off(stepper.get_name(), print_time, rail_name)
+                            self.stepper_off(
+                                stepper.get_name(), print_time, rail_name
+                            )
                 except IndexError:
                     continue
         else:
@@ -326,7 +337,8 @@ class PrinterStepperEnable:
 
     def get_status(self, eventtime):
         steppers = {
-            name: et.is_motor_enabled() for (name, et) in self.enable_lines.items()
+            name: et.is_motor_enabled()
+            for (name, et) in self.enable_lines.items()
         }
         return {"steppers": steppers}
 

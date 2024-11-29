@@ -228,7 +228,10 @@ class TMC2130CurrentHelper(tmc.BaseTMCCurrentHelper):
         vref = 0.32
         if vsense:
             vref = 0.18
-        cs = int(32.0 * sense_resistor * current * math.sqrt(2.0) / vref + 0.5) - 1
+        cs = (
+            int(32.0 * sense_resistor * current * math.sqrt(2.0) / vref + 0.5)
+            - 1
+        )
         return max(0, min(31, cs))
 
     def _calc_current_from_bits(self, cs, vsense):
@@ -310,7 +313,10 @@ class MCU_TMC_SPI_chain:
             return 0
         params = self.spi.spi_transfer(cmd)
         pr = bytearray(params["response"])
-        pr = pr[(self.chain_len - chain_pos) * 5 : (self.chain_len - chain_pos + 1) * 5]
+        pr = pr[
+            (self.chain_len - chain_pos) * 5 : (self.chain_len - chain_pos + 1)
+            * 5
+        ]
         return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
 
     def reg_write(self, reg, val, chain_pos, print_time=None):
@@ -333,7 +339,10 @@ class MCU_TMC_SPI_chain:
             write_cmd, dummy_read, minclock=minclock
         )
         pr = bytearray(params["response"])
-        pr = pr[(self.chain_len - chain_pos) * 5 : (self.chain_len - chain_pos + 1) * 5]
+        pr = pr[
+            (self.chain_len - chain_pos) * 5 : (self.chain_len - chain_pos + 1)
+            * 5
+        ]
         return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
 
     def get_mcu(self):
@@ -349,7 +358,9 @@ def lookup_tmc_spi_chain(config):
 
     # Shared SPI bus - lookup existing MCU_TMC_SPI_chain
     ppins = config.get_printer().lookup_object("pins")
-    cs_pin_params = ppins.lookup_pin(config.get("cs_pin"), share_type="tmc_spi_cs")
+    cs_pin_params = ppins.lookup_pin(
+        config.get("cs_pin"), share_type="tmc_spi_cs"
+    )
     tmc_spi = cs_pin_params.get("class")
     if tmc_spi is None:
         tmc_spi = cs_pin_params["class"] = MCU_TMC_SPI_chain(config, chain_len)
@@ -410,7 +421,9 @@ class TMC2130:
     def __init__(self, config):
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
-        self.mcu_tmc = MCU_TMC_SPI(config, Registers, self.fields, TMC_FREQUENCY)
+        self.mcu_tmc = MCU_TMC_SPI(
+            config, Registers, self.fields, TMC_FREQUENCY
+        )
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands

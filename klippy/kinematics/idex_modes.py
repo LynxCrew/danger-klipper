@@ -95,7 +95,9 @@ class DualCarriages:
         self.toggle_active_dc_rail(0)
 
     def get_status(self, eventtime=None):
-        return {("carriage_%d" % (i,)): dc.mode for (i, dc) in enumerate(self.dc)}
+        return {
+            ("carriage_%d" % (i,)): dc.mode for (i, dc) in enumerate(self.dc)
+        }
 
     def get_kin_range(self, toolhead, mode):
         pos = toolhead.get_position()
@@ -122,10 +124,14 @@ class DualCarriages:
         elif mode == MIRROR:
             if self.get_dc_order(0, 1) > 0:
                 range_min = max(range_min, 0.5 * (sum(axes_pos) + safe_dist))
-                range_max = min(range_max, sum(axes_pos) - dc1_rail.position_min)
+                range_max = min(
+                    range_max, sum(axes_pos) - dc1_rail.position_min
+                )
             else:
                 range_max = min(range_max, 0.5 * (sum(axes_pos) - safe_dist))
-                range_min = max(range_min, sum(axes_pos) - dc1_rail.position_max)
+                range_min = max(
+                    range_min, sum(axes_pos) - dc1_rail.position_max
+                )
         else:
             # mode == PRIMARY
             active_idx = 1 if self.dc[1].is_active() else 0
@@ -193,17 +199,22 @@ class DualCarriages:
             raise gcmd.error("Invalid mode=%s specified" % (mode,))
         if mode in [COPY, MIRROR]:
             if index == 0:
-                raise gcmd.error("Mode=%s is not supported for carriage=0" % (mode,))
+                raise gcmd.error(
+                    "Mode=%s is not supported for carriage=0" % (mode,)
+                )
             curtime = self.printer.get_reactor().monotonic()
             kin = self.printer.lookup_object("toolhead").get_kinematics()
             axis = "xyz"[self.axis]
             if axis not in kin.get_status(curtime)["homed_axes"]:
                 raise gcmd.error(
-                    "Axis %s must be homed prior to enabling mode=%s" % (axis, mode)
+                    "Axis %s must be homed prior to enabling mode=%s"
+                    % (axis, mode)
                 )
         self.activate_dc_mode(index, mode)
 
-    cmd_SAVE_DUAL_CARRIAGE_STATE_help = "Save dual carriages modes and positions"
+    cmd_SAVE_DUAL_CARRIAGE_STATE_help = (
+        "Save dual carriages modes and positions"
+    )
 
     def cmd_SAVE_DUAL_CARRIAGE_STATE(self, gcmd):
         state_name = gcmd.get("NAME", "default")
@@ -213,7 +224,9 @@ class DualCarriages:
             "axes_positions": [dc.get_axis_position(pos) for dc in self.dc],
         }
 
-    cmd_RESTORE_DUAL_CARRIAGE_STATE_help = "Restore dual carriages modes and positions"
+    cmd_RESTORE_DUAL_CARRIAGE_STATE_help = (
+        "Restore dual carriages modes and positions"
+    )
 
     def cmd_RESTORE_DUAL_CARRIAGE_STATE(self, gcmd):
         state_name = gcmd.get("NAME", "default")
@@ -241,7 +254,9 @@ class DualCarriages:
             dc_mode = (
                 INACTIVE
                 if min(abs(dl[0]), abs(dl[1])) < 0.000000001
-                else COPY if dl[0] * dl[1] > 0 else MIRROR
+                else COPY
+                if dl[0] * dl[1] > 0
+                else MIRROR
             )
             if dc_mode != INACTIVE:
                 self.dc[1 - primary_ind].activate(dc_mode, cur_pos[primary_ind])
@@ -276,7 +291,9 @@ class DualCarriagesRail:
             orig_sk = s.get_stepper_kinematics()
             ffi_lib.dual_carriage_set_sk(sk, orig_sk)
             # Set the default transform for the other axis
-            ffi_lib.dual_carriage_set_transform(sk, self.ENC_AXES[1 - axis], 1.0, 0.0)
+            ffi_lib.dual_carriage_set_transform(
+                sk, self.ENC_AXES[1 - axis], 1.0, 0.0
+            )
             self.dc_stepper_kinematics.append(sk)
             self.orig_stepper_kinematics.append(orig_sk)
             s.set_stepper_kinematics(sk)

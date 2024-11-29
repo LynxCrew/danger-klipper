@@ -19,7 +19,9 @@ class mcp4451:
         self.set_register(0x04, 0xFF)
         self.set_register(0x0A, 0xFF)
         for i in range(4):
-            val = config.getfloat("wiper_%d" % (i,), None, minval=0.0, maxval=scale)
+            val = config.getfloat(
+                "wiper_%d" % (i,), None, minval=0.0, maxval=scale
+            )
             if val is not None:
                 val = int(val * 255.0 / scale + 0.5)
                 self.set_register(WiperRegisters[i], val)

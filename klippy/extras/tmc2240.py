@@ -272,7 +272,9 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
-        self.Rref = config.getfloat("rref", None, minval=12000.0, maxval=60000.0)
+        self.Rref = config.getfloat(
+            "rref", None, minval=12000.0, maxval=60000.0
+        )
         if self.Rref is None:
             pconfig.warn(
                 "config",
@@ -339,7 +341,9 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         ifs_rms = self._get_ifs_rms()
         if not globalscaler:
             globalscaler = 256
-        cs = int((current * 256.0 * 32.0) / (globalscaler * ifs_rms) - 1.0 + 0.5)
+        cs = int(
+            (current * 256.0 * 32.0) / (globalscaler * ifs_rms) - 1.0 + 0.5
+        )
         return max(0, min(31, cs))
 
     def _calc_current(self, run_current, hold_current):

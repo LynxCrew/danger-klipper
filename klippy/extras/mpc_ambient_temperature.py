@@ -69,7 +69,9 @@ class MPC_AMBIENT_TEMP_WRAPPER:
         measured_time = self.reactor.monotonic()
 
         self.temperature_callback(
-            self.printer.lookup_object("mcu").estimated_print_time(measured_time),
+            self.printer.lookup_object("mcu").estimated_print_time(
+                measured_time
+            ),
             self.temp,
         )
 
@@ -81,4 +83,6 @@ class MPC_AMBIENT_TEMP_WRAPPER:
 
 def load_config(config):
     pheaters = config.get_printer().load_object(config, "heaters")
-    pheaters.add_sensor_factory("mpc_ambient_temperature", MPC_AMBIENT_TEMP_WRAPPER)
+    pheaters.add_sensor_factory(
+        "mpc_ambient_temperature", MPC_AMBIENT_TEMP_WRAPPER
+    )
