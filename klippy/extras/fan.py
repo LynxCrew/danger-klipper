@@ -50,6 +50,9 @@ class Fan:
         )
         if self.off_below is not None:
             config.deprecate("off_below")
+        self.initial_speed = config.getfloat(
+            "initial_speed", default=None, minval=0.0, maxval=1.0
+        )
 
         # handles switchover of variable
         # if new var is not set, and old var is, set new var to old var
@@ -195,6 +198,8 @@ class Fan:
             toolhead.register_lookahead_callback(
                 (lambda pt: self.set_startup_fan_speed(pt))
             )
+        if self.initial_speed:
+            self.set_speed_from_command(self.initial_speed)
 
     def set_startup_fan_speed(self, print_time):
         self.mcu_fan.set_pwm(print_time, self.max_power)

@@ -590,9 +590,7 @@ class ControlBangBang:
     @staticmethod
     def load_console_message(profile, heater):
         max_delta = profile["max_delta"]
-        msg = "Control: %s\n" % (
-            profile["control"],
-        )
+        msg = "Control: %s\n" % (profile["control"],)
         if max_delta is not None:
             msg += "Max Delta: %.3f\n" % max_delta
         return msg
@@ -1030,7 +1028,9 @@ class ControlVelocityPID:
         self.profile["name"] = name
 
     def _load_console_message(self):
-        return ControlVelocityPID.load_console_message(self.profile, self.heater)
+        return ControlVelocityPID.load_console_message(
+            self.profile, self.heater
+        )
 
     def get_profile(self):
         return self.profile
@@ -1148,7 +1148,9 @@ class ControlPositionalPID:
         self.profile["name"] = name
 
     def _load_console_message(self):
-        return ControlPositionalPID.load_console_message(self.profile, self.heater)
+        return ControlPositionalPID.load_console_message(
+            self.profile, self.heater
+        )
 
     def get_profile(self):
         return self.profile
@@ -1331,7 +1333,7 @@ class ControlMPC:
 
     @staticmethod
     def load_console_message(profile, heater):
-        return "" #TODO
+        return ""  # TODO
 
     @staticmethod
     def get_power_at_temp(temperature, power_table):

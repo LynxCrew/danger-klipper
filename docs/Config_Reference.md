@@ -3329,6 +3329,9 @@ pin:
 #off_below:
 #   These option is deprecated and should no longer be specified.
 #   Use `min_power` instead.
+#initial_speed:
+#   Fan speed will be set to this value on startup if specified. Value
+#   is from 0.0 to 1.0.
 ```
 
 ### [heated_fan]
@@ -3376,6 +3379,7 @@ a shutdown_speed equal to max_power.
 #tachometer_ppr:
 #tachometer_poll_interval:
 #enable_pin:
+#initial_speed:
 #   See the "fan" section for a description of the above parameters.
 #heater: extruder
 #   Name of the config section defining the heater that this fan is
@@ -3413,6 +3417,7 @@ watched component.
 #tachometer_ppr:
 #tachometer_poll_interval:
 #enable_pin:
+#initial_speed:
 #   See the "fan" section for a description of the above parameters.
 #fan_speed: 1.0
 #   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
@@ -3460,6 +3465,7 @@ information.
 #tachometer_ppr:
 #tachometer_poll_interval:
 #enable_pin:
+#initial_speed:
 #   See the "fan" section for a description of the above parameters.
 #sensor_type:
 #sensor_pin:
@@ -3547,6 +3553,7 @@ with the SET_FAN_SPEED [gcode command](G-Codes.md#fan_generic).
 #tachometer_ppr:
 #tachometer_poll_interval:
 #enable_pin:
+#initial_speed:
 #   See the "fan" section for a description of the above parameters.
 ```
 
