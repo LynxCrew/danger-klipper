@@ -267,10 +267,10 @@ FieldFormatters.update(
 
 class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
     def __init__(self, config, mcu_tmc):
-        super().__init__(config, mcu_tmc, self._get_ifs_rms(3), use_rref=True)
-
-        self.test = self.sense_resistor
-        self.test = self.Rref
+        self.Rref = config.getfloat(
+            "rref", minval=12000.0, maxval=60000.0
+        )
+        super().__init__(config, mcu_tmc, self._get_ifs_rms(3), has_sense_resistor=False)
 
         current_range = self._calc_current_range(self.actual_current)
         self.fields.set_field("current_range", current_range)
