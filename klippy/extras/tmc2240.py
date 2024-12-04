@@ -266,36 +266,9 @@ FieldFormatters.update(
 
 
 class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
-    def __init__(self, config, mcu_tmc, type="tmc2240"):
-        self.printer = config.get_printer()
-        self.name = config.get_name().split()[-1]
-        self.mcu_tmc = mcu_tmc
-        self.fields = mcu_tmc.get_fields()
-        self.Rref = config.getfloat(
-            "rref", minval=12000.0, maxval=60000.0
-        )
+    def __init__(self, config, mcu_tmc):
+        super().__init__(config, mcu_tmc, self._get_ifs_rms(3))
 
-        self.max_current = self._get_ifs_rms(3)
-        self.config_run_current = config.getfloat(
-            "run_current", above=0.0, maxval=self.max_current
-        )
-        self.config_hold_current = config.getfloat(
-            "hold_current", self.max_current, above=0.0, maxval=self.max_current
-        )
-        self.config_home_current = config.getfloat(
-            "home_current",
-            self.config_run_current,
-            above=0.0,
-            maxval=self.max_current,
-        )
-        self.current_change_dwell_time = config.getfloat(
-            "current_change_dwell_time", 0.5, above=0.0
-        )
-        self.req_run_current = self.config_run_current
-        self.req_hold_current = self.config_hold_current
-        self.req_home_current = self.config_home_current
-
-        self.actual_current = self.req_run_current
         current_range = self._calc_current_range(self.actual_current)
         self.fields.set_field("current_range", current_range)
         gscaler, irun, ihold = self._calc_current(

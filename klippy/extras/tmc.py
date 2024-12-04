@@ -840,13 +840,18 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
 
 
 class BaseTMCCurrentHelper:
-    def __init__(self, config, mcu_tmc, max_current):
+    def __init__(self, config, mcu_tmc, max_current, use_rref=False):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
 
-        self.sense_resistor = config.getfloat("sense_resistor", above=0.0)
+        if use_rref:
+            self.Rref = config.getfloat(
+                "rref", minval=12000.0, maxval=60000.0
+            )
+        else:
+            self.sense_resistor = config.getfloat("sense_resistor", above=0.0)
 
         # config_{run|hold|home}_current
         # represents an initial value set via config file

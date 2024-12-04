@@ -198,7 +198,7 @@ MAX_CURRENT = 2.000
 
 
 class TMC2130CurrentHelper(tmc.BaseTMCCurrentHelper):
-    def __init__(self, config, mcu_tmc, type="tmc2130"):
+    def __init__(self, config, mcu_tmc):
         super().__init__(config, mcu_tmc, MAX_CURRENT)
 
         vsense, irun, ihold = self._calc_current(
