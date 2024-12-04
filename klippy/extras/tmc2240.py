@@ -268,24 +268,12 @@ FieldFormatters.update(
 class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
     def __init__(self, config, mcu_tmc, type="tmc2240"):
         self.printer = config.get_printer()
-        pconfig: PrinterConfig = self.printer.lookup_object("configfile")
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.Rref = config.getfloat(
-            "rref", None, minval=12000.0, maxval=60000.0
+            "rref", minval=12000.0, maxval=60000.0
         )
-        if self.Rref is None:
-            pconfig.warn(
-                "config",
-                f"""[{type} {self.name}] rref not specified; using default = 12000.
-                If this value is wrong, it might burn your house down.
-                This parameter will be mandatory in future versions.
-                Specify the parameter to resolve this warning""",
-                f"{type} {self.name}",
-                "rref",
-            )
-            self.Rref = 12000.0
 
         self.max_current = self._get_ifs_rms(3)
         self.config_run_current = config.getfloat(
