@@ -486,6 +486,46 @@ class Heater:
         self.control.const_filament_heat_capacity = gcmd.get_float(
             "FILAMENT_HEAT_CAPACITY", self.control.const_filament_heat_capacity
         )
+        self.control.const_block_heat_capacity = gcmd.get_float(
+            "BLOCK_HEAT_CAPACITY", self.control.const_block_heat_capacity
+        )
+        self.control.const_sensor_responsiveness = gcmd.get_float(
+            "SENSOR_RESPONSIVENESS", self.control.const_sensor_responsiveness
+        )
+        self.control.const_ambient_transfer = gcmd.get_float(
+            "AMBIENT_TRANSFER", self.control.const_ambient_transfer
+        )
+        fan_ambient_transfer = gcmd.get("FAN_AMBIENT_TRANSFER", None)
+        if fan_ambient_transfer is not None:
+            try:
+                self.control.const_fan_ambient_transfer = [
+                    float(v)
+                    for v in fan_ambient_transfer.split(",")
+                ]
+            except ValueError:
+                raise gcmd.error(
+                    f"Error on '{gcmd._commandline}': unable to parse FAN_AMBIENT_TRANSFER\n"
+                    "Must be a comma-separated list of values ('0.05,0.07,0.08')"
+                )
+        temp = gcmd.get("FILAMENT_TEMP", None)
+        if temp is not None:
+            temp = temp.lower().strip()
+            if temp == "sensor":
+                self.control.filament_temp_src = (FILAMENT_TEMP_SRC_SENSOR,)
+            elif temp == "ambient":
+                self.control.filament_temp_src = (FILAMENT_TEMP_SRC_AMBIENT,)
+            elif temp == "sensor_ambient":
+                self.control.filament_temp_src = (FILAMENT_TEMP_SRC_SENSOR_AMBIENT,)
+            else:
+                try:
+                    value = float(temp)
+                except ValueError:
+                    raise gcmd.error(
+                        f"Error on '{gcmd._commandline}': unable to parse FILAMENT_TEMP\n"
+                        "Valid options are 'sensor', 'ambient', or number."
+                    )
+                self.control.filament_temp_src = (FILAMENT_TEMP_SRC_FIXED, value)
+
         self.control.update_filament_const()
         if save_profile is not None:
             self.pmgr.save_profile(profile_name=save_profile)
