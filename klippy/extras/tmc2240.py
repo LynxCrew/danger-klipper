@@ -267,7 +267,7 @@ FieldFormatters.update(
 
 class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
     def __init__(self, config, mcu_tmc):
-        super().__init__(config, mcu_tmc, self._get_ifs_rms(3))
+        super().__init__(config, mcu_tmc, self._get_ifs_rms(3), use_rref=True)
 
         current_range = self._calc_current_range(self.actual_current)
         self.fields.set_field("current_range", current_range)
