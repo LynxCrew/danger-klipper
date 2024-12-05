@@ -300,7 +300,9 @@ class GCodeDispatch:
                 cmd = "".join(parts[3:5]).strip()
             else:
                 if numparts > 2:
-                    parts.insert(3, parts[2].split(" ")[-1])
+                    while " " in parts[2].strip():
+                        parts.insert(3, parts[2].split(" ")[-1])
+                        parts[2] = " ".join(parts[2].split(" ")[:-1])
                 cmd = "".join(parts[:3]).strip()
             numparts = len(parts)
             if numparts % 2 != 1:
