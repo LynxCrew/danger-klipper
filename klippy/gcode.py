@@ -290,14 +290,17 @@ class GCodeDispatch:
                 line = line[:cpos]
             # Break line into parts and determine command
             parts = self.args_r.split(line.upper())
+            numparts = len(parts)
             if "".join(parts[:2]) == "N":
                 # Skip line number at start of command
-                while " " in parts[4].strip():
-                    parts.insert(5, parts[4].split(" ")[-1])
-                    parts[4] = " ".join(parts[4].split(" ")[:-1])
+                if numparts > 4:
+                    while " " in parts[4].strip():
+                        parts.insert(5, parts[4].split(" ")[-1])
+                        parts[4] = " ".join(parts[4].split(" ")[:-1])
                 cmd = "".join(parts[3:5]).strip()
             else:
-                parts.insert(3, parts[2].split(" ")[-1])
+                if numparts > 2:
+                    parts.insert(3, parts[2].split(" ")[-1])
                 cmd = "".join(parts[:3]).strip()
             numparts = len(parts)
             if numparts % 2 != 1:
