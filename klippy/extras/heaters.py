@@ -499,8 +499,7 @@ class Heater:
         if fan_ambient_transfer is not None:
             try:
                 self.control.const_fan_ambient_transfer = [
-                    float(v)
-                    for v in fan_ambient_transfer.split(",")
+                    float(v) for v in fan_ambient_transfer.split(",")
                 ]
             except ValueError:
                 raise gcmd.error(
@@ -515,7 +514,9 @@ class Heater:
             elif temp == "ambient":
                 self.control.filament_temp_src = (FILAMENT_TEMP_SRC_AMBIENT,)
             elif temp == "sensor_ambient":
-                self.control.filament_temp_src = (FILAMENT_TEMP_SRC_SENSOR_AMBIENT,)
+                self.control.filament_temp_src = (
+                    FILAMENT_TEMP_SRC_SENSOR_AMBIENT,
+                )
             else:
                 try:
                     value = float(temp)
@@ -524,7 +525,10 @@ class Heater:
                         f"Error on '{gcmd._commandline}': unable to parse FILAMENT_TEMP\n"
                         "Valid options are 'sensor', 'ambient', or number."
                     )
-                self.control.filament_temp_src = (FILAMENT_TEMP_SRC_FIXED, value)
+                self.control.filament_temp_src = (
+                    FILAMENT_TEMP_SRC_FIXED,
+                    value,
+                )
 
         self.control.update_filament_const()
         if save_profile is not None:
