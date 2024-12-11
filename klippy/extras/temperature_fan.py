@@ -3,6 +3,7 @@
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import statistics
 
 import numpy as np
 
@@ -378,6 +379,10 @@ class ControlCurve:
         self.curve_cooling = np.copy(self.curve_standard)
         self.curve_heating[0, :] += self.heating_hysteresis
         self.curve_cooling[0, :] -= self.cooling_hysteresis
+        self.smooth_readings = config.getint("smooth_readings", 10, minval=1)
+        self.stored_speeds = []
+        for i in range(self.smooth_readings):
+            self.stored_speeds.append(0.0)
 
     def temperature_callback(self, read_time, temp):
         current_speed = self.temperature_fan.last_speed_value
@@ -399,7 +404,10 @@ class ControlCurve:
         else:
             next_speed = current_speed
 
-        self.controlled_fan.set_speed(next_speed, read_time)
+        for i in range(1, len(self.stored_speeds)):
+            self.stored_speeds[i] = self.stored_speeds[i - 1]
+        self.stored_speeds[0] = next_speed
+        self.controlled_fan.set_speed(statistics.median(self.stored_speeds), read_time)
 
     def get_type(self):
         return "curve"
