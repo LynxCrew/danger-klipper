@@ -8,7 +8,7 @@ import time
 
 from . import bus
 
-from extras.danger_options import get_danger_options
+from .danger_options import get_danger_options
 
 ######################################################################
 # NOTE: The implementation requires write support of length 0

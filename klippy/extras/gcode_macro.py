@@ -7,7 +7,7 @@ import pipes
 import threading
 import traceback, logging, ast, copy, json
 import jinja2, math
-import configfile
+from klippy import configfile
 
 from extras.danger_options import get_danger_options
 
