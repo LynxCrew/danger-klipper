@@ -5,10 +5,11 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 import sys, os, gc, optparse, logging, time, collections, importlib, importlib.util
+import threading
 
 from . import compat
-from . import util, reactor, queuelogger, msgproto
-from . import gcode, configfile, pins, mcu, toolhead, webhooks
+from . import util, reactor, queuelogger, msgproto, klipper_threads
+from . import gcode, configfile, pins, mcu, toolhead, webhooks, non_critical_mcus
 from .extras.danger_options import get_danger_options
 from . import APP_NAME
 
@@ -62,7 +63,7 @@ class Printer:
     config_error = configfile.error
     command_error = gcode.CommandError
 
-    def __init__(self, main_reactor, bglogger, start_args):
+    def __init__(self, main_reactor, klipper_threads, bglogger, start_args):
         if sys.version_info[0] < 3:
             logging.error("Kalico requires Python 3")
             sys.exit(1)
@@ -70,6 +71,7 @@ class Printer:
         self.bglogger = bglogger
         self.start_args = start_args
         self.reactor = main_reactor
+        self.klipper_threads = klipper_threads
         self.reactor.register_callback(self._connect)
         self.state_message = message_startup
         self.in_shutdown_state = False
@@ -85,6 +87,9 @@ class Printer:
 
     def get_reactor(self):
         return self.reactor
+
+    def get_klipper_threads(self):
+        return self.klipper_threads
 
     def get_state_message(self):
         if self.state_message == message_ready:
@@ -209,7 +214,7 @@ class Printer:
         ):
             pconfig.log_config(config)
         # Create printer components
-        for m in [pins, mcu]:
+        for m in [pins, non_critical_mcus, mcu]:
             m.add_printer_objects(config)
         for section_config in config.get_prefix_sections(""):
             self.load_object(config, section_config.get_name(), None)
@@ -335,15 +340,18 @@ class Printer:
         )
         # Enter main reactor loop
         try:
+            self.klipper_threads.run()
             self.reactor.run()
-        except:
+        except Exception as e:
             msg = "Unhandled exception during run"
+            msg += str(e)
             logging.exception(msg)
             # Exception from a reactor callback - try to shutdown
             try:
                 self.reactor.register_callback(
                     (lambda e: self.invoke_shutdown(msg))
                 )
+                self.klipper_threads.run()
                 self.reactor.run()
             except:
                 logging.exception("Repeat unhandled exception during run")
@@ -366,6 +374,9 @@ class Printer:
             self.bglogger.set_rollover_info(name, info)
 
     def invoke_shutdown(self, msg):
+        if threading.current_thread() is not threading.main_thread():
+            self.invoke_async_shutdown(msg)
+            return
         if self.in_shutdown_state:
             return
         logging.error("Transition to shutdown state: %s", msg)
@@ -395,6 +406,7 @@ class Printer:
         if self.run_result is None:
             self.run_result = result
         self.reactor.end()
+        self.klipper_threads.end()
 
     wait_interrupted = WaitInterruption
 
@@ -582,13 +594,15 @@ def main():
             bglogger.set_rollover_info("versions", versions)
         gc.collect()
         main_reactor = reactor.Reactor(gc_checking=True)
-        printer = Printer(main_reactor, bglogger, start_args)
+        k_threads = klipper_threads.KlipperThreads(main_reactor)
+        printer = Printer(main_reactor, k_threads, bglogger, start_args)
         res = printer.run()
         if res in ["exit", "error_exit"]:
             break
         time.sleep(1.0)
+        k_threads.finalize()
         main_reactor.finalize()
-        main_reactor = printer = None
+        main_reactor = k_threads = printer = None
         logging.info("Restarting printer")
         start_args["start_reason"] = res
         if options.rotate_log_at_restart and bglogger is not None:
