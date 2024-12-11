@@ -380,7 +380,7 @@ class ControlCurve:
         self.curve_cooling[0, :] -= self.cooling_hysteresis
 
     def temperature_callback(self, read_time, temp):
-        current_speed = self.last_speed_value
+        current_speed = self.temperature_fan.last_speed_value
         upper_temp = np.interp(
             current_speed, self.curve_heating[1], self.curve_heating[0]
         )
