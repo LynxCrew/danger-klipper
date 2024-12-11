@@ -399,7 +399,7 @@ class ControlCurve:
         else:
             next_speed = current_speed
 
-        self.controlled_fan.set_speed(read_time, next_speed)
+        self.controlled_fan.set_speed(next_speed, read_time)
 
     def get_type(self):
         return "curve"
