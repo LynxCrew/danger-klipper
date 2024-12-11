@@ -1,4 +1,4 @@
-from extras.danger_options import get_danger_options
+from .danger_options import get_danger_options
 from . import heaters
 
 AMBIENT_REPORT_TIME = 1.0

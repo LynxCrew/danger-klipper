@@ -406,7 +406,9 @@ class ControlCurve:
         for i in range(1, len(self.stored_speeds)):
             self.stored_speeds[i] = self.stored_speeds[i - 1]
         self.stored_speeds[0] = next_speed
-        self.controlled_fan.set_speed(statistics.median(self.stored_speeds), read_time)
+        self.controlled_fan.set_speed(
+            statistics.median(self.stored_speeds), read_time
+        )
 
     def get_type(self):
         return "curve"

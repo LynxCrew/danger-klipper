@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import chelper
+from klippy import chelper
 
 MIN_ENABLE_TIME = 2.0
 MAX_ENABLE_TIME = 60.0

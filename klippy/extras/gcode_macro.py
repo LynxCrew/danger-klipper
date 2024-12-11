@@ -9,7 +9,7 @@ import traceback, logging, ast, copy, json
 import jinja2, math
 from klippy import configfile
 
-from extras.danger_options import get_danger_options
+from .danger_options import get_danger_options
 
 PYTHON_SCRIPT_PREFIX = "!"
 
@@ -19,7 +19,7 @@ PYTHON_SCRIPT_PREFIX = "!"
 
 
 # Wrapper for access to printer object get_status() methods
-class GetStatusWrapperJinja:
+class GetStatusWrapper:
     def __init__(self, printer, eventtime=None):
         self.printer = printer
         self.eventtime = eventtime

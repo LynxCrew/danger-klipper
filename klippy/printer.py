@@ -9,7 +9,15 @@ import threading
 
 from . import compat
 from . import util, reactor, queuelogger, msgproto, klipper_threads
-from . import gcode, configfile, pins, mcu, toolhead, webhooks, non_critical_mcus
+from . import (
+    gcode,
+    configfile,
+    pins,
+    mcu,
+    toolhead,
+    webhooks,
+    non_critical_mcus,
+)
 from .extras.danger_options import get_danger_options
 from . import APP_NAME
 
