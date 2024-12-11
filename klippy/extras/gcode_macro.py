@@ -350,7 +350,7 @@ class PrinterGCodeMacro:
 
     def create_template_context(self, eventtime=None):
         return {
-            "printer": GetStatusWrapperJinja(self.printer, eventtime),
+            "printer": GetStatusWrapper(self.printer, eventtime),
             "action_emergency_stop": self._action_emergency_stop,
             "action_respond_info": self._action_respond_info,
             "action_log": self._action_log,
