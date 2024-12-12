@@ -8,7 +8,7 @@ import sys, os, gc, optparse, logging, time, collections, importlib, importlib.u
 import threading
 
 from . import compat
-from . import util, reactor, queuelogger, msgproto, klipper_threads
+from . import util, reactor, queuelogger, msgproto, kalico_threads
 from . import (
     gcode,
     configfile,
@@ -71,7 +71,7 @@ class Printer:
     config_error = configfile.error
     command_error = gcode.CommandError
 
-    def __init__(self, main_reactor, klipper_threads, bglogger, start_args):
+    def __init__(self, main_reactor, kalico_threads, bglogger, start_args):
         if sys.version_info[0] < 3:
             logging.error("Kalico requires Python 3")
             sys.exit(1)
@@ -79,7 +79,7 @@ class Printer:
         self.bglogger = bglogger
         self.start_args = start_args
         self.reactor = main_reactor
-        self.klipper_threads = klipper_threads
+        self.kalico_threads = kalico_threads
         self.reactor.register_callback(self._connect)
         self.state_message = message_startup
         self.in_shutdown_state = False
@@ -96,8 +96,8 @@ class Printer:
     def get_reactor(self):
         return self.reactor
 
-    def get_klipper_threads(self):
-        return self.klipper_threads
+    def get_kalico_threads(self):
+        return self.kalico_threads
 
     def get_state_message(self):
         if self.state_message == message_ready:
@@ -348,7 +348,7 @@ class Printer:
         )
         # Enter main reactor loop
         try:
-            self.klipper_threads.run()
+            self.kalico_threads.run()
             self.reactor.run()
         except Exception as e:
             msg = "Unhandled exception during run"
@@ -359,7 +359,7 @@ class Printer:
                 self.reactor.register_callback(
                     (lambda e: self.invoke_shutdown(msg))
                 )
-                self.klipper_threads.run()
+                self.kalico_threads.run()
                 self.reactor.run()
             except:
                 logging.exception("Repeat unhandled exception during run")
@@ -414,7 +414,7 @@ class Printer:
         if self.run_result is None:
             self.run_result = result
         self.reactor.end()
-        self.klipper_threads.end()
+        self.kalico_threads.end()
 
     wait_interrupted = WaitInterruption
 
@@ -602,7 +602,7 @@ def main():
             bglogger.set_rollover_info("versions", versions)
         gc.collect()
         main_reactor = reactor.Reactor(gc_checking=True)
-        k_threads = klipper_threads.KlipperThreads(main_reactor)
+        k_threads = kalico_threads.KalicoThreads(main_reactor)
         printer = Printer(main_reactor, k_threads, bglogger, start_args)
         res = printer.run()
         if res in ["exit", "error_exit"]:

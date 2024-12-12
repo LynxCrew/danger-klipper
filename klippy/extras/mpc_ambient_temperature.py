@@ -20,9 +20,9 @@ class MPC_AMBIENT_TEMP_WRAPPER:
         self.temp = self.min_temp = self.max_temp = 0.0
 
         self.reactor = self.printer.get_reactor()
-        self.klipper_threads = self.printer.get_klipper_threads()
+        self.kalico_threads = self.printer.get_kalico_threads()
 
-        self.temperature_sample_thread = self.klipper_threads.register_job(
+        self.temperature_sample_thread = self.kalico_threads.register_job(
             target=self._sample_ambient_temperature
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits

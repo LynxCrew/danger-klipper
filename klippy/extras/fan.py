@@ -24,7 +24,7 @@ class Fan:
         self.gcode = self.printer.lookup_object("gcode")
         self.reactor = self.printer.get_reactor()
         self.estimated_print_time = None
-        self.klipper_threads = self.printer.get_klipper_threads()
+        self.kalico_threads = self.printer.get_kalico_threads()
         self.last_pwm_value = self.last_req_pwm_value = 0.0
         self.last_fan_value = self.last_req_value = 0.0
         # Read config
@@ -278,7 +278,7 @@ class Fan:
         if self.min_rpm > 0 and (force or not self.self_checking):
             if pwm_value > 0:
                 if self.fan_check_thread is None:
-                    self.fan_check_thread = self.klipper_threads.register_job(
+                    self.fan_check_thread = self.kalico_threads.register_job(
                         target=self.fan_check
                     )
                     self.fan_check_thread.start()

@@ -23,9 +23,9 @@ class PrinterTemperatureDriver:
         self.report_time = DRIVER_REPORT_TIME
 
         self.reactor = self.printer.get_reactor()
-        self.klipper_threads = self.printer.get_klipper_threads()
+        self.kalico_threads = self.printer.get_kalico_threads()
 
-        self.temperature_sample_thread = self.klipper_threads.register_job(
+        self.temperature_sample_thread = self.kalico_threads.register_job(
             target=self._sample_driver_temperature
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits

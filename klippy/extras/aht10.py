@@ -32,13 +32,13 @@ class AHT10:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.reactor = self.printer.get_reactor()
-        self.klipper_threads = self.printer.get_klipper_threads()
+        self.kalico_threads = self.printer.get_kalico_threads()
         self.i2c = bus.MCU_I2C_from_config(
             config, default_addr=AHT10_I2C_ADDR, default_speed=100000
         )
         self.report_time = config.getint("aht10_report_time", 30, minval=5)
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.0
-        self.temperature_sample_thread = self.klipper_threads.register_job(
+        self.temperature_sample_thread = self.kalico_threads.register_job(
             target=self._sample_aht10
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
