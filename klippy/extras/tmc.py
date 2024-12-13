@@ -425,6 +425,8 @@ class TMCCommandHelper:
         home_current = gcmd.get_float(
             "HOMECURRENT", None, above=0.0, maxval=max_cur
         )
+        axis_names = gcmd.get("AXISNAMES", None)
+        axis_names = [name.strip() for name in axis_names.split(",")]
         verbose = gcmd.get("VERBOSE", "low")
         if (
             run_current is not None
@@ -440,7 +442,7 @@ class TMCCommandHelper:
                 hold_current = req_hold_cur
 
             if home_current is not None:
-                ch.set_home_current(home_current)
+                ch.set_home_current(home_current, axis_names=axis_names)
 
             toolhead = self.printer.lookup_object("toolhead")
             print_time = toolhead.get_last_move_time()
@@ -863,6 +865,24 @@ class BaseTMCCurrentHelper:
             above=0.0,
             maxval=max_current,
         )
+        self.config_home_x_current = config.getfloat(
+            "home_x_current",
+            self.config_home_current,
+            above=0.0,
+            maxval=max_current
+        )
+        self.config_home_y_current = config.getfloat(
+            "home_y_current",
+            self.config_home_current,
+            above=0.0,
+            maxval=max_current
+        )
+        self.config_home_z_current = config.getfloat(
+            "home_z_current",
+            self.config_home_current,
+            above=0.0,
+            maxval=max_current
+        )
         self.current_change_dwell_time = config.getfloat(
             "current_change_dwell_time", 0.5, above=0.0
         )
@@ -873,7 +893,9 @@ class BaseTMCCurrentHelper:
         # e.g. SET_TMC_CURRENT
         self.req_run_current = self.config_run_current
         self.req_hold_current = self.config_hold_current
-        self.req_home_current = self.config_home_current
+        self.req_home_x_current = self.config_home_x_current
+        self.req_home_y_current = self.config_home_y_current
+        self.req_home_z_current = self.config_home_z_current
 
         # actual_current represents the actual current set to a stepper
         # It fluctuates between req_run_current and req_home_current
@@ -882,8 +904,8 @@ class BaseTMCCurrentHelper:
 
         self.max_current = max_current
 
-    def needs_home_current_change(self):
-        needs = self.actual_current != self.req_home_current
+    def needs_home_current_change(self, home_current):
+        needs = self.actual_current != home_current
         logging.info(f"tmc {self.name}: needs_home_current_change {needs}")
         return needs
 
@@ -897,8 +919,16 @@ class BaseTMCCurrentHelper:
         logging.info(f"tmc {self.name}: needs_hold_current_change {needs}")
         return needs
 
-    def set_home_current(self, new_home_current):
-        self.req_home_current = min(self.max_current, new_home_current)
+    def set_home_current(self, new_home_current, axis_names=None):
+        if axis_names is None:
+            axis_names = ["x", "y", "z"]
+        for axis_name in axis_names:
+            if axis_name == "x":
+                self.req_home_x_current = min(self.max_current, new_home_current)
+            if axis_name == "y":
+                self.req_home_y_current = min(self.max_current, new_home_current)
+            if axis_name == "z":
+                self.req_home_z_current = min(self.max_current, new_home_current)
 
     def set_run_current(self, new_run_current):
         self.req_run_current = min(self.max_current, new_run_current)
@@ -913,11 +943,18 @@ class BaseTMCCurrentHelper:
         )
 
     def set_current_for_homing(
-        self, print_time, pre_homing, get_dwell_time=False
+        self, print_time, pre_homing, axis_name, get_dwell_time=False
     ) -> float:
-        if pre_homing and self.needs_home_current_change():
+        home_current = self.req_run_current
+        if axis_name == "x":
+            home_current = self.req_home_x_current
+        if axis_name == "y":
+            home_current = self.req_home_y_current
+        if axis_name == "z":
+            home_current = self.req_home_z_current
+        if pre_homing and self.needs_home_current_change(home_current):
             self.set_current(
-                self.req_home_current, self.req_hold_current, print_time
+                home_current, self.req_hold_current, print_time
             )
             return self.current_change_dwell_time
         elif not pre_homing and self.needs_run_current_change():
@@ -947,6 +984,9 @@ class BaseTMCCurrentHelper:
 
         self.set_actual_current(new_current)
         self.apply_current(print_time)
+
+    def apply_current(self, print_time):
+        pass
 
 
 # Helper to configure StallGuard and CoolStep minimum velocity

@@ -277,15 +277,15 @@ class Homing:
         for axis in homing_axes:
             axis_name = "xyz"[axis]  # only works for cartesian
             partial_rails = self.toolhead.get_active_rails_for_axis(axis_name)
-            affected_rails = affected_rails | set(partial_rails)
+            affected_rails = (affected_rails | set(partial_rails), axis_name)
 
         dwell_time = 0.0
-        for rail in affected_rails:
+        for rail, axis_name in affected_rails:
             chs = rail.get_tmc_current_helpers()
             for ch in chs:
                 if ch is not None:
                     current_dwell_time = ch.set_current_for_homing(
-                        print_time, pre_homing, get_dwell_time=perform_dwell
+                        print_time, pre_homing, axis_name, get_dwell_time=perform_dwell
                     )
                     dwell_time = max(dwell_time, current_dwell_time)
 
