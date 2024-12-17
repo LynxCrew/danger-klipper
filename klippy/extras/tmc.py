@@ -845,7 +845,6 @@ class BaseTMCCurrentHelper:
     def __init__(self, config, mcu_tmc, max_current, has_sense_resistor=True):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
-        self.type = tmc_type
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
 
