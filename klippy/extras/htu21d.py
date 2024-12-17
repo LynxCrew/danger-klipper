@@ -8,7 +8,7 @@ import time
 
 from . import bus
 
-from extras.danger_options import get_danger_options
+from .danger_options import get_danger_options
 
 ######################################################################
 # NOTE: The implementation requires write support of length 0
@@ -97,7 +97,7 @@ class HTU21D:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.reactor = self.printer.get_reactor()
-        self.klipper_threads = self.printer.get_klipper_threads()
+        self.kalico_threads = self.printer.get_kalico_threads()
         self.i2c = bus.MCU_I2C_from_config(
             config, default_addr=HTU21D_I2C_ADDR, default_speed=100000
         )
@@ -111,7 +111,7 @@ class HTU21D:
             )
         self.deviceId = config.get("sensor_type")
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.0
-        self.temperature_sample_thread = self.klipper_threads.register_job(
+        self.temperature_sample_thread = self.kalico_threads.register_job(
             target=self._sample_htu21d
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits

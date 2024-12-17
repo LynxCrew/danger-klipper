@@ -74,27 +74,27 @@ class EncoderSensor:
         self.runout_helper.note_filament_present(True)
 
     def _handle_printing(self, *args):
-        if self.keep_enabled and not self.runout_helper.smart:
+        if not self.runout_helper.smart:
             self.reset()
             self.reactor.update_timer(
                 self._extruder_pos_update_timer, self.reactor.NOW
             )
 
     def _handle_printing_smart(self, *args):
-        if self.keep_enabled and self.runout_helper.smart:
+        if self.runout_helper.smart:
             self.reset()
             self.reactor.update_timer(
                 self._extruder_pos_update_timer, self.reactor.NOW
             )
 
     def _handle_not_printing(self, *args):
-        if self.keep_enabled and not self.runout_helper.smart:
+        if not self.runout_helper.smart:
             self.reactor.update_timer(
                 self._extruder_pos_update_timer, self.reactor.NEVER
             )
 
     def _handle_not_printing_smart(self, *args):
-        if self.keep_enabled and self.runout_helper.smart:
+        if self.runout_helper.smart:
             self.reactor.update_timer(
                 self._extruder_pos_update_timer, self.reactor.NEVER
             )

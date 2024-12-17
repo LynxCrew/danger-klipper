@@ -14,7 +14,7 @@ class ControllerFan:
         self.full_name = config.get_name()
         self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
-        self.klipper_threads = self.printer.get_klipper_threads()
+        self.kalico_threads = self.printer.get_kalico_threads()
         self.printer.register_event_handler(
             "klippy:connect", self._handle_connect
         )
@@ -39,7 +39,7 @@ class ControllerFan:
         self.last_on = self.idle_timeout
         self.last_speed = 0.0
         self.enabled = True
-        self.temperature_sample_thread = self.klipper_threads.register_job(
+        self.temperature_sample_thread = self.kalico_threads.register_job(
             target=self.callback
         )
         gcode = self.printer.lookup_object("gcode")
@@ -89,7 +89,9 @@ class ControllerFan:
         for name in self.stepper_names:
             active |= self.stepper_enable.lookup_enable(name).is_motor_enabled()
         for name in self.heater_names:
-            _, target_temp = self.pheaters.lookup_heater(name).get_temp(eventtime)
+            _, target_temp = self.pheaters.lookup_heater(name).get_temp(
+                eventtime
+            )
             if target_temp:
                 active = True
         if active:

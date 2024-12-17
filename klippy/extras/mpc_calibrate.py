@@ -280,7 +280,7 @@ class MpcCalibrate:
                 ret = temp > target
                 if ret and not reported[0]:
                     gcmd.respond_info(
-                        f"Waiting for heater to drop below {target} degrees celcius"
+                        f"Waiting for heater to drop below {target} degrees celsius"
                     )
                     reported[0] = True
                 return ret

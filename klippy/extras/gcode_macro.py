@@ -7,9 +7,9 @@ import pipes
 import threading
 import traceback, logging, ast, copy, json
 import jinja2, math
-import configfile
+from klippy import configfile
 
-from extras.danger_options import get_danger_options
+from .danger_options import get_danger_options
 
 PYTHON_SCRIPT_PREFIX = "!"
 
@@ -19,7 +19,7 @@ PYTHON_SCRIPT_PREFIX = "!"
 
 
 # Wrapper for access to printer object get_status() methods
-class GetStatusWrapperJinja:
+class GetStatusWrapper:
     def __init__(self, printer, eventtime=None):
         self.printer = printer
         self.eventtime = eventtime
@@ -350,7 +350,7 @@ class PrinterGCodeMacro:
 
     def create_template_context(self, eventtime=None):
         return {
-            "printer": GetStatusWrapperJinja(self.printer, eventtime),
+            "printer": GetStatusWrapper(self.printer, eventtime),
             "action_emergency_stop": self._action_emergency_stop,
             "action_respond_info": self._action_respond_info,
             "action_log": self._action_log,

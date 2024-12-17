@@ -279,27 +279,11 @@ CURRENT_RANGE_ERROR = "[%s %s]\n" "CURRENT_RANGE(%d) too small, minimum required
 
 
 class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
-    def __init__(self, config, mcu_tmc, tmc_type="tmc2240"):
-        self.use_motor_peak_current = config.getboolean("use_motor_peak_current", False)
-        self.printer = config.get_printer()
-        pconfig: PrinterConfig = self.printer.lookup_object("configfile")
-        self.name = config.get_name().split()[-1]
-        self.mcu_tmc = mcu_tmc
-        self.fields = mcu_tmc.get_fields()
-        self.Rref = config.getfloat("rref", None, minval=12000.0, maxval=60000.0)
-        if self.Rref is None:
-            pconfig.warn(
-                "config",
-                f"""[{self.type} {self.name}] rref not specified; using default = 12000.
-                If this value is wrong, it might burn your house down.
-                This parameter will be mandatory in future versions.
-                Specify the parameter to resolve this warning""",
-                f"{self.type} {self.name}",
-                "rref",
-            )
-            self.Rref = 12000.0
-
-        super().__init__(config, mcu_tmc, self._get_ifs(3), tmc_type)
+    def __init__(self, config, mcu_tmc):
+        self.Rref = config.getfloat("rref", minval=12000.0, maxval=60000.0)
+        super().__init__(
+            config, mcu_tmc, self._get_ifs_rms(3), has_sense_resistor=False
+        )
 
         self.current_range = config.getint(
             "driver_cr",
@@ -487,7 +471,7 @@ class TMC2240:
         if config.get("uart_pin", None) is not None:
             # use UART for communication
             self.mcu_tmc = tmc_uart.MCU_TMC_uart(
-                config, Registers, self.fields, 3, TMC_FREQUENCY
+                config, Registers, self.fields, 7, TMC_FREQUENCY
             )
         else:
             # Use SPI bus for communication

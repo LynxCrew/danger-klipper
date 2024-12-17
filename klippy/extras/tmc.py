@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, collections
-import stepper
+from klippy import stepper
 
 
 ######################################################################
@@ -77,6 +77,8 @@ class FieldHelper:
             )
         else:
             val = config.getint(config_name, default, minval=0, maxval=maxval)
+        if default is None and val is None:
+            return
         return self.set_field(field_name, val)
 
     def pretty_format(self, reg_name, reg_value):
@@ -840,12 +842,15 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
 
 
 class BaseTMCCurrentHelper:
-    def __init__(self, config, mcu_tmc, max_current, tmc_type):
+    def __init__(self, config, mcu_tmc, max_current, has_sense_resistor=True):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.type = tmc_type
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
+
+        if has_sense_resistor:
+            self.sense_resistor = config.getfloat("sense_resistor", above=0.0)
 
         # config_{run|hold|home}_current
         # represents an initial value set via config file
