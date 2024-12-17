@@ -6,7 +6,6 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
 from . import tmc, tmc2130, tmc_uart
-from configfile import PrinterConfig
 
 TMC_FREQUENCY = 12500000.0
 
@@ -280,11 +279,9 @@ CURRENT_RANGE_ERROR = "[%s %s]\n" "CURRENT_RANGE(%d) too small, minimum required
 
 class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
     def __init__(self, config, mcu_tmc):
-        self.use_motor_peak_current = config.getboolean(
-            "use_motor_peak_current", False)
         self.Rref = config.getfloat("rref", minval=12000.0, maxval=60000.0)
         super().__init__(
-            config, mcu_tmc, self._get_ifs(3), has_sense_resistor=False
+            config, mcu_tmc, self._get_ifs_rms(3), has_sense_resistor=False
         )
 
         self.current_range = config.getint(
@@ -327,18 +324,16 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         self.fields.set_field("ihold", ihold)
         self.fields.set_field("irun", self.cs)
 
-    def _get_ifs(self, current_range=None):
+    def _get_ifs_rms(self, current_range=None):
         if current_range is None:
             current_range = self.fields.get_field("current_range")
         ifs = KIFS[current_range] / self.Rref
-        if self.use_motor_peak_current:
-            return ifs
         return ifs / math.sqrt(2)
 
     def _calc_current_range(self, current):
         current_range = 0
         for current_range in range(4):
-            if current <= self._get_ifs(current_range):
+            if current <= self._get_ifs_rms(current_range):
                 break
         if self.current_range is not None:
             if self.current_range < current_range:
@@ -355,8 +350,8 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         return current_range
 
     def _calc_globalscaler(self, current):
-        ifs = self._get_ifs()
-        globalscaler = int(((current * 256.0 * 32) / (ifs * (self.cs + 1))) + 0.5)
+        ifs_rms = self._get_ifs_rms()
+        globalscaler = int(((current * 256.0 * 32) / (ifs_rms * (self.cs + 1))) + 0.5)
         if self.cap_global_scaler and globalscaler >= 256:
             return 0
         if globalscaler == 256:
@@ -378,22 +373,22 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         return globalscaler
 
     def _calc_current_bits(self, current, globalscaler):
-        ifs = self._get_ifs()
+        ifs_rms = self._get_ifs_rms()
         if not globalscaler:
             globalscaler = 256
-        bits = int((current * 256.0 * 32.0) / (globalscaler * ifs) - 1.0 + 0.5)
+        bits = int((current * 256.0 * 32.0) / (globalscaler * ifs_rms) - 1.0 + 0.5)
         return max(0, min(31, bits))
 
     def _calc_current_from_field(self, field_name):
-        ifs = self._get_ifs()
+        ifs_rms = self._get_ifs_rms()
         globalscaler = self.fields.get_field("globalscaler")
         if not globalscaler:
             globalscaler = 256
         bits = self.fields.get_field(field_name)
-        return globalscaler * (bits + 1) * ifs / (256.0 * 32.0)
+        return globalscaler * (bits + 1) * ifs_rms / (256.0 * 32.0)
 
     def get_current(self):
-        ifs = self._get_ifs()
+        ifs_rms = self._get_ifs_rms()
         run_current = self._calc_current_from_field("irun")
         hold_current = self._calc_current_from_field("ihold")
         return (
@@ -404,7 +399,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
                 if self.req_hold_current is None
                 else self.req_hold_current
             ),
-            ifs,
+            ifs_rms,
             self.req_home_current,
         )
 
