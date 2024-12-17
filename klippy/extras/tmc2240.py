@@ -280,9 +280,11 @@ CURRENT_RANGE_ERROR = "[%s %s]\n" "CURRENT_RANGE(%d) too small, minimum required
 
 class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
     def __init__(self, config, mcu_tmc):
+        self.use_motor_peak_current = config.getboolean(
+            "use_motor_peak_current", False)
         self.Rref = config.getfloat("rref", minval=12000.0, maxval=60000.0)
         super().__init__(
-            config, mcu_tmc, self._get_ifs_rms(3), has_sense_resistor=False
+            config, mcu_tmc, self._get_ifs(3), has_sense_resistor=False
         )
 
         self.current_range = config.getint(
@@ -359,7 +361,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
             return 0
         if globalscaler == 256:
             return 0
-        if 1 <= globalscaler <= 31 or globalscaler > 256:
+        if 1 <= globalscaler <= 31 or globalscaler > 255:
             current_range = self.fields.get_field("current_range")
             self.printer.invoke_shutdown(
                 GLOBALSCALER_ERROR
