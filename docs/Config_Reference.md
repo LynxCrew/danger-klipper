@@ -3,6 +3,8 @@
 This document is a reference for options available in the Kalico
 config file.
 
+Sections and options are marked with an ⚠️ to denote configurations that are changed from stock Klipper.
+
 The descriptions in this document are formatted so that it is possible
 to cut-and-paste them into a printer config file. See the
 [installation document](Installation.md) for information on setting up
@@ -1863,7 +1865,7 @@ file for a Marlin compatible M808 G-Code macro.
 [sdcard_loop]
 ```
 
-### ⚠ [force_move]
+### ⚠️ [force_move]
 
 This module is enabled by default in Kalico!
 
