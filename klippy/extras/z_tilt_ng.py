@@ -6,7 +6,7 @@
 import logging
 import numpy as np
 from klippy import mathutil
-from . import probe
+from . import probe, z_tilt
 
 
 MAX_RETRIES = 30
@@ -102,36 +102,6 @@ class ZAdjustHelper:
         last_stepper.set_trapq(toolhead.get_trapq())
         curpos[2] += first_stepper_offset
         toolhead.set_position(curpos)
-
-
-class ZAdjustStatus:
-    def __init__(self, printer):
-        self.applied = False
-        printer.register_event_handler(
-            "stepper_enable:motor_off", self._motor_off
-        )
-        printer.register_event_handler(
-            "stepper_enable:disable_z", self._motor_off
-        )
-        printer.register_event_handler(
-            "unhome:mark_as_unhomed_z", self._motor_off
-        )
-
-    def check_retry_result(self, retry_result):
-        if (isinstance(retry_result, str) and retry_result == "done") or (
-            isinstance(retry_result, float) and retry_result == 0.0
-        ):
-            self.applied = True
-        return retry_result
-
-    def reset(self):
-        self.applied = False
-
-    def get_status(self, eventtime):
-        return {"applied": self.applied}
-
-    def _motor_off(self, print_time):
-        self.reset()
 
 
 class RetryHelper:
@@ -239,7 +209,7 @@ class ZTilt:
         )
         self.z_offsets = self.config_z_offsets
 
-        self.z_status = ZAdjustStatus(self.printer)
+        self.z_status = z_tilt.ZAdjustStatus(self.printer)
         self.z_helper = ZAdjustHelper(config, self.z_count)
         # probe points for calibrate/autodetect
         cal_probe_points = list(self.probe_helper.get_probe_points())
