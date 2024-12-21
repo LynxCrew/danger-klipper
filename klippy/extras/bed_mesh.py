@@ -401,7 +401,7 @@ class BedMeshCalibrate:
                 "scan_speed", self.probe_helper.speed, above=0.0
             )
         self.probe_helper.minimum_points(3)
-        #         self.probe_helper.use_xy_offsets(True)
+        self.probe_helper.use_xy_offsets(True)
         self.gcode = self.printer.lookup_object("gcode")
         self.gcode.register_command(
             "BED_MESH_CALIBRATE",
