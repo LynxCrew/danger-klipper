@@ -59,7 +59,6 @@ class PrinterTemperatureMCU:
         self.mcu_adc = ppins.setup_pin(
             "adc", "%s:ADC_TEMPERATURE" % (mcu_name,)
         )
-        self.mcu_adc.setup_adc_callback(self.report_time, self.adc_callback)
         query_adc = config.get_printer().load_object(config, "query_adc")
         query_adc.register_adc(config.get_name(), self.mcu_adc)
         if self.name in get_danger_options().temp_ignore_limits:
@@ -118,14 +117,13 @@ class PrinterTemperatureMCU:
     def _build_config(self):
         if self.beacon_mcu_temp_wrapper is not None:
             return
+        self.mcu_adc.setup_adc_callback(self.report_time, self.adc_callback)
         # Obtain mcu information
         _mcu = self.mcu_adc.get_mcu()
         self.debug_read_cmd = _mcu.lookup_query_command(
             "debug_read order=%c addr=%u", "debug_result val=%u"
         )
 
-        # Obtain mcu information
-        _mcu = self._mcu = self.mcu_adc.get_mcu()
         self.mcu_type = _mcu.get_constants().get("MCU", "")
         # Run MCU specific configuration
         cfg_funcs = [
@@ -173,6 +171,7 @@ class PrinterTemperatureMCU:
             maxval=max(adc_range),
             range_check_count=self._danger_check_count,
         )
+        self.mcu_adc._build_config()
 
     def setup_callback(self, temperature_callback):
         if self.beacon_mcu_temp_wrapper is not None:
