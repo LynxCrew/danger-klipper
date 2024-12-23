@@ -87,7 +87,11 @@ class PrinterSensorCombined:
             self.initialized = initialized
         values = []
         for sensor in self.sensors:
-            if not hasattr(sensor, "initialized") or sensor.initialized:
+            if (
+                not hasattr(sensor, "initialized")
+                or sensor.initialized
+                and not sensor.get_mcu().non_critical_disconnected
+            ):
                 sensor_temperature = sensor.get_status(eventtime)["temperature"]
                 if sensor_temperature is not None:
                     values.append(sensor_temperature)
