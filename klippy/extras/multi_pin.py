@@ -66,6 +66,9 @@ class PrinterMultiPin:
     def seconds_to_clock(self, time):
         return self.mcu.seconds_to_clock(time)
 
+    def add_config_cmd(self, cmd, is_init=False, on_restart=False):
+        self.mcu.add_config_cmd(cmd, is_init, on_restart)
+
     def get_mcu(self):
         return self.mcu_pins[0].get_mcu()
 
