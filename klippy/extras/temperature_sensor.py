@@ -38,14 +38,15 @@ class PrinterSensorGeneric:
         if pin is None:
             sensor_type = config.get("sensor_type")
             if sensor_type == "temperature_mcu":
-                return self.printer.lookup_object(
-                    ("mcu " + config.get("sensor_mcu", "")).strip()
-                )
+                sensor_mcu = config.get("sensor_mcu", "")
+                if sensor_mcu == "beacon":
+                    return self.sensor.beacon_mcu_temp_wrapper.get_mcu()
+                return self.sensor.mcu_adc.get_mcu()
             if sensor_type == "temperature_driver":
-                return self.printer.lookup_object(
-                    config.get("sensor_driver")
-                ).get_mcu()
+                return self.sensor.driver.get_mcu()
             if sensor_type == "temperature_combined":
+                return self.sensor.get_mcu()
+            if sensor_type == "beacon_coil":
                 return self.sensor.get_mcu()
             return DummyMCU()
         if ":" not in pin:
