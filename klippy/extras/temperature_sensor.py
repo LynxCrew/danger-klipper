@@ -12,7 +12,7 @@ class PrinterSensorGeneric:
         self.printer = config.get_printer()
         self.full_name = config.get_name()
         self.name = self.full_name.split()[-1]
-        self.mcu = self._parse_mcu(config)
+        self.sensor_mcu = self._parse_mcu(config)
         pheaters = self.printer.load_object(config, "heaters")
         self.sensor = pheaters.setup_sensor(config)
         self.min_temp = config.getfloat(
@@ -38,17 +38,25 @@ class PrinterSensorGeneric:
         if pin is None:
             sensor_type = config.get("sensor_type")
             if sensor_type == "temperature_mcu":
-                return self.printer.lookup_object(("mcu " + config.get("sensor_mcu", "")).strip())
+                return self.printer.lookup_object(
+                    ("mcu " + config.get("sensor_mcu", "")).strip()
+                )
             if sensor_type == "temperature_driver":
-                return self.printer.lookup_object(config.get("sensor_driver")).get_mcu()
+                return self.printer.lookup_object(
+                    config.get("sensor_driver")
+                ).get_mcu()
+            if sensor_type == "temperature_combined":
+                return self.sensor.get_mcu()
             return DummyMCU()
         if ":" not in pin:
             return self.printer.lookup_object("mcu")
         else:
-            return self.printer.lookup_object(("mcu " + pin.split(":", 1)[0].strip()).strip())
+            return self.printer.lookup_object(
+                ("mcu " + pin.split(":", 1)[0].strip()).strip()
+            )
 
-    def get_mcu(self):
-        return self.mcu
+    def get_sensor_mcu(self):
+        return self.sensor_mcu
 
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp
@@ -75,10 +83,10 @@ class PrinterSensorGeneric:
             return True
         return False
 
+
 class DummyMCU:
     def __init__(self):
         self.non_critical_disconnected = False
-
 
 
 def load_config_prefix(config):

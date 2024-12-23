@@ -233,21 +233,21 @@ class HTU21D:
                     self.humidity = 100
                 # Only for HTU21D & SHT21.
                 # Calculates temperature compensated Humidity, %RH
-                if (
-                    self.deviceId in ["SHT21", "HTU21D"]
-                    and self.temp > 0
-                    and self.temp < 80
-                ):
+                if self.deviceId in ["SHT21", "HTU21D"] and 0 < self.temp < 80:
                     logging.debug("htu21d: Do temp compensation..")
-                    self.humidity = self.humidity
-                    +(25.0 - self.temp) * HTU21D_TEMP_COEFFICIENT
+                    self.humidity = (
+                        self.humidity
+                        + (25.0 - self.temp) * HTU21D_TEMP_COEFFICIENT
+                    )
                 logging.debug("htu21d: Humidity %.2f " % self.humidity)
         except Exception:
             logging.exception("htu21d: Error reading data")
             self.temp = self.humidity = 0.0
             return 0
 
-        if self.temp < self.min_temp or self.temp > self.max_temp:
+        if not self.i2c.get_mcu().non_critical_disconnected and (
+            self.temp < self.min_temp or self.temp > self.max_temp
+        ):
             if not self.ignore:
                 self.printer.invoke_shutdown(
                     "[htu21d %s]\nTemperature %0.1f outside range of %0.1f-%.01f"

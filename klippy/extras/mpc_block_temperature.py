@@ -51,7 +51,10 @@ class MPC_BLOCK_TEMP_WRAPPER:
 
         if self.temp is not None:
             if self.temp is not None:
-                if self.temp < self.min_temp or self.temp > self.max_temp:
+                if (
+                    not self.heater.mcu_pwm.get_mcu().non_critical_disconnected
+                    and (self.temp < self.min_temp or self.temp > self.max_temp)
+                ):
                     if not self.ignore:
                         self.printer.invoke_shutdown(
                             "MPC Heater Block %s\nTemperature %0.1f outside range of %0.1f-%.01f"
