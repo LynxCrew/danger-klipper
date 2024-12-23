@@ -50,38 +50,8 @@ class PrinterMultiPin:
         ]
         return self
 
-    def create_oid(self):
-        logging.info("I am the issue")
-        return self.mcu.create_oid()
-
-    def register_config_callback(self, cb):
-        self.mcu.register_config_callback(cb)
-
-    def get_non_critical_reconnect_event_name(self):
-        return self.mcu.get_non_critical_reconnect_event_name()
-
-    def get_non_critical_disconnect_event_name(self):
-        return self.mcu.get_non_critical_disconnect_event_name()
-
-    def seconds_to_clock(self, time):
-        return self.mcu.seconds_to_clock(time)
-
-    def add_config_cmd(self, cmd, is_init=False, on_restart=False):
-        self.mcu.add_config_cmd(cmd, is_init, on_restart)
-
-    def alloc_command_queue(self):
-        return self.mcu.alloc_command_queue()
-
-    def lookup_command(self, msgformat, cq=None):
-        return self.mcu.lookup_command(msgformat, cq)
-
-    def lookup_query_command(
-        self, msgformat, respformat, oid=None, cq=None, is_async=False
-    ):
-        return self.mcu.lookup_query_command(msgformat, respformat, oid, cq, is_async)
-
     def get_mcu(self):
-        return self.mcu_pins[0].get_mcu()
+        return self.mcu
 
     def setup_max_duration(self, max_duration):
         for mcu_pin in self.mcu_pins:
