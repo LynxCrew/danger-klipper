@@ -12,7 +12,7 @@ class PrinterSensorGeneric:
         self.printer = config.get_printer()
         self.full_name = config.get_name()
         self.name = self.full_name.split()[-1]
-        self.mcu = self._parse_mcu(config.get("pin"))
+        self.mcu = self._parse_mcu(config)
         pheaters = self.printer.load_object(config, "heaters")
         self.sensor = pheaters.setup_sensor(config)
         self.min_temp = config.getfloat(
@@ -33,7 +33,16 @@ class PrinterSensorGeneric:
         self.measured_max = -99999999.0
         self.initialized = False
 
-    def _parse_mcu(self, pin):
+    def _parse_mcu(self, config):
+        pin = config.get("pin", None)
+        if pin is None:
+            sensor_type = config.get("sensor_type")
+            if sensor_type == "temperature_host":
+                return DummyMCU()
+            if sensor_type == "temperature_mcu":
+                return self.printer.lookup_object(config.get("sensor_mcu", "mcu"))
+            if sensor_type == "temperature_driver":
+                return self.printer.lookup_object(config.get("sensor_driver")).get_mcu()
         if ":" not in pin:
             return self.printer.lookup_object("mcu")
         else:
@@ -66,6 +75,11 @@ class PrinterSensorGeneric:
         if self.last_temp > self.max_temp or self.last_temp < self.min_temp:
             return True
         return False
+
+class DummyMCU:
+    def __init__(self):
+        self.non_critical_disconnected = False
+
 
 
 def load_config_prefix(config):
