@@ -57,6 +57,12 @@ class PrinterMultiPin:
     def register_config_callback(self, cb):
         self.mcu.register_config_callback(cb)
 
+    def get_non_critical_reconnect_event_name(self):
+        return self.mcu.get_non_critical_reconnect_event_name()
+
+    def get_non_critical_disconnect_event_name(self):
+        return self.mcu.get_non_critical_disconnect_event_name()
+
     def get_mcu(self):
         return self.mcu_pins[0].get_mcu()
 
