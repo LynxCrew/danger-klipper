@@ -40,13 +40,13 @@ class PrinterSensorGeneric:
             if sensor_type == "temperature_host":
                 return DummyMCU()
             if sensor_type == "temperature_mcu":
-                return self.printer.lookup_object(config.get("sensor_mcu", "mcu"))
+                return self.printer.lookup_object(("mcu " + config.get("sensor_mcu", "mcu")).strip())
             if sensor_type == "temperature_driver":
                 return self.printer.lookup_object(config.get("sensor_driver")).get_mcu()
         if ":" not in pin:
             return self.printer.lookup_object("mcu")
         else:
-            return self.printer.lookup_object(pin.split(":", 1)[0].strip())
+            return self.printer.lookup_object(("mcu " + pin.split(":", 1)[0].strip()).strip())
 
     def get_mcu(self):
         return self.mcu
