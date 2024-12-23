@@ -63,6 +63,9 @@ class PrinterMultiPin:
     def get_non_critical_disconnect_event_name(self):
         return self.mcu.get_non_critical_disconnect_event_name()
 
+    def seconds_to_clock(self, time):
+        return self.mcu.seconds_to_clock(time)
+
     def get_mcu(self):
         return self.mcu_pins[0].get_mcu()
 
