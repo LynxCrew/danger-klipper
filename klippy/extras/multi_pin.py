@@ -72,6 +72,9 @@ class PrinterMultiPin:
     def alloc_command_queue(self):
         return self.mcu.alloc_command_queue()
 
+    def lookup_command(self, msgformat, cq=None):
+        return self.mcu.lookup_command(msgformat, cq)
+
     def get_mcu(self):
         return self.mcu_pins[0].get_mcu()
 
