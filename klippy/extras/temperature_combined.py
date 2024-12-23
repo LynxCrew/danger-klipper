@@ -23,6 +23,7 @@ class PrinterSensorCombined:
         self.max_deviation = config.getfloat(
             "maximum_deviation", default=None, above=0.0
         )
+        self.non_critical_disconnected = None
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         # ensure compatibility with itself
         self.sensor = self
@@ -97,6 +98,7 @@ class PrinterSensorCombined:
                     values.append(sensor_temperature)
 
         if values:
+            self.non_critical_disconnected = False
             # check if values are out of max_deviation range
             if (
                 self.max_deviation is not None
@@ -119,6 +121,8 @@ class PrinterSensorCombined:
                 self.last_temp = temp
                 self.measured_min = min(self.measured_min, temp)
                 self.measured_max = max(self.measured_max, temp)
+        else:
+            self.non_critical_disconnected = True
 
     def get_temp(self, eventtime):
         return self.last_temp, 0.0
