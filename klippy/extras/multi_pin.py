@@ -37,6 +37,9 @@ class PrinterMultiPin:
         ]
         return self
 
+    def create_oid(self):
+        return self.get_mcu().create_oid()
+
     def get_mcu(self):
         return self.mcu_pins[0].get_mcu()
 
