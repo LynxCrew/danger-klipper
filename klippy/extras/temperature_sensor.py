@@ -48,6 +48,10 @@ class PrinterSensorGeneric:
                 return self.sensor.get_mcu()
             if sensor_type == "beacon_coil":
                 return self.sensor.get_mcu()
+            if sensor_type == "mpc_block_temperature":
+                return self.sensor.heater.mcu_pwm.get_mcu()
+            if sensor_type == "mpc_ambient_temperature":
+                return self.sensor.heater.mcu_pwm.get_mcu()
             return DummyMCU()
         if ":" not in pin:
             return self.printer.lookup_object("mcu")
