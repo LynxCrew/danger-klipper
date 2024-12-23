@@ -54,6 +54,9 @@ class PrinterMultiPin:
         logging.info("I am the issue")
         return self.mcu.create_oid()
 
+    def register_config_callback(self, cb):
+        self.mcu.register_config_callback(cb)
+
     def get_mcu(self):
         return self.mcu_pins[0].get_mcu()
 
