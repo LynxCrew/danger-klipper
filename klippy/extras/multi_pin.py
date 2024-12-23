@@ -16,7 +16,19 @@ class PrinterMultiPin:
             pass
         self.pin_type = None
         self.pin_list = config.getlist("pins")
+        if len(self.pin_list) == 0:
+            raise config.error("No pins defined")
         self.mcu_pins = []
+        chips = self.printer.lookup_object("pins").chips
+        self.mcu = chips[self._get_chip()[0]]
+
+    def _get_chip(self):
+        desc = self.pin_list[0]
+        if ":" not in desc:
+            chip_name, pin = "mcu", desc
+        else:
+            chip_name, pin = [s.strip() for s in desc.split(":", 1)]
+        return chip_name, pin
 
     def setup_pin(self, pin_type, pin_params):
         ppins = self.printer.lookup_object("pins")
@@ -40,6 +52,7 @@ class PrinterMultiPin:
 
     def create_oid(self):
         logging.info("I am the issue")
+        return self.mcu.create_oid()
 
     def get_mcu(self):
         return self.mcu_pins[0].get_mcu()
