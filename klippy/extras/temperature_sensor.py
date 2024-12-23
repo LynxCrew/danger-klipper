@@ -56,7 +56,7 @@ class PrinterSensorGeneric:
                 ("mcu " + pin.split(":", 1)[0].strip()).strip()
             )
 
-    def get_sensor_mcu(self):
+    def get_mcu(self):
         return self.sensor_mcu
 
     def temperature_callback(self, read_time, temp):
