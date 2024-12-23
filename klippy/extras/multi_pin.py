@@ -75,6 +75,11 @@ class PrinterMultiPin:
     def lookup_command(self, msgformat, cq=None):
         return self.mcu.lookup_command(msgformat, cq)
 
+    def lookup_query_command(
+        self, msgformat, respformat, oid=None, cq=None, is_async=False
+    ):
+        return self.mcu.lookup_query_command(msgformat, respformat, oid, cq, is_async)
+
     def get_mcu(self):
         return self.mcu_pins[0].get_mcu()
 
