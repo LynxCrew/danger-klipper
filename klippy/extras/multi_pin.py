@@ -69,6 +69,9 @@ class PrinterMultiPin:
     def add_config_cmd(self, cmd, is_init=False, on_restart=False):
         self.mcu.add_config_cmd(cmd, is_init, on_restart)
 
+    def alloc_command_queue(self):
+        return self.mcu.alloc_command_queue()
+
     def get_mcu(self):
         return self.mcu_pins[0].get_mcu()
 
