@@ -9,6 +9,7 @@ KELVIN_TO_CELSIUS = -273.15
 
 class PrinterSensorGeneric:
     def __init__(self, config):
+        self.config = config
         self.printer = config.get_printer()
         self.full_name = config.get_name()
         self.name = self.full_name.split()[-1]
@@ -31,7 +32,11 @@ class PrinterSensorGeneric:
         self.measured_min = 99999999.0
         self.measured_max = -99999999.0
         self.initialized = False
-        self.sensor_mcu = self._parse_mcu(config)
+        self.sensor_mcu = None
+        self.printer.register_event_handler("klippy:after-ready", self._handle_ready)
+
+    def _handle_ready(self):
+        self.sensor_mcu = self._parse_mcu(self.config)
 
     def _parse_mcu(self, config):
         pin = config.get("pin", None)
