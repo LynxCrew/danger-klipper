@@ -33,7 +33,7 @@ class PrinterSensorGeneric:
         self.measured_max = -99999999.0
         self.initialized = False
         self.sensor_mcu = None
-        self.printer.register_event_handler("klippy:after-ready", self._handle_ready)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def _handle_ready(self):
         self.sensor_mcu = self._parse_mcu(self.config)

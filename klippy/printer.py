@@ -336,16 +336,6 @@ class Printer:
             self.invoke_shutdown(
                 "Internal error during ready callback: %s" % (str(e),)
             )
-        try:
-            for cb in self.event_handlers.get("klippy:after-ready", []):
-                if self.state_message is not message_ready:
-                    return
-                cb()
-        except Exception as e:
-            logging.exception("Unhandled exception during after-ready callback")
-            self.invoke_shutdown(
-                "Internal error during ready after-callback: %s" % (str(e),)
-            )
 
     def run(self):
         systime = time.time()
