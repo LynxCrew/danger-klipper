@@ -26,11 +26,14 @@ class MPC_BLOCK_TEMP_WRAPPER:
         )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
-    def _handle_ready(self):
+    def _handle_connect(self):
         pheaters = self.printer.lookup_object("heaters")
         self.heater = pheaters.lookup_heater(self.heater_name)
+
+    def _handle_ready(self):
         self.temperature_sample_thread.start()
 
     def setup_callback(self, temperature_callback):
