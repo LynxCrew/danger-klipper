@@ -86,7 +86,9 @@ class LM75:
             return 0
 
         if self.temp is not None:
-            if self.temp < self.min_temp or self.temp > self.max_temp:
+            if not self.i2c.get_mcu().non_critical_disconnected and (
+                self.temp < self.min_temp or self.temp > self.max_temp
+            ):
                 if not self.ignore:
                     self.printer.invoke_shutdown(
                         "[lm75 %s]\nTemperature %0.1f outside range of %0.1f-%.01f"

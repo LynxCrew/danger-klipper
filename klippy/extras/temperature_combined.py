@@ -4,7 +4,7 @@
 # Copyright (C) 2023  Michael Jäger <michael@mjaeger.eu>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-
+from . import temperature_sensor
 from .danger_options import get_danger_options
 
 REPORT_TIME = 0.300
@@ -23,6 +23,7 @@ class PrinterSensorCombined:
         self.max_deviation = config.getfloat(
             "maximum_deviation", default=None, above=0.0
         )
+        self.dummy_mcu = temperature_sensor.DummyMCU()
         self.ignore = self.name in get_danger_options().temp_ignore_limits
         # ensure compatibility with itself
         self.sensor = self
@@ -87,12 +88,15 @@ class PrinterSensorCombined:
             self.initialized = initialized
         values = []
         for sensor in self.sensors:
-            if not hasattr(sensor, "initialized") or sensor.initialized:
+            if (
+                not hasattr(sensor, "initialized") or sensor.initialized
+            ) and not sensor.get_mcu().non_critical_disconnected:
                 sensor_temperature = sensor.get_status(eventtime)["temperature"]
                 if sensor_temperature is not None:
                     values.append(sensor_temperature)
 
         if values:
+            self.dummy_mcu.non_critical_disconnected = False
             # check if values are out of max_deviation range
             if (
                 self.max_deviation is not None
@@ -115,6 +119,11 @@ class PrinterSensorCombined:
                 self.last_temp = temp
                 self.measured_min = min(self.measured_min, temp)
                 self.measured_max = max(self.measured_max, temp)
+        else:
+            self.dummy_mcu.non_critical_disconnected = True
+
+    def get_mcu(self):
+        return self.dummy_mcu
 
     def get_temp(self, eventtime):
         return self.last_temp, 0.0

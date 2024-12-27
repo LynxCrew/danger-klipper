@@ -9,6 +9,7 @@ KELVIN_TO_CELSIUS = -273.15
 
 class PrinterSensorGeneric:
     def __init__(self, config):
+        self.config = config
         self.printer = config.get_printer()
         self.full_name = config.get_name()
         self.name = self.full_name.split()[-1]
@@ -31,6 +32,41 @@ class PrinterSensorGeneric:
         self.measured_min = 99999999.0
         self.measured_max = -99999999.0
         self.initialized = False
+        self.sensor_mcu = DummyMCU()
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
+
+    def _handle_ready(self):
+        self.sensor_mcu = self._parse_mcu(self.config)
+
+    def _parse_mcu(self, config):
+        pin = config.get("pin", None)
+        if pin is None:
+            sensor_type = config.get("sensor_type")
+            if sensor_type == "temperature_mcu":
+                sensor_mcu = config.get("sensor_mcu", "")
+                if sensor_mcu == "beacon":
+                    return self.sensor.beacon_mcu_temp_wrapper.get_mcu()
+                return self.sensor.mcu_adc.get_mcu()
+            if sensor_type == "temperature_driver":
+                return self.sensor.driver.get_mcu()
+            if sensor_type == "temperature_combined":
+                return self.sensor.get_mcu()
+            if sensor_type == "beacon_coil":
+                return self.sensor.get_mcu()
+            if sensor_type == "mpc_block_temperature":
+                return self.sensor.heater.mcu_pwm.get_mcu()
+            if sensor_type == "mpc_ambient_temperature":
+                return self.sensor.heater.mcu_pwm.get_mcu()
+            return DummyMCU()
+        if ":" not in pin:
+            return self.printer.lookup_object("mcu")
+        else:
+            return self.printer.lookup_object(
+                ("mcu " + pin.split(":", 1)[0].strip()).strip()
+            )
+
+    def get_mcu(self):
+        return self.sensor_mcu
 
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp
@@ -56,6 +92,11 @@ class PrinterSensorGeneric:
         if self.last_temp > self.max_temp or self.last_temp < self.min_temp:
             return True
         return False
+
+
+class DummyMCU:
+    def __init__(self):
+        self.non_critical_disconnected = False
 
 
 def load_config_prefix(config):
