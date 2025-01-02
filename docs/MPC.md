@@ -24,7 +24,7 @@ To use MPC as the temperature controller for the extruder use the following basi
 [extruder]
 control: mpc
 heater_power: 50  
-cooling_fan: fan
+cooling_fan:
 filament_diameter: 1.75
 filament_density: 1.20
 filament_heat_capacity: 1.8 
@@ -42,10 +42,10 @@ filament_heat_capacity: 1.8
   heater. Setting heater_power to the power output at the expected printing
   temperature is recommended.
   
-- `cooling_fan: fan`  
-  _Default Value: fan_  
-  This is the fan that is cooling extruded filament and the hotend. 
-  Specifying "fan" will automatically use the part cooling fan.
+- `cooling_fan:`  
+  _Default Value: Nothing_  
+  The fan that is cooling extruded filament and the hotend. Default is no fan so 
+  there will be no fan taken into account for controlling the heater.
   
 - `filament_diameter: 1.75`  
   _Default Value: 1.75 (mm)_  
