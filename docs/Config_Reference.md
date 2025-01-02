@@ -497,6 +497,9 @@ radius:
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#use_probe_xy_offsets: False
+#   If True, apply the `[probe]` XY offsets to the probed positions. The
+#   default is False.
 ```
 
 ### Deltesian Kinematics
@@ -1265,6 +1268,9 @@ Visual Examples:
 #bed_mesh_default:
 #   Optionally provide the name of a profile you would like loaded on init.
 #   By default, no profile is loaded.
+#use_probe_xy_offsets: True
+#   If True, apply the `[probe]` XY offsets to the probed positions. The
+#   default is True.
 ```
 
 ### [bed_tilt]
@@ -1302,6 +1308,9 @@ information.
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#use_probe_xy_offsets: False
+#   If True, apply the `[probe]` XY offsets to the probed positions. The
+#   default is False.
 ```
 
 ### [bed_screws]
@@ -1389,6 +1398,9 @@ information.
 #   Default value is CW-M3 which most printers use. A clockwise
 #   rotation of the knob decreases the gap between the nozzle and the
 #   bed. Conversely, a counter-clockwise rotation increases the gap.
+#use_probe_xy_offsets: False
+#   If True, apply the `[probe]` XY offsets to the probed positions. The
+#   default is False.
 ```
 
 ### [z_tilt]
@@ -1439,6 +1451,9 @@ extended [G-Code command](G-Codes.md#z_tilt) becomes available.
 #   will be the probe z-offset)
 #min_horizontal_move_z: 0.0
 #   Minimum horizontal_move_z for adaptive horizontal_move_z.
+#use_probe_xy_offsets: False
+#   If True, apply the `[probe]` XY offsets to the probed positions. The
+#   default is False.
 ```
 
 #### [z_tilt_ng]
@@ -1468,10 +1483,6 @@ commands become available, enhancing bed leveling accuracy and calibration effic
 # See [z_tilt]
 #horizontal_move_z: 5
 # See [z_tilt]
-#min_horizontal_move_z: 1.0
-# See [z_tilt]
-#adaptive_horizontal_move_z: False
-# See [z_tilt]
 #retries: 0
 # See [z_tilt]
 #retry_tolerance: 0
@@ -1481,6 +1492,8 @@ commands become available, enhancing bed leveling accuracy and calibration effic
 #adaptive_horizontal_move_z: false
 # See [z_tilt]
 #min_horizontal_move_z: 0.0
+# See [z_tilt]
+#use_probe_xy_offsets: False
 # See [z_tilt]
 #extra_points:
 #   A list in the same format as "points" above. This list contains
@@ -1557,15 +1570,6 @@ Where x is the 0, 0 point on the bed
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
-#min_horizontal_move_z: 1.0
-#   minimum value for horizontal move z
-#   (only used when adaptive_horizontal_move_z is True)
-#adaptive_horizontal_move_z: False
-#   if we should adjust horizontal move z after the first adjustment round,
-#   based on error.
-#   when set to True, initial horizontal_move_z is the config value,
-#   subsequent iterations will set horizontal_move_z to
-#   the ceil of error, or min_horizontal_move_z - whichever is greater.
 #max_adjust: 4
 #   Safety limit if an adjustment greater than this value is requested
 #   quad_gantry_level will abort.
@@ -1584,6 +1588,9 @@ Where x is the 0, 0 point on the bed
 #   will be the probe z-offset)
 #min_horizontal_move_z: 0.0
 #   Minimum horizontal_move_z for adaptive horizontal_move_z.
+#use_probe_xy_offsets: False
+#   If True, apply the `[probe]` XY offsets to the probed positions. The
+#   default is False.
 ```
 
 ### [skew_correction]
@@ -1934,7 +1941,12 @@ allowing per-filament settings and runtime tuning.
 #   The vertical height by which the nozzle is lifted from the print to
 #   prevent collisions with the print during travel moves when retracted.
 #   The minimum value is 0 mm, the default value is 0 mm, which disables
-#   zhop moves.
+#   zhop moves. The value will be reduced if the zhop move reaches
+#   maximum z.
+#clear_zhop_on_z_moves: False
+#   If True, when a change in Z is sent while toolhead is retracted,
+#   z_hop is cancelled until next retraction. Otherwise,
+#   `z_hop_height` is applied as an offset to all movements.
 ```
 
 ### [gcode_arcs]
@@ -2076,8 +2088,9 @@ Support for LIS2DW accelerometers.
 
 ```
 [lis2dw]
-cs_pin:
-#   The SPI enable pin for the sensor. This parameter must be provided.
+#cs_pin:
+#   The SPI enable pin for the sensor. This parameter must be provided
+#   if using SPI.
 #spi_speed: 5000000
 #   The SPI speed (in hz) to use when communicating with the chip.
 #   The default is 5000000.
@@ -2087,6 +2100,46 @@ cs_pin:
 #spi_software_miso_pin:
 #   See the "common SPI settings" section for a description of the
 #   above parameters.
+#i2c_address:
+#   Default is 25 (0x19). If SA0 is high, it would be 24 (0x18) instead.
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed: 400000
+#   See the "common I2C settings" section for a description of the
+#   above parameters. The default "i2c_speed" is 400000.
+#axes_map: x, y, z
+#   See the "adxl345" section for information on this parameter.
+```
+
+### [lis3dh]
+
+Support for LIS3DH accelerometers.
+
+```
+[lis3dh]
+#cs_pin:
+#   The SPI enable pin for the sensor. This parameter must be provided
+#   if using SPI.
+#spi_speed: 5000000
+#   The SPI speed (in hz) to use when communicating with the chip.
+#   The default is 5000000.
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+#i2c_address:
+#   Default is 25 (0x19). If SA0 is high, it would be 24 (0x18) instead.
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed: 400000
+#   See the "common I2C settings" section for a description of the
+#   above parameters. The default "i2c_speed" is 400000.
 #axes_map: x, y, z
 #   See the "adxl345" section for information on this parameter.
 ```
@@ -3565,14 +3618,17 @@ control: curve
 #   fan would run with 0.5 at 55°)
 #cooling_hysteresis: 0.0
 #   define the temperature hysteresis for lowering the fan speed
-#   (temperature differences to the last measured value that are lower than
-#   the hysteresis will not cause lowering of the fan speed)
+#   (in simple terms this setting offsets the fan curve when cooling down
+#   by the specified amount of degrees celsius. For example, if the
+#   hysteresis is set to 5°C, the fan curve will be moved by -5°C. This
+#   setting can be used to reduce the effects of quickly changing
+#   temperatures around a target temperature which would cause the fan to
+#   speed up and slow down repeatedly.)
 #heating_hysteresis: 0.0
 #   same as cooling_hysteresis but for increasing the fan speed, it is
 #   recommended to be left at 0 for safety reasons
 #smooth_readings: 10
-#   the amount of readings a median should be taken of to determine the fan
-#   speed at each update interval, the default is 10
+#   This parameter is deprecated and should no longer be used.
 ```
 
 ### [fan_generic]
@@ -4408,17 +4464,17 @@ run_current:
 
 ### [tmc5160]
 
-Configure a TMC5160 stepper motor driver via SPI bus. To use this
-feature, define a config section with a "tmc5160" prefix followed by
-the name of the corresponding stepper config section (for example,
-"[tmc5160 stepper_x]").
+Configure a TMC5160 or TMC2160 stepper motor driver via SPI bus.
+To use this feature, define a config section with a "tmc5160" prefix
+followed by the name of the corresponding stepper config section
+(for example, "[tmc5160 stepper_x]").
 
 ```
 [tmc5160 stepper_x]
 cs_pin:
-#   The pin corresponding to the TMC5160 chip select line. This pin
-#   will be set to low at the start of SPI messages and raised to high
-#   after the message completes. This parameter must be provided.
+#   The pin corresponding to the TMC5160 or TMC2160 chip select line.
+#   This pin will be set to low at the start of SPI messages and raised
+#   to high after the message completes. This parameter must be provided.
 #spi_speed:
 #spi_bus:
 #spi_software_sclk_pin:
@@ -4526,8 +4582,8 @@ sense_resistor:
 #driver_BBMCLKS: 4
 #driver_BBMTIME: 0
 #driver_FILT_ISENSE: 0
-#   Set the given register during the configuration of the TMC5160
-#   chip. This may be used to set custom motor parameters. The
+#   Set the given register during the configuration of the TMC5160 or
+#   TMC2160 chip. This may be used to set custom motor parameters. The
 #   defaults for each parameter are next to the parameter name in the
 #   above list.
 #⚠️driver_s2vs_level: 6   # Short to Supply tolerance, from 4 to 15
@@ -4538,9 +4594,9 @@ sense_resistor:
 #diag0_pin:
 #diag1_pin:
 #   The micro-controller pin attached to one of the DIAG lines of the
-#   TMC5160 chip. Only a single diag pin should be specified. The pin
-#   is "active low" and is thus normally prefaced with "^!". Setting
-#   this creates a "tmc5160_stepper_x:virtual_endstop" virtual pin
+#   TMC5160 or TMC2160 chip. Only a single diag pin should be specified.
+#   The pin is "active low" and is thus normally prefaced with "^!".
+#   Setting this creates a "tmc5160_stepper_x:virtual_endstop" virtual pin
 #   which may be used as the stepper's endstop_pin. Doing this enables
 #   "sensorless homing". (Be sure to also set driver_SGT to an
 #   appropriate sensitivity value.) The default is to not enable

@@ -108,9 +108,6 @@ class PrinterTemperatureMCU:
     def calc_base(self, temp, adc):
         return temp - adc * self.slope
 
-    def _mcu_identify(self):
-        self._build_config()
-
     def _build_config(self):
         if self.beacon_mcu_temp_wrapper is not None:
             return

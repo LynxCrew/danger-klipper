@@ -47,6 +47,9 @@ class KalicoTelementry:
             )
 
     def _telemetry_prompt(self):
+        if self.printer.get_start_args().get("debuginput"):
+            return
+
         gcode = self.printer.lookup_object("gcode")
 
         gcode.respond_info(

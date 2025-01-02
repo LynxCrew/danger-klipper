@@ -187,7 +187,8 @@ Can switch back to mainline klipper at any time via a `git checkout upstream_mai
 ```bash
 cd ~/klipper
 git remote add danger https://github.com/LynxCrew/danger-klipper.git
-git checkout -b upstream-master origin/master
+git fetch kalico
+git checkout -b upstream-main origin/master
 git branch -D master
 git checkout -b main kalico/main
 sudo systemctl restart klipper

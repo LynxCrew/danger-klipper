@@ -312,11 +312,8 @@ class ControlPID:
 
 
 class ControlCurve:
-    def __init__(self, temperature_fan, config, controlled_fan=None):
+    def __init__(self, temperature_fan, config):
         self.temperature_fan = temperature_fan
-        self.controlled_fan = (
-            temperature_fan if controlled_fan is None else controlled_fan
-        )
 
         points = list(
             config.getlists("points", seps=(",", "\n"), parser=float, count=2)
@@ -325,7 +322,7 @@ class ControlCurve:
 
         if len(points) < 2:
             raise temperature_fan.printer.config_error(
-                "At least two points need to be defined for curve in "
+                "At least two points must be defined for curve in "
                 "temperature_fan."
             )
         if any(len(point) != 2 for point in points):
