@@ -28,15 +28,13 @@ class KalicoTelementry:
             "TELEMETRY_EXAMPLE", self.cmd_TELEMETRY_EXAMPLE, True
         )
 
-        if self.enabled is not True:
-            gcode.register_command(
-                "ENABLE_TELEMETRY", self.cmd_ENABLE_TELEMETRY
-            )
+        gcode.register_command(
+            "ENABLE_TELEMETRY", self.cmd_ENABLE_TELEMETRY
+        )
 
-        if self.enabled is not False:
-            gcode.register_command(
-                "DISABLE_TELEMETRY", self.cmd_DISABLE_TELEMETRY
-            )
+        gcode.register_command(
+            "DISABLE_TELEMETRY", self.cmd_DISABLE_TELEMETRY
+        )
 
         if self.enabled is None:
             self.printer.register_event_handler(
@@ -68,6 +66,10 @@ class KalicoTelementry:
         )
 
     def cmd_ENABLE_TELEMETRY(self, gcmd):
+        if self.enabled:
+            gcmd.respond_info("Telemetry already enabled")
+            return
+
         "Enable Kalico telemetry reporting"
 
         configfile = self.printer.lookup_object("configfile")
@@ -81,6 +83,10 @@ class KalicoTelementry:
         )
 
     def cmd_DISABLE_TELEMETRY(self, gcmd):
+        if not self.enabled:
+            gcmd.respond_info("Telemetry already disabled")
+            return
+
         "Disable Kalico telemetry reporting"
 
         configfile = self.printer.lookup_object("configfile")
