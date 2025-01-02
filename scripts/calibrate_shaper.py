@@ -362,6 +362,8 @@ def main():
 
     if options.include_smoothers is None:
         include_smoothers = False
+    elif isinstance(options.include_smoothers, bool):
+        include_smoothers = options.include_smoothers
     elif (
         options.include_smoothers.lower() == "true"
         or options.include_smoothers.lower() == "y"
