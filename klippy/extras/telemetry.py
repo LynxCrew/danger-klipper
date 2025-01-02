@@ -28,13 +28,9 @@ class KalicoTelementry:
             "TELEMETRY_EXAMPLE", self.cmd_TELEMETRY_EXAMPLE, True
         )
 
-        gcode.register_command(
-            "ENABLE_TELEMETRY", self.cmd_ENABLE_TELEMETRY
-        )
+        gcode.register_command("ENABLE_TELEMETRY", self.cmd_ENABLE_TELEMETRY)
 
-        gcode.register_command(
-            "DISABLE_TELEMETRY", self.cmd_DISABLE_TELEMETRY
-        )
+        gcode.register_command("DISABLE_TELEMETRY", self.cmd_DISABLE_TELEMETRY)
 
         if self.enabled is None:
             self.printer.register_event_handler(

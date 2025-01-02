@@ -312,8 +312,11 @@ class ControlPID:
 
 
 class ControlCurve:
-    def __init__(self, temperature_fan, config):
+    def __init__(self, temperature_fan, config, controlled_fan=None):
         self.temperature_fan = temperature_fan
+        self.controlled_fan = (
+            temperature_fan if controlled_fan is None else controlled_fan
+        )
 
         points = list(
             config.getlists("points", seps=(",", "\n"), parser=float, count=2)
@@ -373,7 +376,7 @@ class ControlCurve:
         self.smooth_readings = config.getint("smooth_readings", 10, minval=1)
         self.stored_speeds = []
         for i in range(self.smooth_readings):
-            self.stored_speeds.append(0.0)
+            self.stored_speeds.append(self.temperature_fan.last_speed_value)
 
     def temperature_callback(self, read_time, temp):
         current_speed = self.temperature_fan.last_speed_value
