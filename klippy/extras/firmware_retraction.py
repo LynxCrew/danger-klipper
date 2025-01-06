@@ -116,7 +116,7 @@ class FirmwareRetraction:
             "stepper_enable:motor_off", self._execute_clear_z_hop
         )
         self.printer.register_event_handler(
-            "stepper_enable:axes_off", self._evaluate_retraction
+            "stepper_enable:axes_off", self._execute_clear_z_hop
         )
 
     # Helper method to return the current retraction parameters
