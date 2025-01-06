@@ -52,6 +52,9 @@ class TemperatureFan:
             maxval=self.max_temp,
         )
         self.target_temp = self.target_temp_conf
+        self.next_speed_time = 0.0
+        self.last_speed_value = 0.0
+        self.enabled = True
         algos = {
             "watermark": ControlBangBang,
             "pid": ControlPID,
@@ -59,9 +62,6 @@ class TemperatureFan:
         }
         algo = config.getchoice("control", algos)
         self.control = algo(self, config, super_fan)
-        self.next_speed_time = 0.0
-        self.last_speed_value = 0.0
-        self.enabled = True
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "SET_TEMPERATURE_FAN_TARGET",
