@@ -15,4 +15,4 @@ pyserial==3.4
 python-can==3.3.4
 windows-curses==2.4.0 ; sys_platform == 'win32'
 wrapt==1.16.0
-opencv-python==4.10.0.84
+scipy==1.11.4
