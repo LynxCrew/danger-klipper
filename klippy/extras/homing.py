@@ -408,7 +408,7 @@ class Homing:
             ]
             self.printer.lookup_object("gcode_move").last_position = retractpos
             self.toolhead.move(retractpos, hi.post_retract_speed)
-            self.gcode.run_script_from_command("G4 P50")
+            self.gcode.run_script_from_command("G4 P5")
 
 
 class PrinterHoming:
