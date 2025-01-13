@@ -82,7 +82,7 @@ class StepperEnableOutputPin:
         printtime = self._mcu.estimated_print_time(curtime)
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
         self._duration_ticks = self._mcu.seconds_to_clock(
-            (self._max_duration / 2) - 1
+            self._max_duration - 1
         )
         if self._duration_ticks >= 1 << 31:
             raise config_error("PWM pin max duration too large")
