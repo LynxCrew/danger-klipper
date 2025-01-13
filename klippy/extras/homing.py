@@ -397,7 +397,7 @@ class Homing:
             self.toolhead.set_position(homepos)
 
         if hi.post_retract_dist:
-            self.toolhead.wait_moves()
+            # self.toolhead.wait_moves()
             startpos = self._fill_coord(forcepos)
             homepos = self._fill_coord(movepos)
             axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
@@ -408,7 +408,7 @@ class Homing:
             ]
             self.printer.lookup_object("gcode_move").last_position = retractpos
             self.toolhead.move(retractpos, hi.post_retract_speed)
-            self.toolhead.dwell(0.005)
+            # self.toolhead.dwell(0.005)
 
 
 class PrinterHoming:
