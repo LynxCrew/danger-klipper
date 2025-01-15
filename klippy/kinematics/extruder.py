@@ -320,6 +320,13 @@ class ExtruderStepper:
         self.motion_queue = extruder_name
         self.extruder = extruder
 
+    def set_rotation_distance(self, rotation_dist):
+        self.stepper.set_rotation_distance(rotation_dist)
+
+    def get_rotation_distance(self):
+        _, rotation_dist = self.stepper.get_rotation_distance()
+        return rotation_dist
+
     def _update_pressure_advance(self, pa_model, time_offset):
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.flush_step_generation()

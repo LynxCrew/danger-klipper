@@ -154,7 +154,8 @@ A collection of Kalico-specific system options
 In your configuration, you can reference other values to share
 configuration between multiple sections. References take the form of
 `${option}` to copy a value in the current section, or
-`${section.option}` to look up a value elsewhere in your configuration.
+`${section.option}` to look up a value elsewhere in your configuration. Note,
+that constants must always be lower case.
 
 Optionally, a `[constants]` section may be used specifically to store
 these values. Unlike the rest of your configuration, unused constants
@@ -2871,6 +2872,28 @@ printer kinematics.
 #   "homing moves" by adding a STOP_ON_ENDSTOP parameter to
 #   MANUAL_STEPPER movement commands.
 ```
+
+### [mixing_extruder]
+
+A mixing printhead which has <n>in-1out mixing nozzle. When activated
+additional G-Code Commands are available.
+See [G-Codes](G-Codes.md#mixing_extruder) for a detailed description
+of the additional commands.
+
+```
+[mixing_extruder]
+#steppers:
+#   Which steppers feed into the hotend/nozzle. provide a comma
+#   separated list, eg. "extruder,extruder1,extruder2". Should be
+#   the names of either extruder sections or extruder_stepper sections
+#   This configuration is required.
+#extruder_name:
+#   The name of the extruder to synchronize the steppers in the steppers
+#   list to.
+#   The default is the first entry in the
+#   "steppers" list.
+```
+
 
 ## Custom heaters and sensors
 
