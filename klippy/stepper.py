@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import collections
+import logging
 import math
 from . import chelper, msgproto
 
@@ -436,6 +437,7 @@ class GenericPrinterCarriage:
         self.endstop_pin = config.get("endstop_pin")
         # Primary endstop position
         mcu_endstop = self.lookup_endstop(self.endstop_pin, self.name)
+        logging.info(mcu_endstop)
         if hasattr(mcu_endstop, "get_position_endstop"):
             self.position_endstop = mcu_endstop.get_position_endstop()
         elif default_position_endstop is None:
