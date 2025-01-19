@@ -66,8 +66,11 @@ class MpcCalibrate:
         self.orig_control = self.heater.set_control(control)
         self.temp_control = self.orig_control
         if self.temp_control.get_type() != "mpc":
-            self.temp_control = self.pmgr._init_profile(
-                self.config, "autotune", "mpc"
+            self.temp_control = self.pmgr.heater.lookup_control(
+                self.pmgr._init_profile(
+                    self.config, "autotune", force_control="mpc"
+                ),
+                load_clean=True,
             )
         self.fan = self.temp_control.cooling_fan
         ambient_sensor_name = gcmd.get("AMBIENT_TEMP_SENSOR", None)
@@ -88,7 +91,7 @@ class MpcCalibrate:
         heating_gain = gcmd.get_float("HEATING_GAIN", self.heating_gain)
 
         verify_heater = self.printer.lookup_object(
-            "VERIFY_HEATER %s" % self.heater.short_name, None
+            "verify_heater %s" % self.heater.short_name, None
         )
         old_max_error = None
         old_check_gain_time = None
