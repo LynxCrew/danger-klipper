@@ -176,7 +176,7 @@ class SweepingVibrationsTestGenerator:
             "sweeping_accel", 400.0, above=0.0
         )
         self.sweeping_period = config.getfloat(
-            "sweeping_period", 1.2, minval=0.0
+            "sweeping_period", 0.0, minval=0.0
         )
 
     def prepare_test(self, gcmd):

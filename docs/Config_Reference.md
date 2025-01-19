@@ -2204,6 +2204,9 @@ section of the measuring resonances guide for more information on
 #   auto-calibration (with 'SHAPER_CALIBRATE' command). By default no
 #   maximum smoothing is specified. Refer to Measuring_Resonances guide
 #   for more details on using this feature.
+#move_speed: 50
+#   The speed (in mm/s) to move the toolhead to and between test points
+#   during the calibration. The default is 50.
 #min_freq: 5
 #   Minimum frequency to test for resonances. The default is 5 Hz.
 #max_freq: 133.33
@@ -2216,12 +2219,20 @@ section of the measuring resonances guide for more information on
 #   the printer. However, lower values make measurements of
 #   high-frequency resonances less precise. The default value is 75
 #   (mm/sec).
+#   Set it to 60 as a good baseline when using the sweeping resonance tester.
 #hz_per_sec: 1
 #   Determines the speed of the test. When testing all frequencies in
 #   range [min_freq, max_freq], each second the frequency increases by
 #   hz_per_sec. Small values make the test slow, and the large values
 #   will decrease the precision of the test. The default value is 1.0
 #   (Hz/sec == sec^-2).
+#sweeping_accel: 400
+#   An acceleration of slow sweeping moves. The default is 400 mm/sec^2.
+#sweeping_period: 0
+#   A period of slow sweeping moves. Avoid setting it to a too small
+#   non-zero value in order to not poison the measurements.
+#   To enable it, start by setting it to 1.2 sec which is a good all-round
+#   choice. Set it to 0 do disable it. The default is 0.
 ```
 
 ## Config file helpers
@@ -2604,9 +2615,9 @@ sensor_type: ldc1612
 
 ### [axis_twist_compensation]
 
-A tool to compensate for inaccurate probe readings due to twist in X gantry. See
-the [Axis Twist Compensation Guide](Axis_Twist_Compensation.md) for more
-detailed information regarding symptoms, configuration and setup.
+A tool to compensate for inaccurate probe readings due to twist in X or Y
+gantry. See the [Axis Twist Compensation Guide](Axis_Twist_Compensation.md)
+for more detailed information regarding symptoms, configuration and setup.
 
 ```
 [axis_twist_compensation]
@@ -2619,16 +2630,33 @@ detailed information regarding symptoms, configuration and setup.
 calibrate_start_x: 20
 #   Defines the minimum X coordinate of the calibration
 #   This should be the X coordinate that positions the nozzle at the starting
-#   calibration position. This parameter must be provided.
+#   calibration position. 
 calibrate_end_x: 200
 #   Defines the maximum X coordinate of the calibration
 #   This should be the X coordinate that positions the nozzle at the ending
-#   calibration position. This parameter must be provided.
+#   calibration position. 
 calibrate_y: 112.5
 #   Defines the Y coordinate of the calibration
 #   This should be the Y coordinate that positions the nozzle during the
-#   calibration process. This parameter must be provided and is recommended to
+#   calibration process. This parameter is recommended to
 #   be near the center of the bed
+
+# For Y-axis twist compensation, specify the following parameters:
+calibrate_start_y: ...
+#   Defines the minimum Y coordinate of the calibration
+#   This should be the Y coordinate that positions the nozzle at the starting
+#   calibration position for the Y axis. This parameter must be provided if
+#   compensating for Y axis twist.
+calibrate_end_y: ...
+#   Defines the maximum Y coordinate of the calibration
+#   This should be the Y coordinate that positions the nozzle at the ending
+#   calibration position for the Y axis. This parameter must be provided if
+#   compensating for Y axis twist.
+calibrate_x: ...
+#   Defines the X coordinate of the calibration for Y axis twist compensation
+#   This should be the X coordinate that positions the nozzle during the
+#   calibration process for Y axis twist compensation. This parameter must be
+#   provided and is recommended to be near the center of the bed.
 ```
 
 ### ⚠️ [z_calibration]
@@ -4461,6 +4489,11 @@ run_current:
 #driver_PWM_OFS: 29
 #driver_PWM_REG: 4
 #driver_PWM_LIM: 12
+#driver_SLOPE_CONTROL: 0
+#   The chip has a default value of 0, corresponding to 100V/µs.
+#   Setting this value to 2, corresponding to 400V/µs, approximately
+#   matches the TMC2209. This lowers the power dissipation at a 50kHz
+#   chopper frequency by around 1W.
 #driver_SGT: 0
 #driver_SEMIN: 0
 #driver_SEUP: 0
