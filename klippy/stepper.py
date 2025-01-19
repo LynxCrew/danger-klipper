@@ -634,10 +634,10 @@ class PrinterRail(GenericPrinterCarriage):
         )
         self.stepper_units_in_radians = units_in_radians
         self.add_extra_stepper(config)
-        mcu_stepper = self.steppers[0]
-        self.get_name = mcu_stepper.get_name
-        self.get_commanded_position = mcu_stepper.get_commanded_position
-        self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
+        self.mcu_stepper = self.steppers[0]
+        self.get_name = self.mcu_stepper.get_name
+        self.get_commanded_position = self.mcu_stepper.get_commanded_position
+        self.calc_position_from_coord = self.mcu_stepper.calc_position_from_coord
 
     def add_extra_stepper(self, config):
         stepper = PrinterStepper(config, self.stepper_units_in_radians)
