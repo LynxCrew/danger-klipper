@@ -108,7 +108,7 @@ class ProfileManager:
         return value.lower() if type == "lower" else value
 
     def init_default_profile(self):
-        return self._init_profile(self.heater.sensor_config, "default")
+        return self._init_profile(self.heater.config, "default")
 
     def set_values(self, profile_name, gcmd, verbose=True):
         current_profile = self.heater.get_control().get_profile()
