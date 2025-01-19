@@ -66,9 +66,10 @@ class MpcCalibrate:
         self.orig_control = self.heater.set_control(control)
         self.temp_control = self.orig_control
         if self.temp_control.get_type() != "mpc":
-            self.temp_control = self.pmgr.heater.lookup_control(self.pmgr._init_profile(
-                self.config, "autotune", "mpc"
-            ), load_clean=True)
+            self.temp_control = self.pmgr.heater.lookup_control(
+                self.pmgr._init_profile(self.config, "autotune", "mpc"),
+                load_clean=True,
+            )
         self.fan = self.temp_control.cooling_fan
         ambient_sensor_name = gcmd.get("AMBIENT_TEMP_SENSOR", None)
         if ambient_sensor_name is not None:
