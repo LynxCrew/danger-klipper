@@ -637,7 +637,9 @@ class PrinterRail(GenericPrinterCarriage):
         self.mcu_stepper = self.steppers[0]
         self.get_name = self.mcu_stepper.get_name
         self.get_commanded_position = self.mcu_stepper.get_commanded_position
-        self.calc_position_from_coord = self.mcu_stepper.calc_position_from_coord
+        self.calc_position_from_coord = (
+            self.mcu_stepper.calc_position_from_coord
+        )
 
     def add_extra_stepper(self, config):
         stepper = PrinterStepper(config, self.stepper_units_in_radians)
