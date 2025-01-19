@@ -19,9 +19,12 @@ class ProfileManager:
             self._init_profile(profile, name)
 
     def _init_profile(self, config_section, name, force_control=None):
-        control = self._check_value_config(
-            "control", config_section, str, False, default=force_control
-        )
+        if force_control is None:
+            control = self._check_value_config(
+                "control", config_section, str, False, default=None
+            )
+        else:
+            control = force_control
         if control in self.control_types.keys():
             temp_profile = self.control_types[control].init_profile(
                 config_section, name, self
