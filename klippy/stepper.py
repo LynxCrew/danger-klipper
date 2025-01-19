@@ -437,6 +437,7 @@ class GenericPrinterCarriage:
         self.endstop_pin = config.get("endstop_pin")
         # Primary endstop position
         mcu_endstop = self.lookup_endstop(self.endstop_pin, self.name)
+        logging.info("NAME: %s", self.name)
         logging.info(mcu_endstop)
         if hasattr(mcu_endstop, "get_position_endstop"):
             self.position_endstop = mcu_endstop.get_position_endstop()
