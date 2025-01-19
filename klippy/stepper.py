@@ -605,7 +605,7 @@ class GenericPrinterCarriage:
                     "must specify the same pullup/invert settings"
                     % (self.get_name(), pin_name)
                 )
-            return mcu_endstop
+        return mcu_endstop
 
     def add_stepper(self, stepper, endstop_pin=None, endstop_name=None):
         self.steppers.append(stepper)
