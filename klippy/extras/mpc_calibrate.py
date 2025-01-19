@@ -32,7 +32,7 @@ class MPCCalibrate:
 class MpcCalibrate:
     def __init__(self, printer, heater, config):
         self.printer = printer
-        self.config = config
+        self.config = config.getsection(heater.get_name())
         self.heater = heater
         self.pmgr = heater.pmgr
         self.orig_control = None
