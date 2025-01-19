@@ -67,54 +67,84 @@ def get_mzv_shaper(shaper_freq, damping_ratio):
 def get_ei_shaper(shaper_freq, damping_ratio):
     v_tol = 1.0 / SHAPER_VIBRATION_REDUCTION  # vibration tolerance
     df = math.sqrt(1.0 - damping_ratio**2)
-    K = math.exp(-damping_ratio * math.pi / df)
     t_d = 1.0 / (shaper_freq * df)
+    dr = damping_ratio
 
-    a1 = 0.25 * (1.0 + v_tol)
-    a2 = 0.5 * (1.0 - v_tol) * K
-    a3 = a1 * K * K
+    a1 = (0.24968 + 0.24961 * v_tol) + (
+        (0.80008 + 1.23328 * v_tol) + (0.49599 + 3.17316 * v_tol) * dr
+    ) * dr
+    a3 = (0.25149 + 0.21474 * v_tol) + (
+        (-0.83249 + 1.41498 * v_tol) + (0.85181 - 4.90094 * v_tol) * dr
+    ) * dr
+    a2 = 1.0 - a1 - a3
+
+    t2 = (
+        0.4999
+        + (
+            ((0.46159 + 8.57843 * v_tol) * v_tol)
+            + (
+                ((4.26169 - 108.644 * v_tol) * v_tol)
+                + ((1.75601 + 336.989 * v_tol) * v_tol) * dr
+            )
+            * dr
+        )
+        * dr
+    )
 
     A = [a1, a2, a3]
-    T = [0.0, 0.5 * t_d, t_d]
+    T = [0.0, t2 * t_d, t_d]
+    return (A, T)
+
+
+def _get_shaper_from_expansion_coeffs(shaper_freq, damping_ratio, t, a):
+    tau = 1.0 / shaper_freq
+    T = []
+    A = []
+    n = len(a)
+    k = len(a[0])
+    for i in range(n):
+        u = t[i][k - 1]
+        v = a[i][k - 1]
+        for j in range(k - 1):
+            u = u * damping_ratio + t[i][k - j - 2]
+            v = v * damping_ratio + a[i][k - j - 2]
+        T.append(u * tau)
+        A.append(v)
     return (A, T)
 
 
 def get_2hump_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 1.0 / SHAPER_VIBRATION_REDUCTION  # vibration tolerance
-    df = math.sqrt(1.0 - damping_ratio**2)
-    K = math.exp(-damping_ratio * math.pi / df)
-    t_d = 1.0 / (shaper_freq * df)
-
-    V2 = v_tol**2
-    X = pow(V2 * (math.sqrt(1.0 - V2) + 1.0), 1.0 / 3.0)
-    a1 = (3.0 * X * X + 2.0 * X + 3.0 * V2) / (16.0 * X)
-    a2 = (0.5 - a1) * K
-    a3 = a2 * K
-    a4 = a1 * K * K * K
-
-    A = [a1, a2, a3, a4]
-    T = [0.0, 0.5 * t_d, t_d, 1.5 * t_d]
-    return (A, T)
+    t = [
+        [0.0, 0.0, 0.0, 0.0],
+        [0.49890, 0.16270, -0.54262, 6.16180],
+        [0.99748, 0.18382, -1.58270, 8.17120],
+        [1.49920, -0.09297, -0.28338, 1.85710],
+    ]
+    a = [
+        [0.16054, 0.76699, 2.26560, -1.22750],
+        [0.33911, 0.45081, -2.58080, 1.73650],
+        [0.34089, -0.61533, -0.68765, 0.42261],
+        [0.15997, -0.60246, 1.00280, -0.93145],
+    ]
+    return _get_shaper_from_expansion_coeffs(shaper_freq, damping_ratio, t, a)
 
 
 def get_3hump_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 1.0 / SHAPER_VIBRATION_REDUCTION  # vibration tolerance
-    df = math.sqrt(1.0 - damping_ratio**2)
-    K = math.exp(-damping_ratio * math.pi / df)
-    t_d = 1.0 / (shaper_freq * df)
-
-    K2 = K * K
-    a1 = 0.0625 * (
-        1.0 + 3.0 * v_tol + 2.0 * math.sqrt(2.0 * (v_tol + 1.0) * v_tol)
-    )
-    a2 = 0.25 * (1.0 - v_tol) * K
-    a3 = (0.5 * (1.0 + v_tol) - 2.0 * a1) * K2
-    a4 = a2 * K2
-    a5 = a1 * K2 * K2
-
-    A = [a1, a2, a3, a4, a5]
-    T = [0.0, 0.5 * t_d, t_d, 1.5 * t_d, 2.0 * t_d]
-    return (A, T)
+    t = [
+        [0.0, 0.0, 0.0, 0.0],
+        [0.49974, 0.23834, 0.44559, 12.4720],
+        [0.99849, 0.29808, -2.36460, 23.3990],
+        [1.49870, 0.10306, -2.01390, 17.0320],
+        [1.99960, -0.28231, 0.61536, 5.40450],
+    ]
+    a = [
+        [0.11275, 0.76632, 3.29160 - 1.44380],
+        [0.23698, 0.61164, -2.57850, 4.85220],
+        [0.30008, -0.19062, -2.14560, 0.13744],
+        [0.23775, -0.73297, 0.46885, -2.08650],
+        [0.11244, -0.45439, 0.96382, -1.46000],
+    ]
+    return _get_shaper_from_expansion_coeffs(shaper_freq, damping_ratio, t, a)
 
 
 def get_shaper_offset(A, T):
@@ -126,11 +156,15 @@ def get_shaper_offset(A, T):
 def init_smoother(coeffs, smooth_time, normalize_coeffs):
     if not normalize_coeffs:
         return (list(reversed(coeffs)), smooth_time)
-    inv_t_sm = inv_t_sm_n = 1.0 / smooth_time
     n = len(coeffs)
+    int_t0 = 0.0
+    for i in range(0, n, 2):
+        int_t0 += coeffs[n - i - 1] / (2**i * (i + 1))
+    inv_int = 1.0 / int_t0
     c = [0] * n
+    inv_t_sm = inv_t_sm_n = 1.0 / smooth_time
     for i in range(n - 1, -1, -1):
-        c[n - i - 1] = coeffs[i] * inv_t_sm_n
+        c[n - i - 1] = coeffs[i] * inv_t_sm_n * inv_int
         inv_t_sm_n *= inv_t_sm
     return (c, smooth_time)
 
@@ -164,47 +198,74 @@ def get_none_smoother():
 # of the extruder with the toolhead motion).
 
 
-def get_zv_smoother(
-    shaper_freq, damping_ratio_unused=None, normalize_coeffs=True
-):
-    coeffs = [
-        -118.4265334338076,
-        5.861885495127615,
-        29.52796003014231,
-        -1.465471373781904,
-        0.01966833207740377,
+def _get_smoother_from_expansion_coeffs(damping_ratio, t, a):
+    if damping_ratio is None:
+        damping_ratio = DEFAULT_DAMPING_RATIO
+    n = len(a)
+    k = len(a[0])
+    C = []
+    for i in range(n):
+        v = a[i][k - 1]
+        for j in range(k - 1):
+            v = v * damping_ratio + a[i][k - j - 2]
+        C.append(v)
+    t_s = t[k - 1]
+    for j in range(k - 1):
+        t_s = t_s * damping_ratio + t[k - j - 2]
+    return t_s, C[::-1]
+
+
+def get_zv_smoother(shaper_freq, damping_ratio=None, normalize_coeffs=True):
+    t = [0.66471804, 0.0039585139, 0.33614293, 0.2157273]
+    a = [
+        [0.1418285825, -0.4423501425, 0.696114325, -1.3609939],
+        [0.0, 3.5635179, -3.83613985, -6.2783295],
+        [-15.50842883, 29.06586482, -12.3383868, 112.6474131],
+        [0.0, -206.8822741, 52.8629899, 152.492858],
+        [452.7401905, -281.3808295, -2.555613, -1175.326975],
+        [0.0, 770.51281, -150.073722, -509.51816],
+        [-1571.90293, 688.77989, 163.085324, 2986.0529],
     ]
-    return init_smoother(coeffs, 0.8025 / shaper_freq, normalize_coeffs)
+    t_s, coeffs = _get_smoother_from_expansion_coeffs(damping_ratio, t, a)
+    return init_smoother(coeffs, t_s / shaper_freq, normalize_coeffs)
 
 
-def get_mzv_smoother(
-    shaper_freq, damping_ratio_unused=None, normalize_coeffs=True
-):
-    coeffs = [
-        -1906.717580206364,
-        125.8892756660212,
-        698.0200035767849,
-        -37.75923018121473,
-        -62.18762409216703,
-        1.57172781617736,
-        1.713117990217123,
+def get_mzv_smoother(shaper_freq, damping_ratio=None, normalize_coeffs=True):
+    t = [0.85165483, 0.0183642417, 0.39000898, 0.23209004]
+    a = [
+        [2.239795725, -0.3957072675, -5.57438075, 0.07195255],
+        [0.0, 29.10368225, -3.461668825, -22.41514],
+        [-154.4864979, 92.80041407, 23.0961391, 774.3910148],
+        [0.0, -1362.168729, -35.59728045, 1147.640935],
+        [3870.466035, -3292.00459, 7849.3652856, -36092.1938],
+        [0.0, 21476.8835, 2071.594648, -21131.4185],
+        [-43110.2746, 39792.0705, -138379.754, 483530.1615],
+        [0.0, -134532.955, -15615.6118, 139113.6955],
+        [214526.885, -191572.8415, 791628.475, -2450648.74],
+        [0.0, 274229.94, 32481.346, -286062.83],
+        [-378797.98, 316954.83, -1455001.66, 4177695.0],
     ]
-    return init_smoother(coeffs, 0.95625 / shaper_freq, normalize_coeffs)
+    t_s, coeffs = _get_smoother_from_expansion_coeffs(damping_ratio, t, a)
+    return init_smoother(coeffs, t_s / shaper_freq, normalize_coeffs)
 
 
-def get_ei_smoother(
-    shaper_freq, damping_ratio_unused=None, normalize_coeffs=True
-):
-    coeffs = [
-        -1797.048868963208,
-        120.5310596109878,
-        669.6653197989012,
-        -35.71975707450795,
-        -62.49388325512682,
-        1.396748042940248,
-        1.848276903900512,
+def get_ei_smoother(shaper_freq, damping_ratio=None, normalize_coeffs=True):
+    t = [0.97477932, -0.23339195, -0.123664761, -0.062322051]
+    a = [
+        [2.52046355, -1.6501044, 0.967448275, -18.470689],
+        [0.000102487265, 8.717555, 0.549298525, 190.628115],
+        [-168.3978817, 296.1239626, -1411.4470431, 3915.485031],
+        [-0.004769887735, -620.727595, 919.5345309, -10205.12046],
+        [4089.390635, -9645.16343, 51423.482, -123416.1416],
+        [0.06117609445, 12748.675, -21039.42565, 153066.0395],
+        [-44290.59235, 109474.7645, -594172.592, 1326709.805],
+        [-0.2953897565, -92918.327, 136788.81, -839525.34],
+        [215202.86, -501098.035, 2741347.0, -5777313.55],
+        [0.48177759, 205189.38, -269515.26, 1513371.64],
+        [-373354.06, 795968.34, -4389389.6, 8797080.2],
     ]
-    return init_smoother(coeffs, 1.06625 / shaper_freq, normalize_coeffs)
+    t_s, coeffs = _get_smoother_from_expansion_coeffs(damping_ratio, t, a)
+    return init_smoother(coeffs, t_s / shaper_freq, normalize_coeffs)
 
 
 def get_2hump_ei_smoother(

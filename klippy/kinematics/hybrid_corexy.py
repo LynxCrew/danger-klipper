@@ -11,7 +11,6 @@ from . import idex_modes
 class HybridCoreXYKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
-        self.improved_axes_def = config.getboolean("improved_axes_def", False)
         printer_config = config.getsection("printer")
         # itersolve parameters
         self.rails = [
@@ -51,14 +50,12 @@ class HybridCoreXYKinematics:
             self.rails[3].setup_itersolve(
                 "corexy_stepper_alloc", self.corexy_mode[1]
             )
-            dc_rail_0 = idex_modes.DualCarriagesRail(
-                self.rails[0], axis=0, active=True
-            )
-            dc_rail_1 = idex_modes.DualCarriagesRail(
-                self.rails[3], axis=0, active=False
-            )
             self.dc_module = idex_modes.DualCarriages(
-                dc_config, dc_rail_0, dc_rail_1, axis=0
+                self.printer,
+                [self.rails[0]],
+                [self.rails[3]],
+                axes=[0],
+                safe_dist=config.getfloat("safe_distance", None, minval=0.0),
             )
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
@@ -148,8 +145,8 @@ class HybridCoreXYKinematics:
         for i, rail in enumerate(self.rails):
             rail.set_position(newpos)
         for axis in homing_axes:
-            if self.dc_module and axis == self.dc_module.axis:
-                rail = self.dc_module.get_primary_rail().get_rail()
+            if self.dc_module and axis == 0:
+                rail = self.dc_module.get_primary_carriage(axis)
             else:
                 rail = self.rails[axis]
             self.limits[axis] = rail.get_range()
@@ -189,7 +186,7 @@ class HybridCoreXYKinematics:
     def home(self, homing_state):
         for axis in homing_state.get_axes():
             if self.dc_module is not None and axis == 0:
-                self.dc_module.home(homing_state)
+                self.dc_module.home(homing_state, axis)
             else:
                 self.home_axis(homing_state, axis, self.rails[axis])
 
@@ -252,7 +249,6 @@ class HybridCoreXYKinematics:
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
         return {
             "kinematics": "hybrid_corexz",
-            "improved_axes_def": self.improved_axes_def,
             "homed_axes": "".join(axes),
             "axis_minimum": self.axes_min,
             "axis_maximum": self.axes_max,

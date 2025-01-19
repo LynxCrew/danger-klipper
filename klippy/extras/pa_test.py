@@ -288,7 +288,7 @@ class PATest:
                     origin_y + perimeter_y_offset,
                     fast_velocity * 60.0,
                 )
-                # Move the nozzle up
+                ## Move the nozzle up
                 yield "G1 Z%.6f F%.f" % (z, slow_velocity * 60.0)
                 for i in range(perimeters):
                     # Print the perimiter loop alternating velocities

@@ -42,6 +42,7 @@ SOURCE_FILES = [
     "kin_extruder.c",
     "kin_shaper.c",
     "kin_idex.c",
+    "kin_generic.c",
     "integrate.c",
 ]
 DEST_LIB = "c_helper.so"
@@ -137,6 +138,13 @@ defs_kin_cartesian = """
     struct stepper_kinematics *cartesian_stepper_alloc(char axis);
 """
 
+defs_kin_generic_cartesian = """
+    struct stepper_kinematics *generic_cartesian_stepper_alloc(double a_x
+        , double a_y, double a_z);
+    void generic_cartesian_stepper_set_coeffs(struct stepper_kinematics *sk
+        , double a_x, double a_y, double a_z);
+"""
+
 defs_kin_corexy = """
     struct stepper_kinematics *corexy_stepper_alloc(char type);
 """
@@ -171,22 +179,27 @@ defs_kin_winch = """
 """
 
 defs_kin_extruder = """
-    struct stepper_kinematics *extruder_stepper_alloc(void);
-    void extruder_set_pressure_advance(struct stepper_kinematics *sk
-        , int n_params, double params[], double time_offset);
     struct pressure_advance_params;
+    struct stepper_kinematics *extruder_stepper_alloc(void);
+    void extruder_stepper_free(struct stepper_kinematics *sk);
+    void extruder_set_pressure_advance(struct stepper_kinematics *sk
+        , double print_time, int n_params, double params[]
+        , double (*func)(double, double, struct pressure_advance_params *)
+        , double time_offset);
     double pressure_advance_linear_model_func(double position
         , double pa_velocity, struct pressure_advance_params *pa_params);
     double pressure_advance_tanh_model_func(double position
         , double pa_velocity, struct pressure_advance_params *pa_params);
     double pressure_advance_recipr_model_func(double position
         , double pa_velocity, struct pressure_advance_params *pa_params);
-    void extruder_set_pressure_advance_model_func(struct stepper_kinematics *sk
-        , double (*func)(double, double, struct pressure_advance_params *));
+    double pressure_advance_log_model_func(double position
+        , double pa_velocity, struct pressure_advance_params *pa_params);
     int extruder_set_shaper_params(struct stepper_kinematics *sk, char axis
         , int n, double a[], double t[]);
     int extruder_set_smoothing_params(struct stepper_kinematics *sk, char axis
         , int n, double a[], double t_sm, double t_offs);
+    void extruder_set_smooth_moves_params(struct stepper_kinematics *sk
+        , int smooth_extruding_moves, int smooth_extrude_only_moves);
     double extruder_get_step_gen_window(struct stepper_kinematics *sk);
 """
 
@@ -271,6 +284,7 @@ defs_all = [
     defs_trapq,
     defs_trdispatch,
     defs_kin_cartesian,
+    defs_kin_generic_cartesian,
     defs_kin_corexy,
     defs_kin_corexz,
     defs_kin_delta,

@@ -59,7 +59,7 @@ class PrinterNeoPixel:
 
     def _handle_ready(self):
         self.timer_handler = self.reactor.register_timer(
-            self._init_gcode, self.reactor.monotonic()
+            self._init_gcode, self.reactor.monotonic() + 0.5
         )
 
     def _init_gcode(self, eventtime):

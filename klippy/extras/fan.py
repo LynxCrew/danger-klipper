@@ -377,7 +377,9 @@ class PrinterFan:
 
     def cmd_M106(self, gcmd):
         # Set fan speed
-        value = gcmd.get_float("S", 255.0, minval=0.0, maxval=255.0) / 255.0
+        value = round(
+            gcmd.get_float("S", 255.0, minval=0.0, maxval=255.0) / 255.0, 10
+        )
         force = gcmd.get_int("F", 0, minval=0, maxval=1)
         self.fan.set_speed_from_command(value, force)
 

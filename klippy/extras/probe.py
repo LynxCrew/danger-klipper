@@ -40,6 +40,11 @@ class PrinterProbe:
             self.z_position = zconfig.getfloat(
                 "position_min", 0.0, note_valid=False
             )
+        elif config.has_section("carriage z"):
+            zconfig = config.getsection("carriage z")
+            self.z_position = zconfig.getfloat(
+                "position_min", 0.0, note_valid=False
+            )
         else:
             pconfig = config.getsection("printer")
             self.z_position = pconfig.getfloat(

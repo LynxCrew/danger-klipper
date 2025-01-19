@@ -8,7 +8,6 @@ from klippy import stepper, mathutil
 
 class WinchKinematics:
     def __init__(self, toolhead, config):
-        self.improved_axes_def = config.getboolean("improved_axes_def", False)
         # Setup steppers at each anchor
         self.steppers = []
         self.anchors = []
@@ -64,7 +63,6 @@ class WinchKinematics:
         # XXX - homed_checks and rail limits not implemented
         return {
             "kinematics": "winch",
-            "improved_axes_def": self.improved_axes_def,
             "homed_axes": "xyz",
             "axis_minimum": self.axes_min,
             "axis_maximum": self.axes_max,

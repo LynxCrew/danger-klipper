@@ -288,14 +288,11 @@ class ShaperCalibrate:
         window = np.kaiser(nfft, 6.0)
         # Compensation for windowing loss
         scale = 1.0 / (window**2).sum()
-
         # Split into overlapping windows of size nfft
         overlap = nfft // 2
         x = self._split_into_windows(x, nfft, overlap)
-
         # First detrend, then apply windowing function
         x = window[:, None] * (x - np.mean(x, axis=0))
-
         # Calculate frequency response for each window using FFT
         result = np.fft.rfft(x, n=nfft, axis=0)
         result = np.conjugate(result) * result
@@ -304,10 +301,8 @@ class ShaperCalibrate:
         # the last point for unpaired Nyquist frequency (assuming even nfft)
         # and the 'DC' term (0 Hz)
         result[1:-1, :] *= 2.0
-
         # Welch's algorithm: average response over windows
         psd = result.real.mean(axis=-1)
-
         # Calculate the frequency bins
         freqs = np.fft.rfftfreq(nfft, 1.0 / fs)
         return freqs, psd
@@ -323,7 +318,6 @@ class ShaperCalibrate:
             if not samples:
                 return None
             data = np.array(samples)
-
         N = data.shape[0]
         T = data[-1, 0] - data[0, 0]
         SAMPLING_FREQ = N / T
@@ -331,7 +325,6 @@ class ShaperCalibrate:
         M = 1 << int(SAMPLING_FREQ * WINDOW_T_SEC - 1).bit_length()
         if N <= M:
             return None
-
         # Calculate PSD (power spectral density) of vibrations per
         # frequency bins (the same bins for X, Y, and Z)
         fx, px = self._psd(data[:, 1], SAMPLING_FREQ, M)
@@ -428,6 +421,16 @@ class ShaperCalibrate:
         damping_ratio = damping_ratio or shaper_defs.DEFAULT_DAMPING_RATIO
         test_damping_ratios = test_damping_ratios or TEST_DAMPING_RATIOS
 
+        shaper = shaper_cfg.init_func(1.0, damping_ratio)
+
+        test_freq_bins = np.arange(0.0, 10.0, 0.01)
+        test_shaper_vals = np.zeros(shape=test_freq_bins.shape)
+        # Exact damping ratio of the printer is unknown, pessimizing
+        # remaining vibrations over possible damping values
+        for dr in test_damping_ratios:
+            vals = estimate_shaper(self.numpy, shaper, dr, test_freq_bins)
+            test_shaper_vals = np.maximum(test_shaper_vals, vals)
+
         if not shaper_freqs:
             shaper_freqs = (None, None, None)
         if isinstance(shaper_freqs, tuple):
@@ -442,16 +445,6 @@ class ShaperCalibrate:
 
         max_freq = max(max_freq or MAX_FREQ, test_freqs.max())
 
-        shaper = shaper_cfg.init_func(1.0, shaper_defs.DEFAULT_DAMPING_RATIO)
-
-        test_freq_bins = np.arange(0.0, 10.0, 0.01)
-        test_shaper_vals = np.zeros(shape=test_freq_bins.shape)
-        # Exact damping ratio of the printer is unknown, pessimizing
-        # remaining vibrations over possible damping values
-        for dr in test_damping_ratios:
-            vals = estimate_shaper(self.numpy, shaper, dr, test_freq_bins)
-            test_shaper_vals = np.maximum(test_shaper_vals, vals)
-
         freq_bins = calibration_data.freq_bins
         psd = calibration_data.psd_sum[freq_bins <= max_freq]
         freq_bins = freq_bins[freq_bins <= max_freq]
@@ -460,7 +453,7 @@ class ShaperCalibrate:
         results = []
         for test_freq in test_freqs[::-1]:
             shaper = shaper_cfg.init_func(test_freq, damping_ratio)
-            shaper_smoothing = get_shaper_smoothing(shaper)
+            shaper_smoothing = get_shaper_smoothing(shaper, scv=scv)
             if max_smoothing and shaper_smoothing > max_smoothing and best_res:
                 return best_res
             shaper_vals = np.interp(
@@ -469,7 +462,7 @@ class ShaperCalibrate:
             shaper_vibrations = self._estimate_remaining_vibrations(
                 freq_bins, shaper_vals, psd
             )
-            max_accel = self.find_max_accel(shaper, get_shaper_smoothing, scv)
+            max_accel = self.find_max_accel(shaper, scv, get_shaper_smoothing)
             # The score trying to minimize vibrations, but also accounting
             # the growth of smoothing. The formula itself does not have any
             # special meaning, it simply shows good results on real user data
@@ -493,7 +486,7 @@ class ShaperCalibrate:
             if best_res is None or best_res.vibrs > results[-1].vibrs:
                 # The current frequency is better for the shaper.
                 best_res = results[-1]
-        # Try to find an 'optimal' shapper configuration: the one that is not
+        # Try to find an 'optimal' shaper configuration: the one that is not
         # much worse than the 'best' one, but gives much less smoothing
         selected = best_res
         for res in results[::-1]:
@@ -506,7 +499,7 @@ class ShaperCalibrate:
 
     def _bisect(self, func, eps=1e-8):
         left = right = 1.0
-        if not func(1e-9):
+        if not func(eps):
             return 0.0
         while not func(left):
             right = left
@@ -522,7 +515,7 @@ class ShaperCalibrate:
                 right = middle
         return left
 
-    def find_max_accel(self, s, get_smoothing, scv):
+    def find_max_accel(self, s, scv, get_smoothing):
         # Just some empirically chosen value which produces good projections
         # for max_accel without much smoothing
         TARGET_SMOOTHING = 0.12

@@ -10,7 +10,6 @@ from klippy import stepper, mathutil, chelper
 class RotaryDeltaKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
-        self.improved_axes_def = config.getboolean("improved_axes_def", False)
         # Setup tower rails
         stepper_configs = [config.getsection("stepper_" + a) for a in "abc"]
         rail_a = stepper.PrinterRail(
@@ -222,7 +221,6 @@ class RotaryDeltaKinematics:
     def get_status(self, eventtime):
         return {
             "kinematics": "rotary_delta",
-            "improved_axes_def": self.improved_axes_def,
             "homed_axes": "" if self.need_home else "xyz",
             "axis_minimum": self.axes_min,
             "axis_maximum": self.axes_max,

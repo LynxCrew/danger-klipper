@@ -286,7 +286,7 @@ def main():
     ] and options.shaper.lower() not in [
         s.name for s in shaper_defs.INPUT_SMOOTHERS
     ]:
-        opts.error("Invalid shaper name '%s'" % (opts.shaper,))
+        opts.error("Invalid shaper name '%s'" % (options.shaper,))
 
     # Draw graph
     setup_matplotlib(options.output is not None)

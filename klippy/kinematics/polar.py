@@ -10,7 +10,6 @@ from klippy import stepper
 class PolarKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
-        self.improved_axes_def = config.getboolean("improved_axes_def", False)
         # Setup axis steppers
         stepper_bed = stepper.PrinterStepper(
             config.getsection("stepper_bed"), units_in_radians=True
@@ -198,7 +197,6 @@ class PolarKinematics:
         z_home = "z" if self.limit_z[0] <= self.limit_z[1] else ""
         return {
             "kinematics": "polar",
-            "improved_axes_def": self.improved_axes_def,
             "homed_axes": xy_home + z_home,
             "axis_minimum": self.axes_min,
             "axis_maximum": self.axes_max,

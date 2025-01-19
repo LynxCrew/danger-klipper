@@ -4,7 +4,7 @@
 # Copyright (C) 2020-2023  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import collections
+import collections, inspect, logging, sys
 from klippy import chelper
 from . import extruder_smoother, shaper_defs
 
@@ -243,6 +243,14 @@ class CustomInputShaperParams:
                 ("shaper_type", self.SHAPER_TYPE),
                 ("shaper_a", ",".join(["%.6f" % (a,) for a in self.A])),
                 ("shaper_t", ",".join(["%.6f" % (t,) for t in self.T])),
+                (
+                    "motor_filter_a",
+                    ",".join(["%.6f" % (a,) for a in self.motor_filter_A]),
+                ),
+                (
+                    "motor_filter_t",
+                    ",".join(["%.6f" % (t,) for t in self.motor_filter_T]),
+                ),
             ]
         )
 
@@ -431,15 +439,31 @@ class TypedInputSmootherParams:
     def __init__(self, axis, smoother_type, config):
         self.axis = axis
         self.smoother_type = smoother_type
+        self.damping_ratio = shaper_defs.DEFAULT_DAMPING_RATIO
         self.smoother_freq = 0.0
         if config is not None:
             if smoother_type not in self.smoothers:
                 raise config.error(
                     "Unsupported shaper type: %s" % (smoother_type,)
                 )
+            if self._supports_damping_ratio(smoother_type):
+                self.damping_ratio = config.getfloat(
+                    "damping_ratio_" + axis,
+                    self.damping_ratio,
+                    minval=0.0,
+                    maxval=0.25,
+                )
             self.smoother_freq = config.getfloat(
                 "smoother_freq_" + axis, self.smoother_freq, minval=0.0
             )
+
+    def _supports_damping_ratio(self, smoother_type):
+        getargspec = (
+            inspect.getfullargspec
+            if sys.version_info.major >= 3
+            else inspect.getargspec
+        )
+        return "damping_ratio" in getargspec(self.smoothers[smoother_type]).args
 
     def get_type(self):
         return self.smoother_type
@@ -451,6 +475,15 @@ class TypedInputSmootherParams:
         if smoother_type not in self.smoothers:
             raise gcmd.error("Unsupported shaper type: %s" % (smoother_type,))
         axis = self.axis.upper()
+        if self._supports_damping_ratio(smoother_type):
+            self.damping_ratio = gcmd.get_float(
+                "DAMPING_RATIO_" + axis,
+                self.damping_ratio,
+                minval=0.0,
+                maxval=1.0,
+            )
+        else:
+            self.damping_ratio = shaper_defs.DEFAULT_DAMPING_RATIO
         self.smoother_freq = gcmd.get_float(
             "SMOOTHER_FREQ_" + axis, self.smoother_freq, minval=0.0
         )
@@ -461,7 +494,7 @@ class TypedInputSmootherParams:
             C, tsm = shaper_defs.get_none_smoother()
         else:
             C, tsm = self.smoothers[self.smoother_type](
-                self.smoother_freq, normalize_coeffs=False
+                self.smoother_freq, self.damping_ratio, normalize_coeffs=False
             )
         return len(C), C, tsm
 
@@ -470,6 +503,7 @@ class TypedInputSmootherParams:
             [
                 ("shaper_type", self.smoother_type),
                 ("smoother_freq", "%.3f" % (self.smoother_freq,)),
+                ("damping_ratio", "%.6f" % (self.damping_ratio,)),
             ]
         )
 
@@ -588,15 +622,20 @@ class AxisInputSmoother:
             )
         else:
             smoother_type = self.get_type()
+            status = self.params.get_status()
+            damping_ratio = float(
+                status.get("damping_ratio", shaper_defs.DEFAULT_DAMPING_RATIO)
+            )
             C_e, t_sm = extruder_smoother.get_extruder_smoother(
                 smoother_type,
                 self.smooth_time,
-                shaper_defs.DEFAULT_DAMPING_RATIO,
+                damping_ratio,
                 normalize_coeffs=False,
             )
+            smoother_offset = self.t_offs + 0.5 * (self.smooth_time - t_sm)
             success = (
                 ffi_lib.extruder_set_smoothing_params(
-                    sk, axis, len(C_e), C_e, t_sm, self.t_offs
+                    sk, axis, len(C_e), C_e, t_sm, smoother_offset
                 )
                 == 0
             )

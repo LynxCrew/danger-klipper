@@ -16,7 +16,6 @@ MIN_ANGLE = 5.0
 class DeltesianKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
-        self.improved_axes_def = config.getboolean("improved_axes_def", False)
         self.rails = [None] * 3
         stepper_configs = [
             config.getsection("stepper_" + s) for s in ["left", "right", "y"]
@@ -141,12 +140,15 @@ class DeltesianKinematics:
                 % (math.sqrt(self.slow_x2), math.sqrt(self.very_slow_x2))
             )
         # Setup boundary checks
-        max_velocity, max_accel = toolhead.get_max_velocity()
+        self.max_velocity, self.max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
-            "max_z_velocity", max_velocity, above=0.0, maxval=max_velocity
+            "max_z_velocity",
+            self.max_velocity,
+            above=0.0,
+            maxval=self.max_velocity,
         )
         self.max_z_accel = config.getfloat(
-            "max_z_accel", max_accel, above=0.0, maxval=max_accel
+            "max_z_accel", self.max_accel, above=0.0, maxval=self.max_accel
         )
         self.axes_min = toolhead.Coord(*[l[0] for l in self.limits], e=0.0)
         self.axes_max = toolhead.Coord(*[l[1] for l in self.limits], e=0.0)
@@ -308,7 +310,6 @@ class DeltesianKinematics:
         axes = [a for a, b in zip("xyz", self.homed_axis) if b]
         return {
             "kinematics": "deltesian",
-            "improved_axes_def": self.improved_axes_def,
             "homed_axes": "".join(axes),
             "axis_minimum": self.axes_min,
             "axis_maximum": self.axes_max,

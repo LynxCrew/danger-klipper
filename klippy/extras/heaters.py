@@ -72,24 +72,20 @@ FILAMENT_TEMP_SRC_SENSOR_AMBIENT = "sensor_ambient"
 
 
 class Heater:
-    def __init__(self, config, sensor, sensor_config=None):
+    def __init__(self, config, sensor):
         self.printer = config.get_printer()
         self.name = config.get_name()
         self.short_name = short_name = self.name.split()[-1]
         self.reactor = self.printer.get_reactor()
-        sensor_config = config if sensor_config is None else sensor_config
-        self.sensor_config = sensor_config
-        self.sensor_name = sensor_config.get_name()
+        self.sensor_name = config.get_name()
         self.sensor_short_name = self.sensor_name.split()[-1]
         self.config = config
         self.configfile = self.printer.lookup_object("configfile")
         # Setup sensor
         self.sensor = sensor
-        self.min_temp = sensor_config.getfloat(
-            "min_temp", minval=KELVIN_TO_CELSIUS
-        )
-        self.max_temp = sensor_config.getfloat("max_temp", above=self.min_temp)
-        self.max_set_temp = sensor_config.getfloat(
+        self.min_temp = config.getfloat("min_temp", minval=KELVIN_TO_CELSIUS)
+        self.max_temp = config.getfloat("max_temp", above=self.min_temp)
+        self.max_set_temp = config.getfloat(
             "max_set_temp",
             self.max_temp,
             minval=self.min_temp,
@@ -99,7 +95,7 @@ class Heater:
         self.sensor.setup_callback(self.temperature_callback)
         self.pwm_delay = self.sensor.get_report_time_delta()
         # Setup temperature checks
-        self.min_extrude_temp = sensor_config.getfloat(
+        self.min_extrude_temp = config.getfloat(
             "min_extrude_temp",
             170.0,
             minval=self.min_temp,
@@ -115,18 +111,14 @@ class Heater:
             self.disable_if_connected = config.getlist(
                 "disable_if_connected", self.disable_if_connected
             )
-        self.max_power = sensor_config.getfloat(
+        self.max_power = config.getfloat(
             "max_power", 1.0, above=0.0, maxval=1.0
         )
-        self.config_smooth_time = sensor_config.getfloat(
-            "smooth_time", 1.0, above=0.0
-        )
-        self.config_smoothing_elements = sensor_config.getint(
+        self.config_smooth_time = config.getfloat("smooth_time", 1.0, above=0.0)
+        self.config_smoothing_elements = config.getint(
             "smoothing_elements", 1, minval=1
         )
-        self.config_smoothing = sensor_config.getfloat(
-            "smoothing", 0.25, above=0.0
-        )
+        self.config_smoothing = config.getfloat("smoothing", 0.25, above=0.0)
         self.smooth_time = self.config_smooth_time
         self.smoothing_elements = self.config_smoothing_elements
         self.smoothing = self.config_smoothing
@@ -145,30 +137,30 @@ class Heater:
             default,
             can_be_none,
         ) in WATERMARK_PROFILE_OPTIONS.items():
-            sensor_config.get(key, None)
+            config.get(key, None)
         for key, (
             type,
             placeholder,
             default,
             can_be_none,
         ) in PID_PROFILE_OPTIONS.items():
-            sensor_config.get(key, None)
+            config.get(key, None)
         for key, (
             type,
             placeholder,
             default,
             can_be_none,
         ) in MPC_PROFILE_OPTIONS.items():
-            sensor_config.get(key, None)
-        sensor_config.getfloat("calibrate_max_error", None)
-        sensor_config.getfloat("calibrate_check_gain_time", None)
-        sensor_config.getfloat("calibrate_hysteresis", None)
-        sensor_config.getfloat("calibrate_heating_gain", None)
+            config.get(key, None)
+        config.getfloat("calibrate_max_error", None)
+        config.getfloat("calibrate_check_gain_time", None)
+        config.getfloat("calibrate_hysteresis", None)
+        config.getfloat("calibrate_heating_gain", None)
         # Setup output heater pin
-        heater_pin = sensor_config.get("heater_pin")
+        heater_pin = config.get("heater_pin")
         ppins = self.printer.lookup_object("pins")
         self.mcu_pwm = ppins.setup_pin("pwm", heater_pin)
-        pwm_cycle_time = sensor_config.getfloat(
+        pwm_cycle_time = config.getfloat(
             "pwm_cycle_time", 0.100, above=0.0, maxval=self.pwm_delay
         )
         self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
@@ -1766,17 +1758,14 @@ class PrinterHeaters:
     def add_sensor_factory(self, sensor_type, sensor_factory):
         self.sensor_factories[sensor_type] = sensor_factory
 
-    def setup_heater(self, config, gcode_id=None, heater_config=None):
-        heater_config = config if heater_config is None else heater_config
+    def setup_heater(self, config, gcode_id=None):
         heater_name = config.get_name().split()[-1]
         if heater_name in self.heaters:
             raise config.error("Heater %s already registered" % (heater_name,))
         # Setup sensor
-        sensor = self.setup_sensor(heater_config)
+        sensor = self.setup_sensor(config)
         # Create heater
-        self.heaters[heater_name] = heater = Heater(
-            config, sensor, heater_config
-        )
+        self.heaters[heater_name] = heater = Heater(config, sensor)
         self.register_sensor(config, heater, gcode_id)
         self.available_heaters.append(config.get_name())
         return heater

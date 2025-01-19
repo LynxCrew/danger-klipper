@@ -5,7 +5,7 @@ struct shaper_pulses {
     int num_pulses;
     struct {
         double t, a;
-    } pulses[35];
+    } pulses[5];
 };
 
 struct move;

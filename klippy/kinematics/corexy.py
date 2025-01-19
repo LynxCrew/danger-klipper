@@ -17,30 +17,10 @@ class CoreXYKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
         # Setup axis rails
-        self.improved_axes_def = config.getboolean("improved_axes_def", False)
-        if self.improved_axes_def:
-            self.voron_axes_def = config.getboolean("voron_axes_def", False)
-            if self.voron_axes_def:
-                self.rails = [
-                    stepper.LookupMultiRail(
-                        config.getsection("axis_" + n[0]),
-                        stepper_config=config.getsection("stepper_" + n[1]),
-                    )
-                    for n in [["x", "b"], ["y", "a"], ["z", "z"]]
-                ]
-            else:
-                self.rails = [
-                    stepper.LookupMultiRail(
-                        config.getsection("axis_" + n[0]),
-                        stepper_config=config.getsection("stepper_" + n[1]),
-                    )
-                    for n in [["x", "a"], ["y", "b"], ["z", "z"]]
-                ]
-        else:
-            self.rails = [
-                stepper.LookupMultiRail(config.getsection("stepper_" + n))
-                for n in "xyz"
-            ]
+        self.rails = [
+            stepper.LookupMultiRail(config.getsection("stepper_" + n))
+            for n in "xyz"
+        ]
         for s in self.rails[1].get_steppers():
             self.rails[0].get_endstops()[0][0].add_stepper(s)
         for s in self.rails[0].get_steppers():
@@ -55,20 +35,12 @@ class CoreXYKinematics:
             "stepper_enable:motor_off", self._motor_off
         )
 
-        if self.improved_axes_def:
-            self.printer.register_event_handler(
-                "stepper_enable:disable_a", self._disable_xy
-            )
-            self.printer.register_event_handler(
-                "stepper_enable:disable_b", self._disable_xy
-            )
-        else:
-            self.printer.register_event_handler(
-                "stepper_enable:disable_x", self._disable_xy
-            )
-            self.printer.register_event_handler(
-                "stepper_enable:disable_y", self._disable_xy
-            )
+        self.printer.register_event_handler(
+            "stepper_enable:disable_x", self._disable_xy
+        )
+        self.printer.register_event_handler(
+            "stepper_enable:disable_y", self._disable_xy
+        )
         self.printer.register_event_handler(
             "stepper_enable:disable_z", self._set_unhomed_z
         )
@@ -220,7 +192,6 @@ class CoreXYKinematics:
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
         return {
             "kinematics": "corexy",
-            "improved_axes_def": self.improved_axes_def,
             "homed_axes": "".join(axes),
             "axis_minimum": self.axes_min,
             "axis_maximum": self.axes_max,

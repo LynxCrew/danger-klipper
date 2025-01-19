@@ -17,20 +17,10 @@ class CoreXZKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
         # Setup axis rails
-        self.improved_axes_def = config.getboolean("improved_axes_def", False)
-        if self.improved_axes_def:
-            self.rails = [
-                stepper.LookupMultiRail(
-                    config.getsection("axis_" + n[0]),
-                    stepper_config=config.getsection("stepper_" + n[1]),
-                )
-                for n in [["x", "a"], ["y", "y"], ["z", "b"]]
-            ]
-        else:
-            self.rails = [
-                stepper.LookupMultiRail(config.getsection("stepper_" + n))
-                for n in "xyz"
-            ]
+        self.rails = [
+            stepper.LookupMultiRail(config.getsection("stepper_" + n))
+            for n in "xyz"
+        ]
         for s in self.rails[0].get_steppers():
             self.rails[2].get_endstops()[0][0].add_stepper(s)
         for s in self.rails[2].get_steppers():
@@ -202,7 +192,6 @@ class CoreXZKinematics:
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
         return {
             "kinematics": "corexz",
-            "improved_axes_def": self.improved_axes_def,
             "homed_axes": "".join(axes),
             "axis_minimum": self.axes_min,
             "axis_maximum": self.axes_max,

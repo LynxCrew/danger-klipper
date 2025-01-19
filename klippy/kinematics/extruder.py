@@ -9,9 +9,21 @@ from klippy import stepper, chelper
 
 class ExtruderSmoother:
     def __init__(self, config, pa_model):
+        self.config = config
         self.smooth_time = config.getfloat(
             "pressure_advance_smooth_time", 0.040, above=0.0, maxval=0.200
         )
+        self.smooth_extruding_moves = config.getboolean(
+            "pressure_advance_smooth_extruding_moves", True
+        )
+        self.smooth_extrude_only_moves = config.getboolean(
+            "pressure_advance_smooth_extrude_only_moves", True
+        )
+        if self.smooth_extrude_only_moves and not self.smooth_extruding_moves:
+            raise config.error(
+                "Cannot smooth non-extrude moves when smoothing "
+                "for extrude moves is disabled"
+            )
         # A 4-th order smoothing function that goes to 0 together with
         # its derivative at the ends of the smoothing interval
         self.a = [15.0 / 8.0, 0.0, -15.0, 0.0, 30.0]
@@ -19,7 +31,28 @@ class ExtruderSmoother:
         self.axes = ["x", "y", "z"]
 
     def update(self, gcmd):
+        old_smooth_time = self.smooth_time
         self.smooth_time = gcmd.get_float("SMOOTH_TIME", self.smooth_time)
+        old_smooth_extruding_moves = self.smooth_extruding_moves
+        self.smooth_extruding_moves = not not gcmd.get_int(
+            "SMOOTH_EXTRUDING_MOVES", self.smooth_extruding_moves
+        )
+        old_smooth_extrude_only_moves = self.smooth_extrude_only_moves
+        smooth_extrude_only_moves = gcmd.get_int(
+            "SMOOTH_EXTRUDE_ONLY_MOVES", None
+        )
+        if smooth_extrude_only_moves and not self.smooth_extruding_moves:
+            raise self.config.error(
+                "Cannot smooth extrude-only moves when smoothing"
+                " for extrude moves is disabled"
+            )
+        elif smooth_extrude_only_moves is not None:
+            self.smooth_extrude_only_moves = not not smooth_extrude_only_moves
+        return (
+            self.smooth_time != old_smooth_time
+            or self.smooth_extruding_moves != old_smooth_extruding_moves
+            or self.smooth_extrude_only_moves != old_smooth_extrude_only_moves
+        )
 
     def update_pa_model(self, pa_model):
         self.pa_model = pa_model
@@ -45,13 +78,32 @@ class ExtruderSmoother:
                 == 0
             ):
                 success = False
+        ffi_lib.extruder_set_smooth_moves_params(
+            extruder_sk,
+            self.smooth_extruding_moves,
+            self.smooth_extrude_only_moves,
+        )
         return success
 
     def get_status(self, eventtime):
-        return {"smooth_time": self.smooth_time}
+        return {
+            "smooth_time": self.smooth_time,
+            "smooth_extruding_moves": self.smooth_extruding_moves,
+            "smooth_extrude_only_moves": self.smooth_extrude_only_moves
+            and self.smooth_extruding_moves,
+        }
 
     def get_msg(self):
-        return "pressure_advance_smooth_time: %.6f" % (self.smooth_time,)
+        return (
+            "pressure_advance_smooth_time: %.6f\n"
+            "smooth_extruding_moves: %s\n"
+            "smooth_extrude_only_moves: %s"
+            % (
+                self.smooth_time,
+                self.smooth_extruding_moves,
+                self.smooth_extrude_only_moves and self.smooth_extruding_moves,
+            )
+        )
 
 
 class PALinearModel:
@@ -101,10 +153,10 @@ class PANonLinearModel:
             self.linear_advance = config.getfloat(
                 "linear_advance", 0.0, minval=0.0
             )
-            self.linear_offset = config.getfloat(
-                "linear_offset", 0.0, minval=0.0
+            self.nonlinear_offset = config.getfloat(
+                "nonlinear_offset", 0.0, minval=0.0
             )
-            if self.linear_offset:
+            if self.nonlinear_offset:
                 self.linearization_velocity = config.getfloat(
                     "linearization_velocity", above=0.0
                 )
@@ -114,7 +166,7 @@ class PANonLinearModel:
                 )
         else:
             self.linear_advance = 0.0
-            self.linear_offset = 0.0
+            self.nonlinear_offset = 0.0
             self.linearization_velocity = 0.0
 
     def set_enabled(self, enable):
@@ -124,13 +176,13 @@ class PANonLinearModel:
         self.linear_advance = gcmd.get_float(
             "ADVANCE", self.linear_advance, minval=0.0
         )
-        self.linear_offset = gcmd.get_float(
-            "OFFSET", self.linear_offset, minval=0.0
+        self.nonlinear_offset = gcmd.get_float(
+            "OFFSET", self.nonlinear_offset, minval=0.0
         )
         self.linearization_velocity = gcmd.get_float(
             "VELOCITY", self.linearization_velocity
         )
-        if self.linear_offset and self.linearization_velocity <= 0.0:
+        if self.nonlinear_offset and self.linearization_velocity <= 0.0:
             raise gcmd.error(
                 "VELOCITY must be set to a positive value "
                 "when OFFSET is non-zero"
@@ -138,7 +190,7 @@ class PANonLinearModel:
 
     def enabled(self):
         return self.pa_enabled and (
-            self.linear_advance > 0.0 or self.linear_offset > 0.0
+            self.linear_advance > 0.0 or self.nonlinear_offset > 0.0
         )
 
     def get_pa_params(self):
@@ -147,7 +199,7 @@ class PANonLinearModel:
         return (
             (
                 self.linear_advance,
-                self.linear_offset,
+                self.nonlinear_offset * self.linearization_velocity,
                 self.linearization_velocity,
             )
             if self.enabled
@@ -170,7 +222,7 @@ class PANonLinearModel:
             % (
                 "true" if self.pa_enabled else "false",
                 self.linear_advance,
-                self.linear_offset,
+                self.nonlinear_offset,
                 self.linearization_velocity,
             )
         )
@@ -201,11 +253,23 @@ class PAReciprModel(PANonLinearModel):
         return ffi_lib.pressure_advance_recipr_model_func
 
 
+class PALogModel(PANonLinearModel):
+    name = "log"
+
+    def __init__(self, config=None):
+        PANonLinearModel.__init__(self, config)
+
+    def get_func(self):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        return ffi_lib.pressure_advance_log_model_func
+
+
 class ExtruderStepper:
     pa_models = {
         PALinearModel.name: PALinearModel,
         PATanhModel.name: PATanhModel,
         PAReciprModel.name: PAReciprModel,
+        PALogModel.name: PALogModel,
     }
 
     def __init__(self, config):
@@ -222,12 +286,9 @@ class ExtruderStepper:
         self.stepper = stepper.PrinterStepper(config)
         ffi_main, ffi_lib = chelper.get_ffi()
         self.sk_extruder = ffi_main.gc(
-            ffi_lib.extruder_stepper_alloc(), ffi_lib.free
+            ffi_lib.extruder_stepper_alloc(), ffi_lib.extruder_stepper_free
         )
         self.stepper.set_stepper_kinematics(self.sk_extruder)
-        ffi_lib.extruder_set_pressure_advance_model_func(
-            self.sk_extruder, self.pa_model.get_func()
-        )
         self.motion_queue = None
         self.extruder = None
         # Register commands
@@ -316,9 +377,9 @@ class ExtruderStepper:
             raise self.printer.command_error(
                 "'%s' is not a valid extruder." % (extruder_name,)
             )
+        if self.extruder is not None and self.extruder != extruder:
+            self.extruder.unlink_extruder_stepper(self)
         extruder.link_extruder_stepper(self)
-        self.motion_queue = extruder_name
-        self.extruder = extruder
 
     def set_rotation_distance(self, rotation_dist):
         self.stepper.set_rotation_distance(rotation_dist)
@@ -329,17 +390,19 @@ class ExtruderStepper:
 
     def _update_pressure_advance(self, pa_model, time_offset):
         toolhead = self.printer.lookup_object("toolhead")
-        toolhead.flush_step_generation()
         ffi_main, ffi_lib = chelper.get_ffi()
+        espa = ffi_lib.extruder_set_pressure_advance
         old_delay = ffi_lib.extruder_get_step_gen_window(self.sk_extruder)
-        if self.pa_model.name != pa_model.name:
-            pa_func = pa_model.get_func()
-            ffi_lib.extruder_set_pressure_advance_model_func(
-                self.sk_extruder, pa_func
-            )
         pa_params = pa_model.get_pa_params()
-        ffi_lib.extruder_set_pressure_advance(
-            self.sk_extruder, len(pa_params), pa_params, time_offset
+        toolhead.register_lookahead_callback(
+            lambda print_time: espa(
+                self.sk_extruder,
+                print_time,
+                len(pa_params),
+                pa_params,
+                pa_model.get_func(),
+                time_offset,
+            )
         )
         self.smoother.update_pa_model(pa_model)
         self.smoother.update_extruder_kinematics(self.sk_extruder)
@@ -385,6 +448,12 @@ class ExtruderStepper:
             extruder_stepper.cmd_SET_PRESSURE_ADVANCE(gcmd)
 
     def cmd_SET_PRESSURE_ADVANCE(self, gcmd):
+        time_offset = gcmd.get_float(
+            "TIME_OFFSET",
+            self.pressure_advance_time_offset,
+            minval=-0.2,
+            maxval=0.2,
+        )
         pa_model_name = gcmd.get("MODEL", self.pa_model.name)
         if pa_model_name not in self.pa_models:
             raise gcmd.error("Invalid MODEL='%s' choice" % (pa_model_name,))
@@ -395,13 +464,13 @@ class ExtruderStepper:
             gcmd.get_int("ENABLE", self.pa_model.pa_enabled, minval=0, maxval=1)
         )
         pa_model.update(gcmd)
-        self.smoother.update(gcmd)
-        time_offset = gcmd.get_float(
-            "TIME_OFFSET",
-            self.pressure_advance_time_offset,
-            minval=-0.2,
-            maxval=0.2,
-        )
+        smoother_updated = self.smoother.update(gcmd)
+        if (
+            self.pressure_advance_time_offset != time_offset
+            or self.pa_model.enabled() != pa_model.enabled()
+            or smoother_updated
+        ):
+            self.printer.lookup_object("toolhead").flush_step_generation()
         self._update_pressure_advance(pa_model, time_offset)
         msg = (
             "pressure_advance_model: %s\n" % (pa_model.name,)
@@ -484,21 +553,14 @@ class PrinterExtruder:
         pheaters = self.printer.load_object(config, "heaters")
         toolhead = self.printer.lookup_object("toolhead")
         gcode_id = "T%d" % (extruder_num,)
-        hotend_config = (
-            config.getsection("hotend" + self.name.replace("extruder", ""))
-            if toolhead.get_kinematics().improved_axes_def
-            else config
-        )
         if shared_heater is None:
-            self.heater = pheaters.setup_heater(config, gcode_id, hotend_config)
+            self.heater = pheaters.setup_heater(config, gcode_id)
         else:
             config.deprecate("shared_heater")
             self.heater = pheaters.lookup_heater(shared_heater)
         # Setup kinematic checks
-        self.nozzle_diameter = hotend_config.getfloat(
-            "nozzle_diameter", above=0.0
-        )
-        filament_diameter = hotend_config.getfloat(
+        self.nozzle_diameter = config.getfloat("nozzle_diameter", above=0.0)
+        filament_diameter = config.getfloat(
             "filament_diameter", minval=self.nozzle_diameter
         )
         self.filament_area = math.pi * (filament_diameter * 0.5) ** 2
@@ -565,11 +627,15 @@ class PrinterExtruder:
             self.extruder_steppers.append(extruder_stepper)
             extruder_stepper.stepper.set_position(self.last_position)
             extruder_stepper.stepper.set_trapq(self.trapq)
+            extruder_stepper.motion_queue = self.name
+            extruder_stepper.extruder = self
 
     def unlink_extruder_stepper(self, extruder_stepper):
         if extruder_stepper in self.extruder_steppers:
             self.extruder_steppers.remove(extruder_stepper)
             extruder_stepper.stepper.set_trapq(None)
+            extruder_stepper.motion_queue = None
+            extruder_stepper.extruder = None
 
     def get_extruder_steppers(self):
         return self.extruder_steppers
