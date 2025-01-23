@@ -796,6 +796,7 @@ class ToolHead:
     cmd_SET_VELOCITY_LIMIT_help = "Set printer velocity limits"
 
     def cmd_SET_VELOCITY_LIMIT(self, gcmd):
+        msg = ""
         max_velocity = gcmd.get_float("VELOCITY", None, above=0.0)
         max_accel = gcmd.get_float("ACCEL", None, above=0.0)
         square_corner_velocity = gcmd.get_float(
@@ -824,17 +825,23 @@ class ToolHead:
             self.square_corner_velocity = square_corner_velocity
         if min_cruise_ratio is not None:
             self.min_cruise_ratio = min_cruise_ratio
+        msg += (
+            "max_velocity: %.6f" % self.max_velocity,
+            "max_accel: %.6f" % self.max_accel,
+        )
         if isinstance(self.kin, LimitedCoreXYKinematics):
-            max_x_accel = gcmd.get_float("max_x_accel", None)
-            max_y_accel = gcmd.get_float("max_y_accel", None)
+            max_x_accel = gcmd.get_float("X_ACCEL", None)
+            max_y_accel = gcmd.get_float("Y_ACCEL", None)
             if max_x_accel is not None:
                 self.kin.max_x_accel = max_x_accel
             if max_y_accel is not None:
                 self.kin.max_y_accel = max_y_accel
+            msg += (
+                "max_x_accel: %.6f" % self.kin.max_x_accel,
+                "max_y_accel: %.6f" % self.kin.max_y_accel,
+            )
         self._calc_junction_deviation()
-        msg = (
-            "max_velocity: %.6f" % self.max_velocity,
-            "max_accel: %.6f" % self.max_accel,
+        msg += (
             "minimum_cruise_ratio: %.6f" % self.min_cruise_ratio,
             "square_corner_velocity: %.6f" % self.square_corner_velocity,
         )
