@@ -7,6 +7,8 @@ import math, logging, importlib
 from . import chelper
 from .kinematics import extruder
 from .extras.danger_options import get_danger_options
+from .kinematics.limited_corexy import LimitedCoreXYKinematics
+
 
 # Common suffixes: _d is distance (in mm), _v is velocity (in
 #   mm/second), _v2 is velocity squared (mm^2/s^2), _t is time (in
@@ -822,6 +824,13 @@ class ToolHead:
             self.square_corner_velocity = square_corner_velocity
         if min_cruise_ratio is not None:
             self.min_cruise_ratio = min_cruise_ratio
+        if isinstance(self.kin, LimitedCoreXYKinematics):
+            max_x_accel = gcmd.get_float("max_x_accel", None)
+            max_y_accel = gcmd.get_float("max_y_accel", None)
+            if max_x_accel is not None:
+                self.kin.max_x_accel = max_x_accel
+            if max_y_accel is not None:
+                self.kin.max_y_accel = max_y_accel
         self._calc_junction_deviation()
         msg = (
             "max_velocity: %.6f" % self.max_velocity,
