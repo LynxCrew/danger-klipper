@@ -7,7 +7,9 @@ import math, logging, importlib
 from . import chelper
 from .kinematics import extruder
 from .extras.danger_options import get_danger_options
+from .kinematics.limited_cartesian import LimitedCartKinematics
 from .kinematics.limited_corexy import LimitedCoreXYKinematics
+from .kinematics.winch import WinchKinematics
 
 
 # Common suffixes: _d is distance (in mm), _v is velocity (in
@@ -825,26 +827,58 @@ class ToolHead:
             self.square_corner_velocity = square_corner_velocity
         if min_cruise_ratio is not None:
             self.min_cruise_ratio = min_cruise_ratio
-        msg.extend((
-            "max_velocity: %.6f" % self.max_velocity,
-            "max_accel: %.6f" % self.max_accel,
-        ))
-        if isinstance(self.kin, LimitedCoreXYKinematics):
+        msg.extend(
+            (
+                "max_velocity: %.6f" % self.max_velocity,
+                "max_accel: %.6f" % self.max_accel,
+            )
+        )
+        if isinstance(self.kin, LimitedCoreXYKinematics) or isinstance(
+            self.kin, LimitedCartKinematics
+        ):
+            if isinstance(self.kin, LimitedCartKinematics):
+                max_x_velocity = gcmd.get_float("X_VELOCITY", None)
+                if max_x_velocity is not None:
+                    self.kin.max_x_velocity = max_x_velocity
+                msg.append("max_x_velocity: %.6f" % self.kin.max_x_velocity)
+
             max_x_accel = gcmd.get_float("X_ACCEL", None)
-            max_y_accel = gcmd.get_float("Y_ACCEL", None)
             if max_x_accel is not None:
                 self.kin.max_x_accel = max_x_accel
+            msg.append("max_x_accel: %.6f" % self.kin.max_x_accel)
+
+            if isinstance(self.kin, LimitedCartKinematics):
+                max_y_velocity = gcmd.get_float("Y_VELOCITY", None)
+                if max_y_velocity is not None:
+                    self.kin.max_y_velocity = max_y_velocity
+                msg.append("max_y_velocity: %.6f" % self.kin.max_y_velocity)
+
+            max_y_accel = gcmd.get_float("Y_ACCEL", None)
             if max_y_accel is not None:
                 self.kin.max_y_accel = max_y_accel
-            msg.extend((
-                "max_x_accel: %.6f" % self.kin.max_x_accel,
+            msg.append(
                 "max_y_accel: %.6f" % self.kin.max_y_accel,
-            ))
+            )
+        if not isinstance(self.kin, WinchKinematics):
+            max_z_velocity = gcmd.get_float("Z_VELOCITY", None, above=0.0)
+            max_z_accel = gcmd.get_float("Z_ACCEL", None, above=0.0)
+            if max_z_velocity is not None:
+                self.kin.max_z_velocity = max_z_velocity
+            if max_z_accel is not None:
+                self.kin.max_z_accel = max_z_accel
+            msg.extend(
+                (
+                    "max_z_velocity: %.6f" % self.kin.max_z_velocity,
+                    "max_z_accel: %.6f" % self.kin.max_z_accel,
+                )
+            )
         self._calc_junction_deviation()
-        msg.extend((
-            "minimum_cruise_ratio: %.6f" % self.min_cruise_ratio,
-            "square_corner_velocity: %.6f" % self.square_corner_velocity
-        ))
+        msg.extend(
+            (
+                "minimum_cruise_ratio: %.6f" % self.min_cruise_ratio,
+                "square_corner_velocity: %.6f" % self.square_corner_velocity,
+            )
+        )
         self.printer.set_rollover_info(
             "toolhead",
             "toolhead: %s" % (" ".join(msg),),
