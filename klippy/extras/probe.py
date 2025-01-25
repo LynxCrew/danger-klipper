@@ -575,6 +575,9 @@ class ProbePointsHelper:
         self.use_offsets = config.getboolean(
             "use_probe_offsets", use_probe_offsets
         )
+        self.use_offsets = config.getboolean(
+            "use_probe_xy_offsets", self.use_offsets
+        )
         # Internal probing state
         self.lift_speed = self.speed
         self.probe_offsets = (0.0, 0.0, 0.0)
