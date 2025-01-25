@@ -384,6 +384,11 @@ def TMC2240OvertemperatureWarningHelper(config, mcu_tmc):
 ######################################################################
 
 
+sg_modes = {
+    "sg2": "sg2",
+    "sg4": "sg4",
+}
+
 class TMC2240:
     def __init__(self, config):
         # Setup mcu communication
@@ -399,7 +404,17 @@ class TMC2240:
                 config, Registers, self.fields, TMC_FREQUENCY
             )
         # Allow virtual pins to be created
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
+        self.virtual_pin_helper = tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
+        self.sg_mode = config.getchoice(
+            "sg_mode", sg_modes, "sg2"
+        )
+        if self.sg_mode == "sg4":
+            self.virtual_pin_helper.set_sg_homing_begin = self._set_sg4_homing_begin
+            self.virtual_pin_helper.set_sg_homing_end = self._set_sg4_homing_end
+        else:
+            self.virtual_pin_helper.set_sg_homing_begin = self._set_sg2_homing_begin
+            self.virtual_pin_helper.set_sg_homing_end = self._set_sg2_homing_end
+
         # Register commands
         current_helper = TMC2240CurrentHelper(config, self.mcu_tmc)
         TMC2240OvervoltageHelper(config, self.mcu_tmc)
@@ -456,6 +471,28 @@ class TMC2240:
         set_config_field(config, "sg4_angle_offset", 1)
         #   DRV_CONF
         set_config_field(config, "slope_control", 0)
+
+    def _set_sg2_homing_begin(self):
+        self.en_pwm = self.fields.get_field("en_pwm_mode")
+        self.fields.set_field("en_pwm_mode", 0)
+        return self.fields.set_field(self.virtual_pin_helper.diag_pin_field, 1)
+
+    def _set_sg2_homing_end(self):
+        self.fields.set_field("en_pwm_mode", self.en_pwm)
+        return self.fields.set_field(self.virtual_pin_helper.diag_pin_field, 0)
+
+    def _set_sg4_homing_begin(self):
+        self.en_pwm = not self.fields.get_field("en_pwm_mode")
+        tp_val = self.fields.set_field("tpwmthrs", 0)
+        self.mcu_tmc.set_register("TPWMTHRS", tp_val)
+        self.fields.set_field("en_pwm_mode", 1)
+        return self.fields.set_field(self.virtual_pin_helper.diag_pin_field, 1)
+
+    def _set_sg4_homing_end(self):
+        tp_val = self.fields.set_field("tpwmthrs", self.virtual_pin_helper.pwmthrs)
+        self.mcu_tmc.set_register("TPWMTHRS", tp_val)
+        self.fields.set_field("en_pwm_mode", self.en_pwm)
+        return self.fields.set_field(self.virtual_pin_helper.diag_pin_field, 0)
 
 
 def load_config_prefix(config):

@@ -681,6 +681,8 @@ class TMCVirtualPinHelper:
         self.mcu_endstop = None
         self.en_pwm = False
         self.pwmthrs = self.coolthrs = self.thigh = 0
+        self.set_sg_homing_begin = self._set_sg_homing_begin
+        self.set_sg_homing_end = self._set_sg_homing_end
         # Register virtual_endstop pin
         name_parts = config.get_name().split()
         ppins = self.printer.lookup_object("pins")
@@ -705,11 +707,7 @@ class TMCVirtualPinHelper:
         self.mcu_endstop = ppins.setup_pin("endstop", self.diag_pin)
         return self.mcu_endstop
 
-    def handle_homing_move_begin(self, hmove):
-        if self.mcu_endstop not in hmove.get_mcu_endstops():
-            return
-        # Enable/disable stealthchop
-        self.pwmthrs = self.fields.get_field("tpwmthrs")
+    def _set_sg_homing_begin(self):
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
             # On "stallguard4" drivers, "stealthchop" must be enabled
@@ -722,6 +720,25 @@ class TMCVirtualPinHelper:
             self.en_pwm = self.fields.get_field("en_pwm_mode")
             self.fields.set_field("en_pwm_mode", 0)
             val = self.fields.set_field(self.diag_pin_field, 1)
+        return val
+
+    def _set_sg_homing_end(self):
+        reg = self.fields.lookup_register("en_pwm_mode", None)
+        if reg is None:
+            tp_val = self.fields.set_field("tpwmthrs", self.pwmthrs)
+            self.mcu_tmc.set_register("TPWMTHRS", tp_val)
+            val = self.fields.set_field("en_spreadcycle", not self.en_pwm)
+        else:
+            self.fields.set_field("en_pwm_mode", self.en_pwm)
+            val = self.fields.set_field(self.diag_pin_field, 0)
+        return val
+
+    def handle_homing_move_begin(self, hmove):
+        if self.mcu_endstop not in hmove.get_mcu_endstops():
+            return
+        # Enable/disable stealthchop
+        self.pwmthrs = self.fields.get_field("tpwmthrs")
+        val = self.set_sg_homing_begin()
         self.mcu_tmc.set_register("GCONF", val)
         # Enable tcoolthrs (if not already)
         self.coolthrs = self.fields.get_field("tcoolthrs")
@@ -739,14 +756,7 @@ class TMCVirtualPinHelper:
         if self.mcu_endstop not in hmove.get_mcu_endstops():
             return
         # Restore stealthchop/spreadcycle
-        reg = self.fields.lookup_register("en_pwm_mode", None)
-        if reg is None:
-            tp_val = self.fields.set_field("tpwmthrs", self.pwmthrs)
-            self.mcu_tmc.set_register("TPWMTHRS", tp_val)
-            val = self.fields.set_field("en_spreadcycle", not self.en_pwm)
-        else:
-            self.fields.set_field("en_pwm_mode", self.en_pwm)
-            val = self.fields.set_field(self.diag_pin_field, 0)
+        val = self.set_sg_homing_end()
         self.mcu_tmc.set_register("GCONF", val)
         # Restore tcoolthrs
         tc_val = self.fields.set_field("tcoolthrs", self.coolthrs)
@@ -822,14 +832,12 @@ def TMCtstepHelper(mcu_tmc, velocity, pstepper=None, config=None):
 # Helper to configure stealthChop-spreadCycle transition velocity
 def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
     fields = mcu_tmc.get_fields()
-    en_pwm_mode = False
     velocity = config.getfloat("stealthchop_threshold", None, minval=0.0)
-    tpwmthrs = 0xFFFFF
 
     if velocity is not None:
-        en_pwm_mode = True
-        tpwmthrs = TMCtstepHelper(mcu_tmc, velocity, config=config)
-    fields.set_field("tpwmthrs", tpwmthrs)
+        config.deprecate("stealthchop_threshold")
+    en_pwm_mode = config.getboolean("enable_stealthchop", False)
+    fields.set_field("tpwmthrs", 0xFFFFF if en_pwm_mode else 0)
 
     reg = fields.lookup_register("en_pwm_mode", None)
     if reg is not None:
