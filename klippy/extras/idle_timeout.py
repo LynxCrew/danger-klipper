@@ -137,7 +137,7 @@ class IdleTimeout:
 
 INSTANCES = {}
 def register_commands(instance):
-    if not INSTANCES:
+    if len(INSTANCES) == 0:
         instance.gcode.register_command(
             "SET_IDLE_TIMEOUT",
             instance.cmd_SET_IDLE_TIMEOUT,
