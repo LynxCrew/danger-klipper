@@ -31,20 +31,7 @@ class IdleTimeout:
         self.idle_gcode = gcode_macro.load_template(
             config, "gcode", DEFAULT_IDLE_GCODE
         )
-        if self.name == self.base_name:
-            self.gcode.register_command(
-                "SET_IDLE_TIMEOUT",
-                self.cmd_SET_IDLE_TIMEOUT,
-                desc=self.cmd_SET_IDLE_TIMEOUT_help,
-            )
-        else:
-            self.gcode.register_mux_command(
-                "SET_IDLE_TIMEOUT",
-                "NAME",
-                self.name,
-                self.cmd_SET_IDLE_TIMEOUT,
-                desc=self.cmd_SET_IDLE_TIMEOUT_help,
-            )
+        register_commands(self)
         self.state = "Idle"
         self.last_print_start_systime = 0.0
         self.mcu_startup_unixtime = time.time() - self.reactor.monotonic()
@@ -146,6 +133,24 @@ class IdleTimeout:
         if self.state == "Ready":
             checktime = self.reactor.monotonic() + timeout
             self.reactor.update_timer(self.timeout_timer, checktime)
+
+
+INSTANCES = {}
+def register_commands(instance):
+    if not INSTANCES:
+        instance.gcode.register_command(
+            "SET_IDLE_TIMEOUT",
+            instance.cmd_SET_IDLE_TIMEOUT,
+            desc=cmd_SET_IDLE_TIMEOUT_help,
+    )
+    INSTANCES[instance.name] = instance
+
+cmd_SET_IDLE_TIMEOUT_help = "Set the idle timeout in seconds"
+def cmd_SET_IDLE_TIMEOUT(gcmd):
+    name = gcmd.get("NAME", "idle_timeout")
+    return INSTANCES[name].cmd_SET_IDLE_TIMEOUT(gcmd)
+
+
 
 
 def load_config(config):
