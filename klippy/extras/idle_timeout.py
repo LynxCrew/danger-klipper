@@ -172,7 +172,7 @@ class GcodeFactory:
 GCODE_FACTORY = GcodeFactory()
 
 def reinit():
-    GCODE_FACTORY.__init__()
+    GCODE_FACTORY.instances = {}
 
 
 def load_config(config):
