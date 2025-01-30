@@ -140,7 +140,7 @@ def register_commands(instance):
     if len(INSTANCES) == 0:
         instance.gcode.register_command(
             "SET_IDLE_TIMEOUT",
-            instance.cmd_SET_IDLE_TIMEOUT,
+            cmd_SET_IDLE_TIMEOUT,
             desc=cmd_SET_IDLE_TIMEOUT_help,
     )
     INSTANCES[instance.name] = instance
