@@ -208,7 +208,7 @@ class Printer:
             reinit_func = "reinit"
             reinit_func = getattr(mod, reinit_func, None)
             if reinit_func is not None:
-                reinit_func()
+                reinit_func(config.getsection(section))
 
         init_func = "load_config"
         if len(module_parts) > 1:

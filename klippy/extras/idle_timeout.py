@@ -174,7 +174,7 @@ class GcodeFactory:
 
 GCODE_FACTORY = GcodeFactory()
 
-def reinit():
+def reinit(config):
     GCODE_FACTORY.instances = {}
 
 
