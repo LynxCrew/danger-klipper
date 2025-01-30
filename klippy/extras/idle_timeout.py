@@ -159,8 +159,7 @@ class GcodeFactory:
     def cmd_SET_IDLE_TIMEOUT(self, gcmd):
         name = gcmd.get("NAME", "idle_timeout")
         if name not in self.instances:
-            gcmd.respond_error("The value '%s' is not valid for NAME" % name)
-            return
+            raise gcmd.error("The value '%s' is not valid for NAME" % name)
         return self.instances[name].cmd_SET_IDLE_TIMEOUT(gcmd)
 
 
