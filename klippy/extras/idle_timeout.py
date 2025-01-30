@@ -146,6 +146,8 @@ class GcodeFactory:
         self.instances = {}
 
     def register_commands(self, instance):
+        logging.info("REGISTERING_IDLE_TIMEOUT")
+        logging.info(self.instances)
         if len(self.instances) == 0:
             instance.gcode.register_command(
                 "SET_IDLE_TIMEOUT",
