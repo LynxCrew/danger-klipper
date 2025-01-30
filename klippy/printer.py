@@ -18,6 +18,7 @@ from . import (
     webhooks,
     non_critical_mcus,
 )
+from .extras import idle_timeout
 from .extras.danger_options import get_danger_options
 from . import APP_NAME
 
@@ -226,6 +227,7 @@ class Printer:
             m.add_printer_objects(config)
         for section_config in config.get_prefix_sections(""):
             self.load_object(config, section_config.get_name(), None)
+        idle_timeout.reinit()
         # Kalico on-by-default extras
         for section_config in [
             "force_move",

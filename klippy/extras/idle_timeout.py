@@ -171,6 +171,9 @@ class GcodeFactory:
 
 GCODE_FACTORY = GcodeFactory()
 
+def reinit():
+    GCODE_FACTORY.__init__()
+
 
 def load_config(config):
     return IdleTimeout(config)
