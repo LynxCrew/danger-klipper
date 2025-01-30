@@ -129,10 +129,13 @@ class IdleTimeout:
     def cmd_SET_IDLE_TIMEOUT(self, gcmd):
         timeout = gcmd.get_float("TIMEOUT", self.idle_timeout, above=0.0)
         self.idle_timeout = timeout
+        name = "IDLE_TIMEOUT: " + self.name
+        if self.name == self.base_name:
+            name = "IDLE_TIMEOUT"
         gcmd.respond_info(
             "%s: Timeout set to %.2f s"
             % (
-                self.name,
+                name,
                 timeout,
             )
         )
