@@ -31,7 +31,7 @@ class IdleTimeout:
         self.idle_gcode = gcode_macro.load_template(
             config, "gcode", DEFAULT_IDLE_GCODE
         )
-        register_commands(self)
+        GCODE_FACTORY.register_commands(self)
         self.state = "Idle"
         self.last_print_start_systime = 0.0
         self.mcu_startup_unixtime = time.time() - self.reactor.monotonic()
@@ -141,25 +141,27 @@ class IdleTimeout:
             self.reactor.update_timer(self.timeout_timer, checktime)
 
 
-INSTANCES = {}
+class GcodeFactory:
+    def __init__(self):
+        self.instances = {}
+
+    def register_commands(self, instance):
+        if len(self.instances) == 0:
+            instance.gcode.register_command(
+                "SET_IDLE_TIMEOUT",
+                self.cmd_SET_IDLE_TIMEOUT,
+                desc=self.cmd_SET_IDLE_TIMEOUT_help,
+            )
+        self.instances[instance.name] = instance
+
+    cmd_SET_IDLE_TIMEOUT_help = "Set the idle timeout in seconds"
+
+    def cmd_SET_IDLE_TIMEOUT(self, gcmd):
+        name = gcmd.get("NAME", "idle_timeout")
+        return self.instances[name].cmd_SET_IDLE_TIMEOUT(gcmd)
 
 
-def register_commands(instance):
-    if len(INSTANCES) == 0:
-        instance.gcode.register_command(
-            "SET_IDLE_TIMEOUT",
-            cmd_SET_IDLE_TIMEOUT,
-            desc=cmd_SET_IDLE_TIMEOUT_help,
-        )
-    INSTANCES[instance.name] = instance
-
-
-cmd_SET_IDLE_TIMEOUT_help = "Set the idle timeout in seconds"
-
-
-def cmd_SET_IDLE_TIMEOUT(gcmd):
-    name = gcmd.get("NAME", "idle_timeout")
-    return INSTANCES[name].cmd_SET_IDLE_TIMEOUT(gcmd)
+GCODE_FACTORY = GcodeFactory()
 
 
 def load_config(config):
