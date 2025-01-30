@@ -129,32 +129,42 @@ class IdleTimeout:
     def cmd_SET_IDLE_TIMEOUT(self, gcmd):
         timeout = gcmd.get_float("TIMEOUT", self.idle_timeout, above=0.0)
         self.idle_timeout = timeout
-        gcmd.respond_info("idle_timeout: Timeout set to %.2f s" % (timeout,))
+        gcmd.respond_info(
+            "%s: Timeout set to %.2f s"
+            % (
+                self.name,
+                timeout,
+            )
+        )
         if self.state == "Ready":
             checktime = self.reactor.monotonic() + timeout
             self.reactor.update_timer(self.timeout_timer, checktime)
 
 
 INSTANCES = {}
+
+
 def register_commands(instance):
     if len(INSTANCES) == 0:
         instance.gcode.register_command(
             "SET_IDLE_TIMEOUT",
             cmd_SET_IDLE_TIMEOUT,
             desc=cmd_SET_IDLE_TIMEOUT_help,
-    )
+        )
     INSTANCES[instance.name] = instance
 
+
 cmd_SET_IDLE_TIMEOUT_help = "Set the idle timeout in seconds"
+
+
 def cmd_SET_IDLE_TIMEOUT(gcmd):
     name = gcmd.get("NAME", "idle_timeout")
     return INSTANCES[name].cmd_SET_IDLE_TIMEOUT(gcmd)
 
 
-
-
 def load_config(config):
     return IdleTimeout(config)
+
 
 def load_config_prefix(config):
     return IdleTimeout(config)
