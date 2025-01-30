@@ -233,7 +233,6 @@ class Printer:
         # Create printer components
         for m in [pins, non_critical_mcus, mcu]:
             m.add_printer_objects(config)
-        idle_timeout.reinit()
         for section_config in config.get_prefix_sections(""):
             self.load_object(config, section_config.get_name(), None)
         # Kalico on-by-default extras
