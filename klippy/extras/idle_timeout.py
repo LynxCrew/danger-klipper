@@ -157,7 +157,9 @@ class GcodeFactory:
                 self.cmd_SET_IDLE_TIMEOUT,
                 desc=self.cmd_SET_IDLE_TIMEOUT_help,
             )
-            instance.printer.register_event_handler("klippy:firmware_restart", self._clear_instances)
+            instance.printer.register_event_handler(
+                "klippy:firmware_restart", self._clear_instances
+            )
         self.instances[instance.name] = instance
 
     def _clear_instances(self):
@@ -172,13 +174,17 @@ class GcodeFactory:
         return self.instances[name].cmd_SET_IDLE_TIMEOUT(gcmd)
 
 
-GCODE_FACTORY = GcodeFactory()
+GCODE_FACTORY = None
 
-def reinit(config):
-    GCODE_FACTORY.instances = {}
+
+def init(config):
+    global GCODE_FACTORY
+    GCODE_FACTORY = GcodeFactory()
 
 
 def load_config(config):
+    global GCODE_FACTORY
+    GCODE_FACTORY = GcodeFactory()
     return IdleTimeout(config)
 
 

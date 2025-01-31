@@ -87,7 +87,7 @@ class Printer:
         self.run_result = None
         self.event_handlers = {}
         self.objects = collections.OrderedDict()
-        self.reinitialized = set()
+        self.initialized_modules = set()
         # Init printer components that must be setup prior to config
         for m in [gcode, webhooks]:
             m.add_early_printer_objects(self)
@@ -203,9 +203,9 @@ class Printer:
         else:
             mod = importlib.import_module("klippy.extras." + module_name)
 
-        if module_name not in self.reinitialized:
-            self.reinitialized.add(module_name)
-            reinit_func = "reinit"
+        if module_name not in self.initialized_modules:
+            self.initialized_modules.add(module_name)
+            reinit_func = "init"
             reinit_func = getattr(mod, reinit_func, None)
             if reinit_func is not None:
                 reinit_func(config.getsection(section))
