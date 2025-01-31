@@ -168,17 +168,14 @@ class GcodeFactory:
         return self.instances[name].cmd_SET_IDLE_TIMEOUT(gcmd)
 
 
-GCODE_FACTORY = None
+GCODE_FACTORY = GcodeFactory()
 
 
-# def init(config):
-#     global GCODE_FACTORY
-#     GCODE_FACTORY = GcodeFactory()
+def init(config):
+    GCODE_FACTORY.instances = {}
 
 
 def load_config(config):
-    global GCODE_FACTORY
-    GCODE_FACTORY = GcodeFactory()
     return IdleTimeout(config)
 
 
