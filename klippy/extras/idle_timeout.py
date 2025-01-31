@@ -183,8 +183,6 @@ def init(config):
 
 
 def load_config(config):
-    global GCODE_FACTORY
-    GCODE_FACTORY = GcodeFactory()
     return IdleTimeout(config)
 
 
