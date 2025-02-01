@@ -34,6 +34,7 @@ class RunoutHelper:
                 config, "insert_gcode"
             )
         self.pause_delay = config.getfloat("pause_delay", 0.5, minval=0.0)
+        self.trigger_delay = config.getfloat("trigger_delay", 0.0, minval=0.0)
         self.event_delay = config.getfloat("event_delay", 3.0, minval=0.0)
         self.check_runout_timeout = CHECK_RUNOUT_TIMEOUT
         if get_danger_options().modify_check_runout_timeout:
@@ -96,6 +97,8 @@ class RunoutHelper:
             self._execute_runout(eventtime)
 
     def _execute_runout(self, eventtime):
+        if self.trigger_delay:
+            self.printer.get_reactor().pause(eventtime + self.trigger_delay)
         pause_prefix = ""
         if self.runout_pause:
             pause_resume = self.printer.lookup_object("pause_resume")
