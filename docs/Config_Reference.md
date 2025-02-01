@@ -139,6 +139,11 @@ A collection of Kalico-specific system options
 #log_velocity_limit_changes: True
 #   If changes to velocity limits should be logged. If False, velocity limits will only
 #   be logged at rollover. Some slicers emit very frequent SET_VELOCITY_LIMIT commands
+#   The default is True
+#log_pressure_advance_changes: True
+#   If changes to pressure advance should be logged. If false, pressure advance data
+#   will only be logged at rollover.
+#   The default is True.
 #log_shutdown_info: True
 #   If we should log detailed crash info when an exception occurs
 #   Most of it is overly-verbose and fluff and we still get a stack trace
@@ -313,7 +318,8 @@ position_max:
 #   The default is equal to `homing_retract_dist`.
 #second_homing_speed:
 #   Velocity (in mm/s) of the stepper when performing the second home.
-#   The default is homing_speed/2.
+#   The default is homing_speed/2. If `use_sensorless_homing` is
+#   true, the default is homing_speed.
 #homing_positive_dir:
 #   If true, homing will cause the stepper to move in a positive
 #   direction (away from zero); if false, home towards zero. It is
@@ -1143,6 +1149,37 @@ min_temp:
 max_temp:
 #   See the "extruder" section for a description of the above parameters.
 ```
+
+### [pid_profile]
+
+Pid Profiles specify a set of PID values that can be loaded at runtime.
+
+```
+[pid_profile <heater> <profile-name>]
+pid_version: 1
+# This defines the version it was saved with and is important for compatibility
+# checks, leave it at 1!
+pid_target:
+# For reference only, specifies the temperature the profile was calibrated for.
+# If you create a custom profile, either enter the temperature that profile is
+# intended to be used at or leave it blank.
+pid_tolerance: 
+# The tolerance that was used when autocalibrating the profile. If you define
+# a custom profile, leave it empty.
+control: <pid|pid_v>
+# Has to be either pid or pid_v.
+# This parameter is required.
+pid_kp: 
+# The P value for the PID Control.
+# This parameter is required.
+pid_ki:
+# The I value for the PID Control.
+# This parameter is required.
+pid_kd: 
+# The D value for the PID Control.
+# This parameter is required.
+```
+For more information, read up on docs/PID.md
 
 ## Bed level support
 
@@ -2275,6 +2312,8 @@ times in a config file without normal error checking. This is intended
 for diagnostic and debugging purposes. This section is not needed
 where Kalico supports using the same pin multiple times, and using
 this override may cause confusing and unexpected results.
+One may specify an explicit name (eg, [duplicate_pin_override my_name])
+to define multiple instances of it.
 
 ```
 [duplicate_pin_override]
@@ -2630,11 +2669,11 @@ for more detailed information regarding symptoms, configuration and setup.
 calibrate_start_x: 20
 #   Defines the minimum X coordinate of the calibration
 #   This should be the X coordinate that positions the nozzle at the starting
-#   calibration position. 
+#   calibration position.
 calibrate_end_x: 200
 #   Defines the maximum X coordinate of the calibration
 #   This should be the X coordinate that positions the nozzle at the ending
-#   calibration position. 
+#   calibration position.
 calibrate_y: 112.5
 #   Defines the Y coordinate of the calibration
 #   This should be the Y coordinate that positions the nozzle during the

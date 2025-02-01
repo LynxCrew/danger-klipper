@@ -33,6 +33,7 @@ indent-width = 4
 exclude = [".github", ".history", "config", "docs", "lib", "src"]
 
 [tool.ruff.lint]
+extend-select = ["B006"]
 ignore = [
   "E401", # Multiple imports on one line
   "C901", # Function is too complex
@@ -46,6 +47,6 @@ ignore = [
 
 [dependency-groups]
 dev = [
-  "ruff>=0.8.4",
+  "ruff>=0.9.3",
   "pre-commit>=4.0.1",
   ]

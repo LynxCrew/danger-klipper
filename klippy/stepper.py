@@ -478,13 +478,18 @@ class GenericPrinterCarriage:
             "use_sensorless_homing", endstop_is_virtual
         )
         # Homing mechanics
+        self.use_sensorless_homing = config.getboolean(
+            "use_sensorless_homing", endstop_is_virtual
+        )
+
         self.homing_speed = config.getfloat("homing_speed", 5.0, above=0.0)
+
+        default_second_homing_speed = self.homing_speed / 2.0
+        if self.use_sensorless_homing:
+            default_second_homing_speed = self.homing_speed
+
         self.second_homing_speed = config.getfloat(
-            "second_homing_speed",
-            self.homing_speed
-            if self.use_sensorless_homing
-            else (self.homing_speed / 2.0),
-            above=0.0,
+            "second_homing_speed", default_second_homing_speed, above=0.0
         )
         self.homing_retract_speed = config.getfloat(
             "homing_retract_speed", self.homing_speed, above=0.0

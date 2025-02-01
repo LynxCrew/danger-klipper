@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
 from klippy import stepper, chelper
+from ..extras.danger_options import get_danger_options
 
 
 class ExtruderSmoother:
@@ -472,15 +473,15 @@ class ExtruderStepper:
         ):
             self.printer.lookup_object("toolhead").flush_step_generation()
         self._update_pressure_advance(pa_model, time_offset)
-        msg = (
-            "pressure_advance_model: %s\n" % (pa_model.name,)
-            + pa_model.get_msg()
-            + "\n"
-            + self.smoother.get_msg()
-            + "\npressure_advance_time_offset: %.6f" % (time_offset,)
-        )
-        self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
-        gcmd.respond_info(msg, log=False)
+        if get_danger_options().log_pressure_advance_changes:
+            msg = (
+                "pressure_advance_model: %s\n" % (pa_model.name,),
+                pa_model.get_msg(),
+                self.smoother.get_msg(),
+                "pressure_advance_time_offset: %.6f" % (time_offset,),
+            )
+            self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
+            gcmd.respond_info("\n".join(msg), log=False)
 
     cmd_SET_E_ROTATION_DISTANCE_help = "Set extruder rotation distance"
 
