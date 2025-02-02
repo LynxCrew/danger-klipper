@@ -282,7 +282,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
             config, mcu_tmc, self._get_ifs_rms(3), has_sense_resistor=False
         )
 
-        current_range = self._calc_current_range(self.actual_current)
+        current_range = self._calc_current_range(self.req_run_current)
         self.current_range = config.getint(
             "current_range", current_range, minval=current_range, maxval=3
         )
