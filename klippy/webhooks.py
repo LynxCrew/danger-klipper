@@ -517,6 +517,7 @@ class QueryStatusHelper:
         webhooks.register_endpoint("objects/list", self._handle_list)
         webhooks.register_endpoint("objects/query", self._handle_query)
         webhooks.register_endpoint("objects/subscribe", self._handle_subscribe)
+        webhooks.register_endpoint("objects/force_query", lambda web_request: self._handle_query(web_request, force_query=True))
 
     def _handle_list(self, web_request):
         objects = [
@@ -526,7 +527,7 @@ class QueryStatusHelper:
         ]
         web_request.send({"objects": objects})
 
-    def _do_query(self, eventtime):
+    def _do_query(self, eventtime, force_query=False):
         last_query = self.last_query
         query = self.last_query = {}
         msglist = self.pending_queries
@@ -556,7 +557,7 @@ class QueryStatusHelper:
                 cres = {}
                 for ri in req_items:
                     rd = res.get(ri, None)
-                    if is_query or rd != lres.get(ri):
+                    if force_query or is_query or rd != lres.get(ri):
                         cres[ri] = rd
                 if cres or is_query:
                     cquery[obj_name] = cres
@@ -573,7 +574,7 @@ class QueryStatusHelper:
             return reactor.NEVER
         return eventtime + SUBSCRIPTION_REFRESH_TIME
 
-    def _handle_query(self, web_request, is_subscribe=False):
+    def _handle_query(self, web_request, is_subscribe=False, force_query=False):
         objects = web_request.get_dict("objects")
         # Validate subscription format
         for k, v in objects.items():
