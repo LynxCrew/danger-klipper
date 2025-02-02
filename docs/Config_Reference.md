@@ -1470,6 +1470,14 @@ extended [G-Code command](G-Codes.md#z_tilt) becomes available.
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#adaptive_horizontal_move_z: false
+#   When enabled the horizontal_move_z will be dynamically adjusted after
+#   each round of probing to be minimal in order to safe time (minimum move
+#   will be the probe z-offset)
+#min_horizontal_move_z: 0.0
+#   Minimum horizontal_move_z for adaptive horizontal_move_z.
+#additional_horizontal_move_z: 0.0
+#   An additional distance to add to the move_z if adaptive_horizontal_move_z is enabled
 #retries: 0
 #   Number of times to retry if the probed points aren't within
 #   tolerance.
@@ -1483,15 +1491,13 @@ extended [G-Code command](G-Codes.md#z_tilt) becomes available.
 #increasing_threshold: 0.0000001
 #   Sets the threshold that probe points can increase before z_tilt aborts.
 #   To disable the validation, set this parameter to a high value.
-#adaptive_horizontal_move_z: false
-#   When enabled the horizontal_move_z will be dynamically adjusted after
-#   each round of probing to be minimal in order to safe time (minimum move
-#   will be the probe z-offset)
-#min_horizontal_move_z: 0.0
-#   Minimum horizontal_move_z for adaptive horizontal_move_z.
 #use_probe_xy_offsets: False
 #   If True, apply the `[probe]` XY offsets to the probed positions. The
 #   default is False.
+#enforce_lift_speed: False
+#   By default, the first Z movement to reach `horizontal_move_z` uses `speed`.
+#   Set `enforce_lift_speed` to True to enforce the `lift_speed`.
+#   The default is False.
 ```
 
 #### [z_tilt_ng]
@@ -1531,7 +1537,11 @@ commands become available, enhancing bed leveling accuracy and calibration effic
 # See [z_tilt]
 #min_horizontal_move_z: 0.0
 # See [z_tilt]
+#additional_horizontal_move_z: 0.0
+# See [z_tilt]
 #use_probe_xy_offsets: False
+# See [z_tilt]
+#enforce_lift_speed: False
 # See [z_tilt]
 #extra_points:
 #   A list in the same format as "points" above. This list contains
@@ -1608,6 +1618,14 @@ Where x is the 0, 0 point on the bed
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#adaptive_horizontal_move_z: false
+#   When enabled the horizontal_move_z will be dynamically adjusted after
+#   each round of probing to be minimal in order to safe time (minimum move
+#   will be the probe z-offset)
+#min_horizontal_move_z: 0.0
+#   Minimum horizontal_move_z for adaptive horizontal_move_z.
+#additional_horizontal_move_z: 0.0
+#   An additional distance to add to the move_z if adaptive_horizontal_move_z is enabled
 #max_adjust: 4
 #   Safety limit if an adjustment greater than this value is requested
 #   quad_gantry_level will abort.
@@ -1620,15 +1638,13 @@ Where x is the 0, 0 point on the bed
 #increasing_threshold: 0.0000001
 #   Sets the threshold that probe points can increase before qgl aborts.
 #   To disable the validation, set this parameter to a high value.
-#adaptive_horizontal_move_z: false
-#   When enabled the horizontal_move_z will be dynamically adjusted after
-#   each round of probing to be minimal in order to safe time (minimum move
-#   will be the probe z-offset)
-#min_horizontal_move_z: 0.0
-#   Minimum horizontal_move_z for adaptive horizontal_move_z.
 #use_probe_xy_offsets: False
 #   If True, apply the `[probe]` XY offsets to the probed positions. The
 #   default is False.
+#enforce_lift_speed: False
+#   By default, the first Z movement to reach `horizontal_move_z` uses `speed`.
+#   Set `enforce_lift_speed` to True to enforce the `lift_speed`.
+#   The default is False.
 ```
 
 ### [skew_correction]
@@ -4466,6 +4482,13 @@ run_current:
 #   velocity" threshold (THIGH) to. This is typically used to disable
 #   the "CoolStep" feature at high speeds. The default is to not set a
 #   TMC "high velocity" threshold.
+#current_range:
+#   The current_range bit value for the driver. Valid values are 0 and 32-255.
+#   The defaul is to auto-calculate to match the requested run_current.
+#   For further information consult the tmc2240 datasheet and tuning table.
+#driver_CS: 31
+#   The current_scaler value for the driver. The default is 31.
+#   For further information consult the tmc2240 datasheet and tuning table.
 #overvoltage_threshold: 37.735
 #   The threshold voltage (in V) of overvoltage protection. The decelerating
 #   stepper motor can cause a raise of V_supply of the driver. When the V_supply
