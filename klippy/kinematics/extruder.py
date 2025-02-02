@@ -791,6 +791,7 @@ class PrinterExtruder:
     )
 
     def cmd_CHANGE_MAX_EXTRUDE_ONLY_VALUES(self, gcmd):
+        verbose = gcmd.get_int("VERBOSE", 1, minval=0, maxval=1)
         self.max_cross_section = gcmd.get_float(
             "CROSS_SECTION", self.max_cross_section, above=0.0
         )
@@ -807,20 +808,21 @@ class PrinterExtruder:
         self.max_e_dist = gcmd.get_float(
             "DISTANCE", self.max_e_dist, minval=0.0
         )
-        gcmd.respond_info(
-            "New maximum extrude values for extruder %s:\n"
-            "Cross section: %.2f\n"
-            "Velocity: %.2f\n"
-            "Acceleration: %.2f\n"
-            "Distance: %.2f"
-            % (
-                self.name,
-                self.max_cross_section,
-                self.max_e_velocity,
-                self.max_e_accel,
-                self.max_e_dist,
+        if verbose:
+            gcmd.respond_info(
+                "New maximum extrude values for extruder %s:\n"
+                "Cross section: %.2f\n"
+                "Velocity: %.2f\n"
+                "Acceleration: %.2f\n"
+                "Distance: %.2f"
+                % (
+                    self.name,
+                    self.max_cross_section,
+                    self.max_e_velocity,
+                    self.max_e_accel,
+                    self.max_e_dist,
+                )
             )
-        )
 
 
 # Dummy extruder class used when a printer has no extruder at all
