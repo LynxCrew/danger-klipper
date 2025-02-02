@@ -517,7 +517,7 @@ class QueryStatusHelper:
         webhooks.register_endpoint("objects/list", self._handle_list)
         webhooks.register_endpoint("objects/query", self._handle_query)
         webhooks.register_endpoint("objects/subscribe", self._handle_subscribe)
-        webhooks.register_endpoint("objects/force_query", lambda web_request: self._handle_query(web_request, force_query=True))
+        webhooks.register_endpoint("objects/force_query", self._handle_force_query)
 
     def _handle_list(self, web_request):
         objects = [
@@ -604,6 +604,9 @@ class QueryStatusHelper:
 
     def _handle_subscribe(self, web_request):
         self._handle_query(web_request, is_subscribe=True)
+
+    def _handle_force_query(self, web_request):
+        self._handle_query(web_request, force_query=True)
 
 
 def add_early_printer_objects(printer):
