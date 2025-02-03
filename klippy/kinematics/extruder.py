@@ -449,6 +449,7 @@ class ExtruderStepper:
             extruder_stepper.cmd_SET_PRESSURE_ADVANCE(gcmd)
 
     def cmd_SET_PRESSURE_ADVANCE(self, gcmd):
+        verbose = gcmd.get("VERBOSE", "low")
         time_offset = gcmd.get_float(
             "TIME_OFFSET",
             self.pressure_advance_time_offset,
@@ -473,7 +474,10 @@ class ExtruderStepper:
         ):
             self.printer.lookup_object("toolhead").flush_step_generation()
         self._update_pressure_advance(pa_model, time_offset)
-        if get_danger_options().log_pressure_advance_changes:
+        if (
+            get_danger_options().log_pressure_advance_changes
+            and verbose.lower() == "high"
+        ):
             msg = (
                 "pressure_advance_model: %s\n" % (pa_model.name,),
                 pa_model.get_msg(),
