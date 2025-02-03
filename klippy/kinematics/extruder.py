@@ -449,7 +449,7 @@ class ExtruderStepper:
             extruder_stepper.cmd_SET_PRESSURE_ADVANCE(gcmd)
 
     def cmd_SET_PRESSURE_ADVANCE(self, gcmd):
-        verbose = gcmd.get("VERBOSE", "low")
+        verbose = gcmd.get("VERBOSE", "high")
         time_offset = gcmd.get_float(
             "TIME_OFFSET",
             self.pressure_advance_time_offset,
