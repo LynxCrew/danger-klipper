@@ -274,7 +274,15 @@ class Homing:
     def set_homed_position(self, pos):
         self.toolhead.set_position(self._fill_coord(pos))
 
-    def _set_current_homing(self, homing_axes, pre_homing, perform_dwell=False):
+    def _set_homing_accel(self, accel, pre_homing):
+        if accel is None:
+            return
+        if pre_homing:
+            self.toolhead.set_accel(accel)
+        else:
+            self.toolhead.reset_accel()
+
+    def _set_homing_current(self, homing_axes, pre_homing, perform_dwell=False):
         print_time = self.toolhead.get_last_move_time()
         affected_rails = set()
         for axis in homing_axes:
@@ -316,10 +324,13 @@ class Homing:
         hi = rails[0].get_homing_info()
         hmove = HomingMove(self.printer, endstops)
 
-        self._set_current_homing(homing_axes, pre_homing=True)
-        self._reset_endstop_states(endstops)
-
-        hmove.homing_move(homepos, hi.speed)
+        try:
+            self._set_homing_accel(hi.accel, pre_homing=True)
+            self._set_homing_current(homing_axes, pre_homing=True)
+            self._reset_endstop_states(endstops)
+            hmove.homing_move(homepos, hi.speed)
+        finally:
+            self._set_homing_accel(hi.accel, pre_homing=False)
 
         needs_rehome = False
         retract_dist = hi.retract_dist
@@ -343,20 +354,20 @@ class Homing:
                 hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
             ]
             self.toolhead.move(retractpos, hi.retract_speed)
-            # Home again
-            startpos = [
-                rp - ad * retract_r for rp, ad in zip(retractpos, axes_d)
-            ]
-            self.toolhead.set_position(startpos)
-            self._set_current_homing(
-                homing_axes,
-                pre_homing=True,
-                perform_dwell=hi.use_sensorless_homing,
-            )
-            self._reset_endstop_states(endstops)
-            hmove = HomingMove(self.printer, endstops)
-            hmove.homing_move(homepos, hi.second_homing_speed)
             try:
+                # Home again
+                startpos = [
+                    rp - ad * retract_r for rp, ad in zip(retractpos, axes_d)
+                ]
+                self.toolhead.set_position(startpos)
+                self._set_current_homing(
+                    homing_axes,
+                    pre_homing=True,
+                    perform_dwell=hi.use_sensorless_homing,
+                )
+                self._reset_endstop_states(endstops)
+                hmove = HomingMove(self.printer, endstops)
+                hmove.homing_move(homepos, hi.second_homing_speed)
                 if hmove.check_no_movement() is not None:
                     raise self.printer.command_error(
                         "Endstop %s still triggered after retract"
@@ -373,9 +384,11 @@ class Homing:
                         "Early homing trigger on second home!"
                     )
             finally:
+                self._set_homing_accel(hi.accel, pre_homing=False)
                 self._set_current_homing(homing_axes, pre_homing=False)
 
-        self._set_current_homing(homing_axes, pre_homing=False)
+        self._set_homing_accel(hi.accel, pre_homing=False)
+        self._set_homing_current(homing_axes, pre_homing=False)
         # Signal home operation complete
         self.toolhead.flush_step_generation()
         self.trigger_mcu_pos = {

@@ -385,6 +385,7 @@ class ToolHead:
             "statistics",
             "manual_probe",
             "tuning_tower",
+            "garbage_collection",
         ]
         for module_name in modules:
             self.printer.load_object(config, module_name)
@@ -963,6 +964,14 @@ class ToolHead:
                 return
             accel = min(p, t)
         self.max_accel = accel
+        self._calc_junction_deviation()
+
+    def set_accel(self, accel):
+        self.max_accel = accel
+        self._calc_junction_deviation()
+
+    def reset_accel(self):
+        self.max_accel = self.orig_cfg["max_accel"]
         self._calc_junction_deviation()
 
 
