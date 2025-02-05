@@ -360,7 +360,7 @@ class Homing:
                     rp - ad * retract_r for rp, ad in zip(retractpos, axes_d)
                 ]
                 self.toolhead.set_position(startpos)
-                self._set_current_homing(
+                self._set_homing_current(
                     homing_axes,
                     pre_homing=True,
                     perform_dwell=hi.use_sensorless_homing,
@@ -385,7 +385,7 @@ class Homing:
                     )
             finally:
                 self._set_homing_accel(hi.accel, pre_homing=False)
-                self._set_current_homing(homing_axes, pre_homing=False)
+                self._set_homing_current(homing_axes, pre_homing=False)
 
         self._set_homing_accel(hi.accel, pre_homing=False)
         self._set_homing_current(homing_axes, pre_homing=False)
