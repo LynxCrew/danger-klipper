@@ -230,8 +230,12 @@ class DockableProbe:
 
         # Macros to run before attach and after detach
         gcode_macro = self.printer.load_object(config, "gcode_macro")
-        self.run_activate_gcode_before_attach = config.getboolean("run_activate_gcode_before_attach", True)
-        self.run_deactivate_gcode_after_detach = config.getboolean("run_deactivate_gcode_after_detach", True)
+        self.run_activate_gcode_before_attach = config.getboolean(
+            "run_activate_gcode_before_attach", True
+        )
+        self.run_deactivate_gcode_after_detach = config.getboolean(
+            "run_deactivate_gcode_after_detach", True
+        )
         self.activate_gcode = gcode_macro.load_template(
             config, "activate_gcode", ""
         )

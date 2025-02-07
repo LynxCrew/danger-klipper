@@ -444,8 +444,7 @@ class ResonanceTester:
         values = aclient.get_samples()
         if not values:
             raise gcmd.error(
-                "No accelerometer measurements found for chip "
-                "[%s]" % chip.name
+                "No accelerometer measurements found for chip [%s]" % chip.name
             )
 
     cmd_TEST_RESONANCES_help = "Runs the resonance test for a specifed axis"

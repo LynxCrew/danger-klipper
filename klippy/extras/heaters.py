@@ -811,7 +811,7 @@ class ControlPID:
             if profile["smoothing_elements"] is None
             else profile["smoothing_elements"]
         )
-        msg = "Target: %.2f\n" "Tolerance: %.4f\n" "Control: %s\n" % (
+        msg = "Target: %.2f\nTolerance: %.4f\nControl: %s\n" % (
             profile["pid_target"],
             profile["pid_tolerance"],
             profile["control"],
