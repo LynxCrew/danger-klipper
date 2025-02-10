@@ -634,8 +634,10 @@ class ProbePointsHelper:
                     # then res is error
                     error = math.ceil(res) or 1.0
                     self.horizontal_move_z = (
-                        error
-                        + max(self.probe_offsets[2], self.min_horizontal_move_z)
+                        max(
+                            error + self.probe_offsets[2],
+                            self.min_horizontal_move_z,
+                        )
                         + self.additional_horizontal_move_z
                     )
             elif res != "retry":
