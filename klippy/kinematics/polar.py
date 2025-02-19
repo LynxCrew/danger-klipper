@@ -92,6 +92,12 @@ class PolarKinematics:
             return [self.rails[2]]
         raise IndexError("Rail does not exist")
 
+    def disable_steppers(self, axis):
+        if 0 in axis or 1 in axis:
+            self.clear_homing_state("xy")
+        if 2 in axis:
+            self.clear_homing_state("z")
+
     def get_steppers(self):
         return list(self.steppers)
 

@@ -36,18 +36,6 @@ class CoreXYKinematics:
         )
 
         self.printer.register_event_handler(
-            "stepper_enable:disable_x",
-            lambda pt: self.clear_homing_state("xy"),
-        )
-        self.printer.register_event_handler(
-            "stepper_enable:disable_y",
-            lambda pt: self.clear_homing_state("xy"),
-        )
-        self.printer.register_event_handler(
-            "stepper_enable:disable_z", lambda pt: self.clear_homing_state("z")
-        )
-
-        self.printer.register_event_handler(
             "unhome:mark_as_unhomed_x", lambda pt: self.clear_homing_state("x")
         )
         self.printer.register_event_handler(
@@ -92,6 +80,12 @@ class CoreXYKinematics:
         elif axis == 2:
             return [self.rails[2]]
         raise IndexError("Rail does not exist")
+
+    def disable_steppers(self, axis):
+        if 0 in axis or 1 in axis:
+            self.clear_homing_state("xy")
+        if 2 in axis:
+            self.clear_homing_state("z")
 
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]

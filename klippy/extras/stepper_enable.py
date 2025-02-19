@@ -287,6 +287,8 @@ class PrinterStepperEnable:
         if hasattr(kin, "get_connected_rails"):
             for axis in axes:
                 try:
+                    if hasattr(kin, "disable_steppers"):
+                        kin.disable_steppers(axis)
                     rails = kin.get_connected_rails(axis)
                     for rail in rails:
                         steppers = rail.get_steppers()

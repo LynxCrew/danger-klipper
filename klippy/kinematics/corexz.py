@@ -93,6 +93,12 @@ class CoreXZKinematics:
             return [self.rails[1]]
         raise IndexError("Rail does not exist")
 
+    def disable_steppers(self, axis):
+        if 0 in axis or 2 in axis:
+            self.clear_homing_state("xz")
+        if 1 in axis:
+            self.clear_homing_state("y")
+
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
 

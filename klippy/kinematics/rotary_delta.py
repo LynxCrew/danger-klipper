@@ -161,6 +161,9 @@ class RotaryDeltaKinematics:
             raise IndexError("Rail does not exist")
         return [self.rails[0], self.rails[1], self.rails[2]]
 
+    def disable_steppers(self, axis):
+        self.clear_homing_state(axis)
+
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
 

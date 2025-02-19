@@ -97,6 +97,10 @@ class CartKinematics:
             raise IndexError("Rail does not exist")
         return [self.rails[axis]]
 
+    def disable_steppers(self, axis):
+        axis = ["xyz"[i] for i in axis if i < 3]
+        self.clear_homing_state(axis)
+
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
 

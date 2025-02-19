@@ -16,11 +16,17 @@ class NoneKinematics:
     def get_connected_rails(self, axis):
         raise IndexError("Rail does not exist")
 
+    def disable_steppers(self, axis):
+        pass
+
     def get_steppers(self):
         return []
 
     def calc_position(self, stepper_positions):
         return [0, 0, 0]
+
+    def clear_homing_state(self, clear_axes):
+        pass
 
     def set_position(self, newpos, homing_axes):
         pass
