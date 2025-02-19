@@ -17,11 +17,8 @@ class Unhome:
     def unhome_axes(self, axes):
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.dwell(DISABLE_STALL_TIME)
-        print_time = toolhead.get_last_move_time()
         for axis in axes:
-            self.printer.send_event(
-                "unhome:mark_as_unhomed_%s" % axis.lower(), print_time
-            )
+            toolhead.get_kinematics().clear_homing_state(axis.lower())
         if axes:
             logging.info("UNHOME axes: %s" % axes)
         toolhead.dwell(DISABLE_STALL_TIME)
