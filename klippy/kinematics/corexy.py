@@ -108,7 +108,7 @@ class CoreXYKinematics:
 
     def note_z_not_homed(self):
         # Helper for Safe Z Home
-        self.limits[2] = (1.0, -1.0)
+        self.clear_homing_state("z")
 
     def home(self, homing_state):
         # Each axis is homed independently and in order

@@ -158,7 +158,7 @@ class HybridCoreXYKinematics:
 
     def note_z_not_homed(self):
         # Helper for Safe Z Home
-        self.limits[2] = (1.0, -1.0)
+        self.clear_homing_state("z")
 
     def home_axis(self, homing_state, axis, rail):
         position_min, position_max = rail.get_range()

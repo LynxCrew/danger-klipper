@@ -115,7 +115,7 @@ class PolarKinematics:
 
     def note_z_not_homed(self):
         # Helper for Safe Z Home
-        self.limit_z = (1.0, -1.0)
+        self.clear_homing_state("z")
 
     def _home_axis(self, homing_state, axis, rail):
         # Determine movement
