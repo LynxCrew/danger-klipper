@@ -50,6 +50,10 @@ class WinchKinematics:
         for s in self.steppers:
             s.set_position(newpos)
 
+    def clear_homing_state(self, clear_axes):
+        # XXX - homing not implemented
+        pass
+
     def home(self, homing_state):
         # XXX - homing not implemented
         homing_state.set_axes([0, 1, 2])

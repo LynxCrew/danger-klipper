@@ -180,6 +180,8 @@ class ForceMove:
         x = gcmd.get_float("X", None)
         y = gcmd.get_float("Y", None)
         z = gcmd.get_float("Z", None)
+        clear = gcmd.get("CLEAR", "").lower()
+        clear_axes = "".join([a for a in "xyz" if a in clear])
         if x is None:
             x = curpos[0]
         else:
@@ -194,6 +196,7 @@ class ForceMove:
             homing_axes.append(2)
         logging.info("SET_KINEMATIC_POSITION pos=%.3f,%.3f,%.3f", x, y, z)
         toolhead.set_position([x, y, z, curpos[3]], homing_axes=homing_axes)
+        toolhead.get_kinematics().clear_homing_state(clear_axes)
 
     cmd_MARK_AS_HOMED_help = "Manually set a specific axis as homed"
 

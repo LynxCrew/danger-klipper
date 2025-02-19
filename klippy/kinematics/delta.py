@@ -35,33 +35,42 @@ class DeltaKinematics:
         )
 
         self.printer.register_event_handler(
-            "stepper_enable:disable_a", self._set_unhomed
+            "stepper_enable:disable_a",
+            lambda pt: self.clear_homing_state("xyz"),
         )
         self.printer.register_event_handler(
-            "stepper_enable:disable_b", self._set_unhomed
+            "stepper_enable:disable_b",
+            lambda pt: self.clear_homing_state("xyz"),
         )
         self.printer.register_event_handler(
-            "stepper_enable:disable_c", self._set_unhomed
-        )
-
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_x", self._set_unhomed
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_y", self._set_unhomed
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_z", self._set_unhomed
+            "stepper_enable:disable_c",
+            lambda pt: self.clear_homing_state("xyz"),
         )
 
         self.printer.register_event_handler(
-            "force_move:mark_as_homed_x", self._set_homed
+            "unhome:mark_as_unhomed_x",
+            lambda pt: self.clear_homing_state("xyz"),
         )
         self.printer.register_event_handler(
-            "force_move:mark_as_homed_y", self._set_homed
+            "unhome:mark_as_unhomed_y",
+            lambda pt: self.clear_homing_state("xyz"),
         )
         self.printer.register_event_handler(
-            "force_move:mark_as_homed_z", self._set_homed
+            "unhome:mark_as_unhomed_z",
+            lambda pt: self.clear_homing_state("xyz"),
+        )
+
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_x",
+            lambda pt: self.apply_homing_state("xyz"),
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_y",
+            lambda pt: self.apply_homing_state("xyz"),
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_z",
+            lambda pt: self.apply_homing_state("xyz"),
         )
         # Setup max velocity
         self.max_velocity, self.max_accel = toolhead.get_max_velocity()
@@ -200,12 +209,15 @@ class DeltaKinematics:
         self.limit_xy2 = -1.0
         self.need_home = True
 
-    def _set_unhomed(self, print_time):
-        self.limit_xy2 = -1.0
-        self.need_home = True
+    def clear_homing_state(self, clear_axes):
+        # Clearing homing state for each axis individually is not implemented
+        if clear_axes:
+            self.limit_xy2 = -1
+            self.need_home = True
 
-    def _set_homed(self, print_time):
-        self.need_home = False
+    def apply_homing_state(self, axes):
+        if axes:
+            self.need_home = False
 
     def check_move(self, move):
         end_pos = move.end_pos

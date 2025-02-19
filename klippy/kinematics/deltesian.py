@@ -56,33 +56,38 @@ class DeltesianKinematics:
         )
 
         self.printer.register_event_handler(
-            "stepper_enable:disable_left", self._disable_towers
+            "stepper_enable:disable_left",
+            lambda pt: self.clear_homing_state("xz"),
         )
         self.printer.register_event_handler(
-            "stepper_enable:disable_right", self._disable_towers
+            "stepper_enable:disable_right",
+            lambda pt: self.clear_homing_state("xz"),
         )
         self.printer.register_event_handler(
-            "stepper_enable:disable_y", self._set_unhomed_y
-        )
-
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_x", self._set_unhomed_x
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_y", self._set_unhomed_y
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_z", self._set_unhomed_z
+            "stepper_enable:disable_y", lambda pt: self.clear_homing_state("y")
         )
 
         self.printer.register_event_handler(
-            "force_move:mark_as_homed_x", self._set_homed_x
+            "unhome:mark_as_unhomed_x", lambda pt: self.clear_homing_state("x")
         )
         self.printer.register_event_handler(
-            "force_move:mark_as_homed_y", self._set_homed_y
+            "unhome:mark_as_unhomed_y", lambda pt: self.clear_homing_state("y")
         )
         self.printer.register_event_handler(
-            "force_move:mark_as_homed_z", self._set_homed_z
+            "unhome:mark_as_unhomed_z", lambda pt: self.clear_homing_state("z")
+        )
+
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_x",
+            lambda pt: self.apply_homing_state("x"),
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_y",
+            lambda pt: self.apply_homing_state("y"),
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_z",
+            lambda pt: self.apply_homing_state("z"),
         )
         self.limits = [(1.0, -1.0)] * 3
         # X axis limits
@@ -221,14 +226,14 @@ class DeltesianKinematics:
             forcepos = list(homepos)
             dz2 = [(a2 - ax**2) for a2, ax in zip(self.arm2, self.arm_x)]
             forcepos[2] = -1.5 * math.sqrt(max(dz2))
-            for axis_name in ("x", "z"):
+            for axis_name in "xz":
                 self.printer.send_event(
                     "homing:homing_move_begin_%s" % axis_name
                 )
             try:
                 homing_state.home_rails(self.rails[:2], forcepos, homepos)
             finally:
-                for axis_name in ("x", "z"):
+                for axis_name in "xz":
                     self.printer.send_event(
                         "homing:homing_move_end_%s" % axis_name
                     )
@@ -250,27 +255,15 @@ class DeltesianKinematics:
     def _motor_off(self, print_time):
         self.homed_axis = [False] * 3
 
-    def _set_unhomed_x(self, print_time):
-        self.homed_axis[0] = False
+    def clear_homing_state(self, clear_axes):
+        for axis, axis_name in enumerate("xyz"):
+            if axis_name in clear_axes:
+                self.homed_axis[axis] = False
 
-    def _set_unhomed_y(self, print_time):
-        self.homed_axis[1] = False
-
-    def _set_unhomed_z(self, print_time):
-        self.homed_axis[2] = False
-
-    def _set_homed_x(self, print_time):
-        self.homed_axis[0] = True
-
-    def _set_homed_y(self, print_time):
-        self.homed_axis[1] = True
-
-    def _set_homed_z(self, print_time):
-        self.homed_axis[2] = True
-
-    def _disable_towers(self, print_time):
-        self.homed_axis[0] = False
-        self.homed_axis[2] = False
+    def apply_homing_state(self, axes):
+        for axis, axis_name in enumerate("xyz"):
+            if axis_name in axes:
+                self.homed_axis[axis] = True
 
     def check_move(self, move):
         limits = list(map(list, self.limits))

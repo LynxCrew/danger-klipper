@@ -65,33 +65,38 @@ class HybridCoreXYKinematics:
         )
 
         self.printer.register_event_handler(
-            "stepper_enable:disable_x", self._disable_xy
+            "stepper_enable:disable_x",
+            lambda pt: self.clear_homing_state("xy"),
         )
         self.printer.register_event_handler(
-            "stepper_enable:disable_y", self._set_unhomed_y
+            "stepper_enable:disable_y",
+            lambda pt: self.clear_homing_state("xy"),
         )
         self.printer.register_event_handler(
-            "stepper_enable:disable_z", self._set_unhomed_z
-        )
-
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_x", self._set_unhomed_x
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_y", self._set_unhomed_y
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_z", self._set_unhomed_z
+            "stepper_enable:disable_z", lambda pt: self.clear_homing_state("z")
         )
 
         self.printer.register_event_handler(
-            "force_move:mark_as_homed_x", self._set_homed_x
+            "unhome:mark_as_unhomed_x", lambda pt: self.clear_homing_state("x")
         )
         self.printer.register_event_handler(
-            "force_move:mark_as_homed_y", self._set_homed_y
+            "unhome:mark_as_unhomed_y", lambda pt: self.clear_homing_state("y")
         )
         self.printer.register_event_handler(
-            "force_move:mark_as_homed_z", self._set_homed_z
+            "unhome:mark_as_unhomed_z", lambda pt: self.clear_homing_state("z")
+        )
+
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_x",
+            lambda pt: self.apply_homing_state("x"),
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_y",
+            lambda pt: self.apply_homing_state("y"),
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_z",
+            lambda pt: self.apply_homing_state("z"),
         )
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
@@ -193,27 +198,15 @@ class HybridCoreXYKinematics:
     def _motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
 
-    def _set_unhomed_x(self, print_time):
-        self.limits[0] = (1.0, -1.0)
+    def clear_homing_state(self, clear_axes):
+        for axis, axis_name in enumerate("xyz"):
+            if axis_name in clear_axes:
+                self.limits[axis] = (1.0, -1.0)
 
-    def _set_unhomed_y(self, print_time):
-        self.limits[1] = (1.0, -1.0)
-
-    def _set_unhomed_z(self, print_time):
-        self.limits[2] = (1.0, -1.0)
-
-    def _set_homed_x(self, print_time):
-        self.limits[0] = self.rails[0].get_range()
-
-    def _set_homed_y(self, print_time):
-        self.limits[1] = self.rails[1].get_range()
-
-    def _set_homed_z(self, print_time):
-        self.limits[2] = self.rails[2].get_range()
-
-    def _disable_xy(self, print_time):
-        self.limits[0] = (1.0, -1.0)
-        self.limits[1] = (1.0, -1.0)
+    def apply_homing_state(self, axes):
+        for axis, axis_name in enumerate("xyz"):
+            if axis_name in axes:
+                self.limits[axis] = self.rails[axis].get_range()
 
     def _check_endstops(self, move):
         end_pos = move.end_pos

@@ -31,33 +31,40 @@ class PolarKinematics:
         )
 
         self.printer.register_event_handler(
-            "stepper_enable:disable_bed", self._set_unhomed_xy
+            "stepper_enable:disable_bed",
+            lambda pt: self.clear_homing_state("xy"),
         )
         self.printer.register_event_handler(
-            "stepper_enable:disable_arm", self._set_unhomed_xy
+            "stepper_enable:disable_arm",
+            lambda pt: self.clear_homing_state("xy"),
         )
         self.printer.register_event_handler(
-            "stepper_enable:disable_z", self._set_unhomed_z
-        )
-
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_x", self._set_unhomed_xy
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_y", self._set_unhomed_xy
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_z", self._set_unhomed_z
+            "stepper_enable:disable_z", lambda pt: self.clear_homing_state("z")
         )
 
         self.printer.register_event_handler(
-            "force_move:mark_as_homed_x", self._set_homed_xy
+            "unhome:mark_as_unhomed_x",
+            lambda pt: self.clear_homing_state("xy"),
         )
         self.printer.register_event_handler(
-            "force_move:mark_as_homed_y", self._set_homed_xy
+            "unhome:mark_as_unhomed_y",
+            lambda pt: self.clear_homing_state("xy"),
         )
         self.printer.register_event_handler(
-            "force_move:mark_as_homed_z", self._set_homed_z
+            "unhome:mark_as_unhomed_z", lambda pt: self.clear_homing_state("z")
+        )
+
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_x",
+            lambda pt: self.apply_homing_state("xy"),
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_y",
+            lambda pt: self.apply_homing_state("xy"),
+        )
+        self.printer.register_event_handler(
+            "force_move:mark_as_homed_z",
+            lambda pt: self.apply_homing_state("z"),
         )
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
@@ -162,17 +169,19 @@ class PolarKinematics:
         self.limit_z = (1.0, -1.0)
         self.limit_xy2 = -1.0
 
-    def _set_unhomed_xy(self, print_time):
-        self.limit_xy2 = -1.0
+    def clear_homing_state(self, clear_axes):
+        if "x" in clear_axes or "y" in clear_axes:
+            # X and Y cannot be cleared separately
+            self.limit_xy2 = -1.0
+        if "z" in clear_axes:
+            self.limit_z = (1.0, -1.0)
 
-    def _set_unhomed_z(self, print_time):
-        self.limit_z = (1.0, -1.0)
-
-    def _set_homed_xy(self, print_time):
-        self.limit_xy2 = self.rails[0].get_range()[1] ** 2
-
-    def _set_homed_z(self, print_time):
-        self.limit_z = self.rails[1].get_range()
+    def apply_homing_state(self, axes):
+        if "x" in axes or "y" in axes:
+            # X and Y cannot be cleared separately
+            self.limit_xy2 = self.rails[0].get_range()[1] ** 2
+        if "z" in axes:
+            self.limit_z = self.rails[1].get_range()
 
     def check_move(self, move):
         end_pos = move.end_pos

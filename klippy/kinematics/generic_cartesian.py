@@ -354,10 +354,13 @@ class GenericCartesianKinematics:
                     self.limits[axis] = c.get_range()
                     break
 
-    def clear_homing_state(self, axes):
-        for i, _ in enumerate(self.limits):
-            if i in axes:
-                self.limits[i] = (1.0, -1.0)
+    def clear_homing_state(self, clear_axes):
+        for axis, axis_name in enumerate("xyz"):
+            if axis_name in clear_axes:
+                self.limits[axis] = (1.0, -1.0)
+
+    def apply_homing_state(self, axes):
+        pass
 
     def home_axis(self, homing_state, axis, carriage):
         # Determine movement
