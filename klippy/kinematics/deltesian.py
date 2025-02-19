@@ -55,40 +55,6 @@ class DeltesianKinematics:
             "stepper_enable:motor_off", self._motor_off
         )
 
-        self.printer.register_event_handler(
-            "stepper_enable:disable_left",
-            lambda pt: self.clear_homing_state("xz"),
-        )
-        self.printer.register_event_handler(
-            "stepper_enable:disable_right",
-            lambda pt: self.clear_homing_state("xz"),
-        )
-        self.printer.register_event_handler(
-            "stepper_enable:disable_y", lambda pt: self.clear_homing_state("y")
-        )
-
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_x", lambda pt: self.clear_homing_state("x")
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_y", lambda pt: self.clear_homing_state("y")
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_z", lambda pt: self.clear_homing_state("z")
-        )
-
-        self.printer.register_event_handler(
-            "force_move:mark_as_homed_x",
-            lambda pt: self.apply_homing_state("x"),
-        )
-        self.printer.register_event_handler(
-            "force_move:mark_as_homed_y",
-            lambda pt: self.apply_homing_state("y"),
-        )
-        self.printer.register_event_handler(
-            "force_move:mark_as_homed_z",
-            lambda pt: self.apply_homing_state("z"),
-        )
         self.limits = [(1.0, -1.0)] * 3
         # X axis limits
         min_angle = config.getfloat(
@@ -171,10 +137,10 @@ class DeltesianKinematics:
             return [self.rails[1]]
         raise IndexError("Rail does not exist")
 
-    def disable_steppers(self, axis):
-        if 0 in axis or 2 in axis:
+    def disable_steppers(self, axes):
+        if 0 in axes or 2 in axes:
             self.clear_homing_state("xz")
-        if 1 in axis:
+        if 1 in axes:
             self.clear_homing_state("y")
 
     def get_steppers(self):

@@ -320,16 +320,24 @@ class PrinterStepperEnable:
             if enable:
                 el.motor_enable(print_time)
             else:
+                axes = set()
+                steppers = set()
                 el.motor_disable(print_time)
+                for i, rail in enumerate(kin.get_rails()):
+                    for stepper in rail.get_steppers():
+                        if stepper.get_name() == stepper_name:
+                            axes.add(i)
+                            steppers.add(
+                                rail.mcu_stepper.get_name(True).lower()
+                            )
                 if notify:
-                    for rail in kin.get_rails():
-                        for stepper in rail.get_steppers():
-                            if stepper.get_name() == stepper_name:
-                                self.printer.send_event(
-                                    "stepper_enable:disable_%s"
-                                    % rail.mcu_stepper.get_name(True).lower(),
-                                    print_time,
-                                )
+                    if hasattr(kin, "disable_steppers"):
+                        kin.disable_steppers(axes)
+                    for stepper in steppers:
+                        self.printer.send_event(
+                            "stepper_enable:disable_%s" % stepper,
+                            print_time,
+                        )
         logging.info(
             "%s have been manually %s",
             steppers,

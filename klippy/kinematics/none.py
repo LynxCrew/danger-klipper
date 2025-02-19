@@ -16,7 +16,7 @@ class NoneKinematics:
     def get_connected_rails(self, axis):
         raise IndexError("Rail does not exist")
 
-    def disable_steppers(self, axis):
+    def disable_steppers(self, axes):
         pass
 
     def get_steppers(self):

@@ -206,24 +206,21 @@ class ForceMove:
         print_time = toolhead.get_last_move_time()
         axes_str = gcmd.get("AXES", None)
         if axes_str is None:
-            axes = ["X", "Y", "Z"]
+            axes = ["x", "y", "z"]
         else:
-            axes = axes_str.split(",")
+            axes = axes_str.lower().split(",")
         invalid_axis = []
         for axis in axes:
-            if (
-                axis.lower() != "x"
-                and axis.lower() != "y"
-                and axis.lower() != "z"
-            ):
+            if axis != "x" and axis != "y" and axis != "z":
                 invalid_axis.append(axis)
         if invalid_axis:
             gcmd.respond_info("MARK_AS_HOMED: Invalid axis %s" % invalid_axis)
             return
         logging.info("Marking axes as homed: %s", axes)
+        toolhead.get_kinematics().apply_homing_state(axes)
         for axis in axes:
             self.printer.send_event(
-                "force_move:mark_as_homed_%s" % axis.lower(), print_time
+                "force_move:mark_as_homed_%s" % axis, print_time
             )
 
 

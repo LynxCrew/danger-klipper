@@ -35,44 +35,6 @@ class RotaryDeltaKinematics:
             "stepper_enable:motor_off", self._motor_off
         )
 
-        self.printer.register_event_handler(
-            "stepper_enable:disable_a",
-            lambda pt: self.clear_homing_state("xyz"),
-        )
-        self.printer.register_event_handler(
-            "stepper_enable:disable_b",
-            lambda pt: self.clear_homing_state("xyz"),
-        )
-        self.printer.register_event_handler(
-            "stepper_enable:disable_c",
-            lambda pt: self.clear_homing_state("xyz"),
-        )
-
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_x",
-            lambda pt: self.clear_homing_state("xyz"),
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_y",
-            lambda pt: self.clear_homing_state("xyz"),
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_z",
-            lambda pt: self.clear_homing_state("xyz"),
-        )
-
-        self.printer.register_event_handler(
-            "force_move:mark_as_homed_x",
-            lambda pt: self.apply_homing_state("xyz"),
-        )
-        self.printer.register_event_handler(
-            "force_move:mark_as_homed_y",
-            lambda pt: self.apply_homing_state("xyz"),
-        )
-        self.printer.register_event_handler(
-            "force_move:mark_as_homed_z",
-            lambda pt: self.apply_homing_state("xyz"),
-        )
         # Read config
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
@@ -161,8 +123,8 @@ class RotaryDeltaKinematics:
             raise IndexError("Rail does not exist")
         return [self.rails[0], self.rails[1], self.rails[2]]
 
-    def disable_steppers(self, axis):
-        self.clear_homing_state(axis)
+    def disable_steppers(self, axes):
+        self.clear_homing_state(axes)
 
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]

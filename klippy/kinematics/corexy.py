@@ -35,28 +35,6 @@ class CoreXYKinematics:
             "stepper_enable:motor_off", self._motor_off
         )
 
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_x", lambda pt: self.clear_homing_state("x")
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_y", lambda pt: self.clear_homing_state("y")
-        )
-        self.printer.register_event_handler(
-            "unhome:mark_as_unhomed_z", lambda pt: self.clear_homing_state("z")
-        )
-
-        self.printer.register_event_handler(
-            "force_move:mark_as_homed_x",
-            lambda pt: self.apply_homing_state("x"),
-        )
-        self.printer.register_event_handler(
-            "force_move:mark_as_homed_y",
-            lambda pt: self.apply_homing_state("y"),
-        )
-        self.printer.register_event_handler(
-            "force_move:mark_as_homed_z",
-            lambda pt: self.apply_homing_state("z"),
-        )
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
@@ -81,10 +59,10 @@ class CoreXYKinematics:
             return [self.rails[2]]
         raise IndexError("Rail does not exist")
 
-    def disable_steppers(self, axis):
-        if 0 in axis or 1 in axis:
+    def disable_steppers(self, axes):
+        if 0 in axes or 1 in axes:
             self.clear_homing_state("xy")
-        if 2 in axis:
+        if 2 in axes:
             self.clear_homing_state("z")
 
     def get_steppers(self):

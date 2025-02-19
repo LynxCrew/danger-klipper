@@ -38,8 +38,8 @@ class WinchKinematics:
             raise IndexError("Rail does not exist")
         return [self.get_rails()]
 
-    def disable_steppers(self, axis):
-        self.clear_homing_state(axis)
+    def disable_steppers(self, axes):
+        self.clear_homing_state(axes)
 
     def get_steppers(self):
         return list(self.steppers)
