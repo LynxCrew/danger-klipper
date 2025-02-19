@@ -285,10 +285,10 @@ class PrinterStepperEnable:
             for extruder in active_extruders:
                 self.stepper_off(extruder, print_time, "extruder")
         if hasattr(kin, "get_connected_rails"):
+            if hasattr(kin, "disable_steppers"):
+                kin.disable_steppers(axes)
             for axis in axes:
                 try:
-                    if hasattr(kin, "disable_steppers"):
-                        kin.disable_steppers(axis)
                     rails = kin.get_connected_rails(axis)
                     for rail in rails:
                         steppers = rail.get_steppers()
