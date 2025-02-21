@@ -136,14 +136,14 @@ class StepperEnableOutputPin:
             eventtime += DISABLE_STALL_TIME
             self._printer.get_reactor().register_callback(
                 lambda _: self._toolhead.register_lookahead_callback(
-                    lambda pt: self._set_pin(pt, 0)
+                    lambda pt: self._set_digital(pt, 0)
                 ),
                 eventtime,
             )
         else:
-            self._set_pin(print_time, value)
+            self._set_digital(print_time, value)
 
-    def _set_pin(self, print_time, value):
+    def _set_digital(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
             value = 1.0 - value
