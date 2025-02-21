@@ -17,25 +17,25 @@ DISABLE_STALL_TIME = 0.100
 class StepperEnablePin:
     def __init__(
         self,
-        set_enable_pin,
+        mcu_enable,
         enable_count,
         printer,
     ):
         self.printer = printer
         self.reactor = self.printer.get_reactor()
-        self.set_enable_pin = set_enable_pin
+        self.mcu_enable = mcu_enable
         self.enable_count = enable_count
         self.is_dedicated = True
 
     def set_enable(self, print_time):
-        if not self.enable_count and self.set_enable_pin is not None:
-            self.set_enable_pin(print_time, 1)
+        if not self.enable_count:
+            self.mcu_enable.set_digital(print_time, 1)
         self.enable_count += 1
 
     def set_disable(self, print_time):
         self.enable_count -= 1
-        if not self.enable_count and self.set_enable_pin is not None:
-            self.set_enable_pin(print_time, 0)
+        if not self.enable_count:
+            self.mcu_enable.set_digital(print_time, 0)
 
 
 class error(Exception):
@@ -125,7 +125,7 @@ class StepperEnableOutputPin:
         wake_print_time = self._mcu.clock_to_print_time(wakeclock)
         self._toolhead.note_mcu_movequeue_activity(wake_print_time)
 
-    def set_pin(self, print_time, value):
+    def set_digital(self, print_time, value):
         if value == 0:
             # self._toolhead._flush_lookahead()
             eventtime = self._printer.get_reactor().monotonic()
@@ -175,12 +175,10 @@ def setup_enable_pin(printer, pin, max_enable_time=0.0):
         return enable
     if max_enable_time:
         mcu_enable = StepperEnableOutputPin(pin_params)
-        set_enable_pin = mcu_enable.set_pin
     else:
         mcu_enable = pin_params["chip"].setup_pin("digital_out", pin_params)
-        set_enable_pin = mcu_enable.set_digital
     mcu_enable.setup_max_duration(max_enable_time)
-    enable = pin_params["class"] = StepperEnablePin(set_enable_pin, 0, printer)
+    enable = pin_params["class"] = StepperEnablePin(mcu_enable, 0, printer)
     return enable
 
 
