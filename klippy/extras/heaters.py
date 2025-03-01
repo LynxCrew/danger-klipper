@@ -19,6 +19,7 @@ KELVIN_TO_CELSIUS = -273.15
 MAX_HEAT_TIME = 5.0
 AMBIENT_TEMP = 25.0
 PID_PARAM_BASE = 255.0
+MAX_MAINTHREAD_TIME = 5.0
 HEATER_PROFILE_VERSION = 1
 
 # (type, placeholder, default, can_be_none)
@@ -123,7 +124,7 @@ class Heater:
         self.smoothing_elements = self.config_smoothing_elements
         self.smoothing = self.config_smoothing
         self.inv_smooth_time = 1.0 / self.smooth_time
-        self.is_shutdown = False
+        self.verify_mainthread_time = -999.0
         self.lock = threading.Lock()
         self.last_temp = self.smoothed_temp = self.target_temp = 0.0
         self.last_temp_time = 0.0
@@ -243,7 +244,7 @@ class Heater:
         return self.control_types[profile["control"]](profile, self, load_clean)
 
     def set_pwm(self, read_time, value):
-        if self.target_temp <= 0.0 or self.is_shutdown:
+        if self.target_temp <= 0.0 or read_time > self.verify_mainthread_time:
             value = 0.0
         if (read_time < self.next_pwm_time or not self.last_pwm_value) and abs(
             value - self.last_pwm_value
@@ -273,7 +274,7 @@ class Heater:
         # logging.debug("temp: %.3f %f = %f", read_time, temp)
 
     def _handle_shutdown(self):
-        self.is_shutdown = True
+        self.verify_mainthread_time = -999.0
 
     # External commands
     def get_name(self):
@@ -340,6 +341,9 @@ class Heater:
         self.target_temp = target_temp
 
     def stats(self, eventtime):
+        est_print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime)
+        if not self.printer.is_shutdown():
+            self.verify_mainthread_time = est_print_time + MAX_MAINTHREAD_TIME
         with self.lock:
             target_temp = self.target_temp
             last_temp = self.last_temp

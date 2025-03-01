@@ -662,6 +662,12 @@ class ProbePointsHelper:
         # Lookup objects
         probe = self.printer.lookup_object("probe", None)
         method = gcmd.get("METHOD", "automatic").lower()
+        if method == "rapid_scan":
+            gcmd.respond_info(
+                "METHOD=rapid_scan not supported, using automatic"
+            )
+            method = "automatic"
+
         self.results = []
         self.enforce_lift_speed = gcmd.get_int(
             "ENFORCE_LIFT_SPEED", self.enforce_lift_speed, minval=0, maxval=1
