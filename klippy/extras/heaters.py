@@ -721,22 +721,35 @@ class ControlPID:
 
     @staticmethod
     def set_values(pmgr, gcmd, control, profile_name):
-        target = pmgr._check_value_gcmd("TARGET", None, gcmd, float, True)
+        current_profile = pmgr.servo.get_control().get_profile()
+        target = pmgr._check_value_gcmd(
+            "TARGET", current_profile["pid_target"], gcmd, float, True
+        )
         tolerance = pmgr._check_value_gcmd(
             "TOLERANCE",
-            None,
+            current_profile["pid_tolerance"],
             gcmd,
             float,
             True,
         )
-        kp = pmgr._check_value_gcmd("KP", None, gcmd, float, False)
-        ki = pmgr._check_value_gcmd("KI", None, gcmd, float, False)
-        kd = pmgr._check_value_gcmd("KD", None, gcmd, float, False)
+        kp = pmgr._check_value_gcmd(
+            "KP", current_profile["pid_kp"], gcmd, float, False
+        )
+        ki = pmgr._check_value_gcmd(
+            "KI", current_profile["pid_ki"], gcmd, float, False
+        )
+        kd = pmgr._check_value_gcmd(
+            "KD", current_profile["pid_kd"], gcmd, float, False
+        )
         smooth_time = pmgr._check_value_gcmd(
-            "SMOOTH_TIME", None, gcmd, float, True
+            "SMOOTH_TIME", current_profile["smooth_time"], gcmd, float, True
         )
         smoothing_elements = pmgr._check_value_gcmd(
-            "SMOOTHING_ELEMENTS", None, gcmd, int, True
+            "SMOOTHING_ELEMENTS",
+            current_profile["smoothing_elements"],
+            gcmd,
+            int,
+            True,
         )
         keep_target = pmgr._check_value_gcmd(
             "KEEP_TARGET", 0, gcmd, int, True, minval=0, maxval=1
