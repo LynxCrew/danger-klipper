@@ -334,8 +334,8 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         ifs_rms = self._get_ifs_rms()
         if not globalscaler:
             globalscaler = 256
-        cs = int(
-            (current * 256.0 * 32.0) / (globalscaler * ifs_rms) - 1.0 + 0.5
+        cs = math.floor(
+            (current * 256.0 * 32.0) / (globalscaler * ifs_rms) - 1.0
         )
         return max(0, min(31, cs))
 
