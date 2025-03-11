@@ -44,9 +44,6 @@ class MpcCalibrate:
         )
         self.hysteresis = self.config.getfloat("calibrate_hysteresis", None)
         self.heating_gain = self.config.getfloat("calibrate_heating_gain", None)
-        self.no_normalization = self.config.getboolean(
-            "no_normalization", False
-        )
 
     def run(self, gcmd):
         profile_name = gcmd.get("PROFILE", "default")
@@ -97,7 +94,7 @@ class MpcCalibrate:
         heating_gain = gcmd.get_float("HEATING_GAIN", self.heating_gain)
 
         no_normalization = gcmd.get_boolean(
-            "NO_NORMALIZATION", self.no_normalization
+            "NO_NORMALIZATION", self.temp_control.no_normalization
         )
 
         verify_heater = self.printer.lookup_object(

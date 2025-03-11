@@ -50,6 +50,7 @@ MPC_PROFILE_OPTIONS = {
         True,
     ),
     "cooling_fan": (str, "%s", None, True),
+    "no_normalization": (bool, "%s", False, False),
     "ambient_temp_sensor": (str, "%s", None, True),
     "filament_temp_sensor": (str, "%s", None, True),
     "filament_temp_source": (str, "%s", "ambient", False),
@@ -1468,6 +1469,7 @@ class ControlMPC:
         self.ambient_sensor = self.profile["ambient_temp_sensor"]
         self.filament_temp_sensor = self.profile["filament_temp_sensor"]
         self.cooling_fan = self.profile["cooling_fan"]
+        self.no_normalization = self.profile["no_normalization"]
         self.const_fan_ambient_transfer = self.profile["fan_ambient_transfer"]
         self.pwm_max_power = [
             (temp, self.heater.get_max_power() * power)
@@ -1543,9 +1545,10 @@ class ControlMPC:
         # Modulate ambient transfer coefficient with fan speed
         ambient_transfer = self.const_ambient_transfer
         if self.cooling_fan and len(self.const_fan_ambient_transfer) > 1:
+            fan_value = "pwm_value" if self.no_normalization else "speed"
             fan_speed = max(
                 0.0,
-                min(1.0, self.cooling_fan.get_status(read_time)["pwm_value"]),
+                min(1.0, self.cooling_fan.get_status(read_time)[fan_value]),
             )
             fan_break = fan_speed * (len(self.const_fan_ambient_transfer) - 1)
             below = self.const_fan_ambient_transfer[math.floor(fan_break)]

@@ -57,6 +57,8 @@ class ProfileManager:
             value = config_section.getfloat(
                 key, default=default, minval=minval, above=above
             )
+        elif type is bool:
+            value = config_section.getboolean(key, default=default)
         elif type == "floatlist":
             value = config_section.getfloatlist(key, default=default)
         elif isinstance(type, tuple) and len(type) == 4 and type[0] == "lists":
@@ -104,6 +106,8 @@ class ProfileManager:
             value = gcmd.get_int(name, default, minval=minval, maxval=maxval)
         elif type is float:
             value = gcmd.get_float(name, default, minval=minval, maxval=maxval)
+        elif type is bool:
+            value = gcmd.get_boolean(name, default)
         else:
             value = gcmd.get(name, default)
         if not can_be_none and value is None:
