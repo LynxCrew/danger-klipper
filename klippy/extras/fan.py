@@ -171,6 +171,7 @@ class Fan:
             else self.startup_check_rpm
         )
         self.self_checking = False
+        self.no_normalization = False
 
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
         # Register callbacks
@@ -229,14 +230,20 @@ class Fan:
 
     def _apply_speed(self, print_time, value, force=False):
         if value > 0:
-            if value == 1.0 and self.full_speed_max_power:
-                pwm_value = 1.0
+            if self.no_normalization:
+                pwm_value = value
             else:
-                # Scale value between min_power and max_power
-                pwm_value = (
-                    value * (self.max_power - self.min_power) + self.min_power
-                )
-                pwm_value = max(self.min_power, min(self.max_power, pwm_value))
+                if value == 1.0 and self.full_speed_max_power:
+                    pwm_value = 1.0
+                else:
+                    # Scale value between min_power and max_power
+                    pwm_value = (
+                        value * (self.max_power - self.min_power)
+                        + self.min_power
+                    )
+                    pwm_value = max(
+                        self.min_power, min(self.max_power, pwm_value)
+                    )
         else:
             pwm_value = 0
 

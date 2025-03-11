@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, re, logging, collections, shlex
 from . import mathutil
+from .extras.danger_options import get_danger_options
 
 
 class CommandError(Exception):
@@ -113,6 +114,12 @@ class GCodeCommand:
 
     def get_int(self, name, default=sentinel, minval=None, maxval=None):
         return self.get(name, default, parser=int, minval=minval, maxval=maxval)
+
+    def get_boolean(self, name, default=sentinel):
+        value = self.get(name, default).lower()
+        if value in get_danger_options().jinja_boolean_filter:
+            return True
+        return False
 
     def get_float(
         self,

@@ -1544,7 +1544,8 @@ class ControlMPC:
         ambient_transfer = self.const_ambient_transfer
         if self.cooling_fan and len(self.const_fan_ambient_transfer) > 1:
             fan_speed = max(
-                0.0, min(1.0, self.cooling_fan.get_status(read_time)["speed"])
+                0.0,
+                min(1.0, self.cooling_fan.get_status(read_time)["pwm_value"]),
             )
             fan_break = fan_speed * (len(self.const_fan_ambient_transfer) - 1)
             below = self.const_fan_ambient_transfer[math.floor(fan_break)]
