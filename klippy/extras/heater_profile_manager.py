@@ -103,13 +103,13 @@ class ProfileManager:
         maxval=None,
     ):
         if type is int:
-            value = gcmd.get_int(name, default, minval=minval, maxval=maxval)
+            value = gcmd.get_int(name, default=default, minval=minval, maxval=maxval)
         elif type is float:
-            value = gcmd.get_float(name, default, minval=minval, maxval=maxval)
+            value = gcmd.get_float(name, default=default, minval=minval, maxval=maxval)
         elif type is bool:
-            value = gcmd.get_boolean(name, default)
+            value = gcmd.get_boolean(name, default=default)
         else:
-            value = gcmd.get(name, default)
+            value = gcmd.get(name, default=default)
         if not can_be_none and value is None:
             raise gcmd.error("heater_profile: '%s' has to be specified." % name)
         return value.lower() if type == "lower" else value
