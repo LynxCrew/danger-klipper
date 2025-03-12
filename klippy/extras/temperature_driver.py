@@ -90,6 +90,8 @@ class PrinterTemperatureDriver:
         return self.report_time
 
     def set_report_time(self, report_time):
+        if report_time is None:
+            return
         self.report_time = report_time
 
 
