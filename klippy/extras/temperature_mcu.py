@@ -86,6 +86,8 @@ class PrinterTemperatureMCU:
         return self.report_time
 
     def set_report_time(self, report_time):
+        if report_time is None:
+            return
         if self.beacon_mcu_temp_wrapper is not None:
             self.beacon_mcu_temp_wrapper.set_report_time(report_time)
             return
