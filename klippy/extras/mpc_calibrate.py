@@ -47,9 +47,9 @@ class MpcCalibrate:
 
     def run(self, gcmd):
         profile_name = gcmd.get("PROFILE", "default")
-        use_analytic = gcmd.get_int(
-            "USE_DELTA", default=0, minval=0, maxval=1
-        ) or gcmd.get_int("USE_ANALYTIC", default=0, minval=0, maxval=1)
+        use_analytic = gcmd.get_boolean(
+            "USE_DELTA", default=False
+        ) or gcmd.get_boolean("USE_ANALYTIC", default=False)
         ambient_max_measure_time = gcmd.get_float(
             "AMBIENT_MAX_MEASURE_TIME", 20.0, above=0.0
         )
@@ -92,6 +92,10 @@ class MpcCalibrate:
         )
         hysteresis = gcmd.get_float("HYSTERESIS", self.hysteresis)
         heating_gain = gcmd.get_float("HEATING_GAIN", self.heating_gain)
+
+        no_normalization = gcmd.get_boolean(
+            "NO_NORMALIZATION", self.temp_control.no_normalization
+        )
 
         verify_heater = self.printer.lookup_object(
             "verify_heater %s" % self.heater.short_name, None
@@ -151,6 +155,7 @@ class MpcCalibrate:
                 ambient_measure_sample_time,
                 fan_breakpoints,
                 first_res,
+                no_normalization=no_normalization,
             )
             second_res = self.process_second_pass(
                 first_res,
@@ -327,6 +332,7 @@ class MpcCalibrate:
         ambient_measure_sample_time,
         fan_breakpoints,
         first_pass_results,
+        no_normalization=False,
     ):
         target_temp = round(first_pass_results["post_block_temp"])
         self.heater.set_temp(target_temp)
@@ -344,6 +350,7 @@ class MpcCalibrate:
             )
             gcmd.respond_info(f"Average stable power: {power_base} W")
         else:
+            self.fan.no_normalization = no_normalization
             for idx in range(0, fan_breakpoints):
                 speed = idx / (fan_breakpoints - 1)
                 self.fan.set_speed(speed)
@@ -359,6 +366,8 @@ class MpcCalibrate:
                     f"{speed * 100.0:.0f}% fan average power: {power:.2f} W"
                 )
                 fan_powers.append((speed, power))
+            if no_normalization:
+                self.fan.no_normalization = False
             self.fan.set_speed(0.0)
             power_base = fan_powers[0][1]
 
