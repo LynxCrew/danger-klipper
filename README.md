@@ -25,6 +25,8 @@ See the [Kalico Additions document](https://docs.kalico.gg/Kalico_Additions.html
 
 - [core: rotate log file at every restart](https://github.com/KalicoCrew/kalico/pull/181)
 
+- [core: options for API server socket file mode, user, and group](https://github.com/KalicoCrew/kalico/pull/612)
+
 - [fan: normalising Fan PWM power](https://github.com/KalicoCrew/kalico/pull/44) ([klipper#6307](https://github.com/Klipper3d/klipper/pull/6307))
 
 - [fan: reverse FAN](https://github.com/KalicoCrew/kalico/pull/51) ([klipper#4983](https://github.com/Klipper3d/klipper/pull/4983))
@@ -89,6 +91,10 @@ See the [Kalico Additions document](https://docs.kalico.gg/Kalico_Additions.html
 
 - [force_move: turn on by default](https://github.com/KalicoCrew/kalico/pull/135)
 
+- [resonance_tester: warn about active fans during input shaper calibration](https://github.com/KalicoCrew/kalico/pull/627)
+
+- [bed_mesh: add BED_MESH_CHECK command for mesh validation](https://github.com/KalicoCrew/kalico/pull/629)
+
 - [respond: turn on by default](https://github.com/KalicoCrew/kalico/pull/296)
 
 - [exclude_object: turn on by default](https://github.com/KalicoCrew/kalico/pull/306)
@@ -126,6 +132,8 @@ See the [Kalico Additions document](https://docs.kalico.gg/Kalico_Additions.html
 - [core: non-critical-mcus](https://github.com/KalicoCrew/kalico/pull/339)
 
 - [gcode_macros: !python templates](https://github.com/KalicoCrew/kalico/pull/360)
+
+- [gcode_macros: !!include macros/my_macro.py](https://github.com/KalicoCrew/kalico/pull/578)
 
 - [core: action_log](https://github.com/KalicoCrew/kalico/pull/367)
 

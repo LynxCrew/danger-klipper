@@ -311,7 +311,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         ifs_rms = self._get_ifs_rms()
         cs = 31 if self.cs is None else self.cs
         globalscaler = math.floor((current * 256.0 * 32) / (ifs_rms * (cs + 1)))
-        if globalscaler == 256:
+        if self.cs is None and globalscaler == 256:
             return 0
         if self.cs is None and globalscaler < 32:
             return 32
@@ -323,7 +323,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
                     self.name,
                     globalscaler,
                     self.Rref,
-                    self.cs,
+                    cs,
                     f"{current_range:02b}",
                     f"{(KIFS[current_range] / 1000):.2f}",
                 )
@@ -335,7 +335,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         if not globalscaler:
             globalscaler = 256
         cs = int(
-             (current * 256.0 * 32.0) / (globalscaler * ifs_rms) - 1.0 + 0.5
+            (current * 256.0 * 32.0) / (globalscaler * ifs_rms) - 1.0 + 0.5
         )
         return max(0, min(31, cs))
 

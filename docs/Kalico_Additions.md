@@ -19,6 +19,8 @@
 ## Enhanced behavior
 
 - [`canbus_query.py`](./CANBUS.md#finding-the-canbus_uuid-for-new-micro-controllers) now responds with all Kalico devices, even after they've been assigned a node_id.
+- Input shaper calibration now warns about active fans that may affect measurement accuracy.
+- [`BED_MESH_CHECK`](./G-Codes.md#bed_mesh_check) validates the current bed mesh against specified criteria, allowing you to check maximum deviation and slope between adjacent points before printing.
 
 ## New Kalico Modules
 
@@ -66,6 +68,7 @@
 - The python [`math`](https://docs.python.org/3/library/math.html) library is available to macros. `{math.sin(math.pi * variable)}` and more!
 - New [`RELOAD_GCODE_MACROS`](./G-Codes.md#reload_gcode_macros) G-Code command to reload `[gcode_macro]` templates without requiring a restart.
 - G-Code Macros can be written in Python. Read more [here](./Command_Templates.md)
+  - Macros may also be loaded from other files, using `!!include path/to/file.py`
 
 ## Plugins
 
