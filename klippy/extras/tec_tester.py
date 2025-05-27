@@ -32,10 +32,16 @@ class TecTester:
         self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
 
-
-
         self.temperature_sample_thread = self.kalico_threads.register_job(
             target=self.callback
+        )
+
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command(
+            "SET_TEC_TARGET",
+            "TEC_TESTER",
+            self.name,
+            self.cmd_SET_TARGET_TEMP
         )
 
         self.printer.register_event_handler(
@@ -107,6 +113,10 @@ class TecTester:
         else:
             self.mcu_pwm.set_pwm(read_time, 1)
         return 0.25
+
+    def cmd_SET_TARGET_TEMP(self, gcmd):
+        self.target_temperature = gcmd.getfloat("TARGET", self.target_temperature)
+        gcmd.respond_info(f"TARGET_TEMP={self.target_temperature}")
 
 def load_config_prefix(config):
     return TecTester(config)
