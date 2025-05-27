@@ -36,6 +36,9 @@ class TecTester:
             target=self.callback
         )
 
+        self.last_value = 0
+
+        self.printer.add_object("heater_fan " + self.name, self)
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "SET_TEC_TARGET",
@@ -117,6 +120,13 @@ class TecTester:
     def cmd_SET_TARGET_TEMP(self, gcmd):
         self.target_temperature = gcmd.getfloat("TARGET", self.target_temperature)
         gcmd.respond_info(f"TARGET_TEMP={self.target_temperature}")
+
+    def get_status(self, eventtime):
+        return {
+            "speed": self.last_value,
+            "pwm_value": self.last_value,
+            "rpm": None,
+        }
 
 def load_config_prefix(config):
     return TecTester(config)
