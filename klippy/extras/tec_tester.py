@@ -20,6 +20,7 @@ class TecTester:
         self.target_temperature = config.get_float("target_temperature", default=50)
         self.sensor_cold_name = config.get("sensor_cold_name")
         self.sensor_hot_name = config.get("sensor_hot_name")
+        self.enable_delay = config.get_float("enable_delay", 120)
         self.peltier_pin = config.get("peltier_pin")
         self.sensor_cold = None
         self.sensor_hot = None
@@ -37,6 +38,7 @@ class TecTester:
         )
 
         self.last_value = 0
+        self.last_enable_time = 0;
 
         self.printer.add_object("heater_fan " + self.name, self)
         gcode = self.printer.lookup_object("gcode")
@@ -111,9 +113,16 @@ class TecTester:
         target_temp = self.target_temperature if self.target_temperature > dew_point else dew_point
 
         read_time = self.mcu_pwm.get_mcu().estimated_print_time(curtime)
-        if (temp_cold < target_temp):
+        if self.last_value == 0 and read_time < self.last_enable_time + self.enable_delay:
+            return 0.25
+
+        if temp_cold < target_temp:
+            if self.last_value == 1:
+                self.last_enable_time = read_time
+            self.last_value = 0
             self.mcu_pwm.set_pwm(read_time, 0)
         else:
+            self.last_value = 1
             self.mcu_pwm.set_pwm(read_time, 1)
         return 0.25
 
