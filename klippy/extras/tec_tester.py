@@ -21,16 +21,17 @@ class TecTester:
         self.sensor_cold_name = config.get("sensor_cold_name")
         self.sensor_hot_name = config.get("sensor_hot_name")
         self.enable_delay = config.get_float("enable_delay", 120)
-        self.peltier_pin = config.get("peltier_pin")
         self.sensor_cold = None
         self.sensor_hot = None
 
-        ppins = self.printer.lookup_object("pins")
-        self.mcu_pwm = ppins.setup_pin("pwm", self.peltier_pin)
         pwm_cycle_time = config.getfloat(
-            "pwm_cycle_time", 0.100, above=0.0, maxval=0.25
+            "pwm_cycle_time", 0.0004, above=0.0, maxval=0.25
         )
-        self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
+        hardware_pwm = config.getboolean("hardware_pwm", False)
+
+        ppins = self.printer.lookup_object("pins")
+        self.mcu_pwm = ppins.setup_pin("pwm", config.get("peltier_pin"))
+        self.mcu_pwm.setup_cycle_time(pwm_cycle_time, hardware_pwm)
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
 
         self.temperature_sample_thread = self.kalico_threads.register_job(
