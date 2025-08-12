@@ -17,18 +17,12 @@ class CFlap:
         self.stepper = manual_stepper.ManualStepper(config)
         self.toolhead = None
 
-        self.fan = self
-
         self.printer.register_event_handler(
             "klippy:connect", self._handle_connect
         )
 
         self.homing_speed = self.config.getfloat("homing_speed", 30, above=0.0)
         self.ignore_trigger = self.config.getboolean("ignore_trigger", False)
-
-        gcode = config.get_printer().lookup_object("gcode")
-        gcode.register_command("M106", self.cmd_M106)
-        gcode.register_command("M107", self.cmd_M107)
 
     def _handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
@@ -100,6 +94,9 @@ class CFlap:
             self.cflap_fan.set_speed_from_command(0.0)
             self.move_stepper(0)
             self.enable_stepper(False)
+
+    def get_status(self, eventtime):
+        return self.cflap_fan.get_status(eventtime)
 
 
 FAN_MIN_TIME = 0.100
@@ -264,7 +261,25 @@ class FanTachometer:
             rpm = None
         return {"rpm": rpm}
 
+class PrinterCFlapFan:
+    def __init__(self, config):
+        self.fan = CFlap(config)
+
+        gcode = config.get_printer().lookup_object("gcode")
+        gcode.register_command("M106", self.cmd_M106)
+        gcode.register_command("M107", self.cmd_M107)
+
+    def cmd_M106(self, gcmd):
+        self.fan.cmd_M106(gcmd)
+
+    def cmd_M107(self, gcmd):
+        self.fan.cmd_M107(gcmd)
+
+    def get_status(self, eventtime):
+        return self.fan.get_status(eventtime)
+
+
 def load_config(config):
-    cflap = CFlap(config)
-    config.get_printer().add_object("fan", cflap)
-    return cflap
+    fan = PrinterCFlapFan(config)
+    config.get_printer().add_object("fan", fan)
+    return fan
