@@ -93,6 +93,9 @@ A collection of Kalico-specific system options
 #allow_plugin_override: False
 #   Allows modules in `plugins` to override modules of the same name in `extras`
 #   The default is False.
+#single_mcu_trsync_timeout: 0.25
+#   The timeout (in seconds) for MCU synchronization during the homing process when
+#   a single MCUs is in use. The default is 0.25
 #multi_mcu_trsync_timeout: 0.025
 #   The timeout (in seconds) for MCU synchronization during the homing process when
 #   multiple MCUs are in use. The default is 0.025
@@ -162,9 +165,9 @@ configuration between multiple sections. References take the form of
 `${section.option}` to look up a value elsewhere in your configuration. Note,
 that constants must always be lower case.
 
-Optionally, a `[constants]` section may be used specifically to store
-these values. Unlike the rest of your configuration, unused constants
-will show a warning instead of causing an error.
+Optionally, a `[constants]` section can be used specifically to store
+these values. Unused constants will display a warning. However, `[constants]`
+will display an error if none of the constants are used.
 
 ```
 [constants]
@@ -434,6 +437,17 @@ diagonals. If the slicer emit `M204 S3000` (3000 mm/s^2 accel). On these 37° an
 143° diagonals, the toolhead will accelerate at 3000 mm/s^2. On the X axis, the
 acceleration will be  12000 * 3000 / 15000 = 2400 mm/s^2, and 18000 mm/s^2 for
 pure Y moves.
+
+### Linear Delta Kinematics
+
+See [example-delta.cfg](../config/example-delta.cfg) for an example
+linear delta kinematics config file. See the
+[delta calibrate guide](Delta_Calibrate.md) for information on
+calibration.
+
+Only parameters specific to linear delta printers are described here -
+see [common kinematic settings](#common-kinematic-settings) for
+available parameters.
 
 ```
 [printer]
@@ -2140,6 +2154,25 @@ cs_pin:
 #   measurements.
 ```
 
+### [icm20948]
+
+Support for icm20948 accelerometers.
+
+```
+[icm20948]
+#i2c_address:
+#   Default is 104 (0x68). If AD0 is high, it would be 0x69 instead.
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed: 400000
+#   See the "common I2C settings" section for a description of the
+#   above parameters. The default "i2c_speed" is 400000.
+#axes_map: x, y, z
+#   See the "adxl345" section for information on this parameter.
+```
+
 ### [lis2dw]
 
 Support for LIS2DW accelerometers.
@@ -2241,21 +2274,26 @@ section of the measuring resonances guide for more information on
 #   resonances at. At least one point is required. Make sure that all
 #   points with some safety margin in XY plane (~a few centimeters)
 #   are reachable by the toolhead.
+#accel_chips:
+#   A comma-separated list of accelerometer chips to use for measurements.
+#   For example, "accel_chips: adxl345 head, adxl345 bed" would use two
+#   separate accelerometer chips. This parameter has priority over the
+#   other accelerometer parameters if specified.
 #accel_chip:
 #   A name of the accelerometer chip to use for measurements. If
 #   adxl345 chip was defined without an explicit name, this parameter
 #   can simply reference it as "accel_chip: adxl345", otherwise an
 #   explicit name must be supplied as well, e.g. "accel_chip: adxl345
-#   my_chip_name". Either this, or the next two parameters must be
-#   set.
+#   my_chip_name". Either this, 'accel_chips', or the next two parameters
+#   must be set.
 #accel_chip_x:
 #accel_chip_y:
 #   Names of the accelerometer chips to use for measurements for each
 #   of the axis. Can be useful, for instance, on bed slinger printer,
 #   if two separate accelerometers are mounted on the bed (for Y axis)
 #   and on the toolhead (for X axis). These parameters have the same
-#   format as 'accel_chip' parameter. Only 'accel_chip' or these two
-#   parameters must be provided.
+#   format as 'accel_chip' parameter. Only one of 'accel_chips', 'accel_chip',
+#   or these two parameters must be provided.
 #max_smoothing:
 #   Maximum input shaper smoothing to allow for each axis during shaper
 #   auto-calibration (with 'SHAPER_CALIBRATE' command). By default no
@@ -2478,7 +2516,7 @@ control_pin:
 #   See the "probe" section for information on these parameters.
 ```
 
-### [dockable_probe]
+### ⚠️ [dockable_probe]
 
 Certain probes are magnetically coupled to the toolhead and stowed
 in a dock when not in use. One should define this section instead
@@ -4166,8 +4204,9 @@ sense_resistor:
 #stealthchop_threshold: 0
 #   The velocity (in mm/s) to set the "stealthChop" threshold to. When
 #   set, "stealthChop" mode will be enabled if the stepper motor
-#   velocity is below this value. The default is 0, which disables
-#   "stealthChop" mode.
+#   velocity is below this value. Note that the "sensorless homing"
+#   code may temporarily override this setting during homing
+#   operations. The default is 0, which disables "stealthChop" mode.
 #coolstep_threshold:
 #   The velocity (in mm/s) to set the TMC driver internal "CoolStep"
 #   threshold to. If set, the coolstep feature will be enabled when
@@ -4214,6 +4253,7 @@ sense_resistor:
 #driver_PWM_FREQ: 1
 #driver_PWM_GRAD: 4
 #driver_PWM_AMPL: 128
+#driver_FREEWHEEL: 0
 #driver_SGT: 0
 #   Set the given register during the configuration of the TMC2130
 #   chip. This may be used to set custom motor parameters. The
@@ -4279,8 +4319,9 @@ sense_resistor:
 #stealthchop_threshold: 0
 #   The velocity (in mm/s) to set the "stealthChop" threshold to. When
 #   set, "stealthChop" mode will be enabled if the stepper motor
-#   velocity is below this value. The default is 0, which disables
-#   "stealthChop" mode.
+#   velocity is below this value. Note that the "sensorless homing"
+#   code may temporarily override this setting during homing
+#   operations. The default is 0, which disables "stealthChop" mode.
 #driver_MULTISTEP_FILT: True
 #driver_IHOLDDELAY: 8
 #driver_TPOWERDOWN: 20
@@ -4295,6 +4336,7 @@ sense_resistor:
 #driver_PWM_FREQ: 1
 #driver_PWM_GRAD: 14
 #driver_PWM_OFS: 36
+#driver_FREEWHEEL: 0
 #   Set the given register during the configuration of the TMC2208
 #   chip. This may be used to set custom motor parameters. The
 #   defaults for each parameter are next to the parameter name in the
@@ -4346,6 +4388,7 @@ sense_resistor:
 #driver_PWM_FREQ: 1
 #driver_PWM_GRAD: 14
 #driver_PWM_OFS: 36
+#driver_FREEWHEEL: 0
 #driver_SGTHRS: 0
 #   Set the given register during the configuration of the TMC2209
 #   chip. This may be used to set custom motor parameters. The
@@ -4493,8 +4536,9 @@ run_current:
 #stealthchop_threshold: 0
 #   The velocity (in mm/s) to set the "stealthChop" threshold to. When
 #   set, "stealthChop" mode will be enabled if the stepper motor
-#   velocity is below this value. The default is 0, which disables
-#   "stealthChop" mode.
+#   velocity is below this value. Note that the "sensorless homing"
+#   code may temporarily override this setting during homing
+#   operations. The default is 0, which disables "stealthChop" mode.
 #coolstep_threshold:
 #   The velocity (in mm/s) to set the TMC driver internal "CoolStep"
 #   threshold to. If set, the coolstep feature will be enabled when
@@ -4511,9 +4555,16 @@ run_current:
 #   The current_range bit value for the driver. Valid values are 0-3.
 #   The defaul is to auto-calculate to match the requested run_current.
 #   For further information consult the tmc2240 datasheet and tuning table.
-#driver_CS: 31
-#   The current_scaler value for the driver. The default is 31.
-#   For further information consult the tmc2240 datasheet and tuning table.
+#driver_CS:
+#   The current scale value for the TMC driver.
+#   The ideal `driver_CS` value may be found by setting the `CS` value in the
+#   TMC calculations spreadsheet (https://www.analog.com/media/en/engineering-tools/design-tools/tmc5240_tmc2240_tmc2210_calculations.xlsx),
+#   under the chopper tab so the hysteresis is not marked as too high.
+#   While it's not necessary to change the CS value, it can be helpful to achieve
+#   adequate hysteresis values on low current steppers.
+#   By default, this value is autocalculated.
+#   If driver_CS is specified this value will be used for homing so make sure it is possible to achieve your homing_current
+#   with the given currentscaler value.
 #overvoltage_threshold: 37.735
 #   The threshold voltage (in V) of overvoltage protection. The decelerating
 #   stepper motor can cause a raise of V_supply of the driver. When the V_supply
@@ -4656,8 +4707,9 @@ sense_resistor:
 #stealthchop_threshold: 0
 #   The velocity (in mm/s) to set the "stealthChop" threshold to. When
 #   set, "stealthChop" mode will be enabled if the stepper motor
-#   velocity is below this value. The default is 0, which disables
-#   "stealthChop" mode.
+#   velocity is below this value. Note that the "sensorless homing"
+#   code may temporarily override this setting during homing
+#   operations. The default is 0, which disables "stealthChop" mode.
 #coolstep_threshold:
 #   The velocity (in mm/s) to set the TMC driver internal "CoolStep"
 #   threshold to. If set, the coolstep feature will be enabled when
@@ -4706,16 +4758,16 @@ sense_resistor:
 #driver_CHM: 0
 #driver_VHIGHFS: 0
 #driver_VHIGHCHM: 0
-#driver_CS: 31
-#   The current scale value for the TMC driver. The ideal `driver_CS` value may
-#   be found by setting the `CS` value on the tmc5160_calculations.xlsx spreadsheet,
-#   under the chopper tab, so that the Rsense value in the spreadsheet matches
-#   `sense_resistor`. While it's not necessary to change
-#   the CS value, it can be helpful to reach adequate hysteresis values on high
-#   current drivers paired with low current motors. The default for this value is 31,
-#   meaning only globalscaler will be used to scale the current during normal operation.
-#   Errors will be invoked if the CS value is set too low, as the target current
-#   will not be able to be reached.
+#driver_CS:
+#   The current scale value for the TMC driver.
+#   The ideal `driver_CS` value may be found by setting the `CS` value in the
+#   TMC calculations spreadsheet (https://www.analog.com/media/en/engineering-tools/design-tools/tmc5160_calculations.xlsx),
+#   under the chopper tab so the hysteresis is not marked as too high.
+#   While it's not necessary to change the CS value, it can be helpful to achieve
+#   adequate hysteresis values on low current steppers.
+#   By default, this value is autocalculated.
+#   If driver_CS is specified this value will be used for homing so make sure it is possible to achieve your homing_current
+#   with the given currentscaler value.
 #driver_DISS2G: 0
 #driver_DISS2VS: 0
 #driver_PWM_AUTOSCALE: True
@@ -5612,6 +5664,16 @@ scale.
 [load_cell]
 sensor_type:
 #   This must be one of the supported sensor types, see below.
+#counts_per_gram:
+#   The floating point number of sensor counts that indicates 1 gram of force.
+#   This value is calculated by the LOAD_CELL_CALIBRATE command.
+#reference_tare_counts:
+#   The integer tare value, in raw sensor counts, taken when LOAD_CELL_CALIBRATE
+#   is run. This is the default tare value when klipper starts up.
+#sensor_orientation:
+#   Change the sensor's orientation. Can be either 'normal' or 'inverted'.
+#   The default is 'normal'. Use 'inverted' if the sensor reports a
+#   decreasing force value when placed under load.
 ```
 
 #### HX711
@@ -5900,8 +5962,9 @@ serial:
 ### [angle]
 
 Magnetic hall angle sensor support for reading stepper motor angle
-shaft measurements using a1333, as5047d, or tle5012b SPI chips. The
-measurements are available via the [API Server](API_Server.md) and
+shaft measurements using a1333, as5047d, mt6816, mt6826s,
+or tle5012b SPI chips.
+The measurements are available via the [API Server](API_Server.md) and
 [motion analysis tool](Debugging.md#motion-analysis-and-data-logging).
 See the [G-Code reference](G-Codes.md#angle) for available commands.
 
@@ -5909,7 +5972,7 @@ See the [G-Code reference](G-Codes.md#angle) for available commands.
 [angle my_angle_sensor]
 sensor_type:
 #   The type of the magnetic hall sensor chip. Available choices are
-#   "a1333", "as5047d", and "tle5012b". This parameter must be
+#   "a1333", "as5047d", "mt6816", "mt6826s", and "tle5012b". This parameter must be
 #   specified.
 #sample_period: 0.000400
 #   The query period (in seconds) to use during measurements. The
