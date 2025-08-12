@@ -13,9 +13,11 @@ class CFlap:
         self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
         self.stepper_enable = self.printer.load_object(config, "stepper_enable")
-        self.fan = CFlapFan(config, default_shutdown_speed=1.0)
+        self.cflap_fan = CFlapFan(config, default_shutdown_speed=1.0)
         self.stepper = manual_stepper.ManualStepper(config)
         self.toolhead = None
+
+        self.fan = self
 
         self.printer.register_event_handler(
             "klippy:connect", self._handle_connect
@@ -31,7 +33,7 @@ class CFlap:
     def _handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
 
-    def set_speed(self, value, read_time=None, force=False):
+    def set_speed(self, print_time, value):
         self.move_stepper(value * 255.0)
 
     def enable_stepper(self, enable):
@@ -73,7 +75,7 @@ class CFlap:
                         speed = round(
                             s / 255.0, 10
                         )
-                self.fan.set_speed_from_command(speed)
+                self.cflap_fan.set_speed_from_command(speed)
             elif p == 1:
                 self.move_stepper(s)
             else:
@@ -83,7 +85,7 @@ class CFlap:
                 value = round(
                     s / 255.0, 10
                 )
-                self.fan.set_speed_from_command(value)
+                self.cflap_fan.set_speed_from_command(value)
         else:
             self.move_stepper(s)
 
@@ -93,9 +95,9 @@ class CFlap:
             if p == 1:
                 self.move_stepper(0)
             else:
-                self.fan.set_speed_from_command(0.0)
+                self.cflap_fan.set_speed_from_command(0.0)
         else:
-            self.fan.set_speed_from_command(0.0)
+            self.cflap_fan.set_speed_from_command(0.0)
             self.move_stepper(0)
             self.enable_stepper(False)
 
