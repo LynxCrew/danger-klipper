@@ -98,6 +98,9 @@ class CFlap:
     def get_status(self, eventtime):
         return self.cflap_fan.get_status(eventtime)
 
+    def get_mcu(self):
+        return self.cflap_fan.get_mcu()
+
 
 FAN_MIN_TIME = 0.100
 
@@ -277,6 +280,9 @@ class PrinterCFlapFan:
 
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
+
+    def get_mcu(self):
+        return self.fan.get_mcu()
 
 
 def load_config(config):
