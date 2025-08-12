@@ -14,11 +14,18 @@ class CFlap:
         self.printer = config.get_printer()
         self.fan = CFlapFan(config, default_shutdown_speed=1.0)
         self.stepper = manual_stepper.ManualStepper(config)
-        self.toolhead = self.printer.lookup_object("toolhead")
+        self.toolhead = None
+
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect
+        )
 
         gcode = config.get_printer().lookup_object("gcode")
         gcode.register_command("M106", self.cmd_M106)
         gcode.register_command("M107", self.cmd_M107)
+
+    def _handle_connect(self):
+        self.toolhead = self.printer.lookup_object("toolhead")
 
     def set_speed(self, value, read_time=None, force=False):
         self.move_stepper(value * 255.0)
