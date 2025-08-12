@@ -20,6 +20,9 @@ class CFlap:
             "klippy:connect", self._handle_connect
         )
 
+        self.homing_speed = self.config.getfloat("homing_speed", 30, above=0.0)
+        self.use_sensorless = self.config.getboolean("use_sensorless", False)
+
         gcode = config.get_printer().lookup_object("gcode")
         gcode.register_command("M106", self.cmd_M106)
         gcode.register_command("M107", self.cmd_M107)
@@ -36,7 +39,7 @@ class CFlap:
                 self.stepper.do_enable(True)
                 self.toolhead.wait_moves()
                 self.stepper.do_homing_move(
-                    -255, 30, self.stepper.accel, True, True
+                    -255, self.homing_speed, self.stepper.accel, True, not self.use_sensorless
                 )
                 self.toolhead.wait_moves()
                 self.stepper.do_set_position(0)
