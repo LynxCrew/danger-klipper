@@ -12,6 +12,7 @@ class CFlap:
         self.full_name = config.get_name()
         self.name = self.full_name.split()[-1]
         self.printer = config.get_printer()
+        self.stepper_enable = self.printer.load_object(config, "stepper_enable")
         self.fan = CFlapFan(config, default_shutdown_speed=1.0)
         self.stepper = manual_stepper.ManualStepper(config)
         self.toolhead = None
@@ -34,7 +35,7 @@ class CFlap:
         self.move_stepper(value * 255.0)
 
     def enable_stepper(self, enable):
-        if enable != self.stepper.steppers[0].is_motor_enabled():
+        if enable != self.stepper_enable.lookup_enable(self.name).is_motor_enabled()
             if enable:
                 self.stepper.do_enable(True)
                 self.toolhead.wait_moves()
