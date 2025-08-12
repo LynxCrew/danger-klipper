@@ -139,7 +139,7 @@ class ManualStepper:
         elif gcmd.get_int("SYNC", 0):
             self.sync_print_time()
 
-    def get_status(self, eventtime):
+    def get_status(self, eventtime=None):
         return {
             "position": self.rail.get_commanded_position(),
             "enabled": self.steppers[0].is_motor_enabled(),
