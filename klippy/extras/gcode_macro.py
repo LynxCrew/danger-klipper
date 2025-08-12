@@ -13,8 +13,6 @@ from klippy import configfile
 
 from .danger_options import get_danger_options
 
-PYTHON_SCRIPT_PREFIX = "!"
-
 ######################################################################
 # Template handling
 ######################################################################
