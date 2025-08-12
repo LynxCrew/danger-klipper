@@ -20,6 +20,7 @@ class ManualStepper:
             self.can_home = False
             self.rail = stepper.PrinterStepper(config)
             self.steppers = [self.rail]
+        self.stepper_enable = self.printer.load_object(config, "stepper_enable")
         self.velocity = config.getfloat("velocity", 5.0, above=0.0)
         self.accel = self.homing_accel = config.getfloat(
             "accel", 0.0, minval=0.0
@@ -33,12 +34,13 @@ class ManualStepper:
         self.rail.setup_itersolve("cartesian_stepper_alloc", b"x")
         self.rail.set_trapq(self.trapq)
         # Register commands
-        stepper_name = config.get_name().split()[1]
+        self.full_name = config.get_name()
+        self.stepper_name = self.full_name.split()[-1]
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "MANUAL_STEPPER",
             "STEPPER",
-            stepper_name,
+            self.stepper_name,
             self.cmd_MANUAL_STEPPER,
             desc=self.cmd_MANUAL_STEPPER_help,
         )
@@ -142,7 +144,7 @@ class ManualStepper:
     def get_status(self, eventtime):
         return {
             "position": self.rail.get_commanded_position(),
-            "enabled": self.steppers[0].is_motor_enabled(),
+            "enabled": self.stepper_enable.lookup_enable(self.full_name).is_motor_enabled(),
         }
 
     # Toolhead wrappers to support homing
