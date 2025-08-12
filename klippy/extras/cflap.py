@@ -35,7 +35,7 @@ class CFlap:
         self.move_stepper(value * 255.0)
 
     def enable_stepper(self, enable):
-        if enable != self.stepper_enable.lookup_enable(self.name).is_motor_enabled()
+        if enable != self.stepper_enable.lookup_enable(self.name).is_motor_enabled():
             if enable:
                 self.stepper.do_enable(True)
                 self.toolhead.wait_moves()
