@@ -21,7 +21,7 @@ class CFlap:
         )
 
         self.homing_speed = self.config.getfloat("homing_speed", 30, above=0.0)
-        self.use_sensorless = self.config.getboolean("use_sensorless", False)
+        self.ignore_trigger = self.config.getboolean("ignore_trigger", False)
 
         gcode = config.get_printer().lookup_object("gcode")
         gcode.register_command("M106", self.cmd_M106)
@@ -39,7 +39,7 @@ class CFlap:
                 self.stepper.do_enable(True)
                 self.toolhead.wait_moves()
                 self.stepper.do_homing_move(
-                    -255, self.homing_speed, self.stepper.accel, True, not self.use_sensorless
+                    -255, self.homing_speed, self.stepper.accel, True, not self.ignore_trigger
                 )
                 self.toolhead.wait_moves()
                 self.stepper.do_set_position(0)

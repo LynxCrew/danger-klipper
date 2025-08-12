@@ -3884,6 +3884,10 @@ pin:
 #   Endstop switch detection pin. If specified, then one may perform
 #   "homing moves" by adding a STOP_ON_ENDSTOP parameter to
 #   MANUAL_STEPPER movement commands.
+#homing_speed: 30
+#   Speed used for homing
+#ignore trigger: False
+#   If set to true behaviour is as if you used STOP_ON_ENDSTOP=2 for the homing move
 ```
 
 ### [fan_generic]
