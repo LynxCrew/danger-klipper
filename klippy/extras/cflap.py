@@ -98,7 +98,11 @@ class CFlap:
             self.enable_stepper(False)
 
     def get_status(self, eventtime):
-        return self.cflap_fan.get_status(eventtime)
+        return {
+            "power": self.stepper.rail.get_commanded_position(),
+            "value": self.stepper.rail.get_commanded_position(),
+            "speed": self.stepper.rail.get_commanded_position(),
+        }
 
     def get_mcu(self):
         return self.cflap_fan.get_mcu()
@@ -273,12 +277,24 @@ class PrinterCFlapFan:
         gcode = config.get_printer().lookup_object("gcode")
         gcode.register_command("M106", self.cmd_M106)
         gcode.register_command("M107", self.cmd_M107)
+        gcode.register_mux_command(
+            "SET_FAN_SPEED",
+            "FAN",
+            "CFLAP_FAN",
+            self.cmd_SET_FAN_SPEED,
+            desc=self.cmd_SET_FAN_SPEED_help,
+        )
 
     def cmd_M106(self, gcmd):
         self.fan.cmd_M106(gcmd)
 
     def cmd_M107(self, gcmd):
         self.fan.cmd_M107(gcmd)
+
+    cmd_SET_FAN_SPEED_help = "Sets the speed of a fan"
+    def cmd_SET_FAN_SPEED(self, gcmd):
+        speed = gcmd.get_float("SPEED", 0.0)
+        self.fan.cflap_fan.set_speed_from_command(speed)
 
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
@@ -290,4 +306,5 @@ class PrinterCFlapFan:
 def load_config(config):
     fan = PrinterCFlapFan(config)
     config.get_printer().add_object("fan", fan)
+    config.get_printer().add_object("fan_generic cflap_fan", fan.fan.cflap_fan)
     return fan
