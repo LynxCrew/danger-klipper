@@ -23,6 +23,7 @@ class CFlap:
 
         self.homing_speed = self.config.getfloat("homing_speed", 30, above=0.0)
         self.ignore_trigger = self.config.getboolean("ignore_trigger", False)
+        self.disable_position = self.config.getfloat("disable_position", 0, minval=0.0, maxval=255.0)
 
     def _handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
@@ -35,6 +36,7 @@ class CFlap:
             if enable:
                 self.stepper.do_enable(True)
                 self.toolhead.wait_moves()
+                self.stepper.do_set_position(0)
                 self.stepper.do_homing_move(
                     -255, self.homing_speed, self.stepper.accel, True, not self.ignore_trigger
                 )
@@ -42,7 +44,7 @@ class CFlap:
                 self.stepper.do_set_position(0)
                 self.toolhead.wait_moves()
             else:
-                self.stepper.do_move(0, self.stepper.velocity, self.stepper.accel, 1)
+                self.stepper.do_move(self.disable_position, self.stepper.velocity, self.stepper.accel, 1)
                 self.toolhead.wait_moves()
                 self.stepper.do_enable(False)
                 self.toolhead.wait_moves()

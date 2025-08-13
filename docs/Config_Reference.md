@@ -3888,6 +3888,8 @@ pin:
 #   Speed used for homing
 #ignore trigger: False
 #   If set to true behaviour is as if you used STOP_ON_ENDSTOP=2 for the homing move
+#disable_position: 0
+#   The position the flap should be moved to when disabled
 ```
 
 ### [fan_generic]
