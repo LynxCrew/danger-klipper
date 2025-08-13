@@ -99,9 +99,9 @@ class CFlap:
 
     def get_status(self, eventtime):
         return {
-            "power": self.stepper.rail.get_commanded_position(),
-            "value": self.stepper.rail.get_commanded_position(),
-            "speed": self.stepper.rail.get_commanded_position(),
+            "power": self.stepper.rail.get_commanded_position() / 255.0,
+            "value": self.stepper.rail.get_commanded_position() / 255.0,
+            "speed": self.stepper.rail.get_commanded_position() / 255.0,
         }
 
     def get_mcu(self):
