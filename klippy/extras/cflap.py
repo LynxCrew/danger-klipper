@@ -32,7 +32,7 @@ class CFlap:
     def set_speed(self, print_time, value):
         self.move_stepper(value * 255.0)
 
-    def enable_stepper(self, enable):
+    def enable_stepper(self, enable, v):
         if enable != self.stepper_enable.lookup_enable(self.name).is_motor_enabled():
             if enable:
                 self.stepper.do_enable(True)
@@ -45,21 +45,24 @@ class CFlap:
                 self.stepper.do_set_position(0)
                 self.toolhead.wait_moves()
             else:
-                self.stepper.do_move(self.disable_position, self.windup_speed, self.stepper.accel, 1)
+                self.stepper.do_move(self.disable_position, v, self.stepper.accel, 1)
                 self.toolhead.wait_moves()
                 self.stepper.do_enable(False)
                 self.toolhead.wait_moves()
 
-    def move_stepper(self, s):
-        self.enable_stepper(True)
+    def move_stepper(self, s, v=None):
+        if v is None:
+            v = self.windup_speed
+        self.enable_stepper(True, v)
         if s is not None:
-            self.stepper.do_move(s, self.windup_speed, self.stepper.accel, 0)
+            self.stepper.do_move(s, v, self.stepper.accel, 0)
         else:
-            self.stepper.do_move(255, self.windup_speed, self.stepper.accel, 0)
+            self.stepper.do_move(255, v, self.stepper.accel, 0)
 
     def cmd_M106(self, gcmd):
         p = gcmd.get_int("P", None)
         s = gcmd.get_float("S", None, minval=0.0, maxval=255.0)
+        v = gcmd.get_float("V", self.windup_speed)
         if p is not None:
             if p == 3:
                 speed = 1
@@ -74,7 +77,7 @@ class CFlap:
                         )
                 self.cflap_fan.set_speed_from_command(speed)
             elif p == 1:
-                self.move_stepper(s)
+                self.move_stepper(s, v)
             else:
                 if s is None:
                     s = 255.0
@@ -84,10 +87,11 @@ class CFlap:
                 )
                 self.cflap_fan.set_speed_from_command(value)
         else:
-            self.move_stepper(s)
+            self.move_stepper(s, v)
 
     def cmd_M107(self, gcmd):
         p = gcmd.get_int("P", None)
+        v = gcmd.get_float("V", self.windup_speed)
         if p is not None:
             if p == 1:
                 self.move_stepper(0)
@@ -96,7 +100,7 @@ class CFlap:
         else:
             self.cflap_fan.set_speed_from_command(0.0)
             self.move_stepper(0)
-            self.enable_stepper(False)
+            self.enable_stepper(False, v)
 
     def get_status(self, eventtime):
         return {
