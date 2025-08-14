@@ -21,6 +21,7 @@ class CFlap:
             "klippy:connect", self._handle_connect
         )
 
+        self.windup_speed = self.stepper.velocity
         self.homing_speed = self.config.getfloat("homing_speed", 30, above=0.0)
         self.ignore_trigger = self.config.getboolean("ignore_trigger", False)
         self.disable_position = self.config.getfloat("disable_position", 0, minval=0.0, maxval=255.0)
@@ -44,7 +45,7 @@ class CFlap:
                 self.stepper.do_set_position(0)
                 self.toolhead.wait_moves()
             else:
-                self.stepper.do_move(self.disable_position, self.stepper.velocity, self.stepper.accel, 1)
+                self.stepper.do_move(self.disable_position, self.windup_speed, self.stepper.accel, 1)
                 self.toolhead.wait_moves()
                 self.stepper.do_enable(False)
                 self.toolhead.wait_moves()
@@ -52,9 +53,9 @@ class CFlap:
     def move_stepper(self, s):
         self.enable_stepper(True)
         if s is not None:
-            self.stepper.do_move(s, self.stepper.velocity, self.stepper.accel, 0)
+            self.stepper.do_move(s, self.windup_speed, self.stepper.accel, 0)
         else:
-            self.stepper.do_move(255, self.stepper.velocity, self.stepper.accel, 0)
+            self.stepper.do_move(255, self.windup_speed, self.stepper.accel, 0)
 
     def cmd_M106(self, gcmd):
         p = gcmd.get_int("P", None)
@@ -277,6 +278,11 @@ class PrinterCFlapFan:
         gcode = config.get_printer().lookup_object("gcode")
         gcode.register_command("M106", self.cmd_M106)
         gcode.register_command("M107", self.cmd_M107)
+        gcode.register_command(
+            "CFLAP_SET_WINDUP_SPEED",
+            self.cmd_CFLAP_SET_WINDUP_SPEED,
+            desc=self.cmd_CFLAP_SET_WINDUP_SPEED_help
+        )
         gcode.register_mux_command(
             "SET_FAN_SPEED",
             "FAN",
@@ -295,6 +301,14 @@ class PrinterCFlapFan:
     def cmd_SET_FAN_SPEED(self, gcmd):
         speed = gcmd.get_float("SPEED", 0.0)
         self.fan.cflap_fan.set_speed_from_command(speed)
+
+    cmd_CFLAP_SET_WINDUP_SPEED_help = "Sets the stepper speed for the cflap"
+    def cmd_CFLAP_SET_WINDUP_SPEED(self, gcmd):
+        speed = gcmd.get_float("SPEED", None)
+        if speed is None:
+            self.fan.windup_speed = self.fan.stepper.velocity
+        else:
+            self.fan.windup_speed = speed
 
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
