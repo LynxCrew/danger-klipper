@@ -94,11 +94,12 @@ class RunoutHelper:
                     self._pause_after_distance, self.reactor.NOW
                 )
         else:
-            self._execute_runout(eventtime)
+            self.reactor.register_callback(
+                self._execute_runout,
+                self.reactor.monotonic() + self.trigger_delay
+            )
 
     def _execute_runout(self, eventtime):
-        if self.trigger_delay:
-            self.printer.get_reactor().pause(eventtime + self.trigger_delay)
         pause_prefix = ""
         if self.runout_pause:
             pause_resume = self.printer.lookup_object("pause_resume")
@@ -124,7 +125,10 @@ class RunoutHelper:
             self.runout_elapsed = runout_elapsed
             return eventtime + self.check_runout_timeout
         else:
-            self._execute_runout(eventtime)
+            self.reactor.register_callback(
+                self._execute_runout,
+                eventtime + self.trigger_delay
+            )
             return self.reactor.NEVER
 
     def _insert_event_handler(self, eventtime):
@@ -187,7 +191,8 @@ class RunoutHelper:
             self.reactor.register_callback(
                 self._execute_runout
                 if immediate
-                else self._runout_event_handler
+                else self._runout_event_handler,
+                self.reactor.monotonic() + self.trigger_delay
             )
 
     def get_status(self, eventtime):

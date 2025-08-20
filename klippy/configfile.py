@@ -285,6 +285,9 @@ class ConfigWrapper:
             note_valid=note_valid,
         )
 
+    def get_section(self, section):
+        return self.getsection(section)
+
     def getsection(self, section):
         return ConfigWrapper(
             self.printer, self.fileconfig, self.access_tracking, section
