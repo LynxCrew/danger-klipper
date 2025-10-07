@@ -365,10 +365,6 @@ class Homing:
                     break
 
                 if hi.sample_count > 1:
-                    if drop_first_result and first_home:
-                        drop_first_result = False
-                        continue
-
                     if first_home:
                         result = [0] * len(hmove.distance_elapsed)
                         first_home = False
@@ -458,10 +454,6 @@ class Homing:
                         self._set_homing_accel(hi.accel, pre_homing=False)
 
                     if hi.sample_count > 1:
-                        if drop_first_result and first_home:
-                            drop_first_result = False
-                            continue
-
                         if first_home:
                             result = [0] * len(hmove.distance_elapsed)
                             first_home = False
