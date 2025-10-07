@@ -580,6 +580,11 @@ class GenericPrinterCarriage:
                 "use_sensorless_homing",
                 "min_home_dist",
                 "accel",
+                "sample_count",
+                "sample_retract_dist",
+                "samples_result",
+                "samples_tolerance",
+                "samples_retries"
             ],
         )(
             self.homing_speed,
@@ -593,6 +598,11 @@ class GenericPrinterCarriage:
             self.use_sensorless_homing,
             self.min_home_dist,
             self.homing_accel,
+            self.sample_count,
+            self.sample_retract_dist,
+            self.samples_result,
+            self.samples_tolerance,
+            self.samples_retries
         )
         return homing_info
 
