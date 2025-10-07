@@ -500,11 +500,11 @@ class Homing:
         if hi.sample_count > 1:
             pos = self.toolhead.get_position()
             if hi.samples_result == "median":
-                for i in len(hmove.distance_elapsed):
+                for i in range(0, len(hmove.distance_elapsed)):
                     pos[i] += self._calc_median([dist[i] for dist in distances])
                     pos[i] -= distances[i][-1]
             else:
-                for i in len(hmove.distance_elapsed):
+                for i in range(0, len(hmove.distance_elapsed)):
                     pos[i] += self._calc_mean([dist[i] for dist in distances])
                     pos[i] -= distances[i][-1]
 
