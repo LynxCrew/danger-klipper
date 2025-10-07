@@ -365,7 +365,7 @@ class Homing:
                     break
 
                 if first_home:
-                    distance = [0] * len(distances)
+                    distance = [0] * len(hmove.distance_elapsed)
                     first_home = False
                 else:
                     distance = [
@@ -373,7 +373,7 @@ class Homing:
                         for i, dist in enumerate(hmove.distance_elapsed)
                     ]
                 distances.append(distance)
-                gcode.respond_info(f"Result: {[dist for i, dist in enumerate(distances) if i in homing_axes]}")
+                gcode.respond_info(f"Result: {[dist for i, dist in enumerate(distance) if i in homing_axes]}")
 
                 if any(
                         [
@@ -453,7 +453,7 @@ class Homing:
                             self._set_homing_accel(hi.accel, pre_homing=False)
 
                     if first_home:
-                        distance = [0] * len(distances)
+                        distance = [0] * len(hmove.distance_elapsed)
                         first_home = False
                     else:
                         distance = [
