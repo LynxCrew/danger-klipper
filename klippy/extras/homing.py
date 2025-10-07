@@ -364,15 +364,16 @@ class Homing:
                     break
 
                 if first_home:
-                    distance = [0] * len(hmove.distance_elapsed)
+                    result = [0] * len(hmove.distance_elapsed)
                     first_home = False
                 else:
-                    distance = [
+                    result = [
                         dist - retract_dist if i in homing_axes else 0
                         for i, dist in enumerate(hmove.distance_elapsed)
                     ]
-                distances.append(distance)
-                gcode.respond_info(f"Result: {[dist for i, dist in enumerate(distance) if i in homing_axes]}")
+                distances.append(result)
+                for i in homing_axes:
+                    gcode.respond_info(f"Homing result for {"XYZ"[i]}: {result[i]}")
 
                 if any(
                         [
@@ -452,15 +453,16 @@ class Homing:
                             self._set_homing_accel(hi.accel, pre_homing=False)
 
                     if first_home:
-                        distance = [0] * len(hmove.distance_elapsed)
+                        result = [0] * len(hmove.distance_elapsed)
                         first_home = False
                     else:
-                        distance = [
+                        result = [
                             dist - retract_dist if i in homing_axes else 0
                             for i, dist in enumerate(hmove.distance_elapsed)
                         ]
-                    distances.append(distance)
-                    gcode.respond_info(f"Result: {[dist for i, dist in enumerate(distance) if i in homing_axes]}")
+                    distances.append(result)
+                    for i in homing_axes:
+                        gcode.respond_info(f"Homing result for {"XYZ"[i]}: {result[i]}")
 
                     if any(
                             [
@@ -495,15 +497,14 @@ class Homing:
         }
 
         pos = self.toolhead.get_position()
-        gcode.respond_info(f"{pos}")
         if hi.samples_result == "median":
             for i in range(3):
                 pos[i] += self._calc_median([dist[i] for dist in distances])
         else:
             for i in range(3):
                 pos[i] += self._calc_mean([dist[i] for dist in distances])
-        gcode.respond_info(f"{pos}")
 
+        gcode.respond_info(f"Homing position: {zip("XYZ", pos)}")
         self.toolhead.set_position(pos)
 
         self.adjust_pos = {}
