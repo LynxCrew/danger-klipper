@@ -355,7 +355,7 @@ class Homing:
                 finally:
                     self._set_homing_accel(hi.accel, pre_homing=False)
 
-                if hmove.moved_less_than_dist(hi.min_home_dist, homing_axes):
+                if hi.use_sensorless_homing and hmove.moved_less_than_dist(hi.min_home_dist, homing_axes):
                     needs_rehome = True
                     retract_dist = hi.min_home_dist
                     gcode.respond_info("Moved less than min_home_dist. Retrying...")
@@ -499,6 +499,8 @@ class Homing:
         pos = self.toolhead.get_position()
         if hi.samples_result == "median":
             for i in range(3):
+                test = [dist[i] for dist in distances]
+                gcode.respond_info(f"{test}")
                 pos[i] += self._calc_median([dist[i] for dist in distances])
         else:
             for i in range(3):
