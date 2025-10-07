@@ -363,6 +363,7 @@ class Homing:
                 if not hi.use_sensorless_homing and retract_dist:
                     break
 
+                if hi.sample_count > 1:
                 if first_home:
                     result = [0] * len(hmove.distance_elapsed)
                     first_home = False
@@ -496,16 +497,20 @@ class Homing:
             sp.stepper_name: sp.trig_pos for sp in hmove.stepper_positions
         }
 
-        pos = self.toolhead.get_position()
-        if hi.samples_result == "median":
-            for i in range(3):
-                pos[i] += self._calc_median([dist[i] for dist in distances])
-        else:
-            for i in range(3):
-                pos[i] += self._calc_mean([dist[i] for dist in distances])
-        for i in homing_axes:
-            gcode.respond_info(f"Final homing position for {'XYZ'[i]}: {pos[i]}")
-        self.toolhead.set_position(pos)
+        if hi.sample_count > 1:
+            pos = self.toolhead.get_position()
+            if hi.samples_result == "median":
+                for i in len(hmove.distance_elapsed):
+                    pos[i] += self._calc_median([dist[i] for dist in distances])
+                    pos[i] -= distances[i][-1]
+            else:
+                for i in len(hmove.distance_elapsed):
+                    pos[i] += self._calc_mean([dist[i] for dist in distances])
+                    pos[i] -= distances[i][-1]
+
+            for i in homing_axes:
+                gcode.respond_info(f"Final homing position for {'XYZ'[i]}: {pos[i]}")
+            self.toolhead.set_position(pos)
 
         self.adjust_pos = {}
         self.printer.send_event("homing:home_rails_end", self, rails)
