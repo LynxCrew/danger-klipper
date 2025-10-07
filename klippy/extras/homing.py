@@ -313,10 +313,10 @@ class Homing:
 
     def _calc_mean(self, positions):
         count = float(len(positions))
-        return [sum([pos[i] for pos in positions]) / count for i in range(3)]
+        return sum(positions) / count
 
     def _calc_median(self, positions):
-        z_sorted = sorted(positions, key=(lambda p: p[2]))
+        z_sorted = sorted(positions)
         middle = len(positions) // 2
         if (len(positions) & 1) == 1:
             # odd number of samples
