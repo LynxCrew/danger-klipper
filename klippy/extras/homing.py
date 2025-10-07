@@ -505,7 +505,7 @@ class Homing:
                 pos[i] += self._calc_mean([dist[i] for dist in distances])
 
         gcode.respond_info(f"{pos}")
-        gcode.respond_info(f"Homing position: {zip('XYZ', pos)}")
+        gcode.respond_info(f"Homing position: {zip('XYZ', pos[:3])}")
         self.toolhead.set_position(pos)
 
         self.adjust_pos = {}
