@@ -365,16 +365,15 @@ class Homing:
                     break
 
                 if first_home:
-                    distances.append([0] * len(homing_axes))
+                    distance = [0] * len(distances)
                     first_home = False
                 else:
                     distance = [
                         dist - retract_dist if i in homing_axes else 0
                         for i, dist in enumerate(hmove.distance_elapsed)
                     ]
-                    gcode.respond_info(f"{homing_axes}")
-                    distances.append(distance)
-                    gcode.respond_info(f"Result: {distance}")
+                distances.append(distance)
+                gcode.respond_info(f"Result: {[dist for i, dist in enumerate(distances) if i in homing_axes]}")
 
                 if any(
                         [
@@ -420,49 +419,50 @@ class Homing:
                 retries = 0
                 first_home = True
                 while len(distances) < hi.sample_count:
-                    try:
-                        # Home again
-                        startpos = [
-                            rp - ad * retract_r for rp, ad in zip(retractpos, axes_d)
-                        ]
-                        self.toolhead.set_position(startpos)
-                        self._set_homing_current(
-                            homing_axes,
-                            pre_homing=True,
-                            perform_dwell=hi.use_sensorless_homing,
-                        )
-                        self._reset_endstop_states(endstops)
-                        hmove = HomingMove(self.printer, endstops)
-                        hmove.homing_move(homepos, hi.second_homing_speed)
-                        if hmove.check_no_movement() is not None:
-                            raise self.printer.command_error(
-                                "Endstop %s still triggered after retract"
-                                % (hmove.check_no_movement(),)
+                    if True:
+                        try:
+                            # Home again
+                            startpos = [
+                                rp - ad * retract_r for rp, ad in zip(retractpos, axes_d)
+                            ]
+                            self.toolhead.set_position(startpos)
+                            self._set_homing_current(
+                                homing_axes,
+                                pre_homing=True,
+                                perform_dwell=hi.use_sensorless_homing,
                             )
-                        if (
-                            hi.use_sensorless_homing
-                            and needs_rehome
-                            and hmove.moved_less_than_dist(
-                                hi.min_home_dist, homing_axes
-                            )
-                        ):
-                            raise self.printer.command_error(
-                                "Early homing trigger on second home!"
-                            )
-                    finally:
-                        self._set_homing_accel(hi.accel, pre_homing=False)
+                            self._reset_endstop_states(endstops)
+                            hmove = HomingMove(self.printer, endstops)
+                            hmove.homing_move(homepos, hi.second_homing_speed)
+                            if hmove.check_no_movement() is not None:
+                                raise self.printer.command_error(
+                                    "Endstop %s still triggered after retract"
+                                    % (hmove.check_no_movement(),)
+                                )
+                            if (
+                                hi.use_sensorless_homing
+                                and needs_rehome
+                                and hmove.moved_less_than_dist(
+                                    hi.min_home_dist, homing_axes
+                                )
+                            ):
+                                raise self.printer.command_error(
+                                    "Early homing trigger on second home!"
+                                )
+                        finally:
+                            self._set_homing_accel(hi.accel, pre_homing=False)
 
                     if first_home:
-                        distances.append([0] * len(homing_axes))
+                        distance = [0] * len(distances)
                         first_home = False
                     else:
                         distance = [
                             dist - retract_dist if i in homing_axes else 0
                             for i, dist in enumerate(hmove.distance_elapsed)
                         ]
-                        gcode.respond_info(f"{homing_axes}")
-                        distances.append(distance)
-                        gcode.respond_info(f"Result: {distance}")
+                    distances.append(distance)
+                    gcode.respond_info(f"Result: {[dist for i, dist in enumerate(distances) if i in homing_axes]}")
+
                     if any(
                             [
                                 max(dist) > hi.samples_tolerance
@@ -494,6 +494,17 @@ class Homing:
         self.trigger_mcu_pos = {
             sp.stepper_name: sp.trig_pos for sp in hmove.stepper_positions
         }
+
+        pos = self.toolhead.get_position()
+        if hi.samples_result == "median":
+            for i in range(3):
+                pos[i] += self._calc_median([dist[i] for dist in distances])
+        else:
+            for i in range(3):
+                pos[i] += self._calc_mean([dist[i] for dist in distances])
+
+        self.toolhead.set_position(pos)
+
         self.adjust_pos = {}
         self.printer.send_event("homing:home_rails_end", self, rails)
         if any(self.adjust_pos.values()):
