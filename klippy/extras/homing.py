@@ -368,10 +368,13 @@ class Homing:
                     distances.append([0] * len(homing_axes))
                     first_home = False
                 else:
-                    distances.append([
+                    distance = [
                         dist - retract_dist if i in homing_axes else 0
                         for i, dist in enumerate(hmove.distance_elapsed)
-                    ])
+                    ]
+                    gcode.respond_info(f"{homing_axes}")
+                    distances.append(distance)
+                    gcode.respond_info(f"Result: {distance}")
 
                 if any(
                         [
@@ -453,11 +456,13 @@ class Homing:
                         distances.append([0] * len(homing_axes))
                         first_home = False
                     else:
-                        distances.append([
+                        distance = [
                             dist - retract_dist if i in homing_axes else 0
                             for i, dist in enumerate(hmove.distance_elapsed)
-                        ])
-
+                        ]
+                        gcode.respond_info(f"{homing_axes}")
+                        distances.append(distance)
+                        gcode.respond_info(f"Result: {distance}")
                     if any(
                             [
                                 max(dist) > hi.samples_tolerance
