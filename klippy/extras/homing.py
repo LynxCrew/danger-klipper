@@ -312,8 +312,7 @@ class Homing:
             endstop[0].query_endstop(print_time)
 
     def _calc_mean(self, positions):
-        count = float(len(positions))
-        return sum(positions) / count
+        return sum(positions) / float(len(positions))
 
     def _calc_median(self, positions):
         z_sorted = sorted(positions)
