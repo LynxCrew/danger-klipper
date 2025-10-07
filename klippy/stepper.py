@@ -526,6 +526,9 @@ class GenericPrinterCarriage:
         self.samples_retries = config.getint(
             "samples_tolerance_retries", 0, minval=0
         )
+        self.drop_first_result = config.getboolean(
+            "drop_first_result", False
+        )
 
 
         if self.homing_positive_dir is None:
@@ -584,7 +587,8 @@ class GenericPrinterCarriage:
                 "sample_retract_dist",
                 "samples_result",
                 "samples_tolerance",
-                "samples_retries"
+                "samples_retries",
+                "drop_first_result",
             ],
         )(
             self.homing_speed,
@@ -602,7 +606,8 @@ class GenericPrinterCarriage:
             self.sample_retract_dist,
             self.samples_result,
             self.samples_tolerance,
-            self.samples_retries
+            self.samples_retries,
+            self.drop_first_result,
         )
         return homing_info
 
