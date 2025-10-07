@@ -460,8 +460,9 @@ class Homing:
                             dist - retract_dist if i in homing_axes else 0
                             for i, dist in enumerate(hmove.distance_elapsed)
                         ]
+                    gcode.respond_info(f"{distance}")
                     distances.append(distance)
-                    gcode.respond_info(f"Result: {[dist for i, dist in enumerate(distances) if i in homing_axes]}")
+                    gcode.respond_info(f"Result: {[dist for i, dist in enumerate(distance) if i in homing_axes]}")
 
                     if any(
                             [
