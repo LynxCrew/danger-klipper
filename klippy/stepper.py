@@ -512,6 +512,22 @@ class GenericPrinterCarriage:
 
         self.homing_accel = config.getfloat("homing_accel", None, above=0.0)
 
+        self.sample_count = config.getint("samples", 1, minval=1)
+        self.sample_retract_dist = config.getfloat(
+            "sample_retract_dist", 2.0, above=0.0
+        )
+        atypes = ["median", "average"]
+        self.samples_result = config.getchoice(
+            "samples_result", atypes, "average"
+        )
+        self.samples_tolerance = config.getfloat(
+            "samples_tolerance", 0.100, minval=0.0
+        )
+        self.samples_retries = config.getint(
+            "samples_tolerance_retries", 0, minval=0
+        )
+
+
         if self.homing_positive_dir is None:
             axis_len = self.position_max - self.position_min
             if self.position_endstop <= self.position_min + axis_len / 4.0:
