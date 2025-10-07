@@ -373,7 +373,7 @@ class Homing:
                     ]
                 distances.append(result)
                 for i in homing_axes:
-                    gcode.respond_info(f"Homing result for {"XYZ"[i]}: {result[i]}")
+                    gcode.respond_info(f"Homing result for {'XYZ'[i]}: {result[i]}")
 
                 if any(
                         [
@@ -462,7 +462,7 @@ class Homing:
                         ]
                     distances.append(result)
                     for i in homing_axes:
-                        gcode.respond_info(f"Homing result for {"XYZ"[i]}: {result[i]}")
+                        gcode.respond_info(f"Homing result for {'XYZ'[i]}: {result[i]}")
 
                     if any(
                             [
