@@ -371,6 +371,7 @@ class Homing:
                         retries += 1
                         distances = []
                 else:
+                    self.gcode.respond_info("Settling sample (ignored)...")
                     drop = False
 
                 if len(distances) < hi.sample_count:
