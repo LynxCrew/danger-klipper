@@ -506,6 +506,7 @@ class Homing:
             self.toolhead.set_position(pos)
             if hi.move_toolhead_after_adjusting:
                 self.printer.lookup_object("gcode_move").last_position = home_pos
+                self.gcode.respond_info(f"{home_pos}")
                 self.toolhead.move(home_pos, hi.retract_speed)
 
         self.adjust_pos = {}
