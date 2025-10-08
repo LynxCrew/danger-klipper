@@ -488,6 +488,7 @@ class Homing:
         if len(distances) > 1:
             self.toolhead.wait_moves()
             pos = home_pos = self.toolhead.get_position()
+            self.gcode.respond_info(f"{home_pos}")
             calc_adjustment = (
                 self._calc_median
                 if hi.samples_result == "median"
