@@ -399,7 +399,7 @@ class Homing:
                 self.toolhead.set_position(startpos, homing_axes=homing_axes)
                 hmove = HomingMove(self.printer, endstops)
 
-                if drop and hi.sample_count > 1:
+                if drop and hi.sample_count > 1 and hi.use_sensorless_homing or not retract_dist:
                     self.gcode.respond_info("Settling sample (ignored)...")
                 try:
                     self._set_homing_accel(hi.accel, pre_homing=True)
