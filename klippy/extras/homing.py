@@ -351,7 +351,9 @@ class Homing:
                     first_home = False
                 else:
                     result = [
-                        abs(dist) - hi.sample_retract_dist if i in homing_axes else 0
+                        abs(dist) - hi.sample_retract_dist
+                        if i in homing_axes
+                        else 0
                         for i, dist in enumerate(hmove.distance_elapsed)
                     ]
                 distances.append(result)
@@ -379,13 +381,14 @@ class Homing:
                 sample_startpos = self._fill_coord(forcepos)
                 sample_homepos = self._fill_coord(movepos)
                 sample_axes_d = [
-                    hp - sp
-                    for hp, sp in zip(sample_homepos, sample_startpos)
+                    hp - sp for hp, sp in zip(sample_homepos, sample_startpos)
                 ]
                 sample_move_d = math.sqrt(
                     sum([d * d for d in sample_axes_d[:3]])
                 )
-                sample_retract_r = min(1.0, hi.sample_retract_dist / sample_move_d)
+                sample_retract_r = min(
+                    1.0, hi.sample_retract_dist / sample_move_d
+                )
                 sample_retractpos = [
                     hp - ad * sample_retract_r
                     for hp, ad in zip(homepos, sample_axes_d)
@@ -399,7 +402,12 @@ class Homing:
                 self.toolhead.set_position(startpos, homing_axes=homing_axes)
                 hmove = HomingMove(self.printer, endstops)
 
-                if drop and hi.sample_count > 1 and hi.use_sensorless_homing or not retract_dist:
+                if (
+                    drop
+                    and hi.sample_count > 1
+                    and hi.use_sensorless_homing
+                    or not retract_dist
+                ):
                     self.gcode.respond_info("Settling sample (ignored)...")
                 try:
                     self._set_homing_accel(hi.accel, pre_homing=True)
@@ -447,7 +455,9 @@ class Homing:
                 while len(distances) < hi.sample_count:
                     try:
                         if drop and hi.sample_count > 1:
-                            self.gcode.respond_info("Settling sample (ignored)...")
+                            self.gcode.respond_info(
+                                "Settling sample (ignored)..."
+                            )
                         # Home again
                         startpos = [
                             rp - ad * retract_r
