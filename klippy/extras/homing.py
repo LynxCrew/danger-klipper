@@ -502,6 +502,7 @@ class Homing:
                 )
 
             for i in homing_axes:
+                self.gcode.respond_info(f"{distances}")
                 self.gcode.respond_info(
                     f"Final homing position for {'XYZ'[i]}: {pos[i]}"
                 )
