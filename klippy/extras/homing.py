@@ -489,7 +489,6 @@ class Homing:
             self.toolhead.wait_moves()
             pos = self.toolhead.get_position()
             home_pos = self.toolhead.get_position()
-            self.gcode.respond_info(f"{home_pos}")
             calc_adjustment = (
                 self._calc_median
                 if hi.samples_result == "median"
@@ -507,10 +506,9 @@ class Homing:
                 )
             self.toolhead.set_position(pos)
             if hi.move_toolhead_after_adjusting:
-                self.printer.lookup_object(
-                    "gcode_move"
-                ).last_position = home_pos
-                self.gcode.respond_info(f"{home_pos}")
+                # self.printer.lookup_object(
+                #     "gcode_move"
+                # ).last_position = home_pos
                 self.toolhead.move(home_pos, hi.retract_speed)
 
         self.adjust_pos = {}
@@ -546,8 +544,8 @@ class Homing:
             retractpos = [
                 hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
             ]
-            self.printer.lookup_object("gcode_move").last_position = retractpos
             self.toolhead.move(retractpos, hi.post_retract_speed)
+            self.printer.lookup_object("gcode_move").last_position = retractpos
         self.gcode.run_script_from_command("M400")
 
 
