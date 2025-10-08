@@ -507,10 +507,11 @@ class Homing:
                 )
             self.toolhead.set_position(pos)
             if hi.move_toolhead_after_adjusting:
-                self.toolhead.move(home_pos, hi.retract_speed)
+                self.gcode.respond_info(f"{home_pos}")
                 self.printer.lookup_object(
                     "gcode_move"
                 ).last_position = home_pos
+                self.toolhead.move(home_pos, hi.retract_speed)
 
         self.adjust_pos = {}
         self.printer.send_event("homing:home_rails_end", self, rails)
