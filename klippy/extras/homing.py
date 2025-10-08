@@ -339,6 +339,7 @@ class Homing:
         retries = 0
         first_home = True
         drop = hi.drop_first_result
+        hmove = HomingMove(self.printer, endstops)
 
         def _process_samples():
             nonlocal drop, first_home, distances, retries
@@ -414,7 +415,6 @@ class Homing:
                         "Moved less than min_home_dist. Retrying..."
                     )
                     break
-
                 if not hi.use_sensorless_homing and retract_dist:
                     break
 
