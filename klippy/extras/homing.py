@@ -373,7 +373,6 @@ class Homing:
                     retries += 1
                     distances = []
             else:
-                self.gcode.respond_info("Settling sample (ignored)...")
                 drop = False
 
             if len(distances) < hi.sample_count:
@@ -400,6 +399,8 @@ class Homing:
                 self.toolhead.set_position(startpos, homing_axes=homing_axes)
                 hmove = HomingMove(self.printer, endstops)
 
+                if drop and hi.sample_count > 1:
+                    self.gcode.respond_info("Settling sample (ignored)...")
                 try:
                     self._set_homing_accel(hi.accel, pre_homing=True)
                     self._set_homing_current(homing_axes, pre_homing=True)
@@ -445,6 +446,8 @@ class Homing:
                 drop = hi.drop_first_result
                 while len(distances) < hi.sample_count:
                     try:
+                        if drop and hi.sample_count > 1:
+                            self.gcode.respond_info("Settling sample (ignored)...")
                         # Home again
                         startpos = [
                             rp - ad * retract_r
@@ -497,8 +500,6 @@ class Homing:
                 if hi.samples_result == "median"
                 else self._calc_mean
             )
-            self.gcode.respond_info(f"{distances}")
-            self.gcode.respond_info(f"{distances[-1]}")
             for i in range(0, len(hmove.distance_elapsed)):
                 pos[i] += (
                     calc_adjustment([dist[i] for dist in distances])
