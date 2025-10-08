@@ -341,6 +341,7 @@ class Homing:
         drop = hi.drop_first_result
 
         def _process_samples():
+            nonlocal drop, first_home, distances, retries
             if hi.sample_count > 1:
                 if not drop:
                     if first_home:
@@ -348,12 +349,8 @@ class Homing:
                         first_home = False
                     else:
                         result = [
-                            dist - retract_dist
-                            if i in homing_axes
-                            else 0
-                            for i, dist in enumerate(
-                                hmove.distance_elapsed
-                            )
+                            dist - retract_dist if i in homing_axes else 0
+                            for i, dist in enumerate(hmove.distance_elapsed)
                         ]
                     distances.append(result)
                     for i in homing_axes:
@@ -362,10 +359,7 @@ class Homing:
                         )
 
                     if any(
-                            [
-                                max(dist) > hi.samples_tolerance
-                                for dist in distances
-                            ]
+                        [max(dist) > hi.samples_tolerance for dist in distances]
                     ):
                         if retries >= hi.samples_retries:
                             raise self.printer.command_error(
@@ -384,23 +378,18 @@ class Homing:
                     sample_homepos = self._fill_coord(movepos)
                     sample_axes_d = [
                         hp - sp
-                        for hp, sp in zip(
-                            sample_homepos, sample_startpos
-                        )
+                        for hp, sp in zip(sample_homepos, sample_startpos)
                     ]
                     sample_move_d = math.sqrt(
                         sum([d * d for d in sample_axes_d[:3]])
                     )
-                    sample_retract_r = min(
-                        1.0, retract_dist / sample_move_d
-                    )
+                    sample_retract_r = min(1.0, retract_dist / sample_move_d)
                     sample_retractpos = [
                         hp - ad * sample_retract_r
                         for hp, ad in zip(homepos, sample_axes_d)
                     ]
-                    self.toolhead.move(
-                        sample_retractpos, hi.retract_speed
-                    )
+                    self.toolhead.move(sample_retractpos, hi.retract_speed)
+
         try:
             while len(distances) < hi.sample_count:
                 startpos = self._fill_coord(forcepos)
@@ -499,7 +488,11 @@ class Homing:
 
         if len(distances) > 1:
             pos = home_pos = self.toolhead.get_position()
-            calc_adjustment = self._calc_median if hi.samples_result == "median" else self._calc_mean
+            calc_adjustment = (
+                self._calc_median
+                if hi.samples_result == "median"
+                else self._calc_mean
+            )
             for i in range(0, len(hmove.distance_elapsed)):
                 pos[i] += (
                     calc_adjustment([dist[i] for dist in distances])
