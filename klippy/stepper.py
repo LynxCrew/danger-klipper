@@ -527,6 +527,9 @@ class GenericPrinterCarriage:
             "samples_tolerance_retries", 0, minval=0
         )
         self.drop_first_result = config.getboolean("drop_first_result", False)
+        self.move_toolhead_after_adjusting = config.getboolean(
+            "move_toolhead_after_adjusting", False
+        )
 
         if self.homing_positive_dir is None:
             axis_len = self.position_max - self.position_min
@@ -586,6 +589,7 @@ class GenericPrinterCarriage:
                 "samples_tolerance",
                 "samples_retries",
                 "drop_first_result",
+                "move_toolhead_after_adjusting",
             ],
         )(
             self.homing_speed,
@@ -605,6 +609,7 @@ class GenericPrinterCarriage:
             self.samples_tolerance,
             self.samples_retries,
             self.drop_first_result,
+            self.move_toolhead_after_adjusting,
         )
         return homing_info
 

@@ -504,7 +504,8 @@ class Homing:
                     f"Final homing position for {'XYZ'[i]}: {pos[i]}"
                 )
             self.toolhead.set_position(pos)
-            self.toolhead.move(home_pos, hi.retract_speed)
+            if hi.move_toolhead_after_adjusting:
+                self.toolhead.move(home_pos, hi.retract_speed)
 
         self.adjust_pos = {}
         self.printer.send_event("homing:home_rails_end", self, rails)
