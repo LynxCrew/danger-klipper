@@ -342,7 +342,7 @@ class Homing:
 
         def _process_samples():
             nonlocal drop, first_home, distances, retries
-            if hi.sample_count <= 1:
+            if hi.sample_count == 1:
                 distances.append([0] * len(hmove.distance_elapsed))
                 return
             if not drop:
@@ -489,7 +489,7 @@ class Homing:
             sp.stepper_name: sp.trig_pos for sp in hmove.stepper_positions
         }
 
-        if hi.sample_count > 1:
+        if len(distances) > 1:
             self.toolhead.wait_moves()
             pos = self.toolhead.get_position()
             home_pos = self.toolhead.get_position()
@@ -498,6 +498,8 @@ class Homing:
                 if hi.samples_result == "median"
                 else self._calc_mean
             )
+            self.gcode.respond_info(f"{distances}")
+            self.gcode.respond_info(f"{distances[-1]}")
             for i in range(0, len(hmove.distance_elapsed)):
                 pos[i] += (
                     calc_adjustment([dist[i] for dist in distances])
