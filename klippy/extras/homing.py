@@ -533,7 +533,7 @@ class Homing:
         if hi.post_retract_dist:
             self.toolhead.wait_moves()
             startpos = self._fill_coord(forcepos)
-            homepos = self._fill_coord(movepos)
+            homepos = self.toolhead.get_position()
             axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
             move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
             retract_r = min(1.0, hi.post_retract_dist / move_d)
