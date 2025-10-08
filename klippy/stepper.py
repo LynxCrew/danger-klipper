@@ -526,10 +526,7 @@ class GenericPrinterCarriage:
         self.samples_retries = config.getint(
             "samples_tolerance_retries", 0, minval=0
         )
-        self.drop_first_result = config.getboolean(
-            "drop_first_result", False
-        )
-
+        self.drop_first_result = config.getboolean("drop_first_result", False)
 
         if self.homing_positive_dir is None:
             axis_len = self.position_max - self.position_min
