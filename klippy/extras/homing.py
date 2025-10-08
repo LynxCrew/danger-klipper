@@ -486,6 +486,7 @@ class Homing:
         }
 
         if len(distances) > 1:
+            self.toolhead.wait_moves()
             pos = home_pos = self.toolhead.get_position()
             calc_adjustment = (
                 self._calc_median
@@ -503,7 +504,6 @@ class Homing:
                     f"Final homing position for {'XYZ'[i]}: {pos[i]}"
                 )
             self.toolhead.set_position(pos)
-            self.toolhead.wait_moves()
             self.toolhead.move(home_pos, hi.retract_speed)
 
         self.adjust_pos = {}
