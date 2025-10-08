@@ -351,7 +351,7 @@ class Homing:
                     first_home = False
                 else:
                     result = [
-                        dist - retract_dist if i in homing_axes else 0
+                        dist - hi.sample_retract_dist if i in homing_axes else 0
                         for i, dist in enumerate(hmove.distance_elapsed)
                     ]
                 self.gcode.respond_info(f"{hmove.distance_elapsed}")
@@ -387,7 +387,7 @@ class Homing:
                 sample_move_d = math.sqrt(
                     sum([d * d for d in sample_axes_d[:3]])
                 )
-                sample_retract_r = min(1.0, retract_dist / sample_move_d)
+                sample_retract_r = min(1.0, hi.sample_retract_dist / sample_move_d)
                 sample_retractpos = [
                     hp - ad * sample_retract_r
                     for hp, ad in zip(homepos, sample_axes_d)
