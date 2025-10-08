@@ -534,7 +534,6 @@ class Homing:
             self.toolhead.wait_moves()
             startpos = self._fill_coord(forcepos)
             homepos = self.toolhead.get_position()
-            self.gcode.respond_info(f"{homepos}")
             axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
             move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
             retract_r = min(1.0, hi.post_retract_dist / move_d)
