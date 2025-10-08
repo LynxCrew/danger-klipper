@@ -340,6 +340,67 @@ class Homing:
         first_home = True
         drop = hi.drop_first_result
 
+        def _process_samples():
+            if hi.sample_count > 1:
+                if not drop:
+                    if first_home:
+                        result = [0] * len(hmove.distance_elapsed)
+                        first_home = False
+                    else:
+                        result = [
+                            dist - retract_dist
+                            if i in homing_axes
+                            else 0
+                            for i, dist in enumerate(
+                                hmove.distance_elapsed
+                            )
+                        ]
+                    distances.append(result)
+                    for i in homing_axes:
+                        gcode.respond_info(
+                            f"Homing sample for {'XYZ'[i]}: {result[i]}"
+                        )
+
+                    if any(
+                            [
+                                max(dist) > hi.samples_tolerance
+                                for dist in distances
+                            ]
+                    ):
+                        if retries >= hi.samples_retries:
+                            raise self.printer.command_error(
+                                "Homing samples exceed samples_tolerance"
+                            )
+                        gcode.respond_info(
+                            "Homing samples exceed tolerance. Retrying..."
+                        )
+                        retries += 1
+                        distances = []
+                else:
+                    drop = False
+
+                if len(distances) < hi.sample_count:
+                    sample_startpos = self._fill_coord(forcepos)
+                    sample_homepos = self._fill_coord(movepos)
+                    sample_axes_d = [
+                        hp - sp
+                        for hp, sp in zip(
+                            sample_homepos, sample_startpos
+                        )
+                    ]
+                    sample_move_d = math.sqrt(
+                        sum([d * d for d in sample_axes_d[:3]])
+                    )
+                    sample_retract_r = min(
+                        1.0, retract_dist / sample_move_d
+                    )
+                    sample_retractpos = [
+                        hp - ad * sample_retract_r
+                        for hp, ad in zip(homepos, sample_axes_d)
+                    ]
+                    self.toolhead.move(
+                        sample_retractpos, hi.retract_speed
+                    )
         try:
             while len(distances) < hi.sample_count:
                 startpos = self._fill_coord(forcepos)
@@ -368,58 +429,7 @@ class Homing:
                 if not hi.use_sensorless_homing and retract_dist:
                     break
 
-                if hi.sample_count > 1:
-                    if not drop:
-                        if first_home:
-                            result = [0] * len(hmove.distance_elapsed)
-                            first_home = False
-                        else:
-                            result = [
-                                dist - retract_dist if i in homing_axes else 0
-                                for i, dist in enumerate(hmove.distance_elapsed)
-                            ]
-                        distances.append(result)
-                        for i in homing_axes:
-                            gcode.respond_info(
-                                f"Homing sample for {'XYZ'[i]}: {result[i]}"
-                            )
-
-                        if any(
-                            [
-                                max(dist) > hi.samples_tolerance
-                                for dist in distances
-                            ]
-                        ):
-                            if retries >= hi.samples_retries:
-                                raise self.printer.command_error(
-                                    "Homing samples exceed samples_tolerance"
-                                )
-                            gcode.respond_info(
-                                "Homing samples exceed tolerance. Retrying..."
-                            )
-                            retries += 1
-                            distances = []
-                    else:
-                        drop = False
-
-                    if len(distances) < hi.sample_count:
-                        sample_startpos = self._fill_coord(forcepos)
-                        sample_homepos = self._fill_coord(movepos)
-                        sample_axes_d = [
-                            hp - sp
-                            for hp, sp in zip(sample_homepos, sample_startpos)
-                        ]
-                        sample_move_d = math.sqrt(
-                            sum([d * d for d in sample_axes_d[:3]])
-                        )
-                        sample_retract_r = min(
-                            1.0, retract_dist / sample_move_d
-                        )
-                        sample_retractpos = [
-                            hp - ad * sample_retract_r
-                            for hp, ad in zip(homepos, sample_axes_d)
-                        ]
-                        self.toolhead.move(sample_retractpos, hi.retract_speed)
+                _process_samples()
 
             if (not hi.use_sensorless_homing or needs_rehome) and retract_dist:
                 if needs_rehome:
@@ -476,66 +486,7 @@ class Homing:
                     finally:
                         self._set_homing_accel(hi.accel, pre_homing=False)
 
-                    if hi.sample_count > 1:
-                        if not drop:
-                            if first_home:
-                                result = [0] * len(hmove.distance_elapsed)
-                                first_home = False
-                            else:
-                                result = [
-                                    dist - retract_dist
-                                    if i in homing_axes
-                                    else 0
-                                    for i, dist in enumerate(
-                                        hmove.distance_elapsed
-                                    )
-                                ]
-                            distances.append(result)
-                            for i in homing_axes:
-                                gcode.respond_info(
-                                    f"Homing sample for {'XYZ'[i]}: {result[i]}"
-                                )
-
-                            if any(
-                                [
-                                    max(dist) > hi.samples_tolerance
-                                    for dist in distances
-                                ]
-                            ):
-                                if retries >= hi.samples_retries:
-                                    raise self.printer.command_error(
-                                        "Homing samples exceed samples_tolerance"
-                                    )
-                                gcode.respond_info(
-                                    "Homing samples exceed tolerance. Retrying..."
-                                )
-                                retries += 1
-                                distances = []
-                        else:
-                            drop = False
-
-                        if len(distances) < hi.sample_count:
-                            sample_startpos = self._fill_coord(forcepos)
-                            sample_homepos = self._fill_coord(movepos)
-                            sample_axes_d = [
-                                hp - sp
-                                for hp, sp in zip(
-                                    sample_homepos, sample_startpos
-                                )
-                            ]
-                            sample_move_d = math.sqrt(
-                                sum([d * d for d in sample_axes_d[:3]])
-                            )
-                            sample_retract_r = min(
-                                1.0, retract_dist / sample_move_d
-                            )
-                            sample_retractpos = [
-                                hp - ad * sample_retract_r
-                                for hp, ad in zip(homepos, sample_axes_d)
-                            ]
-                            self.toolhead.move(
-                                sample_retractpos, hi.retract_speed
-                            )
+                    _process_samples()
         finally:
             self._set_homing_accel(hi.accel, pre_homing=False)
             self._set_homing_current(homing_axes, pre_homing=False)
@@ -548,18 +499,12 @@ class Homing:
 
         if len(distances) > 1:
             pos = home_pos = self.toolhead.get_position()
-            if hi.samples_result == "median":
-                for i in range(0, len(hmove.distance_elapsed)):
-                    pos[i] += (
-                        self._calc_median([dist[i] for dist in distances])
-                        - distances[i][-1]
-                    )
-            else:
-                for i in range(0, len(hmove.distance_elapsed)):
-                    pos[i] += (
-                        self._calc_mean([dist[i] for dist in distances])
-                        - distances[i][-1]
-                    )
+            calc_adjustment = self._calc_median if hi.samples_result == "median" else self._calc_mean
+            for i in range(0, len(hmove.distance_elapsed)):
+                pos[i] += (
+                    calc_adjustment([dist[i] for dist in distances])
+                    - distances[i][-1]
+                )
 
             for i in homing_axes:
                 gcode.respond_info(
