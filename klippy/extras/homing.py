@@ -326,7 +326,6 @@ class Homing:
     def home_rails(self, rails, forcepos, movepos):
         # Notify of upcoming homing operation
         self.printer.send_event("homing:home_rails_begin", self, rails)
-        gcode = self.printer.lookup_object("gcode")
         # Alter kinematics class to think printer is at forcepos
         homing_axes = [axis for axis in range(3) if forcepos[axis] is not None]
         # Perform first home
@@ -334,12 +333,12 @@ class Homing:
         hi = rails[0].get_homing_info()
         needs_rehome = False
         retract_dist = hi.retract_dist
+        hmove = HomingMove(self.printer, endstops)
 
         distances = []
         retries = 0
         first_home = True
         drop = hi.drop_first_result
-        hmove = HomingMove(self.printer, endstops)
 
         def _process_samples():
             nonlocal drop, first_home, distances, retries
@@ -355,7 +354,7 @@ class Homing:
                         ]
                     distances.append(result)
                     for i in homing_axes:
-                        gcode.respond_info(
+                        self.gcode.respond_info(
                             f"Homing sample for {'XYZ'[i]}: {result[i]}"
                         )
 
@@ -366,7 +365,7 @@ class Homing:
                             raise self.printer.command_error(
                                 "Homing samples exceed samples_tolerance"
                             )
-                        gcode.respond_info(
+                        self.gcode.respond_info(
                             "Homing samples exceed tolerance. Retrying..."
                         )
                         retries += 1
@@ -411,7 +410,7 @@ class Homing:
                 ):
                     needs_rehome = True
                     retract_dist = hi.min_home_dist
-                    gcode.respond_info(
+                    self.gcode.respond_info(
                         "Moved less than min_home_dist. Retrying..."
                     )
                     break
@@ -500,7 +499,7 @@ class Homing:
                 )
 
             for i in homing_axes:
-                gcode.respond_info(
+                self.gcode.respond_info(
                     f"Final homing position for {'XYZ'[i]}: {pos[i]}"
                 )
             self.toolhead.set_position(pos)
