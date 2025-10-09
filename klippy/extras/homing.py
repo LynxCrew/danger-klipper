@@ -611,12 +611,12 @@ class HomingAccuracy(Homing):
         sample_retract_dist = self.gcmd.get_float(
             "SAMPLE_RETRACT_DIST", hi.sample_retract_dist, above=0.0
         )
-        homing_info = (
-            hi._replace(drop_first_result=drop_first_result)
-            ._replace(speed=speed)
-            ._replace(retract_speed=retract_speed)
-            ._replace(sample_count=sample_count)
-            ._replace(sample_retract_dist=sample_retract_dist)
+        homing_info = hi._replace(
+            drop_first_result=drop_first_result,
+            speed=speed,
+            retract_speed=retract_speed,
+            sample_count=sample_count,
+            sample_retract_dist=sample_retract_dist,
         )
         return homing_info
 
