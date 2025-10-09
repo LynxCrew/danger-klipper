@@ -605,7 +605,7 @@ class HomingAccuracy(Homing):
         )
         speed = self.gcmd.get_float("SPEED", hi.speed, above=0.0)
         retract_speed = self.gcmd.get_float(
-            "retract_speed", hi.retract_speed, above=0.0
+            "RETRACT_SPEED", hi.retract_speed, above=0.0
         )
         sample_count = self.gcmd.get_int("SAMPLES", 10, minval=1)
         sample_retract_dist = self.gcmd.get_float(
@@ -646,6 +646,11 @@ class PrinterHoming:
         # Register g-code commands
         gcode = self.printer.lookup_object("gcode")
         gcode.register_command("G28", self.cmd_G28)
+        gcode.register_command(
+            "HOMING_ACCURACY",
+            self.cmd_HOMING_ACCURACY,
+            desc=self.cmd_HOMING_ACCURACY_help,
+        )
 
     def manual_home(
         self, toolhead, endstops, pos, speed, triggered, check_triggered
@@ -684,10 +689,8 @@ class PrinterHoming:
     def cmd_HOMING_ACCURACY(self, gcmd):
         axes = []
         for pos, axis in enumerate("XYZ"):
-            if gcmd.get(axis, None) is not None:
+            if gcmd.get("AXIS") == axis:
                 axes.append(pos)
-        if not axes:
-            axes = [0, 1, 2]
         homing_state = HomingAccuracy(self.printer, gcmd)
         homing_state.set_axes(axes)
         kin = self.printer.lookup_object("toolhead").get_kinematics()
