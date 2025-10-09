@@ -3,6 +3,7 @@
 # Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import collections
 import math
 import logging
 from .danger_options import get_danger_options
@@ -323,6 +324,12 @@ class Homing:
         # even number of samples
         return self._calc_mean(z_sorted[middle - 1 : middle + 1])
 
+    def init_homing(self, hi, homing_axes):
+        pass
+
+    def process_homing_info(self, hi):
+        return hi
+
     def home_rails(self, rails, forcepos, movepos):
         # Notify of upcoming homing operation
         self.printer.send_event("homing:home_rails_begin", self, rails)
@@ -330,7 +337,8 @@ class Homing:
         homing_axes = [axis for axis in range(3) if forcepos[axis] is not None]
         # Perform first home
         endstops = [es for rail in rails for es in rail.get_endstops()]
-        hi = rails[0].get_homing_info()
+        hi = self.process_homing_info(rails[0].get_homing_info())
+        self.init_homing(hi, homing_axes)
         needs_rehome = False
         retract_dist = hi.retract_dist
         hmove = HomingMove(self.printer, endstops)
@@ -452,9 +460,9 @@ class Homing:
                 retries = 0
                 first_home = True
                 drop = hi.drop_first_result
-                while len(distances) < hi.sample_count:
+                while len(distances) < sample_count:
                     try:
-                        if drop and hi.sample_count > 1:
+                        if drop and sample_count > 1:
                             self.gcode.respond_info(
                                 "Settling sample (ignored)..."
                             )
@@ -494,6 +502,8 @@ class Homing:
         finally:
             self._set_homing_accel(hi.accel, pre_homing=False)
             self._set_homing_current(homing_axes, pre_homing=False)
+
+        self.process_homing(distances, homing_axes)
 
         # Signal home operation complete
         self.toolhead.flush_step_generation()
@@ -564,6 +574,71 @@ class Homing:
             self.toolhead.move(retractpos, hi.post_retract_speed)
         self.gcode.run_script_from_command("M400")
 
+    def process_homing(self, distances, homing_axes):
+        pass
+
+
+class HomingAccuracy(Homing):
+    def __init__(self, printer, gcmd):
+        super().__init__(printer)
+        self.gcmd = gcmd
+
+    def init_homing(self, hi, homing_axes):
+        axes = ["XYZ"[i] for i in homing_axes]
+        for axis in axes:
+            self.gcode.respond_info(
+                "HOMING_ACCURACY for %s"
+                " (samples=%d retract=%.3f"
+                " speed=%.1f retract_speed=%.1f)\n"
+                % (
+                    axis,
+                    hi.sample_count,
+                    hi.sample_retract_dist,
+                    hi.speed,
+                    hi.retract_speed,
+                )
+            )
+
+    def process_homing_info(self, hi):
+        drop_first_result = self.gcmd.get_int(
+            "DROP_FIRST_RESULT", hi.drop_first_result
+        )
+        speed = self.gcmd.get_float("SPEED", hi.speed, above=0.0)
+        retract_speed = self.gcmd.get_float(
+            "retract_speed", hi.retract_speed, above=0.0
+        )
+        sample_count = self.gcmd.get_int("SAMPLES", 10, minval=1)
+        sample_retract_dist = self.gcmd.get_float(
+            "SAMPLE_RETRACT_DIST", hi.sample_retract_dist, above=0.0
+        )
+        homing_info = (
+            hi._replace(drop_first_result=drop_first_result)
+            ._replace(speed=speed)
+            ._replace(retract_speed=retract_speed)
+            ._replace(sample_count=sample_count)
+            ._replace(sample_retract_dist=sample_retract_dist)
+        )
+        return homing_info
+
+    def process_homing(self, distances, homing_axes):
+        for i in homing_axes:
+            dists = [dist[i] for dist in distances]
+            min_value = min(dists)
+            max_value = max(dists)
+            avg_value = self._calc_mean(dists)
+            median = self._calc_median(dists)
+            range_value = max_value - min_value
+            deviation_sum = 0
+            for j in range(len(dists)):
+                deviation_sum += pow(dists[j] - avg_value, 2.0)
+            sigma = (deviation_sum / len(dists)) ** 0.5
+
+            self.gcode.respond_info(
+                "probe accuracy results: maximum %.6f, minimum %.6f, range %.6f, "
+                "average %.6f, median %.6f, standard deviation %.6f"
+                % (max_value, min_value, range_value, avg_value, median, sigma)
+            )
+
 
 class PrinterHoming:
     def __init__(self, config):
@@ -603,6 +678,28 @@ class PrinterHoming:
                 "Probe triggered prior to movement"
             )
         return epos
+
+    cmd_HOMING_ACCURACY_help = "Check the accuracy of your endstops"
+
+    def cmd_HOMING_ACCURACY(self, gcmd):
+        axes = []
+        for pos, axis in enumerate("XYZ"):
+            if gcmd.get(axis, None) is not None:
+                axes.append(pos)
+        if not axes:
+            axes = [0, 1, 2]
+        homing_state = HomingAccuracy(self.printer, gcmd)
+        homing_state.set_axes(axes)
+        kin = self.printer.lookup_object("toolhead").get_kinematics()
+        try:
+            kin.home(homing_state)
+        except self.printer.command_error:
+            if self.printer.is_shutdown():
+                raise self.printer.command_error(
+                    "Homing failed due to printer shutdown"
+                )
+            self.printer.lookup_object("stepper_enable").motor_off()
+            raise
 
     def cmd_G28(self, gcmd):
         # Move to origin
