@@ -333,7 +333,7 @@ position_max:
 #   If true, disables the second home action if homing_retract_dist > 0.
 #   The default is true if endstop_pin is configured to use virtual_endstop
 #samples: 1
-#samples_retract_dist: 2.0
+#sample_retract_dist: 2.0
 #samples_result: average
 #samples_tolerance: 0.100
 #samples_tolerance_retries: 0
@@ -341,7 +341,7 @@ position_max:
 #   See the "probe" section for a description of the above parameters
 #   If the second homing is enabled, the first homing move will only be once and the
 #   second homing move will use samples.
-#samples_retract_speed: 
+#sample_retract_speed: 
 #   Equals probes lift_speed, defaults to retract_speed
 #move_toolhead_after_adjusting: False
 #   Move the toolhead to the configured homing position after adjusting the coordinate
