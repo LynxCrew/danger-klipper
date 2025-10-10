@@ -348,6 +348,12 @@ class Homing:
         first_home = True
         drop = hi.drop_first_result
 
+        startpos = None
+        homepos = None
+        axes_d = None
+        move_d = None
+        retract_r = None
+        retractpos = None
         def _retract_toolhead(retract_dist, retract_speed):
             nonlocal startpos, homepos, axes_d, move_d, retract_r, retractpos
             startpos = self._fill_coord(forcepos)
@@ -457,10 +463,6 @@ class Homing:
                         [("X", "Y", "Z")[axis] for axis in homing_axes],
                     )
                 # Retract
-                retract_r = None
-                retractpos = None
-                axes_d = None
-                homepos = None
                 _retract_toolhead(retract_dist, hi.retract_speed)
 
                 distances = []
