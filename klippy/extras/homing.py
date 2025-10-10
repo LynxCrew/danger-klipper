@@ -380,7 +380,7 @@ class Homing:
                     self.gcode.respond_info(
                         "Homing samples exceed tolerance. Retrying..."
                     )
-                    self.gcode.respond_info(distances)
+                    self.gcode.respond_info(f"{distances}")
                     retries += 1
                     distances = []
             else:
