@@ -344,7 +344,7 @@ class Homing:
         hmove = HomingMove(self.printer, endstops)
 
         distances = []
-        retries = 1
+        retries = 0
         first_home = True
         drop = hi.drop_first_result
 
@@ -384,7 +384,6 @@ class Homing:
                         self.gcode.respond_info(
                             "Homing samples exceed tolerance. Retrying..."
                         )
-                        self.gcode.respond_info(f"{distances}")
                         retries += 1
                         distances = []
             else:
@@ -462,7 +461,7 @@ class Homing:
                 self.toolhead.move(retractpos, hi.retract_speed)
 
                 distances = []
-                retries = 1
+                retries = 0
                 first_home = True
                 drop = hi.drop_first_result
                 while len(distances) < hi.sample_count:

@@ -1334,11 +1334,12 @@ verify that an endstop is working correctly.
 ### [homing_accuracy]
 
 #### HOMING_ACCURACY
-`HOMING_ACCURACY AXIS=<X|Y|Z> [DROP_FIRST_RESULT=<TRUE|FALSE>] [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
+`HOMING_ACCURACY AXIS=<X|Y|Z> [DROP_FIRST_RESULT=<TRUE|FALSE>] [SPEED=<mm/s>] [SAMPLES=<count>]
 [SAMPLE_RETRACT_DIST=<mm>]`: Calculate the maximum, minimum, average,
 median, and standard deviation of multiple homing samples. By default,
 10 SAMPLES are taken. Otherwise the optional parameters default to
 their equivalent setting in the stepper config section.
+Speed defaults to `second_homing_speed`.
 
 ### [resonance_tester]
 

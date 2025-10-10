@@ -340,10 +340,15 @@ position_max:
 #drop_first_result: False
 #   See the "probe" section for a description of the above parameters
 #   If the second homing is enabled, the first homing move will only be once and the
-#   second homing move will use samples
+#   second homing move will use samples.
 #move_toolhead_after_adjusting: False
 #   Move the toolhead to the configured homing position after adjusting the coordinate
-#   system according to the samples
+#   system according to the samples.
+#retry_gcode:
+#   For some kinematics, like CoreXY, if one axis skips while homing it also throws off
+#   the other axis so it would be good to rehome that axis.
+#   If the homing procedure has to retry at least once, this code will be executed after
+#   homing is completed.
 ```
 
 ### Cartesian Kinematics
