@@ -344,7 +344,7 @@ class Homing:
         hmove = HomingMove(self.printer, endstops)
 
         distances = []
-        retries = 0
+        retries = 1
         first_home = True
         drop = hi.drop_first_result
 
@@ -462,7 +462,7 @@ class Homing:
                 self.toolhead.move(retractpos, hi.retract_speed)
 
                 distances = []
-                retries = 0
+                retries = 1
                 first_home = True
                 drop = hi.drop_first_result
                 while len(distances) < hi.sample_count:
