@@ -371,7 +371,7 @@ class Homing:
                     )
 
                 if hi.samples_tolerance is not None and any(
-                    [max(dist) > hi.samples_tolerance for dist in distances]
+                    [abs(max(dist) - min(dist)) > hi.samples_tolerance for dist in distances]
                 ):
                     if retries >= hi.samples_retries:
                         raise self.printer.command_error(
