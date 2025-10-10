@@ -365,6 +365,7 @@ class Homing:
             retractpos = [
                 hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
             ]
+            self.gcode.respond_info(f"{homepos}")
             self.toolhead.move(retractpos, retract_speed)
 
         def _process_samples():
@@ -526,8 +527,9 @@ class Homing:
                 else self._calc_mean
             )
             for i in range(0, len(hmove.distance_elapsed)):
-                pos[i] = first_home_pos[i] + calc_adjustment(
-                    [dist[i] for dist in distances]
+                pos[i] += (
+                    calc_adjustment([dist[i] for dist in distances])
+                    - distances[-1][i]
                 )
 
             for i in homing_axes:
