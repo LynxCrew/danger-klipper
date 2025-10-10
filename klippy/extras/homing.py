@@ -350,26 +350,20 @@ class Homing:
 
         startpos = None
         homepos = None
-        axes_d = None
+        axes_d = []
         move_d = None
         retract_r = None
-        retractpos = None
+        retractpos = []
+
         def _retract_toolhead(retract_dist, retract_speed):
             nonlocal startpos, homepos, axes_d, move_d, retract_r, retractpos
             startpos = self._fill_coord(forcepos)
             homepos = self._fill_coord(movepos)
-            axes_d = [
-                hp - sp for hp, sp in zip(homepos, startpos)
-            ]
-            move_d = math.sqrt(
-                sum([d * d for d in axes_d[:3]])
-            )
-            retract_r = min(
-                1.0, retract_dist / move_d
-            )
+            axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
+            move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
+            retract_r = min(1.0, retract_dist / move_d)
             retractpos = [
-                hp - ad * retract_r
-                for hp, ad in zip(homepos, axes_d)
+                hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
             ]
             self.toolhead.move(retractpos, retract_speed)
 
@@ -418,7 +412,9 @@ class Homing:
                         distances = []
 
             if len(distances) < hi.sample_count:
-                _retract_toolhead(hi.samples_retract_dist, hi.samples_retract_speed)
+                _retract_toolhead(
+                    hi.samples_retract_dist, hi.samples_retract_speed
+                )
 
         try:
             while len(distances) < hi.sample_count:
