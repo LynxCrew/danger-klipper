@@ -345,7 +345,7 @@ class Homing:
 
         distances = []
         retries = 0
-        first_home = True
+        first_home_pos = []
         drop = hi.drop_first_result
 
         startpos = None
@@ -368,7 +368,7 @@ class Homing:
             self.toolhead.move(retractpos, retract_speed)
 
         def _process_samples():
-            nonlocal drop, first_home, distances, retries
+            nonlocal drop, first_home_pos, distances, retries
             # early return if we don't use samples for homing
             if hi.sample_count == 1:
                 distances.append([0] * len(hmove.distance_elapsed))
@@ -378,9 +378,9 @@ class Homing:
                 # Don't process the sample if it's dropped
                 drop = False
             else:
-                if first_home:
+                if not first_home_pos:
                     result = [0] * len(hmove.distance_elapsed)
-                    first_home = False
+                    first_home_pos = result
                 else:
                     result = [
                         abs(dist) - hi.sample_retract_dist
@@ -463,7 +463,7 @@ class Homing:
 
                 distances = []
                 retries = 0
-                first_home = True
+                first_home_pos = []
                 drop = hi.drop_first_result
                 while len(distances) < hi.sample_count:
                     try:
@@ -526,9 +526,8 @@ class Homing:
                 else self._calc_mean
             )
             for i in range(0, len(hmove.distance_elapsed)):
-                pos[i] += (
-                    calc_adjustment([dist[i] for dist in distances])
-                    - distances[-1][i]
+                pos[i] = first_home_pos[i] + calc_adjustment(
+                    [dist[i] for dist in distances]
                 )
 
             for i in homing_axes:
