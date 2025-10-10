@@ -383,7 +383,7 @@ class Homing:
                     first_home = False
                 else:
                     result = [
-                        abs(dist) - hi.samples_retract_dist
+                        abs(dist) - hi.sample_retract_dist
                         if i in homing_axes
                         else 0
                         for i, dist in enumerate(hmove.distance_elapsed)
@@ -413,7 +413,7 @@ class Homing:
 
             if len(distances) < hi.sample_count:
                 _retract_toolhead(
-                    hi.samples_retract_dist, hi.samples_retract_speed
+                    hi.sample_retract_dist, hi.sample_retract_speed
                 )
 
         try:
@@ -595,7 +595,7 @@ class HomingAccuracy(Homing):
                 % (
                     axis,
                     hi.sample_count,
-                    hi.samples_retract_dist,
+                    hi.sample_retract_dist,
                     hi.second_homing_speed,
                     hi.retract_speed,
                 )
@@ -610,15 +610,15 @@ class HomingAccuracy(Homing):
             "RETRACT_SPEED", hi.retract_speed, above=0.0
         )
         sample_count = self.gcmd.get_int("SAMPLES", 10, minval=1)
-        samples_retract_dist = self.gcmd.get_float(
-            "samples_retract_dist", hi.samples_retract_dist, above=0.0
+        sample_retract_dist = self.gcmd.get_float(
+            "RETRACT_DIST", hi.sample_retract_dist, above=0.0
         )
         homing_info = hi._replace(
             drop_first_result=drop_first_result,
             second_homing_speed=speed,
             retract_speed=retract_speed,
             sample_count=sample_count,
-            samples_retract_dist=samples_retract_dist,
+            sample_retract_dist=sample_retract_dist,
             samples_tolerance=None,
         )
         return homing_info
