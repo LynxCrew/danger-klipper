@@ -355,13 +355,13 @@ class Homing:
         retract_r = None
         retractpos = []
 
-        def _retract_toolhead(retract_dist, retract_speed):
+        def _retract_toolhead(retract_distance, retract_speed):
             nonlocal startpos, homepos, axes_d, move_d, retract_r, retractpos
             startpos = self._fill_coord(forcepos)
             homepos = self._fill_coord(movepos)
             axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
             move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
-            retract_r = min(1.0, retract_dist / move_d)
+            retract_r = min(1.0, retract_distance / move_d)
             retractpos = [
                 hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
             ]
@@ -566,6 +566,7 @@ class Homing:
             self.toolhead.set_position(homepos)
 
         if hi.post_retract_dist:
+            # Retract (again)
             self.toolhead.wait_moves()
             _retract_toolhead(hi.post_retract_dist, hi.post_retract_speed)
             self.printer.lookup_object("gcode_move").last_position = retractpos
