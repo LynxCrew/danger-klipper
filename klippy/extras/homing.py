@@ -348,12 +348,36 @@ class Homing:
         first_home = True
         drop = hi.drop_first_result
 
+        def _retract_toolhead(retract_dist, retract_speed):
+            nonlocal startpos, homepos, axes_d, move_d, retract_r, retractpos
+            startpos = self._fill_coord(forcepos)
+            homepos = self._fill_coord(movepos)
+            axes_d = [
+                hp - sp for hp, sp in zip(homepos, startpos)
+            ]
+            move_d = math.sqrt(
+                sum([d * d for d in axes_d[:3]])
+            )
+            retract_r = min(
+                1.0, retract_dist / move_d
+            )
+            retractpos = [
+                hp - ad * retract_r
+                for hp, ad in zip(homepos, axes_d)
+            ]
+            self.toolhead.move(retractpos, retract_speed)
+
         def _process_samples():
             nonlocal drop, first_home, distances, retries
+            # early return if we don't use samples for homing
             if hi.sample_count == 1:
                 distances.append([0] * len(hmove.distance_elapsed))
                 return
-            if not drop:
+
+            if drop:
+                # Don't process the sample if it's dropped
+                drop = False
+            else:
                 if first_home:
                     result = [0] * len(hmove.distance_elapsed)
                     first_home = False
@@ -364,11 +388,11 @@ class Homing:
                         else 0
                         for i, dist in enumerate(hmove.distance_elapsed)
                     ]
-                distances.append(result)
                 for i in homing_axes:
                     self.gcode.respond_info(
                         f"Homing sample for {'XYZ'[i]}: {result[i]}"
                     )
+                distances.append(result)
 
                 if hi.samples_tolerance is not None:
                     if any(
@@ -386,26 +410,9 @@ class Homing:
                         )
                         retries += 1
                         distances = []
-            else:
-                drop = False
 
             if len(distances) < hi.sample_count:
-                sample_startpos = self._fill_coord(forcepos)
-                sample_homepos = self._fill_coord(movepos)
-                sample_axes_d = [
-                    hp - sp for hp, sp in zip(sample_homepos, sample_startpos)
-                ]
-                sample_move_d = math.sqrt(
-                    sum([d * d for d in sample_axes_d[:3]])
-                )
-                sample_retract_r = min(
-                    1.0, hi.sample_retract_dist / sample_move_d
-                )
-                sample_retractpos = [
-                    hp - ad * sample_retract_r
-                    for hp, ad in zip(homepos, sample_axes_d)
-                ]
-                self.toolhead.move(sample_retractpos, hi.retract_speed)
+                _retract_toolhead(hi.sample_retract_dist, hi.sample_retract_speed)
 
         try:
             while len(distances) < hi.sample_count:
@@ -450,15 +457,11 @@ class Homing:
                         [("X", "Y", "Z")[axis] for axis in homing_axes],
                     )
                 # Retract
-                startpos = self._fill_coord(forcepos)
-                homepos = self._fill_coord(movepos)
-                axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
-                move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
-                retract_r = min(1.0, retract_dist / move_d)
-                retractpos = [
-                    hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
-                ]
-                self.toolhead.move(retractpos, hi.retract_speed)
+                retract_r = None
+                retractpos = None
+                axes_d = None
+                homepos = None
+                _retract_toolhead(retract_dist, hi.retract_speed)
 
                 distances = []
                 retries = 0
@@ -566,16 +569,8 @@ class Homing:
 
         if hi.post_retract_dist:
             self.toolhead.wait_moves()
-            startpos = self._fill_coord(forcepos)
-            homepos = self.toolhead.get_position()
-            axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
-            move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
-            retract_r = min(1.0, hi.post_retract_dist / move_d)
-            retractpos = [
-                hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
-            ]
+            _retract_toolhead(hi.post_retract_dist, hi.post_retract_speed)
             self.printer.lookup_object("gcode_move").last_position = retractpos
-            self.toolhead.move(retractpos, hi.post_retract_speed)
         self.gcode.run_script_from_command("M400")
 
         if retries and hi.retry_gcode is not None:
