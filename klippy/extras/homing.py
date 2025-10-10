@@ -460,9 +460,9 @@ class Homing:
                 retries = 0
                 first_home = True
                 drop = hi.drop_first_result
-                while len(distances) < sample_count:
+                while len(distances) < hi.sample_count:
                     try:
-                        if drop and sample_count > 1:
+                        if drop and hi.sample_count > 1:
                             self.gcode.respond_info(
                                 "Settling sample (ignored)..."
                             )
