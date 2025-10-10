@@ -370,19 +370,23 @@ class Homing:
                         f"Homing sample for {'XYZ'[i]}: {result[i]}"
                     )
 
-                if hi.samples_tolerance is not None and any(
-                    [abs(max(dist) - min(dist)) > hi.samples_tolerance for dist in distances]
-                ):
-                    if retries >= hi.samples_retries:
-                        raise self.printer.command_error(
-                            "Homing samples exceed samples_tolerance"
+                if hi.samples_tolerance is not None:
+                    if any(
+                        max([dist[i] for dist in distances])
+                        - min([dist[i] for dist in distances])
+                        > hi.samples_tolerance
+                        for i in range(len(hmove.distance_elapsed))
+                    ):
+                        if retries >= hi.samples_retries:
+                            raise self.printer.command_error(
+                                "Homing samples exceed samples_tolerance"
+                            )
+                        self.gcode.respond_info(
+                            "Homing samples exceed tolerance. Retrying..."
                         )
-                    self.gcode.respond_info(
-                        "Homing samples exceed tolerance. Retrying..."
-                    )
-                    self.gcode.respond_info(f"{distances}")
-                    retries += 1
-                    distances = []
+                        self.gcode.respond_info(f"{distances}")
+                        retries += 1
+                        distances = []
             else:
                 drop = False
 
