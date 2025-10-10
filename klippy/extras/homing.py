@@ -345,7 +345,7 @@ class Homing:
 
         distances = []
         retries = 0
-        first_home_pos = []
+        first_home = True
         drop = hi.drop_first_result
 
         startpos = None
@@ -365,11 +365,10 @@ class Homing:
             retractpos = [
                 hp - ad * retract_r for hp, ad in zip(homepos, axes_d)
             ]
-            self.gcode.respond_info(f"{homepos}")
             self.toolhead.move(retractpos, retract_speed)
 
         def _process_samples():
-            nonlocal drop, first_home_pos, distances, retries
+            nonlocal drop, first_home, distances, retries
             # early return if we don't use samples for homing
             if hi.sample_count == 1:
                 distances.append([0] * len(hmove.distance_elapsed))
@@ -379,9 +378,9 @@ class Homing:
                 # Don't process the sample if it's dropped
                 drop = False
             else:
-                if not first_home_pos:
+                if first_home:
                     result = [0] * len(hmove.distance_elapsed)
-                    first_home_pos = result
+                    first_home = False
                 else:
                     result = [
                         abs(dist) - hi.sample_retract_dist
@@ -464,7 +463,7 @@ class Homing:
 
                 distances = []
                 retries = 0
-                first_home_pos = []
+                first_home = True
                 drop = hi.drop_first_result
                 while len(distances) < hi.sample_count:
                     try:
