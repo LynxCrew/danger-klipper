@@ -513,11 +513,11 @@ class GenericPrinterCarriage:
         self.homing_accel = config.getfloat("homing_accel", None, above=0.0)
 
         self.sample_count = config.getint("samples", 1, minval=1)
-        self.samples_retract_dist = config.getfloat(
-            "samples_retract_dist", 2.0, above=0.0
+        self.sample_retract_dist = config.getfloat(
+            "sample_retract_dist", 2.0, above=0.0
         )
-        self.samples_retract_speed = config.getfloat(
-            "samples_retract_speed", self.homing_retract_speed, above=0.0
+        self.sample_retract_speed = config.getfloat(
+            "sample_retract_speed", self.homing_retract_speed, above=0.0
         )
         atypes = ["median", "average"]
         self.samples_result = config.getchoice(
@@ -588,8 +588,8 @@ class GenericPrinterCarriage:
                 "min_home_dist",
                 "accel",
                 "sample_count",
-                "samples_retract_dist",
-                "samples_retract_speed",
+                "sample_retract_dist",
+                "sample_retract_speed",
                 "samples_result",
                 "samples_tolerance",
                 "samples_retries",
@@ -610,8 +610,8 @@ class GenericPrinterCarriage:
             self.min_home_dist,
             self.homing_accel,
             self.sample_count,
-            self.samples_retract_dist,
-            self.samples_retract_speed,
+            self.sample_retract_dist,
+            self.sample_retract_speed,
             self.samples_result,
             self.samples_tolerance,
             self.samples_retries,
