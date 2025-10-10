@@ -594,7 +594,7 @@ class HomingAccuracy(Homing):
                     axis,
                     hi.sample_count,
                     hi.sample_retract_dist,
-                    hi.speed,
+                    hi.second_homing_speed,
                     hi.retract_speed,
                 )
             )
@@ -603,7 +603,7 @@ class HomingAccuracy(Homing):
         drop_first_result = self.gcmd.get_int(
             "DROP_FIRST_RESULT", hi.drop_first_result
         )
-        speed = self.gcmd.get_float("SPEED", hi.speed, above=0.0)
+        speed = self.gcmd.get_float("SPEED", hi.second_homing_speed, above=0.0)
         retract_speed = self.gcmd.get_float(
             "RETRACT_SPEED", hi.retract_speed, above=0.0
         )
@@ -613,7 +613,7 @@ class HomingAccuracy(Homing):
         )
         homing_info = hi._replace(
             drop_first_result=drop_first_result,
-            speed=speed,
+            second_homing_speed=speed,
             retract_speed=retract_speed,
             sample_count=sample_count,
             sample_retract_dist=sample_retract_dist,
