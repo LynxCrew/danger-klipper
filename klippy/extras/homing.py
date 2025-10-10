@@ -370,7 +370,7 @@ class Homing:
                         f"Homing sample for {'XYZ'[i]}: {result[i]}"
                     )
 
-                if any(
+                if hi.samples_tolerance is not None and any(
                     [max(dist) > hi.samples_tolerance for dist in distances]
                 ):
                     if retries >= hi.samples_retries:
@@ -574,6 +574,9 @@ class Homing:
             self.toolhead.move(retractpos, hi.post_retract_speed)
         self.gcode.run_script_from_command("M400")
 
+        if retries:
+            hi.retry_gcode.run_gcode_from_command()
+
     def process_homing(self, distances, homing_axes):
         pass
 
@@ -617,6 +620,7 @@ class HomingAccuracy(Homing):
             retract_speed=retract_speed,
             sample_count=sample_count,
             sample_retract_dist=sample_retract_dist,
+            samples_tolerance=None,
         )
         return homing_info
 

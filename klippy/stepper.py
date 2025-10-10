@@ -530,6 +530,10 @@ class GenericPrinterCarriage:
         self.move_toolhead_after_adjusting = config.getboolean(
             "move_toolhead_after_adjusting", False
         )
+        gcode_macro = self.config.get_printer().load_object(config, "gcode_macro")
+        self.retry_gcode = gcode_macro.load_template(
+            config, "retry_gcode", ""
+        )
 
         if self.homing_positive_dir is None:
             axis_len = self.position_max - self.position_min
@@ -590,6 +594,7 @@ class GenericPrinterCarriage:
                 "samples_retries",
                 "drop_first_result",
                 "move_toolhead_after_adjusting",
+                "retry_gcode",
             ],
         )(
             self.homing_speed,
@@ -610,6 +615,7 @@ class GenericPrinterCarriage:
             self.samples_retries,
             self.drop_first_result,
             self.move_toolhead_after_adjusting,
+            self.retry_gcode,
         )
         return homing_info
 
