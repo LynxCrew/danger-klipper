@@ -536,10 +536,10 @@ class GenericPrinterCarriage:
         self.retry_gcode = None
         if self.config.get("retry_gcode", None) is not None:
             gcode_macro = self.config.get_printer().load_object(
-                config, "gcode_macro"
+                self.config, "gcode_macro"
             )
             self.retry_gcode = gcode_macro.load_template(
-                config, "retry_gcode", ""
+                self.config, "retry_gcode", ""
             )
 
         if self.homing_positive_dir is None:
