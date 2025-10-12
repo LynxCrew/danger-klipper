@@ -572,7 +572,7 @@ class Homing:
         if hi.post_retract_dist:
             # Retract (again)
             self.toolhead.wait_moves()
-            force_pos = self.toolhead.get_position()
+            self.gcode.respond_info(f"{self.toolhead.get_position()}")
             _retract_toolhead(hi.post_retract_dist, hi.post_retract_speed)
             self.printer.lookup_object("gcode_move").last_position = retractpos
         self.gcode.run_script_from_command("M400")
