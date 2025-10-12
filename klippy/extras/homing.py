@@ -413,6 +413,7 @@ class Homing:
                         )
                         retries += 1
                         distances = []
+                        first_home = True
 
             if len(distances) < hi.sample_count:
                 _retract_toolhead(
