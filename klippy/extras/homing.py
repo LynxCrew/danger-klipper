@@ -379,7 +379,6 @@ class Homing:
                 # Don't process the sample if it's dropped
                 drop = False
             else:
-                self.gcode.respond_info(f"{hmove.distance_elapsed}")
                 if first_home:
                     result = [0] * len(hmove.distance_elapsed)
                     first_home = False
@@ -390,7 +389,6 @@ class Homing:
                         else 0
                         for i, dist in enumerate(hmove.distance_elapsed)
                     ]
-                self.gcode.respond_info(f"{result}")
                 for i in homing_axes:
                     self.gcode.respond_info(
                         f"Homing sample for {'XYZ'[i]}: {result[i]}"
