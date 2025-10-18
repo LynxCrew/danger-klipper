@@ -274,6 +274,8 @@ class Heater:
             )
         # logging.debug("temp: %.3f %f = %f", read_time, temp)
         for mpc_sensor, type in self.mpc_sensors:
+            gcode = self.printer.lookup_object("gcode")
+            gcode.respond_info("MEOW")
             temp = None
             if self.get_control().get_type() == "mpc":
                 if type == "block_temperature":
