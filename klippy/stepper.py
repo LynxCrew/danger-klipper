@@ -540,7 +540,9 @@ class GenericPrinterCarriage:
             )
 
         self.min_home_dist = config.getfloat(
-            "min_home_dist", self.sample_retract_dist, minval=0.0
+            "min_home_dist",
+            min(self.homing_retract_dist, self.sample_retract_dist),
+            minval=0.0,
         )
 
         if self.homing_positive_dir is None:
