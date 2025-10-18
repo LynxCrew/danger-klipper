@@ -387,7 +387,10 @@ class Homing:
                 else:
                     haltpos = self.toolhead.get_position()
                     result = [
-                        distances[-1][i] + dist - sample_retract_dist + (haltpos[i] - trigpos[i])
+                        distances[-1][i]
+                        + dist
+                        - sample_retract_dist
+                        + (haltpos[i] - trigpos[i])
                         if i in homing_axes
                         else 0.0
                         for i, dist in enumerate(hmove.distance_elapsed)
@@ -489,7 +492,9 @@ class Homing:
                         )
                         self._reset_endstop_states(endstops)
                         hmove = HomingMove(self.printer, endstops)
-                        hmove.homing_move(homepos, hi.second_homing_speed)
+                        trigpos = hmove.homing_move(
+                            homepos, hi.second_homing_speed
+                        )
                         if hmove.check_no_movement() is not None:
                             raise self.printer.command_error(
                                 "Endstop %s still triggered after retract"
@@ -508,7 +513,7 @@ class Homing:
                     finally:
                         self._set_homing_accel(hi.accel, pre_homing=False)
 
-                    _process_samples()
+                    _process_samples(trigpos)
         finally:
             self._set_homing_accel(hi.accel, pre_homing=False)
             self._set_homing_current(homing_axes, pre_homing=False)
