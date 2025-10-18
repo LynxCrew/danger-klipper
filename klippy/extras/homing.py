@@ -379,7 +379,7 @@ class Homing:
                 drop = False
             else:
                 if not distances:
-                    result = [0.0] * len(hmove.distance_elapsed)
+                    result = [0] * len(hmove.distance_elapsed)
                 else:
                     haltpos = self.toolhead.get_position()
                     result = [
@@ -394,7 +394,7 @@ class Homing:
                         - (haltpos[i] - trigpos[i])
                         # compensate for the deviation between haltpos and trigpos
                         if i in homing_axes
-                        else 0.0
+                        else 0
                         for i, dist in enumerate(hmove.distance_elapsed)
                     ]
                 for i in homing_axes:
