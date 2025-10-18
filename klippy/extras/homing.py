@@ -390,7 +390,7 @@ class Homing:
                         distances[-1][i]
                         + dist
                         - sample_retract_dist
-                        + (haltpos[i] - trigpos[i])
+                        - (haltpos[i] - trigpos[i])
                         if i in homing_axes
                         else 0.0
                         for i, dist in enumerate(hmove.distance_elapsed)
