@@ -388,9 +388,11 @@ class Homing:
                     haltpos = self.toolhead.get_position()
                     result = [
                         distances[-1][i]
-                        + dist
-                        - sample_retract_dist
+                        # Last deviation from the first home which is defined as 0.0
+                        + (dist - sample_retract_dist)
+                        # deviation between retract and actual distance traveled till endstop triggered
                         - (haltpos[i] - trigpos[i])
+                        # compensate for the deviation between haltpos and trigpos
                         if i in homing_axes
                         else 0.0
                         for i, dist in enumerate(hmove.distance_elapsed)
@@ -647,7 +649,7 @@ class HomingAccuracy(Homing):
             sigma = (deviation_sum / len(dists)) ** 0.5
 
             self.gcode.respond_info(
-                "probe accuracy results: maximum %.6f, minimum %.6f, range %.6f, "
+                "homing accuracy results: maximum %.6f, minimum %.6f, range %.6f, "
                 "average %.6f, median %.6f, standard deviation %.6f"
                 % (max_value, min_value, range_value, avg_value, median, sigma)
             )
