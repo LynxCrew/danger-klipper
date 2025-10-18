@@ -400,6 +400,7 @@ class Homing:
                         for i, dist in enumerate(hmove.distance_elapsed)
                     ]
                 for i in homing_axes:
+                    self.gcode.respond_info(f"{result[i]}")
                     self.gcode.respond_info(
                         f"Homing sample for {'XYZ'[i]}: {result[i]:.9f}"
                     )
