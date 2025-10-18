@@ -273,11 +273,7 @@ class Heater:
                 self.smoothed_temp >= self.min_extrude_temp or self.cold_extrude
             )
         # logging.debug("temp: %.3f %f = %f", read_time, temp)
-        gcode = self.printer.lookup_object("gcode")
-        gcode.respond_info(f"{self.mpc_sensors}")
         for mpc_sensor, type in self.mpc_sensors:
-            gcode = self.printer.lookup_object("gcode")
-            gcode.respond_info("MEOW")
             temp = None
             if self.get_control().get_type() == "mpc":
                 if type == "block_temperature":
