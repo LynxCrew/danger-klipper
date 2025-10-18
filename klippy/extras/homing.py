@@ -383,7 +383,7 @@ class Homing:
                 else:
                     haltpos = self.toolhead.get_position()
                     result = [
-                        round(
+                        (
                             distances[-1][i]
                             # Last deviation from the first home which is defined as 0.0
                             + (
@@ -394,7 +394,6 @@ class Homing:
                             # deviation between retract and actual distance traveled till endstop triggered
                             - (haltpos[i] - trigpos[i]),
                             # compensate for the deviation between haltpos and trigpos
-                            9,
                         )
                         if i in homing_axes
                         else 0.0
@@ -402,7 +401,7 @@ class Homing:
                     ]
                 for i in homing_axes:
                     self.gcode.respond_info(
-                        f"Homing sample for {'XYZ'[i]}: {result[i]}"
+                        f"Homing sample for {'XYZ'[i]}: {result[i]:.9f}"
                     )
                 distances.append(result)
 
@@ -534,17 +533,17 @@ class Homing:
             self.toolhead.wait_moves()
             pos = self.toolhead.get_position()
             home_pos = self.toolhead.get_position()
-            calc_adjustment = lambda value: round(
+            calc_adjustment = (
                 self._calc_median(value)
                 if hi.samples_result == "median"
-                else self._calc_mean(value),
-                9,
+                else self._calc_mean(value)
             )
             for i in range(0, len(hmove.distance_elapsed)):
                 pos[i] += (
                     calc_adjustment([dist[i] for dist in distances])
                     - distances[-1][i]
                 )
+                pos[i] = round(pos[i], 9)
 
             for i in homing_axes:
                 self.gcode.respond_info(
