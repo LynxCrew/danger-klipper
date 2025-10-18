@@ -398,9 +398,8 @@ class Homing:
                         for i, dist in enumerate(hmove.distance_elapsed)
                     ]
                 for i in homing_axes:
-                    self.gcode.respond_info(f"{result[i]}")
                     self.gcode.respond_info(
-                        f"Homing sample for {'XYZ'[i]}: {result[i]:.9f}"
+                        f"Homing sample for {'XYZ'[i]}: {result[i]:z.9f}".rstrip("0").rstrip(".")
                     )
                 distances.append(result)
 
@@ -533,9 +532,9 @@ class Homing:
             pos = self.toolhead.get_position()
             home_pos = self.toolhead.get_position()
             calc_adjustment = (
-                self._calc_median(value)
+                self._calc_median
                 if hi.samples_result == "median"
-                else self._calc_mean(value)
+                else self._calc_mean
             )
             for i in range(0, len(hmove.distance_elapsed)):
                 pos[i] += (
