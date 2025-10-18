@@ -394,7 +394,7 @@ class Homing:
                             # deviation between retract and actual distance traveled till endstop triggered
                             - (haltpos[i] - trigpos[i]),
                             # compensate for the deviation between haltpos and trigpos
-                            7,
+                            9,
                         )
                         if i in homing_axes
                         else 0.0
@@ -534,10 +534,11 @@ class Homing:
             self.toolhead.wait_moves()
             pos = self.toolhead.get_position()
             home_pos = self.toolhead.get_position()
-            calc_adjustment = (
+            calc_adjustment = round(
                 self._calc_median
                 if hi.samples_result == "median"
-                else self._calc_mean
+                else self._calc_mean,
+                9,
             )
             for i in range(0, len(hmove.distance_elapsed)):
                 pos[i] += (
