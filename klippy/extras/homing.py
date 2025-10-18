@@ -534,10 +534,10 @@ class Homing:
             self.toolhead.wait_moves()
             pos = self.toolhead.get_position()
             home_pos = self.toolhead.get_position()
-            calc_adjustment = round(
-                self._calc_median
+            calc_adjustment = lambda value: round(
+                self._calc_median(value)
                 if hi.samples_result == "median"
-                else self._calc_mean,
+                else self._calc_mean(value),
                 9,
             )
             for i in range(0, len(hmove.distance_elapsed)):
