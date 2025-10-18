@@ -1,7 +1,4 @@
 from .danger_options import get_danger_options
-from . import heaters
-
-AMBIENT_REPORT_TIME = 1.0
 
 
 class MPC_AMBIENT_TEMP_WRAPPER:
@@ -14,8 +11,6 @@ class MPC_AMBIENT_TEMP_WRAPPER:
         self.heater_name = config.get("heater_name")
 
         self.temperature_callback = None
-
-        self.report_time = AMBIENT_REPORT_TIME
 
         self.temp = self.min_temp = self.max_temp = 0.0
 
@@ -38,7 +33,7 @@ class MPC_AMBIENT_TEMP_WRAPPER:
         self.max_temp = max_temp
 
     def get_report_time_delta(self):
-        return self.report_time
+        return self.heater.sensor.get_report_time_delta()
 
     def process_temp_update(self, temperature, read_time):
         self.temp = temperature
@@ -67,9 +62,7 @@ class MPC_AMBIENT_TEMP_WRAPPER:
         )
 
     def set_report_time(self, report_time):
-        if report_time is None:
-            return
-        self.report_time = report_time
+        pass
 
 
 def load_config(config):

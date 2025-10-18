@@ -279,12 +279,12 @@ class Heater:
     def _handle_shutdown(self):
         self.verify_mainthread_time = -999.0
 
-    def add_mpc_sensor(self, mpc_sensor, type):
-        self.mpc_sensors.append((mpc_sensor, type))
-
     # External commands
     def get_name(self):
         return self.name
+
+    def add_mpc_sensor(self, mpc_sensor, type):
+        self.mpc_sensors.append((mpc_sensor, type))
 
     def get_pwm_delay(self):
         return self.pwm_delay
@@ -647,6 +647,13 @@ class ControlBangBang:
         self.heater_max_power = heater.get_max_power()
         self.max_delta = profile["max_delta"]
         self.heating = False
+
+
+    def get_block_temp(self):
+        return self.heater.smoothed_temp
+
+    def get_ambient_temp(self):
+        return AMBIENT_TEMP
 
     def temperature_update(self, read_time, temp, target_temp):
         if self.heating and temp >= target_temp + self.max_delta:

@@ -1,7 +1,5 @@
 from .danger_options import get_danger_options
 
-BLOCK_REPORT_TIME = 1.0
-
 
 class MPC_BLOCK_TEMP_WRAPPER:
     def __init__(self, config):
@@ -14,11 +12,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
 
         self.temperature_callback = None
 
-        self.report_time = BLOCK_REPORT_TIME
-
         self.temp = self.min_temp = self.max_temp = 0.0
-
-        self.reactor = self.printer.get_reactor()
 
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
@@ -39,7 +33,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
         self.max_temp = max_temp
 
     def get_report_time_delta(self):
-        return self.report_time
+        return self.heater.sensor.get_report_time_delta()
 
     def process_temp_update(self, temperature, read_time):
         self.temp = temperature
@@ -80,9 +74,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
         )
 
     def set_report_time(self, report_time):
-        if report_time is None:
-            return
-        self.report_time = report_time
+        pass
 
 
 def load_config(config):
