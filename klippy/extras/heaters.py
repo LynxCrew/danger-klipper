@@ -273,22 +273,8 @@ class Heater:
                 self.smoothed_temp >= self.min_extrude_temp or self.cold_extrude
             )
         # logging.debug("temp: %.3f %f = %f", read_time, temp)
-        for mpc_sensor, type in self.mpc_sensors:
-            temp = None
-            if self.get_control().get_type() == "mpc":
-                if type == "block_temperature":
-                    temp = self.get_control().state_block_temp
-                elif type == "ambient_temperature":
-                    temp = self.get_control().state_ambient_temp
-            else:
-                if type == "block_temperature":
-                    temp = self.smoothed_temp
-                elif type == "ambient_temperature":
-                    temp = AMBIENT_TEMP
-            mpc_sensor.process_temp_update(temp, read_time)
-
-
-
+        for mpc_sensor, temp_callback in self.mpc_sensors:
+            mpc_sensor.process_temp_update(temp_callback(), read_time)
 
     def _handle_shutdown(self):
         self.verify_mainthread_time = -999.0
@@ -889,6 +875,12 @@ class ControlPID:
         self.prev_temp_deriv = 0.0
         self.prev_temp_integ = 0.0
 
+    def get_block_temp(self):
+        return self.heater.smoothed_temp
+
+    def get_ambient_temp(self):
+        return AMBIENT_TEMP
+
     def temperature_update(self, read_time, temp, target_temp):
         time_diff = read_time - self.prev_temp_time
         # Calculate change of temperature
@@ -1027,6 +1019,12 @@ class ControlVelocityPID:
         self.d2 = 0.0  # previous smoothed 2nd derivative
         self.pwm = 0.0 if load_clean else self.heater.last_pwm_value
 
+    def get_block_temp(self):
+        return self.heater.smoothed_temp
+
+    def get_ambient_temp(self):
+        return AMBIENT_TEMP
+
     def temperature_update(self, read_time, temp, target_temp):
         # update the temp and time lists
         self.temps.pop(0)
@@ -1155,6 +1153,12 @@ class ControlPositionalPID:
         self.prev_err = 0.0
         self.prev_der = 0.0
         self.int_sum = 0.0
+
+    def get_block_temp(self):
+        return self.heater.smoothed_temp
+
+    def get_ambient_temp(self):
+        return AMBIENT_TEMP
 
     def temperature_update(self, read_time, temp, target_temp):
         # calculate the error
@@ -1496,8 +1500,13 @@ class ControlMPC:
         self.heater_max_power = self.heater.get_max_power()
         self.update_filament_const()
 
-    # Helpers
+    def get_block_temp(self):
+        return self.state_block_temp
 
+    def get_ambient_temp(self):
+        return self.state_ambient_temp
+
+    # Helpers
     def _heater_temp(self):
         return self.heater.get_temp(self.heater.reactor.monotonic())[0]
 
