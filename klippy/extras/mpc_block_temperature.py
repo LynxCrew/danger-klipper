@@ -73,9 +73,7 @@ class MPC_BLOCK_TEMP_WRAPPER:
             self.temp = 0.0
 
         self.temperature_callback(
-            self.printer.lookup_object("mcu").estimated_print_time(
-                read_time
-            ),
+            read_time,
             self.temp,
         )
 
