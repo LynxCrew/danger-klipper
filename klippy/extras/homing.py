@@ -399,7 +399,9 @@ class Homing:
                     ]
                 for i in homing_axes:
                     self.gcode.respond_info(
-                        f"Homing sample for {'XYZ'[i]}: {result[i]:.9f}".rstrip("0").rstrip(".")
+                        f"Homing sample for {'XYZ'[i]}: {result[i]:.9f}".rstrip(
+                            "0"
+                        ).rstrip(".")
                     )
                 distances.append(result)
 
@@ -545,7 +547,9 @@ class Homing:
 
             for i in homing_axes:
                 self.gcode.respond_info(
-                    f"Final homing position for {'XYZ'[i]}: {pos[i] + distances[-1][i]}"
+                    f"Final homing position for {'XYZ'[i]}: {round(pos[i] + distances[-1][i], 9):.9f}".rstrip(
+                        "0"
+                    ).rstrip(".")
                 )
             self.toolhead.set_position(pos)
             if hi.move_toolhead_after_adjusting:
