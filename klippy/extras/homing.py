@@ -341,11 +341,7 @@ class Homing:
         self.init_homing(hi, homing_axes)
         needs_rehome = False
         retract_dist = hi.retract_dist
-        sample_retract_dist = (
-            hi.sample_retract_dist
-            if hi.positive_dir
-            else -1 * hi.sample_retract_dist
-        )
+        sample_retract_dist = hi.sample_retract_dist
         hmove = HomingMove(self.printer, endstops)
 
         distances = []
@@ -389,7 +385,11 @@ class Homing:
                     result = [
                         distances[-1][i]
                         # Last deviation from the first home which is defined as 0.0
-                        + (dist - sample_retract_dist)
+                        + (
+                            (dist - sample_retract_dist)
+                            if hi.positive_dir
+                            else (dist + sample_retract_dist)
+                        )
                         # deviation between retract and actual distance traveled till endstop triggered
                         - (haltpos[i] - trigpos[i])
                         # compensate for the deviation between haltpos and trigpos
@@ -452,6 +452,7 @@ class Homing:
                 ):
                     needs_rehome = True
                     retract_dist = hi.min_home_dist
+                    sample_retract_dist = hi.min_home_dist
                     self.gcode.respond_info(
                         "Moved less than min_home_dist. Retrying..."
                     )
