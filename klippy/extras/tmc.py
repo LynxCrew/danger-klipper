@@ -222,7 +222,6 @@ class TMCErrorCheck:
             return
 
     def _do_periodic_check(self, eventtime):
-        logging.info("MIAU %s", self.stepper_name)
         try:
             self._query_register(self.drv_status_reg_info)
             if self.gstat_reg_info is not None:
