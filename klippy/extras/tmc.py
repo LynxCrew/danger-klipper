@@ -222,6 +222,7 @@ class TMCErrorCheck:
             return
 
     def _do_periodic_check(self, eventtime):
+        logging.info("MIAU %s", self.stepper_name)
         try:
             self._query_register(self.drv_status_reg_info)
             if self.gstat_reg_info is not None:
@@ -945,6 +946,9 @@ class BaseTMCCurrentHelper:
         ):
             return False
         return True
+
+    def apply_current(self, print_time):
+        pass
 
     def set_current(self, new_current, hold_current, print_time, force=False):
         if not self.needs_current_changes(new_current, hold_current, force):
