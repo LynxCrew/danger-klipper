@@ -1,7 +1,4 @@
 from .danger_options import get_danger_options
-from . import heaters
-
-AMBIENT_REPORT_TIME = 1.0
 
 
 class MPC_AMBIENT_TEMP_WRAPPER:
@@ -15,16 +12,8 @@ class MPC_AMBIENT_TEMP_WRAPPER:
 
         self.temperature_callback = None
 
-        self.report_time = AMBIENT_REPORT_TIME
-
         self.temp = self.min_temp = self.max_temp = 0.0
 
-        self.reactor = self.printer.get_reactor()
-        self.kalico_threads = self.printer.get_kalico_threads()
-
-        self.temperature_sample_thread = self.kalico_threads.register_job(
-            target=self._sample_ambient_temperature
-        )
         self.ignore = self.name in get_danger_options().temp_ignore_limits
 
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
@@ -32,7 +21,7 @@ class MPC_AMBIENT_TEMP_WRAPPER:
     def _handle_ready(self):
         pheaters = self.printer.lookup_object("heaters")
         self.heater = pheaters.lookup_heater(self.heater_name)
-        self.temperature_sample_thread.start()
+        self.heater.add_mpc_sensor(self)
 
     def setup_callback(self, temperature_callback):
         self.temperature_callback = temperature_callback
@@ -42,13 +31,10 @@ class MPC_AMBIENT_TEMP_WRAPPER:
         self.max_temp = max_temp
 
     def get_report_time_delta(self):
-        return self.report_time
+        return self.heater.sensor.get_report_time_delta()
 
-    def _sample_ambient_temperature(self):
-        if self.heater.get_control().get_type() == "mpc":
-            self.temp = self.heater.get_control().state_ambient_temp
-        else:
-            self.temp = heaters.AMBIENT_TEMP
+    def process_temp_update(self, control, read_time):
+        self.temp = control.get_ambient_temp()
 
         if self.temp is not None:
             if not self.heater.mcu_pwm.get_mcu().non_critical_disconnected and (
@@ -68,21 +54,13 @@ class MPC_AMBIENT_TEMP_WRAPPER:
         else:
             self.temp = 0.0
 
-        measured_time = self.reactor.monotonic()
-
         self.temperature_callback(
-            self.printer.lookup_object("mcu").estimated_print_time(
-                measured_time
-            ),
+            read_time,
             self.temp,
         )
 
-        return self.report_time
-
     def set_report_time(self, report_time):
-        if report_time is None:
-            return
-        self.report_time = report_time
+        pass
 
 
 def load_config(config):
