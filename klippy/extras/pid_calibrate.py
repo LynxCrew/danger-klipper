@@ -24,14 +24,14 @@ class PIDCalibrate:
         )
 
     def _calibrate(
-            self,
-            pheaters,
-            heater,
-            target,
-            tolerance,
-            write_file,
-            gcmd,
-            calibrate_secondary,
+        self,
+        pheaters,
+        heater,
+        target,
+        tolerance,
+        write_file,
+        gcmd,
+        calibrate_secondary,
     ):
         if isinstance(heater.control, heaters.ControlDualLoopPID):
             if calibrate_secondary:
@@ -306,11 +306,11 @@ class ControlAutoTune:
         self.calibrate_secondary = calibrate_secondary
 
     def temperature_update(
-            self,
-            read_time,
-            primary_temp,
-            target_temp,
-            secondary_temp=None,
+        self,
+        read_time,
+        primary_temp,
+        target_temp,
+        secondary_temp=None,
     ):
         if self.calibrate_secondary:
             temp = secondary_temp

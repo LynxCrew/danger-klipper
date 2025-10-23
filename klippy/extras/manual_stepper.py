@@ -144,7 +144,9 @@ class ManualStepper:
     def get_status(self, eventtime):
         return {
             "position": self.rail.get_commanded_position(),
-            "enabled": self.stepper_enable.lookup_enable(self.full_name).is_motor_enabled(),
+            "enabled": self.stepper_enable.lookup_enable(
+                self.full_name
+            ).is_motor_enabled(),
         }
 
     # Toolhead wrappers to support homing

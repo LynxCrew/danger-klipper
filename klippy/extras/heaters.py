@@ -567,7 +567,6 @@ class DualSensorHeater(Heater):
             self.can_extrude = self.smoothed_temp >= self.min_extrude_temp
 
 
-
 ######################################################################
 # Bang-bang control algo
 ######################################################################
@@ -934,7 +933,6 @@ class ControlPID:
             self.prev_temp_integ = temp_integ
 
         return co, bounded_co
-
 
     def temperature_update(self, read_time, temp, target_temp):
         _, bounded_co = self.calculate_output(read_time, temp, target_temp)
@@ -1765,7 +1763,10 @@ class ControlMPC:
             "loss_ambient": self.last_loss_ambient,
             "loss_filament": self.last_loss_filament,
             "filament_temp": self.filament_temp_src,
+            "filament_heat_capacity": self.const_filament_heat_capacity,
+            "filament_density": self.const_filament_density,
         }
+
 
 ######################################################################
 # Dual Loop PID control algo
@@ -1855,7 +1856,6 @@ class ControlDualLoopPID:
 
     def get_type(self):
         return "dual_loop_pid"
-
 
 
 ######################################################################

@@ -96,7 +96,7 @@ class RunoutHelper:
         else:
             self.reactor.register_callback(
                 self._execute_runout,
-                self.reactor.monotonic() + self.trigger_delay
+                self.reactor.monotonic() + self.trigger_delay,
             )
 
     def _execute_runout(self, eventtime):
@@ -126,8 +126,7 @@ class RunoutHelper:
             return eventtime + self.check_runout_timeout
         else:
             self.reactor.register_callback(
-                self._execute_runout,
-                eventtime + self.trigger_delay
+                self._execute_runout, eventtime + self.trigger_delay
             )
             return self.reactor.NEVER
 
@@ -194,7 +193,7 @@ class RunoutHelper:
                 self._execute_runout
                 if immediate
                 else self._runout_event_handler,
-                self.reactor.monotonic() + self.trigger_delay
+                self.reactor.monotonic() + self.trigger_delay,
             )
 
     def get_status(self, eventtime):
@@ -302,7 +301,7 @@ class SwitchSensor:
                 self.runout_helper.note_filament_present(
                     self.reactor.monotonic(), None, True, True
                 )
-    
+
     def _button_handler(self, eventtime, state):
         self.runout_helper.note_filament_present(eventtime, state)
 
