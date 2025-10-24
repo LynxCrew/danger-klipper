@@ -9,7 +9,6 @@ from . import force_move
 
 class ManualStepper:
     def __init__(self, config):
-        stepper_name = config.get_name().split()[1]
         self.printer = config.get_printer()
         self.stepper_enable = self.printer.load_object(config, "stepper_enable")
         if config.get("endstop_pin", None) is not None:
@@ -22,7 +21,7 @@ class ManualStepper:
             self.can_home = False
             self.rail = stepper.PrinterStepper(config)
             self.steppers = [self.rail]
-        self.enable_line = self.stepper_enable.lookup_enable(stepper_name)
+        self.enable_line = self.stepper_enable.lookup_enable(self.steppers[0].get_name())
         self.velocity = config.getfloat("velocity", 5.0, above=0.0)
         self.accel = self.homing_accel = config.getfloat(
             "accel", 0.0, minval=0.0
@@ -36,6 +35,7 @@ class ManualStepper:
         self.rail.setup_itersolve("cartesian_stepper_alloc", b"x")
         self.rail.set_trapq(self.trapq)
         # Register commands
+        stepper_name = config.get_name().split()[1]
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
             "MANUAL_STEPPER",
