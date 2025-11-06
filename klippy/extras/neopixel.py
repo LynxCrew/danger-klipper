@@ -141,6 +141,7 @@ class PrinterNeoPixel:
                 reqclock=BACKGROUND_PRIORITY_CLOCK,
             )
             if params["success"]:
+                logging.info(params["success"])
                 break
         else:
             logging.info("Neopixel update did not succeed")
