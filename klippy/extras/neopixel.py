@@ -74,8 +74,6 @@ class PrinterNeoPixel:
         rmt = self.mcu.seconds_to_clock(RESET_MIN_TIME)
         self.mcu.add_config_cmd(
             "config_neopixel oid=%d pin=%s data_size=%d"
-            " bit_max_ticks=%d reset_min_ticks=%d"
-            % (self.oid, self.pin, len(self.color_data), bmt, rmt)
             " bit_max_ticks=%d reset_min_ticks=%d pulse_long_ticks=%d pulse_short_ticks=%d bit_min_ticks=%d"
             % (
                 self.oid,
