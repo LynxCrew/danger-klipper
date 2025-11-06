@@ -153,7 +153,7 @@ send_data(struct neopixel_s *n)
                 last_start = start;
                 byte <<= 1;
 
-                neopixel_delay(start, PULSE_LONG_TICKS);
+                neopixel_delay(start, pulse_long_ticks);
                 irq_disable();
                 gpio_out_toggle_noirq(pin);
                 irq_enable();
@@ -177,7 +177,7 @@ send_data(struct neopixel_s *n)
         }
     }
     n->last_req_time = timer_read_time();
-    return bit_max_ticks;
+    return pulse_long_ticks;
 fail:
     // A hardware irq messed up the transmission - report a failure
     gpio_out_write(pin, 0);
