@@ -153,7 +153,7 @@ send_data(struct neopixel_s *n)
                 last_start = start;
                 byte <<= 1;
 
-                neopixel_delay(start, pulse_long_ticks);
+                neopixel_delay(start, PULSE_LONG_TICKS);
                 irq_disable();
                 gpio_out_toggle_noirq(pin);
                 irq_enable();
