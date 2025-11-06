@@ -103,9 +103,9 @@ command_config_neopixel(uint32_t *args)
     n->data_size = data_size;
     n->bit_max_ticks = args[3];
     n->reset_min_ticks = args[4];
-    n->pulse_long_ticks = nsecs_to_ticks(args[5]);
-    n->pulse_short_ticks = nsecs_to_ticks(args[6]);
-    n->bit_min_ticks = nsecs_to_ticks(args[7]);
+    n->pulse_long_ticks = nsecs_to_ticks(650);
+    n->pulse_short_ticks = nsecs_to_ticks(200);
+    n->bit_min_ticks = nsecs_to_ticks(1250);
 }
 DECL_COMMAND(command_config_neopixel, "config_neopixel oid=%c pin=%u"
              " data_size=%hu bit_max_ticks=%u reset_min_ticks=%u"
