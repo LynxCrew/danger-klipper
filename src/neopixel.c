@@ -74,10 +74,6 @@ neopixel_delay(neopixel_time_t start, neopixel_time_t ticks)
 
 #endif
 
-#define PULSE_LONG_TICKS  nsecs_to_ticks(650)
-#define PULSE_SHORT_TICKS nsecs_to_ticks(200)
-#define BIT_MIN_TICKS     nsecs_to_ticks(1250)
-
 
 /****************************************************************
  * Neopixel interface
@@ -89,6 +85,9 @@ struct neopixel_s {
     uint32_t last_req_time, reset_min_ticks;
     uint16_t data_size;
     uint8_t data[0];
+    neopixel_time_t pulse_long_ticks;
+    neopixel_time_t pulse_short_ticks;
+    neopixel_time_t bit_min_ticks;
 };
 
 void
@@ -104,9 +103,13 @@ command_config_neopixel(uint32_t *args)
     n->data_size = data_size;
     n->bit_max_ticks = args[3];
     n->reset_min_ticks = args[4];
+    n->pulse_long_ticks = nsecs_to_ticks(args[5]);
+    n->pulse_short_ticks = nsecs_to_ticks(args[6]);
+    n->bit_min_ticks = nsecs_to_ticks(args[7]);
 }
 DECL_COMMAND(command_config_neopixel, "config_neopixel oid=%c pin=%u"
-             " data_size=%hu bit_max_ticks=%u reset_min_ticks=%u");
+             " data_size=%hu bit_max_ticks=%u reset_min_ticks=%u"
+             " pulse_long_ticks=%u pulse_short_ticks=%u bit_min_ticks=%u");
 
 static int
 send_data(struct neopixel_s *n)
@@ -125,13 +128,16 @@ send_data(struct neopixel_s *n)
     struct gpio_out pin = n->pin;
     neopixel_time_t last_start = neopixel_get_time();
     neopixel_time_t bit_max_ticks = n->bit_max_ticks;
+    neopixel_time_t pulse_long_ticks = n->pulse_long_ticks;
+    neopixel_time_t pulse_short_ticks = n->pulse_short_ticks;
+    neopixel_time_t bit_min_ticks = n->bit_min_ticks;
     while (data_len--) {
         uint_fast8_t byte = *data++;
         uint_fast8_t bits = 8;
         while (bits--) {
             if (byte & 0x80) {
                 // Long pulse
-                neopixel_delay(last_start, BIT_MIN_TICKS);
+                neopixel_delay(last_start, bit_min_ticks);
                 irq_disable();
                 neopixel_time_t start = neopixel_get_time();
                 gpio_out_toggle_noirq(pin);
@@ -142,19 +148,19 @@ send_data(struct neopixel_s *n)
                 last_start = start;
                 byte <<= 1;
 
-                neopixel_delay(start, PULSE_LONG_TICKS);
+                neopixel_delay(start, pulse_long_ticks);
                 irq_disable();
                 gpio_out_toggle_noirq(pin);
                 irq_enable();
 
-                neopixel_delay(neopixel_get_time(), PULSE_SHORT_TICKS);
+                neopixel_delay(neopixel_get_time(), pulse_short_ticks);
             } else {
                 // Short pulse
-                neopixel_delay(last_start, BIT_MIN_TICKS);
+                neopixel_delay(last_start, bit_min_ticks);
                 irq_disable();
                 neopixel_time_t start = neopixel_get_time();
                 gpio_out_toggle_noirq(pin);
-                neopixel_delay(start, PULSE_SHORT_TICKS);
+                neopixel_delay(start, pulse_short_ticks);
                 gpio_out_toggle_noirq(pin);
                 irq_enable();
 

@@ -33,6 +33,9 @@ class PrinterNeoPixel:
         chain_count = config.getint("chain_count", 1, minval=1)
         color_order = config.getlist("color_order", ["GRB"])
         self.init_gcode = gcode_macro.load_template(config, "init_gcode", "")
+        self.pulse_long_ticks = config.getint("pulse_long_ticks", 650)
+        self.pulse_short_ticks = config.getint("pulse_short_ticks", 200)
+        self.bit_min_ticks = config.getint("bit_min_ticks", 1250)
         if len(color_order) == 1:
             color_order = [color_order[0]] * chain_count
         if len(color_order) != chain_count:
@@ -73,6 +76,17 @@ class PrinterNeoPixel:
             "config_neopixel oid=%d pin=%s data_size=%d"
             " bit_max_ticks=%d reset_min_ticks=%d"
             % (self.oid, self.pin, len(self.color_data), bmt, rmt)
+            " bit_max_ticks=%d reset_min_ticks=%d pulse_long_ticks=%d pulse_short_ticks=%d bit_min_ticks=%d"
+            % (
+                self.oid,
+                self.pin,
+                len(self.color_data),
+                bmt,
+                rmt,
+                self.pulse_long_ticks,
+                self.pulse_short_ticks,
+                self.bit_min_ticks,
+            )
         )
         cmd_queue = self.mcu.alloc_command_queue()
         self.neopixel_update_cmd = self.mcu.lookup_command(
