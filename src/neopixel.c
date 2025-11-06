@@ -153,7 +153,7 @@ send_data(struct neopixel_s *n)
                 last_start = start;
                 byte <<= 1;
 
-                neopixel_delay(start, PULSE_LONG_TICKS);
+                neopixel_delay(start, pulse_long_ticks);
                 irq_disable();
                 gpio_out_toggle_noirq(pin);
                 irq_enable();
@@ -177,7 +177,7 @@ send_data(struct neopixel_s *n)
         }
     }
     n->last_req_time = timer_read_time();
-    return PULSE_LONG_TICKS;
+    return 0;
 fail:
     // A hardware irq messed up the transmission - report a failure
     gpio_out_write(pin, 0);
@@ -206,7 +206,7 @@ command_neopixel_send(uint32_t *args)
     uint8_t oid = args[0];
     struct neopixel_s *n = oid_lookup(oid, command_config_neopixel);
     int ret = send_data(n);
-    sendf("neopixel_result oid=%c success=%c", oid, ret);
+    sendf("neopixel_result oid=%c success=%c", oid, ret ? 0 : 1);
 }
 DECL_COMMAND_FLAGS(command_neopixel_send, HF_IN_SHUTDOWN,
                    "neopixel_send oid=%c");

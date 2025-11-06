@@ -73,7 +73,6 @@ class PrinterNeoPixel:
         bmt = self.mcu.seconds_to_clock(BIT_MAX_TIME)
         rmt = self.mcu.seconds_to_clock(RESET_MIN_TIME)
         plt = self.mcu.seconds_to_clock(self.pulse_long_ticks / 1000000000)
-        logging.info(f"PULSE_LONG_TICKS: {plt}")
         self.mcu.add_config_cmd(
             "config_neopixel oid=%d pin=%s data_size=%d"
             " bit_max_ticks=%d reset_min_ticks=%d pulse_long_ticks=%d pulse_short_ticks=%d bit_min_ticks=%d"
@@ -83,7 +82,7 @@ class PrinterNeoPixel:
                 len(self.color_data),
                 bmt,
                 rmt,
-                self.pulse_long_ticks,
+                plt,
                 self.pulse_short_ticks,
                 self.bit_min_ticks,
             )
