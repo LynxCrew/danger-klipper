@@ -648,12 +648,6 @@ class ControlBangBang:
         self.max_delta = profile["max_delta"]
         self.heating = False
 
-    def get_block_temp(self):
-        return self.heater.smoothed_temp
-
-    def get_ambient_temp(self):
-        return AMBIENT_TEMP
-
     def temperature_update(self, read_time, temp, target_temp):
         if self.heating and temp >= target_temp + self.max_delta:
             self.heating = False
@@ -881,12 +875,6 @@ class ControlPID:
         self.prev_temp_deriv = 0.0
         self.prev_temp_integ = 0.0
 
-    def get_block_temp(self):
-        return self.heater.smoothed_temp
-
-    def get_ambient_temp(self):
-        return AMBIENT_TEMP
-
     def temperature_update(self, read_time, temp, target_temp):
         time_diff = read_time - self.prev_temp_time
         # Calculate change of temperature
@@ -1025,12 +1013,6 @@ class ControlVelocityPID:
         self.d2 = 0.0  # previous smoothed 2nd derivative
         self.pwm = 0.0 if load_clean else self.heater.last_pwm_value
 
-    def get_block_temp(self):
-        return self.heater.smoothed_temp
-
-    def get_ambient_temp(self):
-        return AMBIENT_TEMP
-
     def temperature_update(self, read_time, temp, target_temp):
         # update the temp and time lists
         self.temps.pop(0)
@@ -1159,12 +1141,6 @@ class ControlPositionalPID:
         self.prev_err = 0.0
         self.prev_der = 0.0
         self.int_sum = 0.0
-
-    def get_block_temp(self):
-        return self.heater.smoothed_temp
-
-    def get_ambient_temp(self):
-        return AMBIENT_TEMP
 
     def temperature_update(self, read_time, temp, target_temp):
         # calculate the error
@@ -1505,12 +1481,6 @@ class ControlMPC:
         ]
         self.heater_max_power = self.heater.get_max_power()
         self.update_filament_const()
-
-    def get_block_temp(self):
-        return self.state_block_temp
-
-    def get_ambient_temp(self):
-        return self.state_ambient_temp
 
     # Helpers
     def _heater_temp(self):

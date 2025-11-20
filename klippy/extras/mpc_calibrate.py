@@ -544,7 +544,7 @@ class TuningControl:
         return {"name": "autotune"}
 
     def get_type(self):
-        return "autotune"
+        return "mpc-autotune"
 
 
 def load_config(config):
