@@ -160,12 +160,10 @@ class RunoutHelper:
         if not self.sensor_enabled:
             return
         # Determine "printing" status
-        idle_timeout = self.printer.lookup_object("idle_timeout")
-        print_stats = self.printer.lookup_object("print_stats")
         is_printing = (
-            print_stats.get_status(eventtime)["state"] == "printing"
+            self.printer.lookup_object("print_stats").get_status(eventtime)["state"] == "printing"
             if self.smart
-            else idle_timeout.get_status(eventtime)["state"] == "Printing"
+            else self.printer.lookup_object("idle_timeout").get_status(eventtime)["state"] == "Printing"
         )
         # Perform filament action associated with status change (if any)
         if is_filament_present:
