@@ -335,7 +335,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         if not globalscaler:
             globalscaler = 256
         cs = int(
-             (current * 256.0 * 32.0) / (globalscaler * ifs_rms) - 1.0 + 0.5
+            (current * 256.0 * 32.0) / (globalscaler * ifs_rms) - 1.0 + 0.5
         )
         return max(0, min(31, cs))
 

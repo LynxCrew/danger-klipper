@@ -370,7 +370,7 @@ class ControlAutoTune:
         return {"name": "autotune"}
 
     def get_type(self):
-        return "autotune"
+        return "pid-autotune"
 
 
 def load_config(config):
