@@ -266,7 +266,7 @@ class Fan:
                 self.last_req_value = value
                 self.last_req_pwm_value = pwm_value
 
-                self.last_fan_value = self.max_power
+                self.last_fan_value = 1.0
                 self.last_pwm_value = self.max_power
 
                 self.mcu_fan.set_pwm(print_time, self.max_power)
