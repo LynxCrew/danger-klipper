@@ -8,7 +8,7 @@ import logging
 import os
 import threading
 import math
-from extras.heater_profile_manager import ProfileManager
+from heater_profile_manager import ProfileManager
 
 ######################################################################
 # Heater
