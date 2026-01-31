@@ -1,14 +1,10 @@
 # Support for PWM driven LEDs
 #
-# Copyright (C) 2019-2022  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 from . import output_pin
-
-
-# Time between each led template update
-RENDER_TIME = 0.500
 
 
 # Helper code for common LED initialization and control
@@ -51,6 +47,13 @@ class LEDHelper:
             "SET_LED_TEMPLATE",
             "LED",
             self.name,
+            self.cmd_SET_LED_TEMPLATE,
+            desc=self.cmd_SET_LED_TEMPLATE_help,
+        )
+        gcode.register_mux_command(
+            "SET_LED_TEMPLATE",
+            "LED",
+            name,
             self.cmd_SET_LED_TEMPLATE,
             desc=self.cmd_SET_LED_TEMPLATE_help,
         )

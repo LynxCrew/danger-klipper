@@ -7,6 +7,7 @@ import logging
 
 from . import bus
 
+from . import bus
 from .danger_options import get_danger_options
 
 LM75_CHIP_ADDR = 0x48
@@ -46,6 +47,10 @@ class LM75:
         self.printer.add_object("lm75 " + self.name, self)
         self.printer.register_event_handler(
             "klippy:connect", self._handle_connect
+        )
+        self.printer.register_event_handler(
+            self.mcu.get_non_critical_reconnect_event_name(),
+            self.handle_connect,
         )
 
     def _handle_connect(self):

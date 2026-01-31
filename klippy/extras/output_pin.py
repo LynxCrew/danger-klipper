@@ -9,7 +9,6 @@ import logging
 from .display import display
 
 PIN_MIN_TIME = 0.100
-RESEND_HOST_TIME = 0.300 + PIN_MIN_TIME
 
 
 # Helper code to queue g-code requests
@@ -269,9 +268,10 @@ class PrinterOutputPin:
     def _template_update(self, text):
         try:
             value = float(text)
-            self.gcrq.send_async_request(value)
         except ValueError as e:
             logging.exception("output_pin template render error")
+            value = 0.0
+        self.gcrq.send_async_request(value)
 
     cmd_SET_PIN_help = "Set the value of an output pin"
 

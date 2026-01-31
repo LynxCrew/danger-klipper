@@ -138,14 +138,21 @@ class RunoutHelper:
         self.min_event_systime = self.reactor.monotonic() + self.event_delay
 
     def note_filament_present(
-        self, is_filament_present=None, force=False, immediate=False
+        self,
+        eventtime=None,
+        is_filament_present=None,
+        force=False,
+        immediate=False,
     ):
         if is_filament_present is None:
             is_filament_present = self.filament_present
         if is_filament_present == self.filament_present and not force:
             return
+        if eventtime is None:
+            eventtime = self.reactor.monotonic()
         self.filament_present = is_filament_present
-        eventtime = self.reactor.monotonic()
+        # with debouncing the event time is passed into us as we are
+        # called with a delay so the current time is not the event time
         if eventtime < self.min_event_systime or (
             not self.always_fire_events and not self.sensor_enabled
         ):
@@ -161,9 +168,15 @@ class RunoutHelper:
             return
         # Determine "printing" status
         is_printing = (
-            self.printer.lookup_object("print_stats").get_status(eventtime)["state"] == "printing"
+            self.printer.lookup_object("print_stats").get_status(eventtime)[
+                "state"
+            ]
+            == "printing"
             if self.smart
-            else self.printer.lookup_object("idle_timeout").get_status(eventtime)["state"] == "Printing"
+            else self.printer.lookup_object("idle_timeout").get_status(
+                eventtime
+            )["state"]
+            == "Printing"
         )
         # Perform filament action associated with status change (if any)
         if is_filament_present:
@@ -172,7 +185,7 @@ class RunoutHelper:
                 self.min_event_systime = self.reactor.NEVER
                 logging.info(
                     "Filament Sensor %s: insert event detected, Time %.2f"
-                    % (self.name, eventtime)
+                    % (self.name, now)
                 )
                 self.reactor.register_callback(self._insert_event_handler)
         elif is_printing and self.runout_gcode is not None:
@@ -180,7 +193,7 @@ class RunoutHelper:
             self.min_event_systime = self.reactor.NEVER
             logging.info(
                 "Filament Sensor %s: runout event detected, Time %.2f"
-                % (self.name, eventtime)
+                % (self.name, now)
             )
             self.reactor.register_callback(
                 self._execute_runout
@@ -250,7 +263,10 @@ class SwitchSensor:
         buttons = self.printer.load_object(config, "buttons")
         switch_pin = config.get("switch_pin")
         runout_distance = config.getfloat("runout_distance", 0.0, minval=0.0)
-        buttons.register_buttons([switch_pin], self._button_handler)
+        buttons.register_debounce_button(
+            switch_pin, self._button_handler, config
+        )
+
         self.check_on_print_start = config.getboolean(
             "check_on_print_start", False
         )
@@ -280,15 +296,27 @@ class SwitchSensor:
     def _handle_printing(self, *args):
         if not self.runout_helper.smart:
             if self.check_on_print_start:
-                self.runout_helper.note_filament_present(None, True, True)
+                self.runout_helper.note_filament_present(
+                    eventtime=self.reactor.monotonic(),
+                    is_filament_present=None,
+                    force=True,
+                    immediate=True,
+                )
 
     def _handle_printing_smart(self, *args):
         if self.runout_helper.smart:
             if self.check_on_print_start:
-                self.runout_helper.note_filament_present(None, True, True)
+                self.runout_helper.note_filament_present(
+                    eventtime=self.reactor.monotonic(),
+                    is_filament_present=None,
+                    force=True,
+                    immediate=True,
+                )
 
     def _button_handler(self, eventtime, state):
-        self.runout_helper.note_filament_present(state)
+        self.runout_helper.note_filament_present(
+            eventtime=eventtime, is_filament_present=state
+        )
 
     def get_extruder_pos(self, eventtime=None):
         if eventtime is None:
@@ -358,7 +386,9 @@ class SwitchSensor:
     def reset(self):
         self.runout_helper.reset_runout_distance_info()
         self.runout_helper.note_filament_present(
-            self.runout_helper.filament_present, True
+            eventtime=self.reactor.monotonic(),
+            is_filament_present=self.runout_helper.filament_present,
+            force=True,
         )
 
 

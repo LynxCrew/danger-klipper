@@ -4,6 +4,7 @@
 # Copyright (C) 2022  Mitko Haralanov <voidtrance@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
 import os
 import shlex
 import subprocess
@@ -19,6 +20,7 @@ class ShellCommand:
         gcode_macro = self.printer.lookup_object("gcode_macro")
         cmd = config.get("command")
         cmd = os.path.expanduser(cmd)
+        cmd = os.path.expandvars(cmd)
         self.command = shlex.split(cmd)
         self.timeout = config.getfloat("timeout", 2.0, above=0.0)
         self.verbose = config.getboolean("verbose", False)

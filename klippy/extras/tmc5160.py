@@ -4,8 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
-from . import tmc
-from . import tmc2130
+
+from . import tmc, tmc2130
 
 TMC_FREQUENCY = 12000000.0
 
@@ -237,6 +237,7 @@ Fields["TPOWERDOWN"] = {"tpowerdown": 0xFF << 0}
 Fields["TPWMTHRS"] = {"tpwmthrs": 0xFFFFF << 0}
 Fields["TCOOLTHRS"] = {"tcoolthrs": 0xFFFFF << 0}
 Fields["TSTEP"] = {"tstep": 0xFFFFF << 0}
+Fields["THIGH"] = {"thigh": 0xFFFFF << 0}
 
 SignedFields = ["cur_a", "cur_b", "sgt", "xactual", "vactual", "pwm_scale_auto"]
 
@@ -270,7 +271,7 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
     def __init__(self, config, mcu_tmc):
         super().__init__(config, mcu_tmc, MAX_CURRENT)
 
-        self.cs = config.getint("driver_CS", 31, maxval=31, minval=0)
+        self.cs = config.getint("driver_CS", None, minval=0, maxval=31)
         gscaler, irun, ihold = self._calc_current(
             self.req_run_current, self.req_hold_current
         )
@@ -279,13 +280,15 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
         self.fields.set_field("irun", irun)
 
     def _calc_globalscaler(self, current):
-        cs = self.cs
+        cs = 31 if self.cs is None else self.cs
         globalscaler = math.floor(
             (current * 32 * 256 * self.sense_resistor * math.sqrt(2.0))
             / ((cs + 1) * VREF)
         )
         if globalscaler == 256:
             return 0
+        if self.cs is None and globalscaler < 32:
+            return 32
         if 1 <= globalscaler <= 31 or globalscaler > 256:
             Ipeak = current * math.sqrt(2)
             Rsens = self.sense_resistor
@@ -295,15 +298,30 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
                 % (
                     self.name,
                     globalscaler,
-                    self.cs,
+                    cs,
                     cs_calculated,
                 )
             )
         return globalscaler
 
+    def _calc_current_bits(self, current, globalscaler):
+        if not globalscaler:
+            globalscaler = 256
+        cs = int(
+            (current * 256.0 * 32.0 * math.sqrt(2.0) * self.sense_resistor)
+            / (globalscaler * VREF)
+            - 1.0
+            + 0.5
+        )
+        return max(0, min(31, cs))
+
     def _calc_current(self, run_current, hold_current):
         gscaler = self._calc_globalscaler(run_current)
-        irun = self.cs
+        irun = (
+            self._calc_current_bits(run_current, gscaler)
+            if self.cs is None
+            else self.cs
+        )
         ihold = math.floor(min((hold_current / run_current) * irun, irun))
         return gscaler, irun, ihold
 
@@ -365,7 +383,10 @@ class TMC5160:
         self.get_status = cmdhelper.get_status
         # Setup basic register values
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc)
+        tmc.TMCVcoolthrsHelper(config, self.mcu_tmc)
+        tmc.TMCVhighHelper(config, self.mcu_tmc)
+        # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         #   GCONF
         set_config_field(config, "multistep_filt", True)

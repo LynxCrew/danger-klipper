@@ -111,6 +111,7 @@ class Fan:
             config, self.mcu_fan.get_mcu(), self._apply_speed
         )
 
+        # Setup tachometer
         self.tachometer = FanTachometer(config)
 
         self.name = config.get_name().split()[-1]

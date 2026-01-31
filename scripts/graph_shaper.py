@@ -232,7 +232,9 @@ def setup_matplotlib(output_to_file):
     global matplotlib
     if output_to_file:
         matplotlib.use("Agg")
-    import matplotlib.pyplot, matplotlib.dates, matplotlib.font_manager
+    import matplotlib.dates
+    import matplotlib.font_manager
+    import matplotlib.pyplot
     import matplotlib.ticker
 
 

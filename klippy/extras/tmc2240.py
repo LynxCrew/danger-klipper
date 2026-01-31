@@ -5,6 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
+
 from . import tmc, tmc2130, tmc_uart
 from configfile import PrinterConfig
 
@@ -311,7 +312,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
         ifs_rms = self._get_ifs_rms()
         cs = 31 if self.cs is None else self.cs
         globalscaler = math.floor((current * 256.0 * 32) / (ifs_rms * (cs + 1)))
-        if globalscaler == 256:
+        if self.cs is None and globalscaler == 256:
             return 0
         if self.cs is None and globalscaler < 32:
             return 32
@@ -323,7 +324,7 @@ class TMC2240CurrentHelper(tmc.BaseTMCCurrentHelper):
                     self.name,
                     globalscaler,
                     self.Rref,
-                    self.cs,
+                    cs,
                     f"{current_range:02b}",
                     f"{(KIFS[current_range] / 1000):.2f}",
                 )
@@ -446,7 +447,10 @@ class TMC2240:
         # Setup basic register values
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
         self.fields.set_config_field(config, "offset_sin90", 0)
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc)
+        tmc.TMCVcoolthrsHelper(config, self.mcu_tmc)
+        tmc.TMCVhighHelper(config, self.mcu_tmc)
+        # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         #   GCONF
         set_config_field(config, "multistep_filt", True)

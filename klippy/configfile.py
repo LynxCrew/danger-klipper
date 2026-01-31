@@ -3,10 +3,18 @@
 # Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, glob, re, time, logging, configparser, io
-from .extras.danger_options import get_danger_options
-from . import mathutil
+import configparser
+import glob
+import io
+import logging
+import os
+import pathlib
+import re
+import sys
+import time
 
+from . import mathutil
+from .extras.danger_options import get_danger_options
 
 error = configparser.Error
 
@@ -15,13 +23,24 @@ class sentinel:
     pass
 
 
+PYTHON_SCRIPT_PREFIX = "!"
+_INCLUDERE = re.compile(r"!!include (?P<file>.*)")
+
+
+def _fix_include_path(source_file: str, match: re.Match) -> pathlib.Path:
+    new_path = pathlib.Path(source_file).parent.absolute() / match.group("file")
+    if not new_path.is_file():
+        raise error(f"Attempted to include non-existent file {new_path}")
+    return f"!!include {new_path}"
+
+
 class SectionInterpolation(configparser.Interpolation):
     """
     variable interpolation replacing ${[section.]option}
     """
 
     _KEYCRE = re.compile(
-        r"\$\{(?:(?P<section>[^.:${}]+)[.:])?(?P<option>[^${}]+)\}"
+        r"(?<!\\)?\$\{(?:(?P<section>[^.:${}]+)[.:])?(?P<option>[^${}]+)\}"
     )
 
     def __init__(self, access_tracking):
@@ -46,7 +65,7 @@ class SectionInterpolation(configparser.Interpolation):
 
             value = value[: match.start()] + const + value[match.end() :]
 
-        return value
+        return value.replace("\\${", "${")
 
 
 class ConfigWrapper:
@@ -124,6 +143,28 @@ class ConfigWrapper:
         return self._get_wrapper(
             self.fileconfig.get, option, default, note_valid=note_valid
         )
+
+    def getscript(self, option, default=sentinel, note_valid=True):
+        value: str = self.get(option, default, note_valid).strip()
+
+        match = _INCLUDERE.search(value)
+        if match:
+            file_path = pathlib.Path(match.group("file"))
+            if file_path.suffix.lower() == ".py":
+                return ("python", file_path.read_text())
+            else:
+                return ("gcode", file_path.read_text())
+
+        elif value.startswith(PYTHON_SCRIPT_PREFIX):
+            return (
+                "python",
+                "\n".join(
+                    line.removeprefix(PYTHON_SCRIPT_PREFIX)
+                    for line in value.splitlines()
+                ),
+            )
+
+        return ("gcode", value)
 
     def getint(
         self,
@@ -445,6 +486,10 @@ class PrinterConfig:
                     filename, include_spec, fileconfig, visited
                 )
             else:
+                line = _INCLUDERE.sub(
+                    lambda match: _fix_include_path(filename, match),
+                    line,
+                )
                 buffer.append(line)
         self._parse_config_buffer(buffer, filename, fileconfig)
         visited.remove(path)

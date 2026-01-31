@@ -26,10 +26,7 @@ PCA9632_LED3 = 0x06
 class PCA9632:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
-        if config.get("scl_pin", None) is not None:
-            self.i2c = mcp4018.SoftwareI2C(config, 98)
-        else:
-            self.i2c = bus.MCU_I2C_from_config(config, default_addr=98)
+        self.i2c = bus.MCU_I2C_from_config(config, default_addr=98)
         color_order = config.get("color_order", "RGBW")
         if sorted(color_order) != sorted("RGBW"):
             raise config.error("Invalid color_order '%s'" % (color_order,))
@@ -42,7 +39,7 @@ class PCA9632:
         if self.prev_regs.get(reg) == val:
             return
         self.prev_regs[reg] = val
-        self.i2c.i2c_write(
+        self.i2c.i2c_write_noack(
             [reg, val], minclock=minclock, reqclock=BACKGROUND_PRIORITY_CLOCK
         )
 

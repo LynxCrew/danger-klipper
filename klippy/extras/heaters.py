@@ -1,6 +1,6 @@
 # Tracking of PWM controlled heaters and their temperature control
 #
-# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import collections
@@ -10,16 +10,16 @@ import threading
 import math
 from extras.heater_profile_manager import ProfileManager
 
-
 ######################################################################
 # Heater
 ######################################################################
 
 KELVIN_TO_CELSIUS = -273.15
-MAX_HEAT_TIME = 5.0
+MAX_HEAT_TIME = 3.0
 AMBIENT_TEMP = 25.0
 PID_PARAM_BASE = 255.0
 MAX_MAINTHREAD_TIME = 5.0
+QUELL_STALE_TIME = 7.0
 HEATER_PROFILE_VERSION = 1
 
 # (type, placeholder, default, can_be_none)
@@ -178,6 +178,7 @@ class Heater:
                 "pid": ControlPID,
                 "pid_v": ControlVelocityPID,
                 "pid_p": ControlPositionalPID,
+                "dual_loop_pid": ControlDualLoopPID,
                 "mpc": ControlMPC,
             }
         )
@@ -195,6 +196,13 @@ class Heater:
             short_name,
             self.cmd_SET_HEATER_TEMPERATURE,
             desc=self.cmd_SET_HEATER_TEMPERATURE_help,
+        )
+        self.gcode.register_mux_command(
+            "COLD_EXTRUDE",
+            "HEATER",
+            self.name,
+            self.cmd_COLD_EXTRUDE,
+            desc=self.cmd_COLD_EXTRUDE_help,
         )
         self.gcode.register_mux_command(
             "SET_SMOOTH_TIME",
@@ -253,7 +261,9 @@ class Heater:
             # No significant change in value - can suppress update
             return
         pwm_time = read_time + self.pwm_delay
-        self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
+        self.next_pwm_time = (
+            pwm_time + MAX_HEAT_TIME - (3.0 * self.pwm_delay + 0.001)
+        )
         self.last_pwm_value = value
         self.mcu_pwm.set_pwm(pwm_time, value)
         # logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
@@ -316,11 +326,10 @@ class Heater:
             self.target_temp = degrees
 
     def get_temp(self, eventtime):
-        print_time = (
-            self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 5.0
-        )
+        est_print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime)
+        quell_time = est_print_time - QUELL_STALE_TIME
         with self.lock:
-            if self.last_temp_time < print_time:
+            if self.last_temp_time < quell_time:
                 return 0.0, self.target_temp
             return self.smoothed_temp, self.target_temp
 
@@ -385,12 +394,48 @@ class Heater:
             return True
         return False
 
+    def set_cold_extrude(self, cold_extrude, min_extrude_temp):
+        if cold_extrude is None and min_extrude_temp is None:
+            self.gcode.respond_info(
+                "Cold extrudes are %s (min temp %.2fC)"
+                % (
+                    "enabled" if self.cold_extrude else "disabled",
+                    self.min_extrude_temp,
+                )
+            )
+            return
+        self.cold_extrude = True if cold_extrude else False
+        if min_extrude_temp is not None:
+            self.min_extrude_temp = min_extrude_temp
+            self.configfile.set(
+                self.name, "min_extrude_temp", self.min_extrude_temp
+            )
+            self.gcode.respond_info(
+                "min_extrude_temp has been set to %.2fC "
+                "for [%s] for the current session.\n"
+                "The SAVE_CONFIG command will update the "
+                "printer config file and restart the "
+                "printer." % (self.min_extrude_temp, self.name)
+            )
+        self.can_extrude = (
+            self.smoothed_temp >= self.min_extrude_temp or self.cold_extrude
+        )
+
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
 
     def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
         temp = gcmd.get_float("TARGET", 0.0)
         pheaters = self.printer.lookup_object("heaters")
         pheaters.set_temperature(self, temp)
+
+    cmd_COLD_EXTRUDE_help = "Control cold extrusions"
+
+    def cmd_COLD_EXTRUDE(self, gcmd):
+        cold_extrude = gcmd.get_int("ENABLE", None, minval=0, maxval=1)
+        min_extrude_temp = gcmd.get_float(
+            "MIN_EXTRUDE_TEMP", None, minval=self.min_temp, maxval=self.max_temp
+        )
+        self.set_cold_extrude(cold_extrude, min_extrude_temp)
 
     cmd_SET_SMOOTH_TIME_help = "Set the smooth time for the given heater"
 
@@ -535,6 +580,43 @@ class Heater:
         self.control.update_filament_const()
         if save_profile is not None:
             self.pmgr.save_profile(profile_name=save_profile)
+
+
+######################################################################
+# Dual Sensor Heater
+######################################################################
+
+
+class DualSensorHeater(Heater):
+    def __init__(self, config, primary_sensor, secondary_sensor):
+        super().__init__(config=config, sensor=primary_sensor)
+        self.secondary_sensor = secondary_sensor
+
+        if (
+            isinstance(self.control, ControlDualLoopPID)
+            and self.secondary_sensor is None
+        ):
+            raise config.error("dual_loop_pid requires a secondary sensor")
+
+    def temperature_callback(self, read_time, primary_temp):
+        with self.lock:
+            time_diff = read_time - self.last_temp_time
+            self.last_temp = primary_temp
+            self.last_temp_time = read_time
+
+            secondary_status = self.secondary_sensor.get_status(read_time)
+            secondary_temp = secondary_status["temperature"]
+
+            self.control.temperature_update(
+                read_time, primary_temp, self.target_temp, secondary_temp
+            )
+
+            temp_diff = primary_temp - self.smoothed_temp
+            adj_time = min(time_diff * self.inv_smooth_time, 1.0)
+            self.smoothed_temp += temp_diff * adj_time
+            self.can_extrude = (
+                self.smoothed_temp >= self.min_extrude_temp or self.cold_extrude
+            )
 
 
 ######################################################################
@@ -875,7 +957,7 @@ class ControlPID:
         self.prev_temp_deriv = 0.0
         self.prev_temp_integ = 0.0
 
-    def temperature_update(self, read_time, temp, target_temp):
+    def calculate_output(self, read_time, temp, target_temp):
         time_diff = read_time - self.prev_temp_time
         # Calculate change of temperature
         temp_diff = temp - self.prev_temp
@@ -895,13 +977,18 @@ class ControlPID:
         # logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
         #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
         bounded_co = max(0.0, min(self.heater_max_power, co))
-        self.heater.set_pwm(read_time, bounded_co)
         # Store state for next measurement
         self.prev_temp = temp
         self.prev_temp_time = read_time
         self.prev_temp_deriv = temp_deriv
         if co == bounded_co:
             self.prev_temp_integ = temp_integ
+
+        return co, bounded_co
+
+    def temperature_update(self, read_time, temp, target_temp):
+        _, bounded_co = self.calculate_output(read_time, temp, target_temp)
+        self.heater.set_pwm(read_time, bounded_co)
 
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
@@ -1731,6 +1818,96 @@ class ControlMPC:
 
 
 ######################################################################
+# Dual Loop PID control algo
+######################################################################
+
+# Secondary Loop monitors the heater / transfer medium
+# Primary Loop monitors the surface / medium
+
+
+class ControlInnerPID(ControlPID):
+    """
+    PID Controller for the inner loop of dual loop pid
+    """
+
+    def __init__(self, profile, heater, load_clean=False):
+        super().__init__(profile, heater, load_clean)
+
+        self.Kp = profile["inner_pid_kp"] / PID_PARAM_BASE
+        self.Ki = profile["inner_pid_ki"] / PID_PARAM_BASE
+        self.Kd = profile["inner_pid_kd"] / PID_PARAM_BASE
+
+        if self.Ki:
+            self.temp_integ_max = self.heater_max_power / self.Ki
+
+
+class ControlDualLoopPID:
+    def __init__(self, profile, heater, load_clean=False):
+        self.profile = profile
+        self.heater = heater
+        self.heater_max_power = heater.get_max_power()
+
+        # Outer (primary) loop - e.g. bed surface
+        self.primary_pid = ControlPID(
+            profile=profile,
+            heater=heater,
+            load_clean=load_clean,
+        )
+
+        # Inner (secondary) loop - e.g. heater element
+        self.secondary_pid = ControlInnerPID(
+            profile=profile,
+            heater=heater,
+            load_clean=load_clean,
+        )
+
+        self.secondary_max_temp = self.heater.config.getfloat("inner_max_temp")
+
+    def temperature_update(
+        self,
+        read_time,
+        primary_temp,
+        target_temp,
+        secondary_temp,
+    ):
+        if secondary_temp is None:
+            raise ValueError("Secondary temperature must be provided!")
+
+        primary_co, _ = self.primary_pid.calculate_output(
+            read_time,
+            primary_temp,
+            target_temp,
+        )
+
+        secondary_co, _ = self.secondary_pid.calculate_output(
+            read_time,
+            secondary_temp,
+            self.secondary_max_temp,
+        )
+
+        co = min(primary_co, secondary_co)
+        bounded_co = max(0.0, min(self.heater_max_power, co))
+
+        self.heater.set_pwm(read_time, bounded_co)
+
+    def check_busy(self, eventtime, smoothed_temp, target_temp):
+        return self.primary_pid.check_busy(
+            eventtime,
+            smoothed_temp,
+            target_temp,
+        )
+
+    def update_smooth_time(self):
+        self.smooth_time = self.heater.get_smooth_time()  # smoothing window
+
+    def get_profile(self):
+        return self.profile
+
+    def get_type(self):
+        return "dual_loop_pid"
+
+
+######################################################################
 # Sensor and heater lookup
 ######################################################################
 
@@ -1784,10 +1961,28 @@ class PrinterHeaters:
         heater_name = config.get_name().split()[-1]
         if heater_name in self.heaters:
             raise config.error("Heater %s already registered" % (heater_name,))
-        # Setup sensor
+
+        # Setup sensor (primary/outer sensor for dual loop)
         sensor = self.setup_sensor(config)
+
+        # Setup inner sensor (inner/secondary sensor only for dual loop pid)
+        inner_sensor = None
+        inner_sensor_name = config.get("inner_sensor_name", None)
+        if inner_sensor_name is not None:
+            full_name = "temperature_sensor " + inner_sensor_name
+            inner_sensor = self.printer.lookup_object(full_name)
+
         # Create heater
-        self.heaters[heater_name] = heater = Heater(config, sensor)
+        if inner_sensor is not None:
+            heater = DualSensorHeater(
+                config=config,
+                primary_sensor=sensor,
+                secondary_sensor=inner_sensor,
+            )
+        else:
+            heater = Heater(config=config, sensor=sensor)
+
+        self.heaters[heater_name] = heater
         self.register_sensor(config, heater, gcode_id)
         self.available_heaters.append(config.get_name())
         return heater

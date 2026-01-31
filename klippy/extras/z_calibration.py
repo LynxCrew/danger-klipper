@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+
 from klippy.mcu import MCU_endstop
 
 
@@ -17,7 +18,7 @@ class ZCalibrationHelper:
         self.position_z_endstop = None
         self.config = config
         self.printer = config.get_printer()
-        self.switch_offset = config.getfloat("switch_offset", 0.0, above=0.0)
+        self.switch_offset = config.getfloat("switch_offset", 0.0)
         # max_deviation is deprecated
         self.max_deviation = config.getfloat("max_deviation", None, above=0.0)
         config.deprecate("max_deviation")
