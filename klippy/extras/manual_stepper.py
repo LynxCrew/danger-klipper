@@ -22,7 +22,9 @@ class ManualStepper:
             self.can_home = False
             self.rail = stepper.PrinterStepper(config)
             self.steppers = [self.rail]
-        self.enable_line = self.stepper_enable.lookup_enable(self.steppers[0].get_name())
+        self.enable_line = self.stepper_enable.lookup_enable(
+            self.steppers[0].get_name()
+        )
         self.velocity = config.getfloat("velocity", 5.0, above=0.0)
         self.accel = self.homing_accel = config.getfloat(
             "accel", 0.0, minval=0.0
