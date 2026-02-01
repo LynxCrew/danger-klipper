@@ -139,7 +139,7 @@ class MCU_SPI:
         )
 
     def spi_transfer_with_preface(
-        self, preface_data, data, minclock=0, reqclock=0
+        self, preface_data, data, minclock=0, reqclock=0, retry=True
     ):
         return self.spi_transfer_cmd.send_with_preface(
             self.spi_send_cmd,
@@ -147,6 +147,7 @@ class MCU_SPI:
             [self.oid, data],
             minclock=minclock,
             reqclock=reqclock,
+            retry=retry,
         )
 
 

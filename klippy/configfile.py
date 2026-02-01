@@ -366,9 +366,8 @@ class PrinterConfig:
 
     def _read_config_file(self, filename):
         try:
-            f = open(filename, "r")
-            data = f.read()
-            f.close()
+            with open(filename, "r") as f:
+                data = f.read()
         except:
             msg = "Unable to open config file %s" % (filename,)
             logging.exception(msg)
